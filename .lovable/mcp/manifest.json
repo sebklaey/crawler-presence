@@ -1,0 +1,362 @@
+{
+  "version": 1,
+  "sdk_version": "0.26.2",
+  "path": "/mcp",
+  "auth": {
+    "type": "none"
+  },
+  "mcp": {
+    "server": {
+      "name": "presence-builder-01",
+      "version": "0.1.0",
+      "title": "Presence Builder (01)"
+    },
+    "tools": [
+      {
+        "name": "start_interview",
+        "title": "Start Presence interview",
+        "description": "Use this when a user wants to create or start an AI-readable Crawler Presence. Accepts a free-text description and optionally a website or product URL. Infers the entity type, returns an opaque ephemeral session_id, a first Knowledge Core draft, detected facts, detected narrative/positioning and the single most valuable adaptive follow-up question.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": true
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "free_text": {
+              "type": "string",
+              "minLength": 3,
+              "maxLength": 6000,
+              "description": "What the person, shop, brand, company or project does, in their own words."
+            },
+            "source_url": {
+              "type": "string",
+              "format": "uri",
+              "description": "Optional website or product URL the user pasted. Used as context only."
+            }
+          },
+          "required": [
+            "free_text"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "continue_interview",
+        "title": "Continue Presence interview",
+        "description": "Use this after start_interview to submit the user's answer and get the next adaptive question. Merges the answer into the Knowledge Core, keeps verified facts separate from narrative claims, and returns either the next most valuable tailored question or interview_complete=true.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": true
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "session_id": {
+              "type": "string",
+              "minLength": 6,
+              "description": "Opaque session id returned by start_interview."
+            },
+            "user_answer": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 6000,
+              "description": "The user's answer to the previous question."
+            }
+          },
+          "required": [
+            "session_id",
+            "user_answer"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "analyze_source_url",
+        "title": "Analyze a public URL",
+        "description": "Use this when the user pastes a website or product URL and wants Crawler to extract candidate facts from the public page. Returns extracted information with provenance (source_url) and per-fact confidence. If fetching fails or is blocked, returns an honest structured unavailable result instead of invented data.",
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": true
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string",
+              "format": "uri",
+              "description": "Public HTTPS URL to read."
+            }
+          },
+          "required": [
+            "url"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_knowledge_core",
+        "title": "Get Knowledge Core",
+        "description": "Use this when you need the full structured Knowledge Core for a Crawler session: identity, verified facts, unconfirmed claims, narrative/positioning, catalog, FAQ, CV, links and known gaps.",
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "session_id": {
+              "type": "string",
+              "minLength": 6,
+              "description": "Opaque session id returned by start_interview."
+            }
+          },
+          "required": [
+            "session_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "preview_presence",
+        "title": "Preview generated Presence files",
+        "description": "Use this when the user wants to see the AI-readable files Crawler would publish. Generates llms.txt, llms-full.txt, about.md and — only when relevant — products.md, projects.md, services.md, faq.md, cv.md, plus JSON payload previews for entity, products, projects and services. Contains only known facts; marketing/positioning copy is marked as narrative.",
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "session_id": {
+              "type": "string",
+              "minLength": 6,
+              "description": "Opaque session id returned by start_interview."
+            },
+            "paths": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Optional filter, e.g. ['llms.txt','about.md']. Omit to get every relevant file."
+            },
+            "max_chars_per_file": {
+              "type": "integer",
+              "minimum": 200,
+              "maximum": 20000,
+              "default": 4000,
+              "description": "Truncate each file preview to keep the response concise."
+            }
+          },
+          "required": [
+            "session_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "publish_presence",
+        "title": "Publish Presence (requires account)",
+        "description": "Use this when the user asks to publish or host their Presence. In this no-auth MVP nothing is published: it returns publish_requires_account=true plus an account-link / checkout URL to the Crawler website. Creating and previewing a Presence is free; hosting is paid.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": true
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "session_id": {
+              "type": "string",
+              "minLength": 6,
+              "description": "Opaque session id returned by start_interview."
+            },
+            "plan": {
+              "type": "string",
+              "enum": [
+                "plus",
+                "pro",
+                "business"
+              ],
+              "description": "Optional plan the user already chose."
+            }
+          },
+          "required": [
+            "session_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_pricing",
+        "title": "Get Crawler pricing",
+        "description": "Use this when the user asks what Crawler costs or which plan they need. Returns the Plus / Pro / Business plans in USD per month with their concise feature differences. Creating and previewing a Presence is always free; hosting and analytics are paid.",
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_analytics",
+        "title": "Get Presence analytics (demo)",
+        "description": "Use this when the user asks how their Presence is performing, what people ask about it, or for analytics over the last 7/30/90 days. In this no-auth MVP it returns clearly labelled seeded DEMO analytics plus session-local metrics — never private data and never external AI assistant conversations.",
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "session_id": {
+              "type": "string",
+              "minLength": 6,
+              "description": "Optional Crawler session for session-local metrics."
+            },
+            "period_days": {
+              "type": "number",
+              "enum": [
+                7,
+                30,
+                90
+              ],
+              "default": 30,
+              "description": "Analytics window in days."
+            },
+            "filter": {
+              "type": "string",
+              "description": "Optional product or entity name filter, e.g. 'gravel bikes' or 'Product X'."
+            },
+            "include_ai_summary": {
+              "type": "boolean",
+              "default": true,
+              "description": "Include the AI summary of recurring questions and gaps."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "improve_presence",
+        "title": "Improve the Presence",
+        "description": "Use this when the user has an analytics insight or a requested change and wants to know what to fix in their Presence. Identifies which Knowledge Core fields need clarification and returns one targeted next question. Never invents facts.",
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": true
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "session_id": {
+              "type": "string",
+              "minLength": 6,
+              "description": "Opaque session id returned by start_interview."
+            },
+            "insight": {
+              "type": "string",
+              "minLength": 3,
+              "maxLength": 2000,
+              "description": "The analytics insight or requested change, e.g. 'people keep asking about frame sizes'."
+            }
+          },
+          "required": [
+            "session_id",
+            "insight"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_checkout_link",
+        "title": "Get checkout link",
+        "description": "Use this when the user wants to pay for hosting and needs a checkout link. Returns the external Crawler checkout URL for the chosen plan. If Stripe is not configured, returns a clearly labelled test/demo checkout state instead of a fake success.",
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": true
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "plan": {
+              "type": "string",
+              "enum": [
+                "plus",
+                "pro",
+                "business"
+              ],
+              "description": "Plan to purchase."
+            },
+            "session_id": {
+              "type": "string",
+              "minLength": 6,
+              "description": "Optional Crawler session to attach to the checkout."
+            }
+          },
+          "required": [
+            "plan"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_status",
+        "title": "Server status",
+        "description": "Use this when debugging the Crawler MCP connection. Returns server health, auth mode, model availability, session store state and which capabilities are demo-only.",
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
