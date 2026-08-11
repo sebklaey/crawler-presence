@@ -47,6 +47,7 @@ export type Database = {
           expires_at: string
           id: string
           origin: string
+          owner_user_id: string | null
           token: string
           transcript: Json
           updated_at: string
@@ -59,6 +60,7 @@ export type Database = {
           expires_at?: string
           id?: string
           origin?: string
+          owner_user_id?: string | null
           token: string
           transcript?: Json
           updated_at?: string
@@ -71,6 +73,7 @@ export type Database = {
           expires_at?: string
           id?: string
           origin?: string
+          owner_user_id?: string | null
           token?: string
           transcript?: Json
           updated_at?: string
@@ -85,6 +88,7 @@ export type Database = {
           files: Json
           id: string
           mode: string
+          owner_user_id: string | null
           plan: string
           session_token: string | null
           slug: string
@@ -97,6 +101,7 @@ export type Database = {
           files?: Json
           id?: string
           mode?: string
+          owner_user_id?: string | null
           plan?: string
           session_token?: string | null
           slug: string
@@ -109,10 +114,59 @@ export type Database = {
           files?: Json
           id?: string
           mode?: string
+          owner_user_id?: string | null
           plan?: string
           session_token?: string | null
           slug?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          environment: string
+          id: string
+          price_id: string
+          product_id: string
+          status: string
+          stripe_customer_id: string
+          stripe_subscription_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          environment?: string
+          id?: string
+          price_id: string
+          product_id: string
+          status?: string
+          stripe_customer_id: string
+          stripe_subscription_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          environment?: string
+          id?: string
+          price_id?: string
+          product_id?: string
+          status?: string
+          stripe_customer_id?: string
+          stripe_subscription_id?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -121,7 +175,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_active_subscription: {
+        Args: { check_env?: string; user_uuid: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

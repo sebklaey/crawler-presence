@@ -55,5 +55,15 @@ export const PLANS: Plan[] = [
 
 export const planById = (id: PlanId) => PLANS.find((p) => p.id === id)!;
 
-/** No invented keys: without a configured Stripe key the app runs in labelled demo mode. */
-export const stripeConfigured = () => Boolean(import.meta.env["VITE_STRIPE_PUBLISHABLE_KEY"]);
+/** Human-readable price ids in the payment provider; stable across test and live. */
+export const PRICE_BY_PLAN: Record<PlanId, string> = {
+  plus: "plus_monthly",
+  pro: "pro_monthly",
+  business: "business_monthly",
+};
+
+/** No invented keys: without a payment client token the app runs in labelled test mode. */
+export const stripeConfigured = () => {
+  const token = import.meta.env["VITE_PAYMENTS_CLIENT_TOKEN"] as string | undefined;
+  return Boolean(token?.startsWith("pk_live_"));
+};

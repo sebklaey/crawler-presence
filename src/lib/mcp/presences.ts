@@ -39,6 +39,7 @@ export async function publishDraft(input: {
   plan: string;
   mode: PublishMode;
   sessionToken?: string;
+  ownerUserId?: string;
 }): Promise<PublishedPresence> {
   const files = generatedFiles(input.core).map((f) => ({ path: f.path, type: f.type, content: f.content }));
   const record: PublishedPresence = {
@@ -61,6 +62,7 @@ export async function publishDraft(input: {
       plan: record.plan,
       mode: record.mode,
       claim_token: record.claimToken,
+      owner_user_id: input.ownerUserId ?? null,
     });
     if (!error) return record;
   }

@@ -203,3 +203,43 @@ export async function storeMode(): Promise<"database" | "in-memory-fallback"> {
 
 export const SESSION_NOTE =
   "Anonymous draft session: identified only by an opaque random token, stored durably for ~30 days and not linked to any account. Anyone holding the token can read the draft, so treat it as a shareable link. Durable ownership, paid plans and private analytics require account linking on the Crawler website.";
+
+/* ------------------------------------------------------------------ */
+/* Ownership (account linking)                                         */
+/* ------------------------------------------------------------------ */
+
+/** Account that claimed this draft, or null while it is still anonymous. */
+export async function getSessionOwner(id: string): Promise<string | null> {
+  const supabase = await client();
+  if (!supabase) return null;
+  const { data } = await supabase
+    .from("mcp_sessions")
+    .select("owner_user_id")
+    .eq("token", id)
+    .maybeSingle();
+  return (data as { owner_user_id: string | null } | null)?.owner_user_id ?? null;
+}
+
+/**
+ * Link an anonymous draft to an account. First claim wins: a draft already
+ * owned by someone else is never reassigned.
+ */
+export async function claimSession(
+  id: string,
+  userId: string,
+): Promise<{ ok: boolean; reason?: string }> {
+  const supabase = await client();
+  if (!supabase) return { ok: false, reason: "no-store" };
+  const session = await getSession(id);
+  if (!session) return { ok: false, reason: "not-found" };
+  const owner = await getSessionOwner(id);
+  if (owner && owner !== userId) return { ok: false, reason: "owned-by-other" };
+  if (owner === userId) return { ok: true };
+  const { error } = await supabase
+    .from("mcp_sessions")
+    .update({ owner_user_id: userId, updated_at: new Date().toISOString() })
+    .eq("token", id)
+    .is("owner_user_id", null);
+  if (error) return { ok: false, reason: error.message };
+  return { ok: true };
+}
