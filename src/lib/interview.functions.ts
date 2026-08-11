@@ -5,7 +5,7 @@ import { generateJson } from "./ai-gateway.server";
 const factSchema = z.object({
   label: z.string(),
   value: z.string(),
-  status: z.enum(["verified", "claimed"]).catch("claimed"),
+  status: z.enum(["verified", "claimed"]).default("claimed"),
   source: z.string().optional(),
 });
 
@@ -21,19 +21,19 @@ const itemSchema = z.object({
 const coreSchema = z.object({
   entityType: z
     .enum(["person", "creator", "shop", "product-brand", "manufacturer", "company", "project", "unknown"])
-    .catch("unknown"),
-  name: z.string().catch(""),
-  tagline: z.string().catch(""),
-  summary: z.string().catch(""),
+    .default("unknown"),
+  name: z.string().default(""),
+  tagline: z.string().default(""),
+  summary: z.string().default(""),
   location: z.string().optional(),
   website: z.string().optional(),
   languages: z.array(z.string()).optional(),
-  facts: z.array(factSchema).catch([]),
+  facts: z.array(factSchema).default([]),
   stories: z
-    .array(z.object({ label: z.string(), text: z.string(), confirmed: z.boolean().catch(false) }))
-    .catch([]),
-  items: z.array(itemSchema).catch([]),
-  faqs: z.array(z.object({ question: z.string(), answer: z.string() })).catch([]),
+    .array(z.object({ label: z.string(), text: z.string(), confirmed: z.boolean().default(false) }))
+    .default([]),
+  items: z.array(itemSchema).default([]),
+  faqs: z.array(z.object({ question: z.string(), answer: z.string() })).default([]),
   cv: z
     .array(
       z.object({
@@ -43,15 +43,15 @@ const coreSchema = z.object({
         note: z.string().optional(),
       }),
     )
-    .catch([]),
-  links: z.array(z.object({ label: z.string(), url: z.string() })).catch([]),
-  gaps: z.array(z.string()).catch([]),
+    .default([]),
+  links: z.array(z.object({ label: z.string(), url: z.string() })).default([]),
+  gaps: z.array(z.string()).default([]),
 });
 
 const turnSchema = z.object({
   reply: z.string(),
   question: z.string(),
-  suggestions: z.array(z.string()).catch([]),
+  suggestions: z.array(z.string()).default([]),
   core: coreSchema,
 });
 
@@ -111,9 +111,9 @@ export const interviewTurn = createServerFn({ method: "POST" })
 
 const improveSchema = z.object({
   headline: z.string(),
-  strengths: z.array(z.string()).catch([]),
-  missing: z.array(z.string()).catch([]),
-  suggestions: z.array(z.object({ title: z.string(), why: z.string() })).catch([]),
+  strengths: z.array(z.string()).default([]),
+  missing: z.array(z.string()).default([]),
+  suggestions: z.array(z.object({ title: z.string(), why: z.string() })).default([]),
 });
 
 export const improvePresence = createServerFn({ method: "POST" })

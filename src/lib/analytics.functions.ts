@@ -5,8 +5,8 @@ import { generateJson } from "./ai-gateway.server";
 const answerSchema = z.object({
   intent: z.string(),
   answer: z.string(),
-  metrics: z.array(z.object({ label: z.string(), value: z.string() })).catch([]),
-  caveat: z.string().catch(""),
+  metrics: z.array(z.object({ label: z.string(), value: z.string() })).default([]),
+  caveat: z.string().default(""),
 });
 
 export const askAnalytics = createServerFn({ method: "POST" })
@@ -27,9 +27,9 @@ If the dataset cannot answer the question, say so plainly. Never invent numbers.
 
 const summarySchema = z.object({
   headline: z.string(),
-  recurringQuestions: z.array(z.string()).catch([]),
-  missingInformation: z.array(z.string()).catch([]),
-  improvements: z.array(z.object({ action: z.string(), impact: z.string() })).catch([]),
+  recurringQuestions: z.array(z.string()).default([]),
+  missingInformation: z.array(z.string()).default([]),
+  improvements: z.array(z.object({ action: z.string(), impact: z.string() })).default([]),
 });
 
 export const analyticsSummary = createServerFn({ method: "POST" })
