@@ -74,7 +74,7 @@ function Index() {
           id: uid(),
           role: "assistant",
           content: `${res.reply}\n\n${res.question}`,
-          suggestions: res.suggestions,
+          suggestions: res.suggestions ?? [],
         },
       ]);
     } catch (e) {
