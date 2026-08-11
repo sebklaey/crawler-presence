@@ -60,4 +60,18 @@ curl -s -X POST https://crawler-presence.lovable.app/mcp \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
 ```
 
+Session persistence regression test — performs `start_interview` ->
+`get_knowledge_core` -> `continue_interview` -> `get_knowledge_core` in four
+separate HTTP requests and asserts the Knowledge Core persists and evolves:
+
+```bash
+node scripts/mcp-session-persistence.mjs https://crawler-presence.lovable.app
+# defaults to http://localhost:8080
+```
+
+Sessions are stored durably in Postgres (`mcp_sessions`, 30-day retention).
+`saveSession` performs a single verified upsert of the complete state and
+throws on a failed write; the in-memory map is only used when no database is
+configured at all.
+
 Setup instructions for ChatGPT live at `/chatgpt`.
