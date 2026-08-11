@@ -83,7 +83,7 @@ function PricingPage() {
 
         <p className="mt-8 text-sm text-muted-foreground">
           Ready to go live?{" "}
-          <Link to="/publish" className="underline underline-offset-4 hover:text-foreground">
+          <Link to="/publish" search={{}} className="underline underline-offset-4 hover:text-foreground">
             Open the publish flow
           </Link>
           .
