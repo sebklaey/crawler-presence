@@ -12,8 +12,8 @@ export default defineTool({
     session_id: z.string().trim().min(6).describe("Opaque session id returned by start_interview."),
   },
   annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
-  handler: ({ session_id }) => {
-    const session = getSession(session_id);
+  handler: async ({ session_id }) => {
+    const session = await getSession(session_id);
     if (!session) throw new ToolError("Unknown or expired session_id. Call start_interview to begin a new session.");
     const c = session.core;
     return {

@@ -8,7 +8,7 @@ function env(name: string): string | undefined {
 
 /** Public web URL of the Crawler site, used for checkout / account-link links. */
 export function siteUrl(): string {
-  return (env("PUBLIC_SITE_URL") ?? "https://crawler.lovable.app").replace(/\/$/, "");
+  return (env("PUBLIC_SITE_URL") ?? "https://crawler-presence.lovable.app").replace(/\/$/, "");
 }
 
 /** No invented secrets: without a Stripe key the checkout tool reports demo mode. */
