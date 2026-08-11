@@ -1,6 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
+import { useAuth } from "@/hooks/use-auth";
+
 const nav = [
   { to: "/", label: "Interview" },
   { to: "/knowledge", label: "Knowledge Core" },
@@ -33,8 +35,9 @@ export function AppShell({ children }: { children: ReactNode }) {
               </Link>
             ))}
           </nav>
-          <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
-            <span className="hidden sm:inline">Creation & preview are free</span>
+          <div className="ml-auto flex items-center gap-3 text-xs text-muted-foreground">
+            <span className="hidden lg:inline">Creation & preview are free</span>
+            <AuthLink />
           </div>
         </div>
         <div className="flex gap-1 overflow-x-auto border-t border-border/70 px-5 py-2 md:hidden">
@@ -57,6 +60,27 @@ export function AppShell({ children }: { children: ReactNode }) {
         files only — never private conversations in ChatGPT, Claude, Gemini or other assistants.
       </footer>
     </div>
+  );
+}
+
+function AuthLink() {
+  const { loading, user } = useAuth();
+  if (loading) return null;
+  return user ? (
+    <Link
+      to="/account"
+      className="rounded-md px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+      activeProps={{ className: "bg-secondary text-foreground" }}
+    >
+      Account
+    </Link>
+  ) : (
+    <Link
+      to="/auth"
+      className="rounded-md border border-border px-2.5 py-1.5 text-sm text-foreground transition-colors hover:bg-secondary"
+    >
+      Sign in
+    </Link>
   );
 }
 
