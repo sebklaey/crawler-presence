@@ -50,7 +50,7 @@ function PublicPresence() {
           <h1 className="display text-3xl">Presence not found</h1>
           <p className="mt-3 text-sm text-muted-foreground">
             No published presence lives at <code>/p/{slug}</code>.{" "}
-            <Link to="/publish" search={{}} className="underline underline-offset-4">
+            <Link to="/publish" className="underline underline-offset-4">
               Publish one
             </Link>
             .

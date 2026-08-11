@@ -54,7 +54,7 @@ export function PresenceStatus({
         <Link to="/knowledge" className="rounded-md border border-border px-3 py-1.5 hover:bg-secondary">
           Knowledge Core
         </Link>
-        <Link to="/publish" search={{}} className="rounded-md border border-border px-3 py-1.5 hover:bg-secondary">
+        <Link to="/publish" className="rounded-md border border-border px-3 py-1.5 hover:bg-secondary">
           Publish
         </Link>
       </div>
