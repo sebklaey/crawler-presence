@@ -150,6 +150,21 @@ const slug = (s: string) =>
 
 const bullet = (s: string) => `- ${s}`;
 
+/** Path index only — must not build file contents (llms.txt links to these). */
+function filePaths(c: KnowledgeCore): string[] {
+  const has = (k: CatalogKind) => c.items.some((i) => i.kind === k);
+  const paths = ["about.md"];
+  if (has("product")) paths.push("products.md");
+  if (has("project")) paths.push("projects.md");
+  if (has("service")) paths.push("services.md");
+  if (c.faqs.length) paths.push("faq.md");
+  if (c.cv.length) paths.push("cv.md");
+  paths.push("api/entity.json");
+  for (const k of ["product", "project", "service"] as CatalogKind[]) if (has(k)) paths.push(`api/${k}s.json`);
+  paths.push("llms-full.txt");
+  return paths;
+}
+
 function verified(c: KnowledgeCore) {
   return c.facts.filter((f) => f.status === "verified");
 }
@@ -167,9 +182,7 @@ export function buildLlmsTxt(c: KnowledgeCore): string {
     ...(verified(c).length ? verified(c).map((f) => bullet(`${f.label}: ${f.value}`)) : [bullet("None confirmed yet.")]),
     "",
     "## Files",
-    ...baseFiles(c)
-      .filter((f) => f.path !== "llms.txt")
-      .map((f) => bullet(`[${f.path}](/${f.path})`)),
+    ...filePaths(c).map((p) => bullet(`[${p}](/${p})`)),
   ];
   return lines.join("\n") + "\n";
 }
@@ -178,6 +191,7 @@ export function buildLlmsFullTxt(c: KnowledgeCore): string {
   const parts: string[] = [buildLlmsTxt(c).trimEnd(), ""];
   for (const f of baseFiles(c)) {
     if (f.path === "llms.txt" || f.type === "json") continue;
+    if (f.path === "llms-full.txt") continue;
     parts.push(`\n---\n\n# /${f.path}\n\n${f.content.trim()}`);
   }
   return parts.join("\n") + "\n";
