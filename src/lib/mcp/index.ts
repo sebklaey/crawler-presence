@@ -20,7 +20,8 @@ export default defineMcp({
 Typical flow: start_interview -> continue_interview (repeat until interview_complete) -> preview_presence -> publish_presence / get_checkout_link. Use analyze_source_url when the user pastes a link, get_analytics for performance questions and improve_presence to turn an insight into the next question.
 
 Important: this server is unauthenticated. It has no ChatGPT account identity, sessions are ephemeral in-memory demo state keyed by an opaque session_id, analytics are seeded demo data, and nothing is published. Durable persistence, subscription status and private analytics require account linking (OAuth 2.1) on the Crawler website. Never claim access to private ChatGPT, Claude or Gemini conversations.`,
-  tools: [
+  // exactOptionalPropertyTypes vs. the SDK's AnyToolDefinition (optional outputSchema).
+  tools: ([
     startInterview,
     continueInterview,
     analyzeSourceUrl,
@@ -32,5 +33,5 @@ Important: this server is unauthenticated. It has no ChatGPT account identity, s
     improvePresence,
     getCheckoutLink,
     getStatus,
-  ],
+  ] as unknown) as Parameters<typeof defineMcp>[0]["tools"],
 });
