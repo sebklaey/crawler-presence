@@ -1,12 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
-import { generateObject } from "ai";
 import { z } from "zod";
-import { CRAWLER_MODEL, requireGateway } from "./ai-gateway.server";
+import { generateJson } from "./ai-gateway.server";
 
 const factSchema = z.object({
   label: z.string(),
   value: z.string(),
-  status: z.enum(["verified", "claimed"]),
+  status: z.enum(["verified", "claimed"]).catch("claimed"),
   source: z.string().optional(),
 });
 
@@ -20,44 +19,58 @@ const itemSchema = z.object({
 });
 
 const coreSchema = z.object({
-  entityType: z.enum([
-    "person",
-    "creator",
-    "shop",
-    "product-brand",
-    "manufacturer",
-    "company",
-    "project",
-    "unknown",
-  ]),
-  name: z.string(),
-  tagline: z.string(),
-  summary: z.string(),
+  entityType: z
+    .enum(["person", "creator", "shop", "product-brand", "manufacturer", "company", "project", "unknown"])
+    .catch("unknown"),
+  name: z.string().catch(""),
+  tagline: z.string().catch(""),
+  summary: z.string().catch(""),
   location: z.string().optional(),
   website: z.string().optional(),
   languages: z.array(z.string()).optional(),
-  facts: z.array(factSchema),
-  stories: z.array(z.object({ label: z.string(), text: z.string(), confirmed: z.boolean() })),
-  items: z.array(itemSchema),
-  faqs: z.array(z.object({ question: z.string(), answer: z.string() })),
-  cv: z.array(
-    z.object({
-      role: z.string(),
-      organization: z.string().optional(),
-      period: z.string().optional(),
-      note: z.string().optional(),
-    }),
-  ),
-  links: z.array(z.object({ label: z.string(), url: z.string() })),
-  gaps: z.array(z.string()),
+  facts: z.array(factSchema).catch([]),
+  stories: z
+    .array(z.object({ label: z.string(), text: z.string(), confirmed: z.boolean().catch(false) }))
+    .catch([]),
+  items: z.array(itemSchema).catch([]),
+  faqs: z.array(z.object({ question: z.string(), answer: z.string() })).catch([]),
+  cv: z
+    .array(
+      z.object({
+        role: z.string(),
+        organization: z.string().optional(),
+        period: z.string().optional(),
+        note: z.string().optional(),
+      }),
+    )
+    .catch([]),
+  links: z.array(z.object({ label: z.string(), url: z.string() })).catch([]),
+  gaps: z.array(z.string()).catch([]),
 });
 
 const turnSchema = z.object({
-  reply: z.string().describe("Short acknowledgement, max 2 sentences. No lists."),
-  question: z.string().describe("One single, domain-specific follow-up question."),
-  suggestions: z.array(z.string()).max(3).describe("Up to 3 short example answers the user could tap."),
+  reply: z.string(),
+  question: z.string(),
+  suggestions: z.array(z.string()).catch([]),
   core: coreSchema,
 });
+
+const CORE_SHAPE = `{
+  "reply": "short acknowledgement, max 2 sentences, no lists",
+  "question": "ONE domain-specific follow-up question",
+  "suggestions": ["up to 3 short example answers the user could tap"],
+  "core": {
+    "entityType": "person|creator|shop|product-brand|manufacturer|company|project|unknown",
+    "name": "", "tagline": "", "summary": "", "location": "", "website": "", "languages": [],
+    "facts": [{"label": "", "value": "", "status": "verified|claimed", "source": ""}],
+    "stories": [{"label": "", "text": "", "confirmed": false}],
+    "items": [{"kind": "product|project|service", "name": "", "summary": "", "details": "", "url": "", "tags": []}],
+    "faqs": [{"question": "", "answer": ""}],
+    "cv": [{"role": "", "organization": "", "period": "", "note": ""}],
+    "links": [{"label": "", "url": ""}],
+    "gaps": ["information still missing"]
+  }
+}`;
 
 const SYSTEM = `You are Crawler, an adaptive interviewer that builds an AI-readable public Presence (a Knowledge Core) for a person, creator, shop, product brand, manufacturer, company or project.
 
@@ -84,38 +97,33 @@ export const interviewTurn = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data }) => {
-    const gateway = requireGateway();
     const transcript = [...data.history, { role: "user" as const, content: data.message }]
       .map((m) => `${m.role === "user" ? "USER" : "CRAWLER"}: ${m.content}`)
       .join("\n\n");
 
-    const result = await generateObject({
-      model: gateway(CRAWLER_MODEL),
+    return await generateJson({
       schema: turnSchema,
+      shape: CORE_SHAPE,
       system: SYSTEM,
       prompt: `Current Knowledge Core (JSON):\n${JSON.stringify(data.core ?? {}, null, 2)}\n\nConversation so far:\n${transcript}\n\nReturn the acknowledgement, the single next question and the fully merged Knowledge Core.`,
     });
-
-    return result.object;
   });
 
 const improveSchema = z.object({
   headline: z.string(),
-  strengths: z.array(z.string()).max(4),
-  missing: z.array(z.string()).max(6),
-  suggestions: z.array(z.object({ title: z.string(), why: z.string() })).max(5),
+  strengths: z.array(z.string()).catch([]),
+  missing: z.array(z.string()).catch([]),
+  suggestions: z.array(z.object({ title: z.string(), why: z.string() })).catch([]),
 });
 
 export const improvePresence = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ core: z.unknown() }).parse(input))
   .handler(async ({ data }) => {
-    const gateway = requireGateway();
-    const result = await generateObject({
-      model: gateway(CRAWLER_MODEL),
+    return await generateJson({
       schema: improveSchema,
+      shape: `{"headline": "", "strengths": [""], "missing": [""], "suggestions": [{"title": "", "why": ""}]}`,
       system:
         "You review an AI-readable Presence Knowledge Core and say precisely what is missing for AI assistants to answer questions about this entity well. Be concrete and specific to the entity type. Never invent facts.",
       prompt: `Knowledge Core:\n${JSON.stringify(data.core, null, 2)}`,
     });
-    return result.object;
   });
