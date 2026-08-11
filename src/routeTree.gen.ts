@@ -10,7 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AccountRouteImport } from './routes/account'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ChatgptRouteImport } from './routes/chatgpt'
 import { Route as KnowledgeRouteImport } from './routes/knowledge'
 import { Route as McpRouteImport } from './routes/mcp'
@@ -19,19 +21,31 @@ import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PublishRouteImport } from './routes/publish'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as ApiPublicMcpHealthRouteImport } from './routes/api/public/mcp-health'
 import { Route as PSlugIndexRouteImport } from './routes/p.$slug.index'
 import { Route as PSlugSplatRouteImport } from './routes/p.$slug.$'
+import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AccountRoute = AccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AnalyticsRoute = AnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChatgptRoute = ChatgptRouteImport.update({
@@ -76,6 +90,11 @@ const Char91DotwellKnownChar93OauthProtectedResourceRoute =
     path: '/.well-known/oauth-protected-resource',
     getParentRoute: () => rootRouteImport,
   } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
     id: '/.mcp/invoke-tool/$tool',
@@ -97,10 +116,18 @@ const PSlugSplatRoute = PSlugSplatRouteImport.update({
   path: '/p/$slug/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPaymentsWebhookRoute =
+  ApiPublicPaymentsWebhookRouteImport.update({
+    id: '/api/public/payments/webhook',
+    path: '/api/public/payments/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/account': typeof AccountRoute
   '/analytics': typeof AnalyticsRoute
+  '/auth': typeof AuthRoute
   '/chatgpt': typeof ChatgptRoute
   '/knowledge': typeof KnowledgeRoute
   '/mcp': typeof McpRoute
@@ -109,14 +136,18 @@ export interface FileRoutesByFullPath {
   '/publish': typeof PublishRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
   '/p/$slug/$': typeof PSlugSplatRoute
   '/p/$slug/': typeof PSlugIndexRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/account': typeof AccountRoute
   '/analytics': typeof AnalyticsRoute
+  '/auth': typeof AuthRoute
   '/chatgpt': typeof ChatgptRoute
   '/knowledge': typeof KnowledgeRoute
   '/mcp': typeof McpRoute
@@ -125,15 +156,19 @@ export interface FileRoutesByTo {
   '/publish': typeof PublishRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
   '/p/$slug/$': typeof PSlugSplatRoute
   '/p/$slug': typeof PSlugIndexRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/account': typeof AccountRoute
   '/analytics': typeof AnalyticsRoute
+  '/auth': typeof AuthRoute
   '/chatgpt': typeof ChatgptRoute
   '/knowledge': typeof KnowledgeRoute
   '/mcp': typeof McpRoute
@@ -142,16 +177,20 @@ export interface FileRoutesById {
   '/publish': typeof PublishRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
   '/p/$slug/$': typeof PSlugSplatRoute
   '/p/$slug/': typeof PSlugIndexRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/account'
     | '/analytics'
+    | '/auth'
     | '/chatgpt'
     | '/knowledge'
     | '/mcp'
@@ -160,14 +199,18 @@ export interface FileRouteTypes {
     | '/publish'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
     | '/p/$slug/$'
     | '/p/$slug/'
+    | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/account'
     | '/analytics'
+    | '/auth'
     | '/chatgpt'
     | '/knowledge'
     | '/mcp'
@@ -176,14 +219,18 @@ export interface FileRouteTypes {
     | '/publish'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
     | '/p/$slug/$'
     | '/p/$slug'
+    | '/api/public/payments/webhook'
   id:
     | '__root__'
     | '/'
+    | '/account'
     | '/analytics'
+    | '/auth'
     | '/chatgpt'
     | '/knowledge'
     | '/mcp'
@@ -192,15 +239,19 @@ export interface FileRouteTypes {
     | '/publish'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
     | '/p/$slug/$'
     | '/p/$slug/'
+    | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AccountRoute: typeof AccountRoute
   AnalyticsRoute: typeof AnalyticsRoute
+  AuthRoute: typeof AuthRoute
   ChatgptRoute: typeof ChatgptRoute
   KnowledgeRoute: typeof KnowledgeRoute
   McpRoute: typeof McpRoute
@@ -209,10 +260,12 @@ export interface RootRouteChildren {
   PublishRoute: typeof PublishRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicMcpHealthRoute: typeof ApiPublicMcpHealthRoute
   PSlugSplatRoute: typeof PSlugSplatRoute
   PSlugIndexRoute: typeof PSlugIndexRoute
+  ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -224,11 +277,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/account': {
+      id: '/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AccountRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/analytics': {
       id: '/analytics'
       path: '/analytics'
       fullPath: '/analytics'
       preLoaderRoute: typeof AnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chatgpt': {
@@ -287,6 +354,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/.mcp/invoke-tool/$tool': {
       id: '/.mcp/invoke-tool/$tool'
       path: '/.mcp/invoke-tool/$tool'
@@ -315,12 +389,21 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PSlugSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/payments/webhook': {
+      id: '/api/public/payments/webhook'
+      path: '/api/public/payments/webhook'
+      fullPath: '/api/public/payments/webhook'
+      preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AccountRoute: AccountRoute,
   AnalyticsRoute: AnalyticsRoute,
+  AuthRoute: AuthRoute,
   ChatgptRoute: ChatgptRoute,
   KnowledgeRoute: KnowledgeRoute,
   McpRoute: McpRoute,
@@ -330,10 +413,12 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicMcpHealthRoute: ApiPublicMcpHealthRoute,
   PSlugSplatRoute: PSlugSplatRoute,
   PSlugIndexRoute: PSlugIndexRoute,
+  ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

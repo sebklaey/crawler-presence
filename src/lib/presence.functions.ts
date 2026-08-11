@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+
 import type { KnowledgeCore } from "./knowledge";
 
 const tokenSchema = z.object({ token: z.string().trim().min(6).max(128) });
@@ -25,21 +27,35 @@ const publishSchema = z.object({
   sessionToken: z.string().trim().min(6).max(128).optional(),
 });
 
-/** Persist a draft as a public presence and return its stable public URLs. */
+/**
+ * Persist a draft as a public presence.
+ *
+ * Publishing is the owned, paid step: the caller must be signed in, and only an
+ * active subscription produces a `live` presence. Without one the presence is
+ * published in clearly labelled demo mode.
+ */
 export const publishPresenceFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => publishSchema.parse(input))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { publishDraft } = await import("./mcp/presences");
-    const { stripeConfigured } = await import("./mcp/site");
+    const { ownerPlan } = await import("./subscription.server");
+    const { claimSession } = await import("./mcp/sessions");
+
+    if (data.sessionToken) await claimSession(data.sessionToken, context.userId);
+
+    const plan = await ownerPlan(context.userId);
     const record = await publishDraft({
       core: data.core as KnowledgeCore,
-      plan: data.plan,
-      mode: stripeConfigured() ? "live" : "demo",
+      plan: plan.active ? plan.plan ?? data.plan : data.plan,
+      mode: plan.active ? "live" : "demo",
+      ownerUserId: context.userId,
       ...(data.sessionToken ? { sessionToken: data.sessionToken } : {}),
     });
     return {
       slug: record.slug,
       mode: record.mode,
+      subscriptionActive: plan.active,
       publishedAt: record.publishedAt,
       paths: record.files.map((f) => f.path),
     };

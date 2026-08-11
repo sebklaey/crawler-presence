@@ -1,15 +1,21 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Check, Globe, Loader2, Lock } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell, PageHead } from "@/components/app-shell";
+import { PaymentTestModeBanner } from "@/components/payment-test-mode-banner";
+import { PresenceCheckout } from "@/components/presence-checkout";
 import { PresenceStatus } from "@/components/presence-status";
 import { Button } from "@/components/ui/button";
-import { PLANS, stripeConfigured, type PlanId } from "@/lib/billing";
+import { useAuth } from "@/hooks/use-auth";
+import { PLANS, type PlanId } from "@/lib/billing";
 import { generatedFiles, isCoreEmpty, presenceScore, type KnowledgeCore } from "@/lib/knowledge";
+import { getMySubscription } from "@/lib/payments.functions";
 import { loadDraft, publishPresenceFn } from "@/lib/presence.functions";
-import { useCore, usePlan, usePublished } from "@/lib/store";
+import { currentPaymentEnvironment, paymentsAvailable } from "@/lib/stripe";
+import { useCore, usePublished } from "@/lib/store";
 import { Empty } from "./knowledge";
 
 export const Route = createFileRoute("/publish")({
@@ -25,7 +31,7 @@ export const Route = createFileRoute("/publish")({
         content: "Publish your Knowledge Core as a hosted, AI-readable presence with llms.txt and JSON endpoints.",
       },
       { property: "og:title", content: "Publish — Crawler" },
-      { property: "og:description", content: "Creation and preview are free. Hosting is the paid step." },
+      { property: "og:description", content: "Creation and preview are free. You only pay to be online." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -35,13 +41,21 @@ export const Route = createFileRoute("/publish")({
 
 function PublishPage() {
   const search = Route.useSearch();
+  const navigate = useNavigate();
+  const { loading: authLoading, user } = useAuth();
   const [core, setCore] = useCore();
-  const [plan, setPlan] = usePlan();
   const [published, setPublished] = usePublished();
-  const [checkingOut, setCheckingOut] = useState<PlanId | null>(null);
+  const [selected, setSelected] = useState<PlanId | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [recovering, setRecovering] = useState(Boolean(search.session));
   const [recovered, setRecovered] = useState(false);
+  const env = currentPaymentEnvironment();
+
+  const subscription = useQuery({
+    queryKey: ["subscription", env],
+    enabled: Boolean(user) && Boolean(env),
+    queryFn: () => getMySubscription({ data: { environment: env! } }),
+  });
 
   // Handoff from ChatGPT: recover the anonymous draft carried in the URL.
   useEffect(() => {
@@ -73,8 +87,7 @@ function PublishPage() {
 
   useEffect(() => {
     const p = search.plan;
-    if (p === "plus" || p === "pro" || p === "business") setPlan(p);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (p === "plus" || p === "pro" || p === "business") setSelected(p);
   }, [search.plan]);
 
   if (recovering) {
@@ -91,33 +104,28 @@ function PublishPage() {
 
   const score = presenceScore(core);
   const files = generatedFiles(core);
-  const paid = plan !== "free";
-
-  async function checkout(id: PlanId) {
-    setCheckingOut(id);
-    // Stripe Checkout is prepared but never faked with invented keys.
-    await new Promise((r) => setTimeout(r, 700));
-    setPlan(id);
-    setCheckingOut(null);
-    toast.success(
-      stripeConfigured() ? "Redirecting to Stripe Checkout…" : `Demo mode: ${id} activated without payment.`,
-    );
-  }
+  const active = Boolean(subscription.data?.active);
+  const canCheckout = paymentsAvailable() && Boolean(user);
 
   async function publish() {
-    if (plan === "free") return;
+    if (!user) {
+      void navigate({ to: "/auth", search: { next: "/publish" } });
+      return;
+    }
     setPublishing(true);
     try {
       const result = await publishPresenceFn({
         data: {
           core,
-          plan,
+          plan: (subscription.data?.plan as PlanId | null) ?? selected ?? "plus",
           ...(search.session ? { sessionToken: search.session } : {}),
         },
       });
       setPublished({ at: result.publishedAt, slug: result.slug });
       toast.success(
-        result.mode === "demo" ? "Demo publish complete — files are live." : "Presence published.",
+        result.mode === "live"
+          ? "Presence published and hosted."
+          : "Demo publish complete — files are live but clearly labelled as a demo.",
       );
     } catch (e) {
       toast.error(`Publishing failed: ${String((e as Error).message ?? e)}`);
@@ -128,11 +136,12 @@ function PublishPage() {
 
   return (
     <AppShell>
+      <PaymentTestModeBanner />
       <div className="mx-auto max-w-5xl px-5 pb-24 pt-14">
         <PageHead
           eyebrow="Go live"
           title="Publish your presence"
-          description="Everything up to this point is free. Hosting keeps your files reachable at a stable address so AI systems and crawlers can read them."
+          description="Everything up to this point is free. You only pay to be online: hosting keeps your files reachable at a stable address so AI systems and crawlers can read them."
         />
 
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
@@ -150,41 +159,61 @@ function PublishPage() {
 
             <div className="rounded-2xl border border-border bg-card p-6">
               <div className="flex items-center gap-2 text-sm font-medium">
-                {paid ? <Globe className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
-                {paid ? "Hosting active" : "Hosting required"}
+                {active ? <Globe className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+                {active ? "Hosting active" : "Hosting required"}
               </div>
-              {!stripeConfigured() ? (
-                <div className="mt-3 rounded-lg border border-dashed border-border bg-secondary/60 px-3 py-2 text-xs text-muted-foreground">
-                  <strong className="text-foreground">Demo / test mode.</strong> No Stripe keys configured — the
-                  checkout below simulates the subscription and no payment is taken. Real Stripe Checkout takes over as
-                  soon as keys exist.
+
+              {!user ? (
+                <div className="mt-3 rounded-lg border border-dashed border-border bg-secondary/60 px-3 py-3 text-xs text-muted-foreground">
+                  Sign in to claim this draft, subscribe and own the published Presence.
+                  <div className="mt-3">
+                    <Button asChild size="sm">
+                      <Link to="/auth" search={{ next: "/publish" }}>
+                        Sign in with Google
+                      </Link>
+                    </Button>
+                  </div>
                 </div>
               ) : null}
+
+              {!paymentsAvailable() ? (
+                <div className="mt-3 rounded-lg border border-dashed border-border bg-secondary/60 px-3 py-2 text-xs text-muted-foreground">
+                  <strong className="text-foreground">Demo / test mode.</strong> No payment credentials are configured
+                  on this deployment, so no subscription can be created and publishing is labelled as a demo.
+                </div>
+              ) : null}
+
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
                 {PLANS.map((p) => (
                   <button
                     key={p.id}
-                    onClick={() => void checkout(p.id)}
-                    disabled={checkingOut !== null}
+                    onClick={() => setSelected(p.id)}
+                    disabled={active}
                     aria-label={`Choose the ${p.name} plan at $${p.price} per month`}
-                    className={`rounded-xl border p-4 text-left transition-colors ${
-                      plan === p.id ? "border-foreground bg-secondary" : "border-border hover:border-foreground/40"
+                    className={`rounded-xl border p-4 text-left transition-colors disabled:opacity-60 ${
+                      (subscription.data?.plan ?? selected) === p.id
+                        ? "border-foreground bg-secondary"
+                        : "border-border hover:border-foreground/40"
                     }`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">{p.name}</span>
-                      {plan === p.id ? <Check className="h-3.5 w-3.5" /> : null}
+                      {(subscription.data?.plan ?? selected) === p.id ? <Check className="h-3.5 w-3.5" /> : null}
                     </div>
                     <div className="display mt-1 text-2xl">${p.price}</div>
                     <div className="text-[11px] text-muted-foreground">per month</div>
-                    {checkingOut === p.id ? (
-                      <div className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                        <Loader2 className="h-3 w-3 animate-spin" /> Opening checkout…
-                      </div>
-                    ) : null}
                   </button>
                 ))}
               </div>
+
+              {selected && canCheckout && !active ? (
+                <PresenceCheckout
+                  plan={selected}
+                  sessionToken={search.session}
+                  returnUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/account`}
+                />
+              ) : null}
+
               <p className="mt-3 text-xs text-muted-foreground">
                 Compare everything on the{" "}
                 <Link to="/pricing" className="underline underline-offset-4">
@@ -202,10 +231,16 @@ function PublishPage() {
                   : "Your presence has enough substance to answer real questions."}
               </p>
               <div className="mt-4 flex flex-wrap items-center gap-3">
-                <Button disabled={!paid || publishing} onClick={() => void publish()}>
+                <Button disabled={publishing || authLoading} onClick={() => void publish()}>
                   {publishing ? "Publishing…" : published ? "Publish again" : "Publish presence"}
                 </Button>
-                {!paid ? <span className="text-xs text-muted-foreground">Choose a plan first.</span> : null}
+                {!active ? (
+                  <span className="text-xs text-muted-foreground">
+                    {user
+                      ? "Without an active subscription this publishes in labelled demo mode."
+                      : "Sign in first — publishing is the owned step."}
+                  </span>
+                ) : null}
               </div>
 
               {published ? (
