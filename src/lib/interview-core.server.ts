@@ -98,8 +98,8 @@ export async function runInterviewTurn({
   core: unknown;
   transcript: string;
 }): Promise<InterviewTurn> {
-  return await generateJson({
-    schema: turnSchema,
+  return await generateJson<InterviewTurn>({
+    schema: turnSchema as unknown as z.ZodType<InterviewTurn>,
     shape: CORE_SHAPE,
     system: SYSTEM,
     prompt: `Current Knowledge Core (JSON):\n${JSON.stringify(core ?? {}, null, 2)}\n\nConversation so far:\n${transcript}\n\nReturn the acknowledgement, the single next question and the fully merged Knowledge Core.`,
@@ -107,6 +107,11 @@ export async function runInterviewTurn({
 }
 
 const rid = () => Math.random().toString(36).slice(2, 10);
+
+/** Drop undefined values so exactOptionalPropertyTypes stays satisfied. */
+function clean<T extends object>(obj: T): T {
+  return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as T;
+}
 
 /** Turn the model's loose core into the app's KnowledgeCore (adds ids + timestamp). */
 export function toKnowledgeCore(raw: z.infer<typeof coreSchema>): KnowledgeCore {
@@ -120,11 +125,11 @@ export function toKnowledgeCore(raw: z.infer<typeof coreSchema>): KnowledgeCore 
     ...(raw.location ? { location: raw.location } : {}),
     ...(raw.website ? { website: raw.website } : {}),
     ...(raw.languages ? { languages: raw.languages } : {}),
-    facts: raw.facts.map((f) => ({ id: rid(), ...f })),
+    facts: raw.facts.map((f) => clean({ id: rid(), ...f })),
     stories: raw.stories.map((s) => ({ id: rid(), ...s })),
-    items: raw.items.map((i) => ({ id: rid(), ...i })),
+    items: raw.items.map((i) => clean({ id: rid(), ...i })),
     faqs: raw.faqs.map((f) => ({ id: rid(), ...f })),
-    cv: raw.cv.map((e) => ({ id: rid(), ...e })),
+    cv: raw.cv.map((e) => clean({ id: rid(), ...e })),
     links: raw.links,
     gaps: raw.gaps,
     updatedAt: new Date().toISOString(),
