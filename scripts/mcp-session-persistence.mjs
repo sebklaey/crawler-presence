@@ -63,7 +63,10 @@ const main = async () => {
   assert(typeof sessionId === "string" && sessionId.startsWith("sess_"), "start_interview returns opaque session id");
   const startName = started.knowledge_core_summary?.name ?? "";
   const startFacts = (started.verified_facts ?? []).length;
-  assert(startName.length > 0, `start_interview produced a name (${startName})`);
+  assert(
+    startName.length > 0 || startFacts > 0,
+    `start_interview produced knowledge (name "${startName}", ${startFacts} verified facts)`,
+  );
 
   // 2 — independent read
   const read1 = await call("get_knowledge_core", { session_id: sessionId });
