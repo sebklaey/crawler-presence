@@ -13,9 +13,9 @@ import { useCore, usePlan, usePublished } from "@/lib/store";
 import { Empty } from "./knowledge";
 
 export const Route = createFileRoute("/publish")({
-  validateSearch: (s: Record<string, unknown>) => ({
-    session: typeof s["session"] === "string" ? (s["session"] as string) : undefined,
-    plan: typeof s["plan"] === "string" ? (s["plan"] as string) : undefined,
+  validateSearch: (s: Record<string, unknown>): { session?: string; plan?: string } => ({
+    ...(typeof s["session"] === "string" ? { session: s["session"] as string } : {}),
+    ...(typeof s["plan"] === "string" ? { plan: s["plan"] as string } : {}),
   }),
   head: () => ({
     meta: [
