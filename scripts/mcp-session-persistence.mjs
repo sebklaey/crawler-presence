@@ -71,9 +71,13 @@ const main = async () => {
   // 2 — independent read
   const read1 = await call("get_knowledge_core", { session_id: sessionId });
   assert(read1.knowledge_core?.name === startName, `core persisted across requests (name "${read1.knowledge_core?.name}")`);
-  assert(read1.presence_score > 0, `presence score persisted (${read1.presence_score})`);
   assert(
-    (read1.knowledge_core?.facts ?? []).length >= startFacts,
+    read1.presence_score === started.presence_score,
+    `presence score persisted (${read1.presence_score})`,
+  );
+  assert(
+    (read1.knowledge_core?.facts ?? []).length > 0 &&
+      (read1.knowledge_core?.facts ?? []).length >= startFacts,
     `facts persisted (${(read1.knowledge_core?.facts ?? []).length} >= ${startFacts})`,
   );
   assert(read1.confidence === started.confidence, `confidence persisted (${read1.confidence})`);
