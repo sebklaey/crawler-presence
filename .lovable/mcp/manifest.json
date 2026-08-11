@@ -15,7 +15,7 @@
       {
         "name": "start_interview",
         "title": "Start Presence interview",
-        "description": "Use this when a user wants to create or start an AI-readable Crawler Presence. Accepts a free-text description and optionally a website or product URL. Infers the entity type, returns an opaque ephemeral session_id, a first Knowledge Core draft, detected facts, detected narrative/positioning and the single most valuable adaptive follow-up question.",
+        "description": "Use this when a user wants to create or start an AI-readable Crawler Presence. Accepts a free-text description and optionally a website or product URL. Infers the entity type, returns an opaque anonymous session_id (durable ~30 days, not tied to any account), a first Knowledge Core draft, detected facts, detected narrative/positioning and the single most valuable adaptive follow-up question.",
         "annotations": {
           "readOnlyHint": false,
           "destructiveHint": false,
