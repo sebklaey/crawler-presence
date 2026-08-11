@@ -53,7 +53,7 @@ const tools: { name: string; kind: string; text: string }[] = [
   { name: "analyze_source_url", kind: "read", text: "Reads a public HTTPS page and returns candidate facts with provenance and confidence, or an honest unavailable result." },
   { name: "get_knowledge_core", kind: "read", text: "The full structured Knowledge Core for a session." },
   { name: "preview_presence", kind: "read", text: "llms.txt, llms-full.txt, about.md and the relevant markdown and JSON previews." },
-  { name: "publish_presence", kind: "write", text: "Never publishes in no-auth mode — returns publish_requires_account and an account-link URL." },
+  { name: "publish_presence", kind: "write", text: "Publishes for real once the draft is linked to a subscribed Crawler account; otherwise returns publish_requires_account and a handoff URL." },
   { name: "get_pricing", kind: "read", text: "Plus $5, Pro $20, Business $80 per month with feature differences." },
   { name: "get_analytics", kind: "read", text: "Clearly labelled demo analytics for 7/30/90 days, plus an AI summary of recurring questions and gaps." },
   { name: "improve_presence", kind: "read", text: "Turns an insight into the fields to clarify and one targeted question." },
@@ -122,7 +122,10 @@ function ChatGptPage() {
           <li>
             <strong className="text-foreground">Account linking is required for</strong> durable ownership, paid
             subscription management, private analytics, team access and cross-device recovery. That step happens on
-            this website — OAuth 2.1 account linking for the MCP connector is not implemented yet.
+            this website. Sign in with Google at /auth, and the draft you started in ChatGPT is claimed by your account — after
+            that, publish_presence publishes for real while the subscription is active. Crawler also runs an OAuth 2.1
+            authorization server with a consent screen, so a future authenticated MCP connector can link accounts
+            directly instead of using the website handoff.
           </li>
           <li>
             <strong className="text-foreground">Publishing is the paid step.</strong> publish_presence hands off to the
