@@ -27,7 +27,7 @@ export default defineTool({
   handler: async ({ free_text, source_url }) => {
     if (!(await allowRequest("tool:start_interview", 60)))
       throw new ToolError("Crawler is rate limited right now (60 interview starts per minute). Try again shortly.");
-    const session = await createSession();
+    const session = createSession();
     const message = source_url ? `${free_text}\n\nSource URL: ${source_url}` : free_text;
 
     let turn;

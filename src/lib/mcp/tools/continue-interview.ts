@@ -21,7 +21,7 @@ export default defineTool({
     const session = await getSession(session_id);
     if (!session) {
       throw new ToolError(
-        "Unknown or expired session_id. Sessions are ephemeral demo state; call start_interview again to begin a new one.",
+        "Unknown or expired session_id. Anonymous drafts are stored for ~30 days; call start_interview again to begin a new one.",
       );
     }
 
