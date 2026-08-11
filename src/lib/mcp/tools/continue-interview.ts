@@ -38,8 +38,8 @@ export default defineTool({
     session.complete = turn.interviewComplete;
     session.transcript = [
       ...session.transcript,
-      { role: "user", content: user_answer },
-      { role: "assistant", content: turn.question || turn.reply },
+      { role: "user" as const, content: user_answer },
+      { role: "assistant" as const, content: turn.question || turn.reply },
     ].slice(-40);
     saveSession(session);
 
