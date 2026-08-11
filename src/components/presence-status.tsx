@@ -3,7 +3,15 @@ import { Check, Minus } from "lucide-react";
 
 import { presenceChecks, presenceLabel, presenceScore, type KnowledgeCore } from "@/lib/knowledge";
 
-export function PresenceStatus({ core, compact = false }: { core: KnowledgeCore; compact?: boolean }) {
+export function PresenceStatus({
+  core,
+  compact = false,
+  columns = 2,
+}: {
+  core: KnowledgeCore;
+  compact?: boolean;
+  columns?: 1 | 2;
+}) {
   const score = presenceScore(core);
   const checks = presenceChecks(core);
 
@@ -22,7 +30,7 @@ export function PresenceStatus({ core, compact = false }: { core: KnowledgeCore;
       </div>
 
       {!compact ? (
-        <ul className="mt-5 grid gap-2 sm:grid-cols-2">
+        <ul className={`mt-5 grid gap-2 ${columns === 2 ? "sm:grid-cols-2" : ""}`}>
           {checks.map((c) => (
             <li key={c.label} className="flex items-center gap-2 text-sm">
               {c.done ? (

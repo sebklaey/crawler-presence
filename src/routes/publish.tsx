@@ -142,7 +142,7 @@ function PublishPage() {
             </div>
           </div>
 
-          <PresenceStatus core={core} />
+          <PresenceStatus core={core} columns={1} />
         </div>
       </div>
     </AppShell>
