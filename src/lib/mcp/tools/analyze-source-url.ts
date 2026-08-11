@@ -74,7 +74,7 @@ export default defineTool({
     let extracted;
     try {
       extracted = await generateJson({
-        schema,
+        schema: schema as unknown as z.ZodType<z.infer<typeof schema>>,
         shape: `{"entity_type_guess":"","name":"","summary":"","candidate_facts":[{"label":"","value":"","confidence":0.0}],"candidate_items":[{"kind":"product|project|service","name":"","summary":""}],"narrative":["marketing/positioning copy found on the page"],"missing_information":[""]}`,
         system:
           "You extract structured, checkable information from a public web page for an AI-readable presence. Only report what the page actually states. Separate hard facts from marketing narrative. Never invent prices, numbers, awards or clients. Lower confidence when the page is ambiguous.",
