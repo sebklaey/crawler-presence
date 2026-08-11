@@ -15,7 +15,7 @@
       {
         "name": "start_interview",
         "title": "Start Presence interview",
-        "description": "Use this when a user wants to create or start an AI-readable Crawler Presence. Accepts a free-text description and optionally a website or product URL. Infers the entity type, returns an opaque ephemeral session_id, a first Knowledge Core draft, detected facts, detected narrative/positioning and the single most valuable adaptive follow-up question.",
+        "description": "Use this when a user wants to create or start an AI-readable Crawler Presence. Accepts a free-text description and optionally a website or product URL. Infers the entity type, returns an opaque anonymous session_id (durable ~30 days, not tied to any account), a first Knowledge Core draft, detected facts, detected narrative/positioning and the single most valuable adaptive follow-up question.",
         "annotations": {
           "readOnlyHint": false,
           "destructiveHint": false,
@@ -176,8 +176,8 @@
       },
       {
         "name": "publish_presence",
-        "title": "Publish Presence (requires account)",
-        "description": "Use this when the user asks to publish or host their Presence. In this no-auth MVP nothing is published: it returns publish_requires_account=true plus an account-link / checkout URL to the Crawler website. Creating and previewing a Presence is free; hosting is paid.",
+        "title": "Publish Presence (handoff to the website)",
+        "description": "Use this when the user asks to publish or host their Presence. Publishing is the paid step and always happens on the Crawler website, so this returns publish_requires_account=true plus a handoff URL that carries the anonymous draft session so nothing is retyped. Creating and previewing a Presence is free.",
         "annotations": {
           "readOnlyHint": false,
           "destructiveHint": false,
@@ -190,6 +190,7 @@
             "session_id": {
               "type": "string",
               "minLength": 6,
+              "maxLength": 128,
               "description": "Opaque session id returned by start_interview."
             },
             "plan": {

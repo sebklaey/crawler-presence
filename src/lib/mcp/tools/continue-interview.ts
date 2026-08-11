@@ -1,5 +1,6 @@
 import { defineTool, ToolError } from "@lovable.dev/mcp-js";
 import { z } from "zod";
+import { allowRequest } from "../presences";
 import { runInterviewTurn, toKnowledgeCore } from "../../interview-core.server";
 import { presenceChecks, presenceScore } from "../../knowledge";
 import { getSession, saveSession, SESSION_NOTE } from "../sessions";
@@ -15,7 +16,9 @@ export default defineTool({
   },
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
   handler: async ({ session_id, user_answer }) => {
-    const session = getSession(session_id);
+    if (!(await allowRequest(`tool:continue_interview:${session_id}`, 20)))
+      throw new ToolError("Too many answers for this session in the last minute. Try again shortly.");
+    const session = await getSession(session_id);
     if (!session) {
       throw new ToolError(
         "Unknown or expired session_id. Sessions are ephemeral demo state; call start_interview again to begin a new one.",
@@ -41,7 +44,7 @@ export default defineTool({
       { role: "user" as const, content: user_answer },
       { role: "assistant" as const, content: turn.question || turn.reply },
     ].slice(-40);
-    saveSession(session);
+    await saveSession(session);
 
     return {
       content: [

@@ -1,5 +1,6 @@
 import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
+import { allowRequest } from "../presences";
 import { generateJson } from "../../ai-gateway.server";
 
 const schema = z.object({
@@ -36,6 +37,11 @@ export default defineTool({
   },
   annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
   handler: async ({ url }) => {
+    if (!(await allowRequest("tool:analyze_source_url", 30)))
+      return {
+        content: [{ type: "text" as const, text: "Rate limited: too many URL analyses in the last minute. Try again shortly." }],
+        isError: true as const,
+      };
     const unavailable = (reason: string) => ({
       content: [{ type: "text" as const, text: `Could not read ${url}: ${reason}. No facts were invented.` }],
       structuredContent: {

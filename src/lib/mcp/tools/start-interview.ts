@@ -1,5 +1,6 @@
 import { defineTool, ToolError } from "@lovable.dev/mcp-js";
 import { z } from "zod";
+import { allowRequest } from "../presences";
 import { runInterviewTurn, toKnowledgeCore } from "../../interview-core.server";
 import { presenceScore } from "../../knowledge";
 import { createSession, saveSession, SESSION_NOTE } from "../sessions";
@@ -8,7 +9,7 @@ export default defineTool({
   name: "start_interview",
   title: "Start Presence interview",
   description:
-    "Use this when a user wants to create or start an AI-readable Crawler Presence. Accepts a free-text description and optionally a website or product URL. Infers the entity type, returns an opaque ephemeral session_id, a first Knowledge Core draft, detected facts, detected narrative/positioning and the single most valuable adaptive follow-up question.",
+    "Use this when a user wants to create or start an AI-readable Crawler Presence. Accepts a free-text description and optionally a website or product URL. Infers the entity type, returns an opaque anonymous session_id (durable ~30 days, not tied to any account), a first Knowledge Core draft, detected facts, detected narrative/positioning and the single most valuable adaptive follow-up question.",
   inputSchema: {
     free_text: z
       .string()
@@ -24,7 +25,9 @@ export default defineTool({
   },
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
   handler: async ({ free_text, source_url }) => {
-    const session = createSession();
+    if (!(await allowRequest("tool:start_interview", 60)))
+      throw new ToolError("Crawler is rate limited right now (60 interview starts per minute). Try again shortly.");
+    const session = await createSession();
     const message = source_url ? `${free_text}\n\nSource URL: ${source_url}` : free_text;
 
     let turn;
@@ -40,7 +43,7 @@ export default defineTool({
       { role: "user", content: message },
       { role: "assistant", content: turn.question || turn.reply },
     ];
-    saveSession(session);
+    await saveSession(session);
 
     const payload = {
       session_id: session.id,

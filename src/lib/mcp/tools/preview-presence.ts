@@ -23,8 +23,8 @@ export default defineTool({
       .describe("Truncate each file preview to keep the response concise."),
   },
   annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
-  handler: ({ session_id, paths, max_chars_per_file }) => {
-    const session = getSession(session_id);
+  handler: async ({ session_id, paths, max_chars_per_file }) => {
+    const session = await getSession(session_id);
     if (!session) throw new ToolError("Unknown or expired session_id. Call start_interview to begin a new session.");
 
     const limit = max_chars_per_file ?? 4000;

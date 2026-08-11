@@ -50,7 +50,7 @@ export default defineTool({
     const topics = demoTopics.filter((x) => match(x.label));
     const entities = demoEntities.filter((x) => match(x.label));
 
-    const session = session_id ? getSession(session_id) : undefined;
+    const session = session_id ? await getSession(session_id) : undefined;
     const dataset = {
       period_days: days,
       filter: filter ?? null,

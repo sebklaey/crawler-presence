@@ -1,5 +1,6 @@
 import { defineTool, ToolError } from "@lovable.dev/mcp-js";
 import { z } from "zod";
+import { allowRequest } from "../presences";
 import { generateJson } from "../../ai-gateway.server";
 import { presenceChecks, presenceScore } from "../../knowledge";
 import { getSession } from "../sessions";
@@ -29,7 +30,9 @@ export default defineTool({
   },
   annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
   handler: async ({ session_id, insight }) => {
-    const session = getSession(session_id);
+    if (!(await allowRequest(`tool:improve_presence:${session_id}`, 20)))
+      throw new ToolError("Too many improvement requests for this session in the last minute. Try again shortly.");
+    const session = await getSession(session_id);
     if (!session) throw new ToolError("Unknown or expired session_id. Call start_interview to begin a new session.");
 
     let result;

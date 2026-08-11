@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 
 import { AppShell, PageHead } from "@/components/app-shell";
 
@@ -70,10 +71,7 @@ function ChatGptPage() {
           description="The whole workflow — interview, Knowledge Core, file previews, analytics — runs in the conversation. You only visit this website for checkout."
         />
 
-        <div className="mb-10 rounded-xl border border-border bg-secondary/50 px-4 py-3 font-mono text-sm">
-          <div className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">MCP endpoint</div>
-          <code className="break-all">https://&lt;your-deployed-crawler-domain&gt;/mcp</code>
-        </div>
+        <ConnectorUrl />
 
         <ol className="mb-12 space-y-4">
           {steps.map((s, i) => (
@@ -102,35 +100,89 @@ function ChatGptPage() {
           ))}
         </div>
 
-        <h2 className="display mb-4 text-2xl">What this MVP does not do</h2>
+        <h2 className="display mb-4 text-2xl">What works without an account — and what does not</h2>
         <ul className="space-y-2 text-sm text-muted-foreground">
           <li>
-            <strong className="text-foreground">No authentication.</strong> Every tool is public. Anyone with the
-            endpoint URL can call it.
+            <strong className="text-foreground">No authentication on the endpoint.</strong> Every tool is public.
+            Anyone with the connector URL can call it, so treat a session token like a shareable link.
           </li>
           <li>
-            <strong className="text-foreground">No account identity.</strong> The server cannot see who you are in
-            ChatGPT and never treats a ChatGPT account as a Crawler user.
+            <strong className="text-foreground">ChatGPT account identity is not passed to Crawler.</strong> The server
+            cannot see who you are and never treats a ChatGPT account as a Crawler user.
           </li>
           <li>
-            <strong className="text-foreground">No durable storage.</strong> A session is an opaque, ephemeral
-            in-memory id that expires after a few hours. Nothing user-specific is persisted across users or deploys.
+            <strong className="text-foreground">Building and previewing are free and need no Crawler account.</strong>{" "}
+            Interview, Knowledge Core, corrections, file previews, pricing and analytics questions all run in the
+            conversation.
           </li>
           <li>
-            <strong className="text-foreground">No publishing.</strong> publish_presence returns an account-link URL
-            instead of hosting private data. Creating and previewing stay free.
+            <strong className="text-foreground">Drafts are durable but anonymous.</strong> Sessions are stored in the
+            database for ~30 days under an opaque random token. They are not owned by anyone until you claim them.
           </li>
           <li>
-            <strong className="text-foreground">Demo analytics only.</strong> Crawler never has access to private
-            ChatGPT, Claude or Gemini conversations — only Crawler-internal events and observable reads of published
-            files.
+            <strong className="text-foreground">Account linking is required for</strong> durable ownership, paid
+            subscription management, private analytics, team access and cross-device recovery. That step happens on
+            this website — OAuth 2.1 account linking for the MCP connector is not implemented yet.
+          </li>
+          <li>
+            <strong className="text-foreground">Publishing is the paid step.</strong> publish_presence hands off to the
+            website with your draft attached; when Stripe keys are absent the same flow runs in clearly labelled
+            DEMO/TEST mode and no charge is made.
+          </li>
+          <li>
+            <strong className="text-foreground">Analytics are labelled DEMO.</strong> Crawler never has access to
+            private ChatGPT, Claude or Gemini conversations — only Crawler-internal events and observable reads of
+            published files.
           </li>
         </ul>
-        <p className="mt-6 text-sm text-muted-foreground">
-          Durable per-user persistence, subscription status and private analytics will require account linking with
-          OAuth 2.1. That is the next step after this MVP.
-        </p>
       </div>
     </AppShell>
+  );
+}
+
+function ConnectorUrl() {
+  const [origin, setOrigin] = useState("https://crawler-presence.lovable.app");
+  const [health, setHealth] = useState<Record<string, unknown> | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+    fetch("/api/public/mcp-health")
+      .then((r) => r.json())
+      .then((d) => setHealth(d as Record<string, unknown>))
+      .catch(() => setFailed(true));
+  }, []);
+
+  const url = `${origin}/mcp`;
+  const store = (health?.["session_store"] ?? null) as { type?: string; active_sessions?: number } | null;
+
+  return (
+    <div className="mb-10 space-y-3">
+      <div className="rounded-xl border border-border bg-secondary/50 px-4 py-3">
+        <div className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">Connector URL</div>
+        <div className="flex flex-wrap items-center gap-3">
+          <code className="break-all font-mono text-sm">{url}</code>
+          <button
+            type="button"
+            onClick={() => void navigator.clipboard.writeText(url)}
+            aria-label="Copy the connector URL"
+            className="rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
+          >
+            Copy
+          </button>
+        </div>
+      </div>
+      <div className="rounded-xl border border-border/70 px-4 py-3 text-xs text-muted-foreground">
+        <span className="text-foreground">Live health:</span>{" "}
+        {failed
+          ? "unavailable"
+          : health
+            ? `${String(health["status"])} · auth ${String(health["auth_mode"])} · sessions ${store?.type ?? "?"} (${store?.active_sessions ?? 0} active) · checkout ${String(health["checkout_mode"])} · analytics ${String(health["analytics_mode"])}`
+            : "checking…"}{" "}
+        <a href="/api/public/mcp-health" className="underline underline-offset-4">
+          /api/public/mcp-health
+        </a>
+      </div>
+    </div>
   );
 }

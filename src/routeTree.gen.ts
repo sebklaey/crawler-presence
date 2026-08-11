@@ -21,6 +21,8 @@ import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as ApiPublicMcpHealthRouteImport } from './routes/api/public/mcp-health'
+import { Route as PSlugIndexRouteImport } from './routes/p.$slug.index'
+import { Route as PSlugSplatRouteImport } from './routes/p.$slug.$'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -85,6 +87,16 @@ const ApiPublicMcpHealthRoute = ApiPublicMcpHealthRouteImport.update({
   path: '/api/public/mcp-health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PSlugIndexRoute = PSlugIndexRouteImport.update({
+  id: '/p/$slug/',
+  path: '/p/$slug/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PSlugSplatRoute = PSlugSplatRouteImport.update({
+  id: '/p/$slug/$',
+  path: '/p/$slug/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -99,6 +111,8 @@ export interface FileRoutesByFullPath {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
+  '/p/$slug/$': typeof PSlugSplatRoute
+  '/p/$slug/': typeof PSlugIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -113,6 +127,8 @@ export interface FileRoutesByTo {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
+  '/p/$slug/$': typeof PSlugSplatRoute
+  '/p/$slug': typeof PSlugIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -128,6 +144,8 @@ export interface FileRoutesById {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
+  '/p/$slug/$': typeof PSlugSplatRoute
+  '/p/$slug/': typeof PSlugIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -144,6 +162,8 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
+    | '/p/$slug/$'
+    | '/p/$slug/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -158,6 +178,8 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
+    | '/p/$slug/$'
+    | '/p/$slug'
   id:
     | '__root__'
     | '/'
@@ -172,6 +194,8 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
+    | '/p/$slug/$'
+    | '/p/$slug/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -187,6 +211,8 @@ export interface RootRouteChildren {
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicMcpHealthRoute: typeof ApiPublicMcpHealthRoute
+  PSlugSplatRoute: typeof PSlugSplatRoute
+  PSlugIndexRoute: typeof PSlugIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -275,6 +301,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicMcpHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/p/$slug/': {
+      id: '/p/$slug/'
+      path: '/p/$slug'
+      fullPath: '/p/$slug/'
+      preLoaderRoute: typeof PSlugIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/p/$slug/$': {
+      id: '/p/$slug/$'
+      path: '/p/$slug/$'
+      fullPath: '/p/$slug/$'
+      preLoaderRoute: typeof PSlugSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -292,6 +332,8 @@ const rootRouteChildren: RootRouteChildren = {
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicMcpHealthRoute: ApiPublicMcpHealthRoute,
+  PSlugSplatRoute: PSlugSplatRoute,
+  PSlugIndexRoute: PSlugIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
