@@ -41,6 +41,7 @@ function PublishPage() {
   const [checkingOut, setCheckingOut] = useState<PlanId | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [recovering, setRecovering] = useState(Boolean(search.session));
+  const [recovered, setRecovered] = useState(false);
 
   // Handoff from ChatGPT: recover the anonymous draft carried in the URL.
   useEffect(() => {
@@ -53,6 +54,7 @@ function PublishPage() {
         if (cancelled) return;
         if (result.found) {
           setCore(result.core as KnowledgeCore);
+          setRecovered(true);
           toast.success("Draft recovered from your ChatGPT session.");
         } else {
           toast.error("That draft link has expired. Start a new interview.");
@@ -85,7 +87,7 @@ function PublishPage() {
     );
   }
 
-  if (isCoreEmpty(core)) return <Empty />;
+  if (isCoreEmpty(core) && !recovered) return <Empty />;
 
   const score = presenceScore(core);
   const files = generatedFiles(core);
