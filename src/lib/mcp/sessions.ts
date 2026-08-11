@@ -8,8 +8,12 @@
  * anonymous draft. Durable *ownership*, subscription status and private
  * analytics require account linking on the Crawler website.
  *
- * If the database is unreachable the store degrades to in-memory state so the
- * MCP endpoint keeps working (state is then lost on redeploy).
+ * Persistence contract: a session row is written with a single verified
+ * upsert of the *complete* state (see `saveSession`). The row is only created
+ * on the first save, so a half-written empty row can never survive a failed
+ * turn. When the database is configured but a write fails we throw instead of
+ * silently reporting success; the in-memory map is only used when no database
+ * is configured at all (state is then lost on redeploy).
  */
 import type { KnowledgeCore } from "../knowledge";
 import { emptyCore } from "../knowledge";
@@ -26,7 +30,15 @@ export type Session = {
   transcript: Transcript;
   confidence: number;
   complete: boolean;
+  origin: "mcp" | "web";
 };
+
+export class SessionPersistenceError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "SessionPersistenceError";
+  }
+}
 
 /* ------------------------------------------------------------------ */
 /* Fallback store                                                      */
@@ -69,6 +81,7 @@ type Row = {
   transcript: unknown;
   confidence: number;
   complete: boolean;
+  origin?: string;
   created_at: string;
   updated_at: string;
 };
@@ -82,6 +95,7 @@ function fromRow(row: Row): Session {
     transcript: Array.isArray(row.transcript) ? (row.transcript as Transcript) : [],
     confidence: row.confidence ?? 0,
     complete: Boolean(row.complete),
+    origin: row.origin === "web" ? "web" : "mcp",
   };
 }
 
@@ -89,9 +103,12 @@ function fromRow(row: Row): Session {
 /* Public API                                                          */
 /* ------------------------------------------------------------------ */
 
-export async function createSession(origin: "mcp" | "web" = "mcp"): Promise<Session> {
+export function createSession(origin: "mcp" | "web" = "mcp"): Session {
   const now = Date.now();
-  const session: Session = {
+  // Not written to the database yet: the row is created by the first
+  // saveSession() upsert, so an interview turn that fails never leaves an
+  // empty, unusable session row behind.
+  return {
     id: opaqueToken("sess"),
     createdAt: now,
     updatedAt: now,
@@ -99,23 +116,8 @@ export async function createSession(origin: "mcp" | "web" = "mcp"): Promise<Sess
     transcript: [],
     confidence: 0,
     complete: false,
+    origin,
   };
-
-  const supabase = await client();
-  if (supabase) {
-    const { error } = await supabase.from("mcp_sessions").insert({
-      token: session.id,
-      core: session.core,
-      transcript: [],
-      confidence: 0,
-      complete: false,
-      origin,
-      expires_at: new Date(now + SESSION_TTL_MS).toISOString(),
-    });
-    if (!error) return session;
-  }
-  rememberLocally(session);
-  return session;
 }
 
 export async function getSession(id: string): Promise<Session | undefined> {
@@ -124,7 +126,7 @@ export async function getSession(id: string): Promise<Session | undefined> {
   if (supabase) {
     const { data } = await supabase
       .from("mcp_sessions")
-      .select("token, core, transcript, confidence, complete, created_at, updated_at")
+      .select("token, core, transcript, confidence, complete, origin, created_at, updated_at")
       .eq("token", id)
       .gt("expires_at", new Date().toISOString())
       .maybeSingle();
@@ -136,19 +138,39 @@ export async function getSession(id: string): Promise<Session | undefined> {
 export async function saveSession(session: Session): Promise<void> {
   session.updatedAt = Date.now();
   const supabase = await client();
-  if (supabase) {
-    const { error } = await supabase
-      .from("mcp_sessions")
-      .update({
+  if (!supabase) {
+    // No database configured at all — degrade to in-memory state.
+    rememberLocally(session);
+    return;
+  }
+
+  const now = new Date();
+  const { data, error } = await supabase
+    .from("mcp_sessions")
+    .upsert(
+      {
+        token: session.id,
         core: session.core,
         transcript: session.transcript,
         confidence: session.confidence,
         complete: session.complete,
-        expires_at: new Date(Date.now() + SESSION_TTL_MS).toISOString(),
-      })
-      .eq("token", session.id);
-    if (!error) return;
+        origin: session.origin,
+        updated_at: now.toISOString(),
+        expires_at: new Date(now.getTime() + SESSION_TTL_MS).toISOString(),
+      },
+      { onConflict: "token" },
+    )
+    .select("token")
+    .maybeSingle();
+
+  if (error || !data) {
+    const detail = error?.message ?? "no row returned by the upsert";
+    console.error("[crawler] session persistence failed", { session_id: session.id, detail });
+    throw new SessionPersistenceError(
+      `Could not save session state to the Crawler database (${detail}). Nothing was lost on your side — please retry the last step.`,
+    );
   }
+  // Keep a warm copy for same-worker reads; the database stays the source of truth.
   rememberLocally(session);
 }
 
@@ -169,4 +191,4 @@ export async function storeMode(): Promise<"database" | "in-memory-fallback"> {
 }
 
 export const SESSION_NOTE =
-  "Anonymous draft session: identified only by an opaque random token, stored for ~30 days and not linked to any account. Anyone holding the token can read the draft, so treat it as a shareable link. Durable ownership, paid plans and private analytics require account linking on the Crawler website.";
+  "Anonymous draft session: identified only by an opaque random token, stored durably for ~30 days and not linked to any account. Anyone holding the token can read the draft, so treat it as a shareable link. Durable ownership, paid plans and private analytics require account linking on the Crawler website.";
