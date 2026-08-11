@@ -86,6 +86,17 @@ type Row = {
   updated_at: string;
 };
 
+/** The database column is an integer, the model works in 0-1 confidence. */
+function confidenceToDb(v: number): number {
+  if (!Number.isFinite(v)) return 0;
+  return Math.max(0, Math.min(100, Math.round(v * 100)));
+}
+
+function confidenceFromDb(v: number | null | undefined): number {
+  if (typeof v !== "number" || !Number.isFinite(v)) return 0;
+  return Math.max(0, Math.min(1, v / 100));
+}
+
 function fromRow(row: Row): Session {
   return {
     id: row.token,
@@ -93,7 +104,7 @@ function fromRow(row: Row): Session {
     updatedAt: Date.parse(row.updated_at),
     core: (row.core as KnowledgeCore) ?? emptyCore(),
     transcript: Array.isArray(row.transcript) ? (row.transcript as Transcript) : [],
-    confidence: row.confidence ?? 0,
+    confidence: confidenceFromDb(row.confidence),
     complete: Boolean(row.complete),
     origin: row.origin === "web" ? "web" : "mcp",
   };
@@ -152,7 +163,7 @@ export async function saveSession(session: Session): Promise<void> {
         token: session.id,
         core: session.core,
         transcript: session.transcript,
-        confidence: session.confidence,
+        confidence: confidenceToDb(session.confidence),
         complete: session.complete,
         origin: session.origin,
         updated_at: now.toISOString(),
