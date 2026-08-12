@@ -28,7 +28,9 @@ function PricingPage() {
 
   return (
     <AppShell>
+      <PaymentTestModeBanner />
       <div className="mx-auto max-w-6xl px-5 pb-24 pt-14">
+
         <PageHead
           eyebrow="Digital SaaS hosting"
           title="Pay only to host your Presence online."
