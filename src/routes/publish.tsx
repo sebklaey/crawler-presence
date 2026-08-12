@@ -385,28 +385,19 @@ function PublishPage() {
             </div>
 
             <div className="rounded-2xl border border-border bg-card p-6">
-              <div className="text-sm font-medium">Publish</div>
+              <div className="text-sm font-medium">Before you publish</div>
               <p className="mt-1 text-xs text-muted-foreground">
                 {score < 55
                   ? "Your presence is still thin — publishing works, but AI systems will have little to read."
                   : "Your presence has enough substance to answer real questions."}
               </p>
-              <div className="mt-4 flex flex-wrap items-center gap-3">
-                <Button disabled={busy || !selected} onClick={() => void publish()}>
-                  {busy ? "Working…" : payments ? "Continue to checkout" : "Publish in demo mode"}
-                </Button>
-                <span className="text-xs text-muted-foreground">
-                  {payments
-                    ? "You will be redirected to the payment provider and back."
-                    : "No payment credentials — this publishes in labelled demo mode."}
-                </span>
-              </div>
               <div className="mt-4">
                 <Button variant="ghost" size="sm" onClick={() => void navigate({ to: "/manage" })}>
                   Already published? Manage with your recovery code
                 </Button>
               </div>
             </div>
+
           </div>
 
           <PresenceStatus core={core} columns={1} />
