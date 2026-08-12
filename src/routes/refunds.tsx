@@ -38,8 +38,9 @@ function RefundsPage() {
               you only ever pay for hosting a published Presence.
             </p>
             <p className="mt-3">
-              Crawler sells digital software subscriptions only. Nothing physical is shipped or returned, so there are
-              no return shipments, restocking fees or postage costs — a refund simply reverses the charge.
+               Crawler sells access to digital SaaS and online Presence hosting only. The service is activated
+               electronically. No physical product, merchandise, hardware or printed material is included, shipped or
+               returned, so there are no return shipments, restocking fees or postage costs.
             </p>
           </section>
 

@@ -8,6 +8,7 @@ export type Plan = {
   features: string[];
   /** On the roadmap — never presented as working. */
   planned?: string[];
+  /** Maximum number of digital Knowledge Core records hosted by Crawler. */
   catalogLimit: number;
   analyticsDays: number;
 };
@@ -20,8 +21,8 @@ export const PLANS: Plan[] = [
     catalogLimit: 10,
     analyticsDays: 7,
     features: [
-      "1 published presence",
-      "Small catalog (up to 10 offerings, projects or services)",
+      "1 hosted digital Presence",
+      "Up to 10 AI-readable content records",
       "Measured analytics, 7-day window",
       "llms.txt, markdown pages and JSON endpoints",
       "Accountless management via recovery code",
@@ -34,7 +35,7 @@ export const PLANS: Plan[] = [
     catalogLimit: 200,
     analyticsDays: 90,
     features: [
-      "Larger catalog (up to 200 entries)",
+      "Up to 200 AI-readable content records",
       "Analytics with a 90-day window",
       "Detailed conversation insights (recurring questions, gaps)",
       "Improve my Presence recommendations",
@@ -48,7 +49,7 @@ export const PLANS: Plan[] = [
     catalogLimit: 5000,
     analyticsDays: 90,
     features: [
-      "Large catalog (up to 5,000 entries)",
+      "Up to 5,000 AI-readable content records",
       "Analytics with a 90-day window over the full event retention",
       "Detailed conversation insights and improvement recommendations",
       "Custom domain with DNS verification",

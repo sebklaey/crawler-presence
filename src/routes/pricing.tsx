@@ -30,14 +30,16 @@ function PricingPage() {
     <AppShell>
       <div className="mx-auto max-w-6xl px-5 pb-24 pt-14">
         <PageHead
-          eyebrow="Free to build"
-          title="Pay only to be online."
-          description="Building your Knowledge Core and previewing every generated file costs nothing. Hosting your published presence is the paid part."
+          eyebrow="Digital SaaS hosting"
+          title="Pay only to host your Presence online."
+          description="Building your Knowledge Core and previewing every generated file costs nothing. Each paid plan is a monthly subscription to Crawler's online software and digital Presence hosting."
         />
 
         <p className="-mt-4 mb-8 max-w-2xl text-xs text-muted-foreground">
-          Every plan is a digital software subscription, delivered online and active immediately after purchase. No
-          physical goods are sold or shipped, and no delivery address is ever required. Cancel any time; see the{" "}
+          <strong className="text-foreground">The product sold here is digital SaaS hosting.</strong> Every plan is
+          delivered online and activated electronically after purchase. Plans include hosted AI-readable text files,
+          data endpoints and software analytics only. No physical item, merchandise, hardware or printed material is
+          sold, bundled, delivered or shipped, and no delivery address is required. Cancel any time; see the{" "}
           <Link to="/refunds" className="underline underline-offset-4">
             refund policy
           </Link>

@@ -244,9 +244,9 @@ function PublishPage() {
       <PaymentTestModeBanner />
       <div className="mx-auto max-w-5xl px-5 pb-24 pt-14">
         <PageHead
-          eyebrow="Go live"
-          title="Publish your presence"
-          description="Everything up to this point is free. You only pay to be online. There is no account and no login: publishing hands you a one-time recovery code that controls the Presence."
+          eyebrow="Digital SaaS hosting"
+          title="Host your Presence online"
+          description="Everything up to this point is free. A paid plan provides online software hosting for your AI-readable files and endpoints. It is delivered electronically and contains no physical goods."
         />
 
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
@@ -296,7 +296,7 @@ function PublishPage() {
             <div className="rounded-2xl border border-border bg-card p-6">
               <div className="flex items-center gap-2 text-sm font-medium">
                 {payments ? <Globe className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
-                Choose your plan
+                Choose your digital hosting plan
               </div>
 
               {!payments ? (
@@ -307,8 +307,8 @@ function PublishPage() {
                 </div>
               ) : (
                 <p className="mt-3 text-xs text-muted-foreground">
-                  Checkout happens with our payment provider. Crawler creates no account and sends no personal
-                  identifier — only an anonymous reference to this publish request.
+                  You are purchasing a digital SaaS subscription for online Presence hosting. Nothing physical is
+                  sold or shipped. Checkout receives only an anonymous reference to this publish request.
                 </p>
               )}
 
