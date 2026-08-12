@@ -110,7 +110,15 @@ export async function buildReport(slug: string, days: 7 | 30): Promise<{ subject
 export async function sendReport(slug: string, days: 7 | 30, to: string) {
   const report = await buildReport(slug, days);
   if (!report) return { delivered: false, reason: "not-found" as const };
-  const result = await sendMail({ to, subject: report.subject, text: report.text, replyTo: CRAWLER_SUPPORT_EMAIL });
+  const result = await sendMail({
+    to,
+    template: "presence-report",
+    subject: report.subject,
+    text: report.text,
+    replyTo: CRAWLER_SUPPORT_EMAIL,
+    idempotencyKey: `report-${slug}-${days}-${new Date().toISOString().slice(0, 10)}`,
+  });
+
   if (result.delivered) await markSent(slug);
   return result;
 }
