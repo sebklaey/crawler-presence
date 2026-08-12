@@ -156,16 +156,21 @@ export async function notify(input: NotifyInput): Promise<NotifyResult> {
     "To change or stop these emails, open your Presence at https://crawler.today/manage with your recovery code.",
   ].join("\n");
 
-  const result = await sendMail({ to: recipient, subject: input.subject, text } as never);
+  const result = await sendMail({
+    to: recipient,
+    subject: input.subject,
+    text,
+    idempotencyKey: input.dedupeKey,
+  });
   await store()
     .from("notification_events")
     .update({
-      status: result?.delivered === false ? "failed" : "sent",
-      error: result?.delivered === false ? (result.reason ?? "Delivery failed").slice(0, 500) : null,
+      status: result.delivered ? "sent" : "failed",
+      error: result.delivered === false ? (result.reason ?? "Delivery failed").slice(0, 500) : null,
     })
     .eq("dedupe_key", input.dedupeKey);
 
-  return { sent: result?.delivered !== false };
+  return { sent: result.delivered };
 }
 
 export const OPERATIONS_INBOX = CRAWLER_SUPPORT_EMAIL;
