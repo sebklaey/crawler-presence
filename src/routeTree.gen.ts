@@ -35,6 +35,7 @@ import { Route as ApiPublicReportsRunRouteImport } from './routes/api/public/rep
 import { Route as ApiPublicTrackClickRouteImport } from './routes/api/public/track/click'
 import { Route as ApiPublicV1AnalyticsRouteImport } from './routes/api/public/v1/analytics'
 import { Route as ApiPublicV1PresenceRouteImport } from './routes/api/public/v1/presence'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -170,6 +171,12 @@ const ApiPublicV1PresenceRoute = ApiPublicV1PresenceRouteImport.update({
   path: '/api/public/v1/presence',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -198,6 +205,7 @@ export interface FileRoutesByFullPath {
   '/api/public/track/click': typeof ApiPublicTrackClickRoute
   '/api/public/v1/analytics': typeof ApiPublicV1AnalyticsRoute
   '/api/public/v1/presence': typeof ApiPublicV1PresenceRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -226,6 +234,7 @@ export interface FileRoutesByTo {
   '/api/public/track/click': typeof ApiPublicTrackClickRoute
   '/api/public/v1/analytics': typeof ApiPublicV1AnalyticsRoute
   '/api/public/v1/presence': typeof ApiPublicV1PresenceRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -255,6 +264,7 @@ export interface FileRoutesById {
   '/api/public/track/click': typeof ApiPublicTrackClickRoute
   '/api/public/v1/analytics': typeof ApiPublicV1AnalyticsRoute
   '/api/public/v1/presence': typeof ApiPublicV1PresenceRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -285,6 +295,7 @@ export interface FileRouteTypes {
     | '/api/public/track/click'
     | '/api/public/v1/analytics'
     | '/api/public/v1/presence'
+    | '/lovable/email/transactional/preview'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -313,6 +324,7 @@ export interface FileRouteTypes {
     | '/api/public/track/click'
     | '/api/public/v1/analytics'
     | '/api/public/v1/presence'
+    | '/lovable/email/transactional/preview'
   id:
     | '__root__'
     | '/'
@@ -341,6 +353,7 @@ export interface FileRouteTypes {
     | '/api/public/track/click'
     | '/api/public/v1/analytics'
     | '/api/public/v1/presence'
+    | '/lovable/email/transactional/preview'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -370,6 +383,7 @@ export interface RootRouteChildren {
   ApiPublicTrackClickRoute: typeof ApiPublicTrackClickRoute
   ApiPublicV1AnalyticsRoute: typeof ApiPublicV1AnalyticsRoute
   ApiPublicV1PresenceRoute: typeof ApiPublicV1PresenceRoute
+  LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -556,6 +570,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1PresenceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -587,6 +608,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicTrackClickRoute: ApiPublicTrackClickRoute,
   ApiPublicV1AnalyticsRoute: ApiPublicV1AnalyticsRoute,
   ApiPublicV1PresenceRoute: ApiPublicV1PresenceRoute,
+  LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
