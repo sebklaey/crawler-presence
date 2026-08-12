@@ -159,7 +159,22 @@ export const manageOverviewFn = createServerFn({ method: "POST" })
       catalogLimit: limited.limit,
       // Analytics are part of the paid plan — locked while billing has lapsed.
       analytics: restricted ? null : await analyticsFor(p.slug, p.plan),
+      customDomain: {
+        domain: p.customDomain,
+        verified: Boolean(p.customDomainVerifiedAt),
+        verifiedAt: p.customDomainVerifiedAt,
+        allowedOnPlan: DOMAIN_PLANS.includes(p.plan),
+        instructions: p.customDomain
+          ? {
+              txtHost: CUSTOM_DOMAIN_TXT_HOST,
+              txtValue: p.customDomainToken,
+              cnameTarget: CUSTOM_DOMAIN_TARGET,
+            }
+          : null,
+      },
+      apiAccess: p.plan === "business",
     };
+
 
   });
 
