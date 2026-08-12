@@ -14,6 +14,7 @@ import { Route as SplatRouteImport } from './routes/$'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as ChatgptRouteImport } from './routes/chatgpt'
 import { Route as KnowledgeRouteImport } from './routes/knowledge'
+import { Route as LlmsFullDottxtRouteImport } from './routes/llms-full[.]txt'
 import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
 import { Route as ManageRouteImport } from './routes/manage'
 import { Route as McpRouteImport } from './routes/mcp'
@@ -62,6 +63,11 @@ const ChatgptRoute = ChatgptRouteImport.update({
 const KnowledgeRoute = KnowledgeRouteImport.update({
   id: '/knowledge',
   path: '/knowledge',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LlmsFullDottxtRoute = LlmsFullDottxtRouteImport.update({
+  id: '/llms-full.txt',
+  path: '/llms-full.txt',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LlmsDottxtRoute = LlmsDottxtRouteImport.update({
@@ -196,6 +202,7 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AnalyticsRoute
   '/chatgpt': typeof ChatgptRoute
   '/knowledge': typeof KnowledgeRoute
+  '/llms-full.txt': typeof LlmsFullDottxtRoute
   '/llms.txt': typeof LlmsDottxtRoute
   '/manage': typeof ManageRoute
   '/mcp': typeof McpRoute
@@ -227,6 +234,7 @@ export interface FileRoutesByTo {
   '/analytics': typeof AnalyticsRoute
   '/chatgpt': typeof ChatgptRoute
   '/knowledge': typeof KnowledgeRoute
+  '/llms-full.txt': typeof LlmsFullDottxtRoute
   '/llms.txt': typeof LlmsDottxtRoute
   '/manage': typeof ManageRoute
   '/mcp': typeof McpRoute
@@ -259,6 +267,7 @@ export interface FileRoutesById {
   '/analytics': typeof AnalyticsRoute
   '/chatgpt': typeof ChatgptRoute
   '/knowledge': typeof KnowledgeRoute
+  '/llms-full.txt': typeof LlmsFullDottxtRoute
   '/llms.txt': typeof LlmsDottxtRoute
   '/manage': typeof ManageRoute
   '/mcp': typeof McpRoute
@@ -292,6 +301,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/chatgpt'
     | '/knowledge'
+    | '/llms-full.txt'
     | '/llms.txt'
     | '/manage'
     | '/mcp'
@@ -323,6 +333,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/chatgpt'
     | '/knowledge'
+    | '/llms-full.txt'
     | '/llms.txt'
     | '/manage'
     | '/mcp'
@@ -354,6 +365,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/chatgpt'
     | '/knowledge'
+    | '/llms-full.txt'
     | '/llms.txt'
     | '/manage'
     | '/mcp'
@@ -386,6 +398,7 @@ export interface RootRouteChildren {
   AnalyticsRoute: typeof AnalyticsRoute
   ChatgptRoute: typeof ChatgptRoute
   KnowledgeRoute: typeof KnowledgeRoute
+  LlmsFullDottxtRoute: typeof LlmsFullDottxtRoute
   LlmsDottxtRoute: typeof LlmsDottxtRoute
   ManageRoute: typeof ManageRoute
   McpRoute: typeof McpRoute
@@ -447,6 +460,13 @@ declare module '@tanstack/react-router' {
       path: '/knowledge'
       fullPath: '/knowledge'
       preLoaderRoute: typeof KnowledgeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/llms-full.txt': {
+      id: '/llms-full.txt'
+      path: '/llms-full.txt'
+      fullPath: '/llms-full.txt'
+      preLoaderRoute: typeof LlmsFullDottxtRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/llms.txt': {
@@ -626,6 +646,7 @@ const rootRouteChildren: RootRouteChildren = {
   AnalyticsRoute: AnalyticsRoute,
   ChatgptRoute: ChatgptRoute,
   KnowledgeRoute: KnowledgeRoute,
+  LlmsFullDottxtRoute: LlmsFullDottxtRoute,
   LlmsDottxtRoute: LlmsDottxtRoute,
   ManageRoute: ManageRoute,
   McpRoute: McpRoute,
