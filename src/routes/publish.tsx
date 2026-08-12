@@ -283,7 +283,7 @@ function PublishPage() {
             ) : null}
 
             <div className="rounded-2xl border border-border bg-card p-6">
-              <div className="text-sm font-medium">What goes live</div>
+              <h2 className="text-sm font-medium">What goes live</h2>
               <ul className="mt-4 grid gap-1.5 font-mono text-xs text-muted-foreground sm:grid-cols-2">
                 {files.map((f) => (
                   <li key={f.path} className="break-all">
@@ -294,10 +294,10 @@ function PublishPage() {
             </div>
 
             <div className="rounded-2xl border border-border bg-card p-6">
-              <div className="flex items-center gap-2 text-sm font-medium">
+              <h2 className="flex items-center gap-2 text-sm font-medium">
                 {payments ? <Globe className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
                 Choose your digital hosting plan
-              </div>
+              </h2>
 
               {!payments ? (
                 <div className="mt-3 rounded-lg border border-dashed border-border bg-secondary/60 px-3 py-2 text-xs text-muted-foreground">
@@ -390,7 +390,7 @@ function PublishPage() {
             </div>
 
             <div className="rounded-2xl border border-border bg-card p-6">
-              <div className="text-sm font-medium">Before you publish</div>
+              <h2 className="text-sm font-medium">Before you publish</h2>
               <p className="mt-1 text-xs text-muted-foreground">
                 {score < 55
                   ? "Your presence is still thin — publishing works, but AI systems will have little to read."

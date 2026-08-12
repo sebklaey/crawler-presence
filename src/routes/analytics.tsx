@@ -223,7 +223,7 @@ function AnalyticsPage() {
             </div>
 
             <div className="mt-4 rounded-2xl border border-border bg-card p-5">
-              <div className="mb-4 text-sm font-medium">Mentions &amp; reads per day</div>
+              <h2 className="mb-4 text-sm font-medium">Mentions &amp; reads per day</h2>
               <div className="h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={data.daily} margin={{ left: -20, right: 8, top: 8 }}>
@@ -342,7 +342,7 @@ function AnalyticsPage() {
             <div className="mt-4 rounded-2xl border border-border bg-card p-6">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <div className="text-sm font-medium">AI summary</div>
+                  <h2 className="text-sm font-medium">AI summary</h2>
                   <p className="text-xs text-muted-foreground">
                     Recurring questions, missing information and suggested Presence improvements — derived from your
                     measured events only.
@@ -405,7 +405,7 @@ function AnalyticsPage() {
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="rounded-2xl border border-border bg-card p-5">
-      <div className="mb-3 text-sm font-medium">{title}</div>
+      <h2 className="mb-3 text-sm font-medium">{title}</h2>
       <div className="divide-y divide-border">{children}</div>
     </div>
   );
