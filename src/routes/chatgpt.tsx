@@ -53,12 +53,12 @@ const tools: { name: string; kind: string; text: string }[] = [
   { name: "analyze_source_url", kind: "read", text: "Reads a public HTTPS page and returns candidate facts with provenance and confidence, or an honest unavailable result." },
   { name: "get_knowledge_core", kind: "read", text: "The full structured Knowledge Core for a session." },
   { name: "preview_presence", kind: "read", text: "llms.txt, llms-full.txt, about.md and the relevant markdown and JSON previews." },
-  { name: "publish_presence", kind: "write", text: "Publishes for real once the draft is linked to a subscribed Crawler account; otherwise returns publish_requires_account and a handoff URL." },
+  { name: "publish_presence", kind: "write", text: "Publishes for real once hosting has been paid for this draft, and returns the one-time recovery code; otherwise returns publish_requires_payment and a handoff URL." },
   { name: "get_pricing", kind: "read", text: "Plus $5, Pro $20, Business $80 per month with feature differences." },
   { name: "get_analytics", kind: "read", text: "Clearly labelled demo analytics for 7/30/90 days, plus an AI summary of recurring questions and gaps." },
   { name: "improve_presence", kind: "read", text: "Turns an insight into the fields to clarify and one targeted question." },
   { name: "get_checkout_link", kind: "read", text: "External checkout URL; labelled demo mode when Stripe is not configured." },
-  { name: "get_status", kind: "read", text: "Health and debug output: auth mode, model availability, session store, checkout mode." },
+  { name: "get_status", kind: "read", text: "Health and debug output: auth mode (none), model availability, session store, checkout mode." },
 ];
 
 function ChatGptPage() {
@@ -68,7 +68,7 @@ function ChatGptPage() {
         <PageHead
           eyebrow="MCP connector"
           title="Use Crawler inside ChatGPT."
-          description="The whole workflow — interview, Knowledge Core, file previews, analytics — runs in the conversation. You only visit this website for checkout."
+          description="The whole workflow — interview, Knowledge Core, file previews, analytics — runs in the conversation. You only visit this website to pay for hosting and to manage a published Presence."
         />
 
         <ConnectorUrl />
@@ -100,7 +100,7 @@ function ChatGptPage() {
           ))}
         </div>
 
-        <h2 className="display mb-4 text-2xl">What works without an account — and what does not</h2>
+        <h2 className="display mb-4 text-2xl">How ownership works without accounts</h2>
         <ul className="space-y-2 text-sm text-muted-foreground">
           <li>
             <strong className="text-foreground">No authentication on the endpoint.</strong> Every tool is public.
@@ -117,20 +117,20 @@ function ChatGptPage() {
           </li>
           <li>
             <strong className="text-foreground">Drafts are durable but anonymous.</strong> Sessions are stored in the
-            database for ~30 days under an opaque random token. They are not owned by anyone until you claim them.
+            database for ~30 days under an opaque random token. Crawler has no user registration, no login and no user
+            accounts, so a draft is never tied to a person.
           </li>
           <li>
-            <strong className="text-foreground">Account linking is required for</strong> durable ownership, paid
-            subscription management, private analytics, team access and cross-device recovery. That step happens on
-            this website. Sign in with Google at /auth, and the draft you started in ChatGPT is claimed by your account — after
-            that, publish_presence publishes for real while the subscription is active. Crawler also runs an OAuth 2.1
-            authorization server with a consent screen, so a future authenticated MCP connector can link accounts
-            directly instead of using the website handoff.
+            <strong className="text-foreground">Ownership is a code, not an account.</strong> When you publish, Crawler
+            issues a one-time recovery code. It controls the Presence: take it offline, put it back online, rotate the
+            code and manage the subscription at /manage. Only a one-way hash is stored, so a lost code cannot be
+            recovered by anyone — including Crawler.
           </li>
           <li>
             <strong className="text-foreground">Publishing is the paid step.</strong> publish_presence hands off to the
-            website with your draft attached; when Stripe keys are absent the same flow runs in clearly labelled
-            DEMO/TEST mode and no charge is made.
+            website with your draft attached. Payment details go to the payment provider only — no Crawler account is
+            created. When payment keys are absent the same flow runs in clearly labelled DEMO/TEST mode and no charge
+            is made.
           </li>
           <li>
             <strong className="text-foreground">Analytics are labelled DEMO.</strong> Crawler never has access to
