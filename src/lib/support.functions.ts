@@ -33,7 +33,7 @@ export const submitSupportFn = createServerFn({ method: "POST" })
 
     // Store first so the ticket id can be quoted in the notification and the
     // request survives even if delivery fails.
-    let ticketId = crypto.randomUUID();
+    let ticketId: string = crypto.randomUUID();
     let thread: { thread_id: string; subject: string } | null = null;
 
     if (supabase) {
