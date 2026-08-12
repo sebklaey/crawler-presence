@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SplatRouteImport } from './routes/$'
+import { Route as AboutDotmdRouteImport } from './routes/about[.]md'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as ChatgptRouteImport } from './routes/chatgpt'
 import { Route as KnowledgeRouteImport } from './routes/knowledge'
@@ -48,6 +49,11 @@ const IndexRoute = IndexRouteImport.update({
 const SplatRoute = SplatRouteImport.update({
   id: '/$',
   path: '/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AboutDotmdRoute = AboutDotmdRouteImport.update({
+  id: '/about.md',
+  path: '/about.md',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AnalyticsRoute = AnalyticsRouteImport.update({
@@ -199,6 +205,7 @@ const LovableEmailTransactionalPreviewRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/about.md': typeof AboutDotmdRoute
   '/analytics': typeof AnalyticsRoute
   '/chatgpt': typeof ChatgptRoute
   '/knowledge': typeof KnowledgeRoute
@@ -231,6 +238,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/about.md': typeof AboutDotmdRoute
   '/analytics': typeof AnalyticsRoute
   '/chatgpt': typeof ChatgptRoute
   '/knowledge': typeof KnowledgeRoute
@@ -264,6 +272,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/about.md': typeof AboutDotmdRoute
   '/analytics': typeof AnalyticsRoute
   '/chatgpt': typeof ChatgptRoute
   '/knowledge': typeof KnowledgeRoute
@@ -298,6 +307,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/$'
+    | '/about.md'
     | '/analytics'
     | '/chatgpt'
     | '/knowledge'
@@ -330,6 +340,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/$'
+    | '/about.md'
     | '/analytics'
     | '/chatgpt'
     | '/knowledge'
@@ -362,6 +373,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/$'
+    | '/about.md'
     | '/analytics'
     | '/chatgpt'
     | '/knowledge'
@@ -395,6 +407,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SplatRoute: typeof SplatRoute
+  AboutDotmdRoute: typeof AboutDotmdRoute
   AnalyticsRoute: typeof AnalyticsRoute
   ChatgptRoute: typeof ChatgptRoute
   KnowledgeRoute: typeof KnowledgeRoute
@@ -439,6 +452,13 @@ declare module '@tanstack/react-router' {
       path: '/$'
       fullPath: '/$'
       preLoaderRoute: typeof SplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about.md': {
+      id: '/about.md'
+      path: '/about.md'
+      fullPath: '/about.md'
+      preLoaderRoute: typeof AboutDotmdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/analytics': {
@@ -643,6 +663,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SplatRoute: SplatRoute,
+  AboutDotmdRoute: AboutDotmdRoute,
   AnalyticsRoute: AnalyticsRoute,
   ChatgptRoute: ChatgptRoute,
   KnowledgeRoute: KnowledgeRoute,
