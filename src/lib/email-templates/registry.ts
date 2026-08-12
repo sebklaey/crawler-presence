@@ -2,6 +2,7 @@ import type { ComponentType } from 'react'
 
 import { template as presenceReportTemplate } from './presence-report'
 import { template as supportRequestTemplate } from './support-request'
+import { template as supportUpdateTemplate } from './support-update'
 
 
 export interface TemplateEntry {
@@ -24,5 +25,6 @@ export interface TemplateEntry {
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'presence-report': presenceReportTemplate,
   'support-request': supportRequestTemplate,
+  'support-update': supportUpdateTemplate,
 }
 
