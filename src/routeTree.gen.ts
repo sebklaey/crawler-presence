@@ -29,6 +29,7 @@ import { Route as ApiPublicMcpHealthRouteImport } from './routes/api/public/mcp-
 import { Route as PSlugIndexRouteImport } from './routes/p.$slug.index'
 import { Route as PSlugSplatRouteImport } from './routes/p.$slug.$'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
+import { Route as ApiPublicTrackClickRouteImport } from './routes/api/public/track/click'
 import { Route as ApiPublicV1AnalyticsRouteImport } from './routes/api/public/v1/analytics'
 import { Route as ApiPublicV1PresenceRouteImport } from './routes/api/public/v1/presence'
 
@@ -136,6 +137,11 @@ const ApiPublicPaymentsWebhookRoute =
     path: '/api/public/payments/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicTrackClickRoute = ApiPublicTrackClickRouteImport.update({
+  id: '/api/public/track/click',
+  path: '/api/public/track/click',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicV1AnalyticsRoute = ApiPublicV1AnalyticsRouteImport.update({
   id: '/api/public/v1/analytics',
   path: '/api/public/v1/analytics',
@@ -168,6 +174,7 @@ export interface FileRoutesByFullPath {
   '/p/$slug/$': typeof PSlugSplatRoute
   '/p/$slug/': typeof PSlugIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/track/click': typeof ApiPublicTrackClickRoute
   '/api/public/v1/analytics': typeof ApiPublicV1AnalyticsRoute
   '/api/public/v1/presence': typeof ApiPublicV1PresenceRoute
 }
@@ -192,6 +199,7 @@ export interface FileRoutesByTo {
   '/p/$slug/$': typeof PSlugSplatRoute
   '/p/$slug': typeof PSlugIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/track/click': typeof ApiPublicTrackClickRoute
   '/api/public/v1/analytics': typeof ApiPublicV1AnalyticsRoute
   '/api/public/v1/presence': typeof ApiPublicV1PresenceRoute
 }
@@ -217,6 +225,7 @@ export interface FileRoutesById {
   '/p/$slug/$': typeof PSlugSplatRoute
   '/p/$slug/': typeof PSlugIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/track/click': typeof ApiPublicTrackClickRoute
   '/api/public/v1/analytics': typeof ApiPublicV1AnalyticsRoute
   '/api/public/v1/presence': typeof ApiPublicV1PresenceRoute
 }
@@ -243,6 +252,7 @@ export interface FileRouteTypes {
     | '/p/$slug/$'
     | '/p/$slug/'
     | '/api/public/payments/webhook'
+    | '/api/public/track/click'
     | '/api/public/v1/analytics'
     | '/api/public/v1/presence'
   fileRoutesByTo: FileRoutesByTo
@@ -267,6 +277,7 @@ export interface FileRouteTypes {
     | '/p/$slug/$'
     | '/p/$slug'
     | '/api/public/payments/webhook'
+    | '/api/public/track/click'
     | '/api/public/v1/analytics'
     | '/api/public/v1/presence'
   id:
@@ -291,6 +302,7 @@ export interface FileRouteTypes {
     | '/p/$slug/$'
     | '/p/$slug/'
     | '/api/public/payments/webhook'
+    | '/api/public/track/click'
     | '/api/public/v1/analytics'
     | '/api/public/v1/presence'
   fileRoutesById: FileRoutesById
@@ -316,6 +328,7 @@ export interface RootRouteChildren {
   PSlugSplatRoute: typeof PSlugSplatRoute
   PSlugIndexRoute: typeof PSlugIndexRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
+  ApiPublicTrackClickRoute: typeof ApiPublicTrackClickRoute
   ApiPublicV1AnalyticsRoute: typeof ApiPublicV1AnalyticsRoute
   ApiPublicV1PresenceRoute: typeof ApiPublicV1PresenceRoute
 }
@@ -462,6 +475,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/track/click': {
+      id: '/api/public/track/click'
+      path: '/api/public/track/click'
+      fullPath: '/api/public/track/click'
+      preLoaderRoute: typeof ApiPublicTrackClickRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/analytics': {
       id: '/api/public/v1/analytics'
       path: '/api/public/v1/analytics'
@@ -501,6 +521,7 @@ const rootRouteChildren: RootRouteChildren = {
   PSlugSplatRoute: PSlugSplatRoute,
   PSlugIndexRoute: PSlugIndexRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
+  ApiPublicTrackClickRoute: ApiPublicTrackClickRoute,
   ApiPublicV1AnalyticsRoute: ApiPublicV1AnalyticsRoute,
   ApiPublicV1PresenceRoute: ApiPublicV1PresenceRoute,
 }
