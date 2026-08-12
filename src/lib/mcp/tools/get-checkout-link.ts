@@ -36,7 +36,7 @@ export default defineTool({
         checkout_mode: live ? "live" : "demo",
         payment_possible: live,
         note: live
-          ? "Checkout is completed on the Crawler website, not inside this conversation."
+          ? "Checkout is completed on the Crawler website, not inside this conversation. No Crawler account is created: after payment the Presence goes live and a one-time recovery code is issued."
           : "Stripe keys are absent on this deployment. The website shows a labelled demo checkout; no payment is processed and no subscription is created.",
       },
     };

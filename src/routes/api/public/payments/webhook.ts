@@ -1,66 +1,79 @@
+/**
+ * Payment webhook — the only place a subscription becomes real.
+ *
+ * Crawler has no user accounts, so nothing here refers to a person. Events are
+ * matched to an anonymous publish intent (`pi_…`) that the checkout session
+ * carried in its metadata, and to the presence that later redeemed it.
+ */
 import { createFileRoute } from "@tanstack/react-router";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import { type StripeEnv, verifyWebhook } from "@/lib/stripe.server";
 
-let _supabase: SupabaseClient | null = null;
-function getSupabase(): SupabaseClient {
-  if (!_supabase) {
-    _supabase = createClient(process.env["SUPABASE_URL"]!, process.env["SUPABASE_SERVICE_ROLE_KEY"]!, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
-  }
-  return _supabase;
-}
-
 type AnySub = Record<string, any>;
-
-function priceOf(subscription: AnySub) {
-  const item = subscription["items"]?.data?.[0];
-  return {
-    priceId: item?.price?.lookup_key || item?.price?.metadata?.lovable_external_id || item?.price?.id,
-    productId: item?.price?.product,
-    periodStart: item?.current_period_start ?? subscription["current_period_start"],
-    periodEnd: item?.current_period_end ?? subscription["current_period_end"],
-  };
-}
 
 const iso = (seconds?: number | null) => (seconds ? new Date(seconds * 1000).toISOString() : null);
 
-async function upsertSubscription(subscription: AnySub, env: StripeEnv) {
-  const userId = subscription["metadata"]?.userId;
-  if (!userId) {
-    console.error("[crawler] subscription webhook without userId metadata", subscription["id"]);
-    return;
-  }
-  const { priceId, productId, periodStart, periodEnd } = priceOf(subscription);
-
-  await getSupabase()
-    .from("subscriptions")
-    .upsert(
-      {
-        user_id: userId,
-        stripe_subscription_id: subscription["id"],
-        stripe_customer_id: subscription["customer"],
-        product_id: productId ?? "unknown",
-        price_id: priceId ?? "unknown",
-        status: subscription["status"],
-        current_period_start: iso(periodStart),
-        current_period_end: iso(periodEnd),
-        cancel_at_period_end: Boolean(subscription["cancel_at_period_end"]),
-        environment: env,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "stripe_subscription_id" },
-    );
+function subscriptionShape(subscription: AnySub) {
+  const item = subscription["items"]?.data?.[0];
+  return {
+    subscriptionId: String(subscription["id"] ?? ""),
+    customerId: typeof subscription["customer"] === "string" ? subscription["customer"] : null,
+    status: typeof subscription["status"] === "string" ? subscription["status"] : null,
+    periodEnd: iso(item?.current_period_end ?? subscription["current_period_end"]),
+  };
 }
 
-async function markCanceled(subscription: AnySub, env: StripeEnv) {
-  await getSupabase()
-    .from("subscriptions")
-    .update({ status: "canceled", updated_at: new Date().toISOString() })
-    .eq("stripe_subscription_id", subscription["id"])
-    .eq("environment", env);
+function intentRefOf(object: AnySub): string | null {
+  const ref = object["metadata"]?.intent_ref;
+  return typeof ref === "string" && /^pi_[a-f0-9]{32}$/.test(ref) ? ref : null;
+}
+
+async function handleSubscription(subscription: AnySub) {
+  const { markIntentPaid } = await import("@/lib/intents.server");
+  const { syncPresenceBilling } = await import("@/lib/mcp/presences");
+  const shape = subscriptionShape(subscription);
+  const ref = intentRefOf(subscription);
+
+  if (ref) {
+    await markIntentPaid(ref, {
+      stripeCustomerId: shape.customerId,
+      stripeSubscriptionId: shape.subscriptionId,
+      subscriptionStatus: shape.status,
+      currentPeriodEnd: shape.periodEnd,
+    });
+  } else {
+    console.error("[crawler] subscription event without intent_ref metadata", shape.subscriptionId);
+  }
+
+  if (shape.subscriptionId) {
+    await syncPresenceBilling(shape.subscriptionId, {
+      subscriptionStatus: shape.status,
+      currentPeriodEnd: shape.periodEnd,
+    });
+  }
+}
+
+async function handleCanceled(subscription: AnySub) {
+  const { syncPresenceBilling } = await import("@/lib/mcp/presences");
+  const shape = subscriptionShape(subscription);
+  if (!shape.subscriptionId) return;
+  await syncPresenceBilling(shape.subscriptionId, {
+    subscriptionStatus: "canceled",
+    currentPeriodEnd: shape.periodEnd,
+  });
+}
+
+/** A completed checkout may arrive before the subscription events. */
+async function handleCheckoutCompleted(session: AnySub) {
+  const ref = intentRefOf(session);
+  if (!ref) return;
+  const { markIntentPaid } = await import("@/lib/intents.server");
+  await markIntentPaid(ref, {
+    stripeCustomerId: typeof session["customer"] === "string" ? session["customer"] : null,
+    stripeSubscriptionId: typeof session["subscription"] === "string" ? session["subscription"] : null,
+    subscriptionStatus: "active",
+    currentPeriodEnd: null,
+  });
 }
 
 export const Route = createFileRoute("/api/public/payments/webhook")({
@@ -76,12 +89,15 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
         try {
           const event = await verifyWebhook(request, env);
           switch (event.type) {
+            case "checkout.session.completed":
+              await handleCheckoutCompleted(event.data.object as AnySub);
+              break;
             case "customer.subscription.created":
             case "customer.subscription.updated":
-              await upsertSubscription(event.data.object as AnySub, env);
+              await handleSubscription(event.data.object as AnySub);
               break;
             case "customer.subscription.deleted":
-              await markCanceled(event.data.object as AnySub, env);
+              await handleCanceled(event.data.object as AnySub);
               break;
             default:
               console.log("[crawler] unhandled payment event:", event.type);

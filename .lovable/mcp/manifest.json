@@ -3,11 +3,7 @@
   "sdk_version": "0.26.2",
   "path": "/mcp",
   "auth": {
-    "type": "oauth",
-    "issuer": "https://wpobmaweqzkeqkxkkdtb.supabase.co/auth/v1",
-    "accepted_audiences": [
-      "authenticated"
-    ]
+    "type": "none"
   },
   "mcp": {
     "server": {
@@ -181,7 +177,7 @@
       {
         "name": "publish_presence",
         "title": "Publish Presence",
-        "description": "Use this when the user asks to publish or host their Presence. Publishing is the paid step and requires a Crawler account with an active subscription. If the draft has already been linked to a subscribed account, this publishes it and returns the live URLs. Otherwise it returns publish_requires_account=true plus a handoff URL that carries the anonymous draft so nothing is retyped. Creating and previewing a Presence is always free.",
+        "description": "Use this when the user asks to publish or host their Presence. Publishing is the paid step. Crawler has no accounts, no login and no registration: if the user already paid for this draft on the Crawler website, this publishes it and returns the live URLs plus a one-time management secret. Otherwise it returns publish_requires_payment=true plus a handoff URL that carries the anonymous draft so nothing is retyped. Creating and previewing a Presence is always free.",
         "annotations": {
           "readOnlyHint": false,
           "destructiveHint": false,

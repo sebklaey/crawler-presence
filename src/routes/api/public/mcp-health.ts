@@ -20,7 +20,7 @@ export const Route = createFileRoute("/api/public/mcp-health")({
             time: new Date().toISOString(),
             auth_mode: "none",
             auth_note:
-              "Public no-auth MVP. No ChatGPT account identity is available. Building and previewing need no account; durable ownership, subscription management, private analytics, team access and cross-device recovery require account linking on the Crawler website.",
+              "Public no-auth endpoint. No ChatGPT account identity is available. Crawler has no user registration, no login and no user accounts. Published Presences are controlled by a capability-based recovery code, of which only a hash is stored.",
             interview_model_configured: Boolean(process.env["LOVABLE_API_KEY"]),
             analytics_mode: "demo",
             checkout_mode: stripeConfigured() ? "live" : "demo",

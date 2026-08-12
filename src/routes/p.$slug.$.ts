@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { getPublished } from "@/lib/mcp/presences";
+import { getLivePresence } from "@/lib/mcp/presences";
 
 const contentType = (type: string, path: string) => {
   if (path.endsWith(".json") || type === "json") return "application/json; charset=utf-8";
@@ -13,7 +13,7 @@ export const Route = createFileRoute("/p/$slug/$")({
   server: {
     handlers: {
       GET: async ({ params }) => {
-        const record = await getPublished(params.slug);
+        const record = await getLivePresence(params.slug);
         if (!record) return new Response("Presence not found", { status: 404 });
         const path = (params._splat ?? "").replace(/^\/+/, "");
         const file = record.files.find((f) => f.path === path);

@@ -26,7 +26,7 @@ export default defineTool({
         time: new Date().toISOString(),
         auth_mode: "none",
         auth_note:
-          "All tools are public and unauthenticated. No ChatGPT account identity is available to this server. Building and previewing need no account; durable ownership, subscription management, private analytics, team access and cross-device recovery require account linking on the Crawler website.",
+          "All tools are public and unauthenticated (auth type none). No ChatGPT account identity is available to this server. Crawler has no user registration, no login and no user accounts at all. Building and previewing are free; publishing is the paid step on the Crawler website and hands out a one-time recovery code that is the sole means of managing a published Presence.",
         interview_model_configured: modelConfigured,
         analytics_mode: "demo",
         checkout_mode: stripeConfigured() ? "live" : "demo",
