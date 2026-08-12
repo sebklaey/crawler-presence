@@ -295,7 +295,7 @@
       {
         "name": "improve_presence",
         "title": "Improve the Presence",
-        "description": "Use this when the user has an analytics insight or a requested change and wants to know what to fix in their Presence. Identifies which Knowledge Core fields need clarification and returns one targeted next question. Never invents facts.",
+        "description": "Use this when the user has an analytics insight or a requested change and wants to know what to fix in their Presence. Crawler runs no language model of its own: it returns a deterministic gap analysis of the Knowledge Core plus the insight, and you phrase the targeted follow-up question. Never invents facts.",
         "annotations": {
           "readOnlyHint": true,
           "destructiveHint": false,
@@ -314,7 +314,7 @@
               "type": "string",
               "minLength": 3,
               "maxLength": 2000,
-              "description": "The analytics insight or requested change, e.g. 'people keep asking about frame sizes'."
+              "description": "The analytics insight or requested change, e.g. 'people keep asking about licensing'."
             }
           },
           "required": [
