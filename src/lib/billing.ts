@@ -4,7 +4,10 @@ export type Plan = {
   id: PlanId;
   name: string;
   price: number;
+  /** Shipped and enforced today. */
   features: string[];
+  /** On the roadmap — never presented as working. */
+  planned?: string[];
   catalogLimit: number;
   analyticsDays: number;
 };
@@ -19,8 +22,9 @@ export const PLANS: Plan[] = [
     features: [
       "1 published presence",
       "Small catalog (up to 10 products, projects or services)",
-      "Basic analytics, 7-day window",
+      "Measured analytics, 7-day window",
       "llms.txt, markdown pages and JSON endpoints",
+      "Accountless management via recovery code",
     ],
   },
   {
@@ -32,26 +36,27 @@ export const PLANS: Plan[] = [
     features: [
       "Larger catalog (up to 200 entries)",
       "Analytics with a 90-day window",
-      "Detailed conversation insights",
+      "Detailed conversation insights (recurring questions, gaps)",
       "Improve my Presence recommendations",
-      "Custom domain",
     ],
+    planned: ["Custom domain"],
   },
   {
     id: "business",
     name: "Business",
     price: 80,
     catalogLimit: 5000,
-    analyticsDays: 3650,
+    analyticsDays: 90,
     features: [
-      "Team use with shared presences",
       "Large catalog (up to 5,000 entries)",
-      "Unlimited analytics history",
-      "API access and scheduled reports",
-      "Priority support",
+      "Analytics with a 90-day window over the full event retention",
+      "Detailed conversation insights and improvement recommendations",
+      "Priority support by email",
     ],
+    planned: ["Shared team access", "API access and scheduled reports"],
   },
 ];
+
 
 export const planById = (id: PlanId) => PLANS.find((p) => p.id === id)!;
 
