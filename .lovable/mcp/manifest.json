@@ -92,7 +92,7 @@
       {
         "name": "analyze_source_url",
         "title": "Analyze a public URL",
-        "description": "Use this when the user pastes a website or landing-page URL and wants Crawler to extract candidate facts from the public page. Returns extracted information with provenance (source_url) and per-fact confidence. If fetching fails or is blocked, returns an honest structured unavailable result instead of invented data.",
+        "description": "Use this when the user pastes a website or landing-page URL. Crawler fetches the public page and returns its readable text, title, meta description and headings with provenance (source_url). Crawler runs no language model of its own — YOU extract the candidate facts from the returned text, keep hard facts separate from marketing narrative, and send them as core_update to continue_interview. If fetching fails or is blocked, an honest structured unavailable result is returned instead of invented data.",
         "annotations": {
           "readOnlyHint": true,
           "destructiveHint": false,
