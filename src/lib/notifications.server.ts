@@ -91,7 +91,8 @@ async function allowedByPreference(slug: string | null, topic: NotificationTopic
   const column = PREFERENCE_COLUMN[topic];
   if (!column || !slug) return true;
   const { data } = await store().from("published_presences").select(column).eq("slug", slug).maybeSingle();
-  return data ? data[column] !== false : true;
+  const row = data as Record<string, unknown> | null;
+  return row ? row[column] !== false : true;
 }
 
 async function withinQuietPeriod(slug: string | null, eventType: NotificationEventType): Promise<boolean> {
