@@ -53,6 +53,13 @@ export default defineTool({
       },
     });
 
+    try {
+      const { recordMentionsFromInput } = await import("../presence-analytics");
+      await recordMentionsFromInput(url);
+    } catch {
+      /* analytics must never break a URL analysis */
+    }
+
     let parsed: URL;
     try {
       parsed = new URL(url);

@@ -77,6 +77,82 @@ export type Database = {
         }
         Relationships: []
       }
+      presence_aliases: {
+        Row: {
+          alias: string
+          alias_kind: string
+          created_at: string
+          id: string
+          presence_slug: string
+        }
+        Insert: {
+          alias: string
+          alias_kind: string
+          created_at?: string
+          id?: string
+          presence_slug: string
+        }
+        Update: {
+          alias?: string
+          alias_kind?: string
+          created_at?: string
+          id?: string
+          presence_slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presence_aliases_presence_slug_fkey"
+            columns: ["presence_slug"]
+            isOneToOne: false
+            referencedRelation: "published_presences"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      presence_analytics_events: {
+        Row: {
+          created_at: string
+          dedupe_key: string | null
+          event_type: string
+          file_path: string | null
+          id: string
+          occurred_at: string
+          presence_slug: string
+          session_fingerprint: string | null
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          dedupe_key?: string | null
+          event_type: string
+          file_path?: string | null
+          id?: string
+          occurred_at?: string
+          presence_slug: string
+          session_fingerprint?: string | null
+          source?: string
+        }
+        Update: {
+          created_at?: string
+          dedupe_key?: string | null
+          event_type?: string
+          file_path?: string | null
+          id?: string
+          occurred_at?: string
+          presence_slug?: string
+          session_fingerprint?: string | null
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presence_analytics_events_presence_slug_fkey"
+            columns: ["presence_slug"]
+            isOneToOne: false
+            referencedRelation: "published_presences"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
       publish_intents: {
         Row: {
           billing_checkout_id: string | null

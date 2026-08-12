@@ -13,7 +13,7 @@ import { z } from "zod";
 const codeSchema = z.object({ code: z.string().trim().min(10).max(200) });
 
 export type ManageAnalytics = {
-  mode: "demo";
+  mode: "demo" | "measured";
   windowDays: number;
   metrics: { label: string; value: number; hint: string }[];
   topQuestions: { label: string; count: number }[];
@@ -73,7 +73,44 @@ async function resolve(code: string) {
  * of the published files. This build serves seeded DEMO numbers and says so.
  * Crawler never sees private ChatGPT, Claude or Gemini conversations.
  */
-async function analyticsFor(): Promise<ManageAnalytics> {
+async function analyticsFor(slug: string, plan: string): Promise<ManageAnalytics> {
+  const { planById } = await import("./billing");
+  const { asPlanId } = await import("./entitlements");
+  const windowDays = Math.min(planById(asPlanId(plan)).analyticsDays, 90);
+
+  try {
+    const { hasEvents, publicSummary, detailedSummary } = await import("./mcp/presence-analytics");
+    if (await hasEvents(slug)) {
+      const period = (windowDays >= 90 ? 90 : 7) as 7 | 90;
+      const summary = await publicSummary(slug, slug, period);
+      const detail = await detailedSummary(slug, period);
+      if (summary) {
+        return {
+          mode: "measured",
+          windowDays: period,
+          metrics: [
+            {
+              label: "Crawler conversations",
+              value: summary.conversations_mentioning,
+              hint: "Distinct anonymous Crawler sessions that mentioned this Presence",
+            },
+            { label: "Mention events", value: summary.mention_events, hint: "Crawler tool calls referencing it" },
+            { label: "Public reads", value: summary.crawler_reads, hint: "Observable reads of your public files" },
+            {
+              label: "Outbound clicks",
+              value: detail?.outbound_clicks ?? 0,
+              hint: "Trackable clicks on your links",
+            },
+          ],
+          topQuestions: (detail?.file_reads ?? []).slice(0, 4).map((f) => ({ label: f.path, count: f.count })),
+          gaps: [],
+        };
+      }
+    }
+  } catch {
+    /* fall through to the clearly labelled demo numbers */
+  }
+
   const { demoDays, demoMissing, demoTopics, totals, windowRows } = await import("./demo-analytics");
   const rows = windowRows(demoDays(90), 7);
   const t = totals(rows);
@@ -118,7 +155,7 @@ export const manageOverviewFn = createServerFn({ method: "POST" })
       hiddenCatalogEntries: limited.hidden,
       catalogLimit: limited.limit,
       // Analytics are part of the paid plan — locked while billing has lapsed.
-      analytics: restricted ? null : await analyticsFor(),
+      analytics: restricted ? null : await analyticsFor(p.slug, p.plan),
     };
 
   });

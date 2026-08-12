@@ -1,0 +1,1 @@
+DELETE FROM public.published_presences WHERE slug LIKE 'analytics-test-presence-%';

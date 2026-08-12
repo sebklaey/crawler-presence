@@ -45,6 +45,14 @@ export default defineTool({
     ];
     await saveSession(session);
 
+    // Measurable analytics: does this tool input reference a published Presence?
+    try {
+      const { recordMentionsFromInput } = await import("../presence-analytics");
+      await recordMentionsFromInput(message, session.id);
+    } catch {
+      /* analytics must never break an interview */
+    }
+
     const payload = {
       session_id: session.id,
       session_note: SESSION_NOTE,

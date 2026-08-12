@@ -230,8 +230,8 @@
       },
       {
         "name": "get_analytics",
-        "title": "Get Presence analytics (demo)",
-        "description": "Use this when the user asks how their Presence is performing, what people ask about it, or for analytics over the last 7/30/90 days. In this no-auth MVP it returns clearly labelled seeded DEMO analytics plus session-local metrics — never private data and never external AI assistant conversations.",
+        "title": "Presence analytics (Crawler-measured)",
+        "description": "Use this whenever a user asks how often something or someone was talked about inside Crawler, e.g. 'wie oft wurde über sebklaey.app geredet?', 'how many people asked about Product X?' or 'analytics last 7 days'. Pass entity_or_domain with the domain, URL, entity name or public Presence slug. It returns a truthful PUBLIC aggregate for any published Presence with no account and no code: distinct anonymous Crawler sessions that mentioned it, mention events, public file reads. Scope is Crawler-only — it measures Crawler tool calls and reads of the published Presence files, never all ChatGPT, Claude, Gemini or internet conversations. Detailed analytics (daily trend, file reads, sources, outbound clicks) require the Presence recovery code; pass it as recovery_code.",
         "annotations": {
           "readOnlyHint": true,
           "destructiveHint": false,
@@ -241,29 +241,45 @@
         "inputSchema": {
           "type": "object",
           "properties": {
+            "entity_or_domain": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 200,
+              "description": "Domain, URL, entity name or public Presence slug to look up, e.g. 'sebklaey.app'."
+            },
+            "period_days": {
+              "type": [
+                "number",
+                "string"
+              ],
+              "enum": [
+                7,
+                30,
+                90,
+                "all"
+              ],
+              "default": 30,
+              "description": "Analytics window: 7, 30, 90 or 'all'."
+            },
+            "recovery_code": {
+              "type": "string",
+              "minLength": 10,
+              "maxLength": 200,
+              "description": "Optional Presence recovery code (<slug>~crw_...) that unlocks detailed analytics."
+            },
             "session_id": {
               "type": "string",
               "minLength": 6,
               "description": "Optional Crawler session for session-local metrics."
             },
-            "period_days": {
-              "type": "number",
-              "enum": [
-                7,
-                30,
-                90
-              ],
-              "default": 30,
-              "description": "Analytics window in days."
-            },
             "filter": {
               "type": "string",
-              "description": "Optional product or entity name filter, e.g. 'gravel bikes' or 'Product X'."
+              "description": "Optional product or entity name filter."
             },
             "include_ai_summary": {
               "type": "boolean",
-              "default": true,
-              "description": "Include the AI summary of recurring questions and gaps."
+              "default": false,
+              "description": "Include a seeded demo AI summary (no measured data)."
             }
           },
           "additionalProperties": false,

@@ -46,6 +46,13 @@ export default defineTool({
     ].slice(-40);
     await saveSession(session);
 
+    try {
+      const { recordMentionsFromInput } = await import("../presence-analytics");
+      await recordMentionsFromInput(user_answer, session.id);
+    } catch {
+      /* analytics must never break an interview */
+    }
+
     return {
       content: [
         {
