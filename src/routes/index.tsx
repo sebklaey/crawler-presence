@@ -27,7 +27,21 @@ export const Route = createFileRoute("/")({
         content: "Build an AI-readable presence through an adaptive interview. Creation and preview are free.",
       },
     ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "Crawler",
+          url: "https://crawler.today",
+          description:
+            "Crawler turns what you do into an AI-readable public presence: llms.txt, markdown pages and JSON endpoints.",
+        }),
+      },
+    ],
   }),
+
   component: Index,
 });
 
