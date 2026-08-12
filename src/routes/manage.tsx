@@ -299,15 +299,16 @@ function ManagePage() {
                     Presence analytics · last {data.analytics.windowDays} days
                   </div>
                   <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                    {data.analytics.mode === "measured" ? "Measured" : "Demo data"}
+                    {data.analytics.mode === "measured" ? "Measured" : "No events yet"}
                   </span>
                 </div>
                 <p className="mt-2 text-xs text-muted-foreground">
                   {data.analytics.mode === "measured"
-                    ? "Measured inside Crawler: anonymous Crawler sessions that referenced this Presence, and observable reads of your public files. No demo data is mixed in."
-                    : "No measured events yet, so these numbers are seeded DEMO data — they are not your traffic."}{" "}
+                    ? "Measured inside Crawler: anonymous Crawler sessions that referenced this Presence, and observable reads of your public files."
+                    : "Nothing measured in this window yet. Numbers appear as soon as Crawler references this Presence or its public files are read — Crawler never shows demo numbers here."}{" "}
                   Crawler has no access to private ChatGPT, Claude, Gemini or other assistant conversations.
                 </p>
+
 
 
                 <dl className="mt-5 grid gap-4 sm:grid-cols-3">
