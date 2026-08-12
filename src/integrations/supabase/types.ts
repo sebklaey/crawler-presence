@@ -79,6 +79,9 @@ export type Database = {
       }
       publish_intents: {
         Row: {
+          billing_checkout_id: string | null
+          billing_customer_id: string | null
+          billing_subscription_id: string | null
           created_at: string
           current_period_end: string | null
           environment: string
@@ -89,13 +92,13 @@ export type Database = {
           presence_slug: string | null
           session_token: string | null
           status: string
-          stripe_checkout_id: string | null
-          stripe_customer_id: string | null
-          stripe_subscription_id: string | null
           subscription_status: string | null
           updated_at: string
         }
         Insert: {
+          billing_checkout_id?: string | null
+          billing_customer_id?: string | null
+          billing_subscription_id?: string | null
           created_at?: string
           current_period_end?: string | null
           environment?: string
@@ -106,13 +109,13 @@ export type Database = {
           presence_slug?: string | null
           session_token?: string | null
           status?: string
-          stripe_checkout_id?: string | null
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
           subscription_status?: string | null
           updated_at?: string
         }
         Update: {
+          billing_checkout_id?: string | null
+          billing_customer_id?: string | null
+          billing_subscription_id?: string | null
           created_at?: string
           current_period_end?: string | null
           environment?: string
@@ -123,9 +126,6 @@ export type Database = {
           presence_slug?: string | null
           session_token?: string | null
           status?: string
-          stripe_checkout_id?: string | null
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
           subscription_status?: string | null
           updated_at?: string
         }
@@ -133,6 +133,8 @@ export type Database = {
       }
       published_presences: {
         Row: {
+          billing_customer_id: string | null
+          billing_subscription_id: string | null
           claim_token: string | null
           core: Json
           created_at: string
@@ -147,13 +149,13 @@ export type Database = {
           session_token: string | null
           slug: string
           status: string
-          stripe_customer_id: string | null
-          stripe_subscription_id: string | null
           subscription_status: string | null
           unpublished_at: string | null
           updated_at: string
         }
         Insert: {
+          billing_customer_id?: string | null
+          billing_subscription_id?: string | null
           claim_token?: string | null
           core: Json
           created_at?: string
@@ -168,13 +170,13 @@ export type Database = {
           session_token?: string | null
           slug: string
           status?: string
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
           subscription_status?: string | null
           unpublished_at?: string | null
           updated_at?: string
         }
         Update: {
+          billing_customer_id?: string | null
+          billing_subscription_id?: string | null
           claim_token?: string | null
           core?: Json
           created_at?: string
@@ -189,8 +191,6 @@ export type Database = {
           session_token?: string | null
           slug?: string
           status?: string
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
           subscription_status?: string | null
           unpublished_at?: string | null
           updated_at?: string
