@@ -227,7 +227,7 @@ function PublishPage() {
           mode: "demo",
         });
         setPublished({ at: result.publishedAt, slug: result.slug });
-        toast.success("Demo publish complete — files are live but clearly labelled as a demo.");
+        toast.success("Published free in Free Beta 0.0.1 — your files are live, no charge.");
         return;
       }
       toast.error(result.message);
@@ -256,7 +256,7 @@ function PublishPage() {
                 <RecoveryCodeCard code={issued.recoveryCode} slug={issued.slug} />
                 <div className="rounded-2xl border border-border bg-card p-6">
                   <div className="text-sm font-medium">
-                    {issued.mode === "demo" ? "Demo publish complete" : "Live since"}{" "}
+                    {issued.mode === "demo" ? "Published free (Free Beta 0.0.1) since" : "Live since"}{" "}
                     {new Date(issued.publishedAt).toLocaleString()}
                   </div>
                   <a href={`/p/${issued.slug}`} className="mt-1 block break-all text-sm underline underline-offset-4">
@@ -301,9 +301,10 @@ function PublishPage() {
 
               {!payments ? (
                 <div className="mt-3 rounded-lg border border-dashed border-border bg-secondary/60 px-3 py-2 text-xs text-muted-foreground">
-                  <strong className="text-foreground">Demo / test mode.</strong> No payment credentials are configured
-                  on this deployment, so no subscription is created and no charge is made. The same flow runs and the
-                  Presence is published, clearly labelled as a demo.
+                  <strong className="text-foreground">Free Beta 0.0.1 — publishing is free.</strong> Live payments are
+                  not enabled yet, so your Presence goes online immediately at no cost and no subscription is created.
+                  Pick the plan whose limits you want during the beta. Once payments go live, Crawler switches
+                  automatically to the paid version 0.0.2 and normal paid operation begins.
                 </div>
               ) : (
                 <p className="mt-3 text-xs text-muted-foreground">
