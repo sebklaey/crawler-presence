@@ -77,6 +77,25 @@ function PublicPresence() {
           </div>
         ) : null}
 
+        {data.website || data.links.length ? (
+          <div className="mb-8 flex flex-wrap gap-2">
+            {[
+              ...(data.website ? [{ label: "Website", url: data.website }] : []),
+              ...data.links,
+            ].map((link: { label: string; url: string }) => (
+              <a
+                key={link.url}
+                href={`/api/public/track/click?slug=${encodeURIComponent(slug)}&url=${encodeURIComponent(link.url)}`}
+                rel="noopener noreferrer nofollow"
+                target="_blank"
+                className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground hover:border-foreground/40 hover:text-foreground"
+              >
+                {link.label}
+              </a>
+            ))}
+          </div>
+        ) : null}
+
         <h2 className="display mb-3 text-2xl">Public files</h2>
         <ul className="divide-y divide-border/70 rounded-xl border border-border/70">
           {data.files.map((f: { path: string; type: string }) => (
