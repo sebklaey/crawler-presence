@@ -28,7 +28,11 @@ export const Route = createFileRoute("/api/public/reports/run")({
           // Same schedule announces support ticket status changes, so no
           // second scheduler is needed.
           const tickets = await notifyTicketUpdates();
-          return Response.json({ ok: true, ...result, ticketNotifications: tickets });
+          // Source monitoring, health scoring and lifecycle notifications run
+          // on the same schedule; each step is independently idempotent.
+          const { runRetentionMaintenance } = await import("@/lib/retention-jobs.server");
+          const retention = await runRetentionMaintenance();
+          return Response.json({ ok: true, ...result, ticketNotifications: tickets, retention });
         } catch (error) {
           console.error("[crawler] report run failed", error instanceof Error ? error.message : "unknown error");
           return Response.json({ ok: false, error: "Report run failed." }, { status: 500 });
