@@ -39,6 +39,8 @@ export const Route = createFileRoute("/publish")({
   component: PublishPage,
 });
 
+const PENDING_INTENT_KEY = "crawler:pending-intent";
+
 type Issued = { slug: string; publishedAt: string; paths: string[]; recoveryCode: string; mode: "live" | "demo" };
 
 function PublishPage() {
@@ -52,6 +54,7 @@ function PublishPage() {
   const [recovered, setRecovered] = useState(false);
   const [issued, setIssued] = useState<Issued | null>(null);
   const [awaitingPayment, setAwaitingPayment] = useState(Boolean(search.intent));
+  const [pendingIntent, setPendingIntent] = useState<string | null>(search.intent ?? null);
   const { status: paymentsStatus } = usePaymentsStatus();
 
   // Handoff from ChatGPT: recover the anonymous draft carried in the URL.
@@ -94,6 +97,7 @@ function PublishPage() {
   const finalize = useCallback(
     async (intentRef: string) => {
       const result = await finalizePublishFn({ data: { intentRef, core } });
+      if (result.kind !== "pending") localStorage.removeItem(PENDING_INTENT_KEY);
       if (result.kind === "published") {
         setIssued({
           slug: result.slug,
@@ -123,9 +127,23 @@ function PublishPage() {
     [core, setPublished],
   );
 
+  // Paddle's hosted checkout returns to the success URL configured in Paddle,
+  // which may not carry our query string — so the intent is also kept locally.
+  useEffect(() => {
+    if (search.intent) {
+      setPendingIntent(search.intent);
+      return;
+    }
+    const stored = localStorage.getItem(PENDING_INTENT_KEY);
+    if (stored) {
+      setPendingIntent(stored);
+      setAwaitingPayment(true);
+    }
+  }, [search.intent]);
+
   // Return from hosted checkout: poll until the payment webhook has landed.
   useEffect(() => {
-    const intentRef = search.intent;
+    const intentRef = pendingIntent;
     if (!intentRef) return;
     let cancelled = false;
     let attempts = 0;
@@ -150,7 +168,7 @@ function PublishPage() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search.intent]);
+  }, [pendingIntent]);
 
   if (recovering) {
     return (
@@ -199,6 +217,7 @@ function PublishPage() {
         },
       });
       if (result.kind === "checkout") {
+        localStorage.setItem(PENDING_INTENT_KEY, result.intentRef);
         window.location.href = result.url;
         return;
       }
