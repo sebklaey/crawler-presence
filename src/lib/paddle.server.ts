@@ -93,8 +93,8 @@ export async function resolvePriceId(plan: PlanId): Promise<string> {
   return id;
 }
 
-/** True when this deployment can really charge for the given environment. */
 /**
+
  * True only when this deployment can really charge in `target`: an API key for
  * that environment AND a webhook secret to confirm the payment afterwards.
  * Without confirmation a checkout could never unlock publishing, so a missing
