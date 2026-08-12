@@ -301,13 +301,18 @@ export async function rotateManageSecret(slug: string): Promise<string> {
 export async function setPresenceStatus(slug: string, status: PresenceStatus): Promise<void> {
   const supabase = await client();
   if (supabase) {
-    await supabase
+    const { data, error } = await supabase
       .from("published_presences")
       .update({ status, unpublished_at: status === "offline" ? new Date().toISOString() : null })
-      .eq("slug", slug);
+      .eq("slug", slug)
+      .select("slug");
+    if (error) storeFailure("status", error.message);
+    if (!data || data.length !== 1) storeFailure("status", `unexpected affected rows: ${data?.length ?? 0}`);
+    return;
   }
   const local = memory.get(slug);
-  if (local) memory.set(slug, { ...local, status });
+  if (!local) storeFailure("status", "unknown presence");
+  memory.set(slug, { ...local, status });
 }
 
 /** Keeps a presence in sync with subscription lifecycle events. */
@@ -317,13 +322,14 @@ export async function syncPresenceBilling(
 ): Promise<void> {
   const supabase = await client();
   if (!supabase) return;
-  await supabase
+  const { error } = await supabase
     .from("published_presences")
     .update({
       subscription_status: billing.subscriptionStatus ?? null,
       current_period_end: billing.currentPeriodEnd ?? null,
     })
     .eq("billing_subscription_id", billingSubscriptionId);
+  if (error) storeFailure("billing-sync", error.message);
 }
 
 /* ------------------------------------------------------------------ */
@@ -339,22 +345,38 @@ export async function allowRequest(bucketKey: string, limit: number): Promise<bo
   const supabase = await client();
   if (supabase) {
     const iso = new Date(windowStart).toISOString();
-    const { data } = await supabase
+    const { data, error: readError } = await supabase
       .from("mcp_rate_limits")
       .select("id, hits")
       .eq("bucket_key", bucketKey)
       .eq("window_start", iso)
       .maybeSingle();
+    // Fail closed: a broken limiter must not become an open door.
+    if (readError) {
+      console.error("[crawler] rate limit read failed", readError.message);
+      return false;
+    }
     if (data) {
       const row = data as { id: string; hits: number };
       if (row.hits >= limit) return false;
-      await supabase.from("mcp_rate_limits").update({ hits: row.hits + 1 }).eq("id", row.id);
+      const { error } = await supabase
+        .from("mcp_rate_limits")
+        .update({ hits: row.hits + 1 })
+        .eq("id", row.id);
+      if (error) {
+        console.error("[crawler] rate limit update failed", error.message);
+        return false;
+      }
       return true;
     }
     const { error } = await supabase
       .from("mcp_rate_limits")
       .insert({ bucket_key: bucketKey, window_start: iso, hits: 1 });
-    if (!error) return true;
+    if (error) {
+      console.error("[crawler] rate limit insert failed", error.message);
+      return false;
+    }
+    return true;
   }
 
   const local = memoryHits.get(bucketKey);
