@@ -70,15 +70,21 @@ function PricingPage() {
                     <span className="text-muted-foreground">{f}</span>
                   </li>
                 ))}
+                {(p.planned ?? []).map((f) => (
+                  <li key={f} className="flex gap-2">
+                    <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 opacity-30" />
+                    <span className="text-muted-foreground/60">
+                      {f} <span className="text-[10px] uppercase tracking-wide">— planned</span>
+                    </span>
+                  </li>
+                ))}
               </ul>
-              <Button
-                className="mt-6"
-                variant={p.id === "pro" ? "default" : "outline"}
-                disabled={plan === p.id}
-                onClick={() => setPlan(p.id)}
-              >
-                {plan === p.id ? "Current plan" : `Choose ${p.name}`}
+              <Button asChild className="mt-6" variant={p.id === "pro" ? "default" : "outline"}>
+                <Link to="/publish" search={{ plan: p.id }} onClick={() => setPlan(p.id)}>
+                  {plan === p.id ? `Continue with ${p.name}` : `Choose ${p.name}`}
+                </Link>
               </Button>
+
             </div>
           ))}
         </div>
