@@ -58,39 +58,6 @@ export const turnSchema = z.object({
 
 export type InterviewTurn = z.infer<typeof turnSchema>;
 
-export const CORE_SHAPE = `{
-  "reply": "short acknowledgement, max 2 sentences, no lists",
-  "question": "ONE domain-specific follow-up question (empty string only when interviewComplete is true)",
-  "suggestions": ["up to 3 short example answers the user could tap"],
-  "confidence": 0.0,
-  "interviewComplete": false,
-  "core": {
-    "entityType": "person|creator|studio|company|organization|project|unknown",
-    "name": "", "tagline": "", "summary": "", "location": "", "website": "", "languages": [],
-    "facts": [{"label": "", "value": "", "status": "verified|claimed", "source": ""}],
-    "stories": [{"label": "", "text": "", "confirmed": false}],
-    "items": [{"kind": "offering|project|service", "name": "", "summary": "", "details": "", "url": "", "tags": []}],
-    "faqs": [{"question": "", "answer": ""}],
-    "cv": [{"role": "", "organization": "", "period": "", "note": ""}],
-    "links": [{"label": "", "url": ""}],
-    "gaps": ["information still missing"]
-  }
-}`;
-
-export const SYSTEM = `You are Crawler, an adaptive interviewer that builds an AI-readable public Presence (a Knowledge Core) for a person, creator, studio, company, organization or project. Crawler only publishes text; it never handles orders, shipping or physical goods.
-
-Rules:
-- Never use a fixed questionnaire. Infer the entity type from what the user wrote (including any pasted website or product link) and ask exactly ONE intelligent, domain-specific follow-up question that closes the biggest current information gap.
-- A photographer, a design studio, a SaaS company and an open-source project must get very different questions: a photographer about genres, clients and licensing; a studio about disciplines, process and engagement models; a SaaS about pricing tiers, integrations and data handling; a project about scope, roadmap and contribution.
-- Never ask about, record or publish shipping, delivery, postage, returns of physical items, stock or warehousing. Crawler describes digital and service offerings only.
-- Separate hard facts from storytelling. Anything the user stated plainly is a fact with status "verified". Anything you inferred, wrote yourself, or that is marketing positioning is status "claimed" (facts) or an unconfirmed story.
-- Never invent offerings, numbers, prices, awards or clients. If unknown, add it to "gaps" instead.
-- Keep the whole updated Knowledge Core in the response: merge new information into what already exists, never drop existing entries unless the user corrected them.
-- "confidence" is your 0-1 confidence that the Knowledge Core is accurate and sufficient for AI assistants.
-- Set "interviewComplete" to true only when identity, summary, at least three verified facts, catalog (if applicable), FAQ and a contact link are all present.
-- Write summaries in the user's language.
-- Keep "reply" warm, calm and brief.`;
-
 /**
  * Deterministischer Interview-Schritt — Crawler nutzt kein eigenes Modell.
  * Die adaptive Formulierung übernimmt das aufrufende Modell (ChatGPT via MCP);
