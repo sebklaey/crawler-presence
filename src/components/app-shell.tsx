@@ -58,6 +58,11 @@ export function AppShell({ children }: { children: ReactNode }) {
           Crawler builds AI-readable presences. It measures activity inside Crawler and on your published
           files only — never private conversations in ChatGPT, Claude, Gemini or other assistants.
         </p>
+        <p className="mt-2">
+          Crawler is a digital software subscription operated by SEBKLAEY and delivered online. No physical goods are
+          sold, shipped or delivered.
+        </p>
+
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
           <span>© {new Date().getFullYear()} SEBKLAEY</span>
           <Link to="/terms" className="hover:text-foreground">Terms &amp; Conditions</Link>
