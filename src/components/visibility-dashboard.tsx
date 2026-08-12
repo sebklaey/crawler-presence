@@ -389,8 +389,9 @@ export function VisibilityDashboardView({
           <TabsContent value="benchmark" className="space-y-4 pt-6">
             <div className="rounded-xl border border-dashed border-border bg-secondary/50 px-4 py-3 text-xs text-muted-foreground">
               <strong className="text-foreground">Kontrollierter Benchmark – keine reale Nutzermessung.</strong> Ein
-              festes Set neutraler Testfragen wird an ausgewählte AI-Modelle geschickt und ausgewertet. Gespeichert
-              werden nur Bewertungen, keine vollständigen Prompts oder Antworten.
+              festes Set neutraler Testfragen wird vom verbundenen Assistenten (ChatGPT über MCP) beantwortet und
+              bewertet — Crawler betreibt kein eigenes AI-Modell. Gespeichert werden nur die Bewertungen, keine
+              vollständigen Prompts oder Antworten.
             </div>
             <div className="flex flex-wrap items-center gap-3">
               {onBenchmark ? (
