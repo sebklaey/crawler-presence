@@ -26,13 +26,24 @@ const API_BASE: Record<PaddleEnv, string> = {
 const env = (name: string): string | undefined => process.env[name]?.trim() || undefined;
 
 export function paddleApiKey(): string | undefined {
-  return env("PADDLE_API_KEY");
+  // Managed connection keys first, then the legacy single-key secret.
+  return env("PADDLE_LIVE_API_KEY") ?? env("PADDLE_SANDBOX_API_KEY") ?? env("PADDLE_API_KEY");
 }
 
 /** Sandbox vs live is derived from the API key itself — never guessed. */
 export function paddleEnvironment(): PaddleEnv {
-  return paddleApiKey()?.includes("_live_") ? "live" : "sandbox";
+  const key = paddleApiKey();
+  if (!key) return "sandbox";
+  if (env("PADDLE_LIVE_API_KEY")) return "live";
+  return key.includes("_live_") ? "live" : "sandbox";
 }
+
+/** Human-readable price ids, stable across test and live. */
+const PRICE_EXTERNAL_ID: Record<PlanId, string> = {
+  plus: "crawler_plus_monthly",
+  pro: "crawler_pro_monthly",
+  business: "crawler_business_monthly",
+};
 
 const PRICE_ENV: Record<PlanId, string> = {
   plus: "PADDLE_PRICE_PLUS",
@@ -40,16 +51,38 @@ const PRICE_ENV: Record<PlanId, string> = {
   business: "PADDLE_PRICE_BUSINESS",
 };
 
-export function paddlePriceId(plan: PlanId): string | undefined {
-  return env(PRICE_ENV[plan]);
+const priceCache = new Map<string, string>();
+
+/**
+ * Resolves the Paddle internal `pri_…` id for a plan. An explicit
+ * `PADDLE_PRICE_*` secret wins; otherwise the catalog is looked up by its
+ * human-readable external id.
+ */
+export async function resolvePriceId(plan: PlanId): Promise<string> {
+  const override = env(PRICE_ENV[plan]);
+  if (override) return override;
+
+  const externalId = PRICE_EXTERNAL_ID[plan];
+  const cacheKey = `${paddleEnvironment()}:${externalId}`;
+  const cached = priceCache.get(cacheKey);
+  if (cached) return cached;
+
+  const prices = await paddleFetch<Array<{ id: string }>>(
+    `/prices?external_id=${encodeURIComponent(externalId)}&status=active`,
+  );
+  const id = prices[0]?.id;
+  if (!id) throw new Error(`No Paddle price found for ${externalId}`);
+  priceCache.set(cacheKey, id);
+  return id;
 }
 
 /** True when this deployment can really charge for the given environment. */
 export function paymentsConfigured(target: PaddleEnv): boolean {
   const key = paddleApiKey();
   if (!key || paddleEnvironment() !== target) return false;
-  return (Object.keys(PRICE_ENV) as PlanId[]).every((plan) => Boolean(paddlePriceId(plan)));
+  return true;
 }
+
 
 export function getPaddleErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message) return error.message;
