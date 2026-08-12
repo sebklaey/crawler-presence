@@ -109,7 +109,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap",
       },
+      // AI-readable presence of Crawler itself.
+      { rel: "describedby", href: "https://crawler.today/llms.txt", type: "text/plain" },
+      { rel: "alternate", href: "https://crawler.today/about.md", type: "text/markdown", title: "About (Markdown)" },
+      { rel: "alternate", href: "https://crawler.today/api/entity.json", type: "application/json", title: "Entity (JSON)" },
     ],
+
     scripts: [
       {
         type: "application/ld+json",

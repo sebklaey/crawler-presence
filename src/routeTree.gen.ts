@@ -11,9 +11,13 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SplatRouteImport } from './routes/$'
+import { Route as AboutDotmdRouteImport } from './routes/about[.]md'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as ChatgptRouteImport } from './routes/chatgpt'
+import { Route as FaqDotmdRouteImport } from './routes/faq[.]md'
 import { Route as KnowledgeRouteImport } from './routes/knowledge'
+import { Route as LlmsFullDottxtRouteImport } from './routes/llms-full[.]txt'
+import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
 import { Route as ManageRouteImport } from './routes/manage'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as PreviewRouteImport } from './routes/preview'
@@ -21,12 +25,15 @@ import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PublishRouteImport } from './routes/publish'
 import { Route as RefundsRouteImport } from './routes/refunds'
+import { Route as ServicesDotmdRouteImport } from './routes/services[.]md'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SupportRouteImport } from './routes/support'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as ApiEntityDotjsonRouteImport } from './routes/api/entity[.]json'
+import { Route as ApiServicesDotjsonRouteImport } from './routes/api/services[.]json'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as ApiPublicMcpHealthRouteImport } from './routes/api/public/mcp-health'
 import { Route as PSlugIndexRouteImport } from './routes/p.$slug.index'
@@ -48,6 +55,11 @@ const SplatRoute = SplatRouteImport.update({
   path: '/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AboutDotmdRoute = AboutDotmdRouteImport.update({
+  id: '/about.md',
+  path: '/about.md',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AnalyticsRoute = AnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
@@ -58,9 +70,24 @@ const ChatgptRoute = ChatgptRouteImport.update({
   path: '/chatgpt',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FaqDotmdRoute = FaqDotmdRouteImport.update({
+  id: '/faq.md',
+  path: '/faq.md',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const KnowledgeRoute = KnowledgeRouteImport.update({
   id: '/knowledge',
   path: '/knowledge',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LlmsFullDottxtRoute = LlmsFullDottxtRouteImport.update({
+  id: '/llms-full.txt',
+  path: '/llms-full.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LlmsDottxtRoute = LlmsDottxtRouteImport.update({
+  id: '/llms.txt',
+  path: '/llms.txt',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ManageRoute = ManageRouteImport.update({
@@ -98,6 +125,11 @@ const RefundsRoute = RefundsRouteImport.update({
   path: '/refunds',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ServicesDotmdRoute = ServicesDotmdRouteImport.update({
+  id: '/services.md',
+  path: '/services.md',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
@@ -130,6 +162,16 @@ const Char91DotwellKnownChar93OauthProtectedResourceRoute =
     path: '/.well-known/oauth-protected-resource',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiEntityDotjsonRoute = ApiEntityDotjsonRouteImport.update({
+  id: '/api/entity.json',
+  path: '/api/entity.json',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiServicesDotjsonRoute = ApiServicesDotjsonRouteImport.update({
+  id: '/api/services.json',
+  path: '/api/services.json',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
     id: '/.mcp/invoke-tool/$tool',
@@ -187,9 +229,13 @@ const LovableEmailTransactionalPreviewRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/about.md': typeof AboutDotmdRoute
   '/analytics': typeof AnalyticsRoute
   '/chatgpt': typeof ChatgptRoute
+  '/faq.md': typeof FaqDotmdRoute
   '/knowledge': typeof KnowledgeRoute
+  '/llms-full.txt': typeof LlmsFullDottxtRoute
+  '/llms.txt': typeof LlmsDottxtRoute
   '/manage': typeof ManageRoute
   '/mcp': typeof McpRoute
   '/preview': typeof PreviewRoute
@@ -197,12 +243,15 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/publish': typeof PublishRoute
   '/refunds': typeof RefundsRoute
+  '/services.md': typeof ServicesDotmdRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/support': typeof SupportRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/api/entity.json': typeof ApiEntityDotjsonRoute
+  '/api/services.json': typeof ApiServicesDotjsonRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
   '/p/$slug/$': typeof PSlugSplatRoute
@@ -217,9 +266,13 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/about.md': typeof AboutDotmdRoute
   '/analytics': typeof AnalyticsRoute
   '/chatgpt': typeof ChatgptRoute
+  '/faq.md': typeof FaqDotmdRoute
   '/knowledge': typeof KnowledgeRoute
+  '/llms-full.txt': typeof LlmsFullDottxtRoute
+  '/llms.txt': typeof LlmsDottxtRoute
   '/manage': typeof ManageRoute
   '/mcp': typeof McpRoute
   '/preview': typeof PreviewRoute
@@ -227,12 +280,15 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/publish': typeof PublishRoute
   '/refunds': typeof RefundsRoute
+  '/services.md': typeof ServicesDotmdRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/support': typeof SupportRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/api/entity.json': typeof ApiEntityDotjsonRoute
+  '/api/services.json': typeof ApiServicesDotjsonRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
   '/p/$slug/$': typeof PSlugSplatRoute
@@ -248,9 +304,13 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/about.md': typeof AboutDotmdRoute
   '/analytics': typeof AnalyticsRoute
   '/chatgpt': typeof ChatgptRoute
+  '/faq.md': typeof FaqDotmdRoute
   '/knowledge': typeof KnowledgeRoute
+  '/llms-full.txt': typeof LlmsFullDottxtRoute
+  '/llms.txt': typeof LlmsDottxtRoute
   '/manage': typeof ManageRoute
   '/mcp': typeof McpRoute
   '/preview': typeof PreviewRoute
@@ -258,12 +318,15 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/publish': typeof PublishRoute
   '/refunds': typeof RefundsRoute
+  '/services.md': typeof ServicesDotmdRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/support': typeof SupportRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/api/entity.json': typeof ApiEntityDotjsonRoute
+  '/api/services.json': typeof ApiServicesDotjsonRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
   '/p/$slug/$': typeof PSlugSplatRoute
@@ -280,9 +343,13 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/$'
+    | '/about.md'
     | '/analytics'
     | '/chatgpt'
+    | '/faq.md'
     | '/knowledge'
+    | '/llms-full.txt'
+    | '/llms.txt'
     | '/manage'
     | '/mcp'
     | '/preview'
@@ -290,12 +357,15 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/publish'
     | '/refunds'
+    | '/services.md'
     | '/sitemap.xml'
     | '/support'
     | '/team'
     | '/terms'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/api/entity.json'
+    | '/api/services.json'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
     | '/p/$slug/$'
@@ -310,9 +380,13 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/$'
+    | '/about.md'
     | '/analytics'
     | '/chatgpt'
+    | '/faq.md'
     | '/knowledge'
+    | '/llms-full.txt'
+    | '/llms.txt'
     | '/manage'
     | '/mcp'
     | '/preview'
@@ -320,12 +394,15 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/publish'
     | '/refunds'
+    | '/services.md'
     | '/sitemap.xml'
     | '/support'
     | '/team'
     | '/terms'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/api/entity.json'
+    | '/api/services.json'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
     | '/p/$slug/$'
@@ -340,9 +417,13 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/$'
+    | '/about.md'
     | '/analytics'
     | '/chatgpt'
+    | '/faq.md'
     | '/knowledge'
+    | '/llms-full.txt'
+    | '/llms.txt'
     | '/manage'
     | '/mcp'
     | '/preview'
@@ -350,12 +431,15 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/publish'
     | '/refunds'
+    | '/services.md'
     | '/sitemap.xml'
     | '/support'
     | '/team'
     | '/terms'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/api/entity.json'
+    | '/api/services.json'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
     | '/p/$slug/$'
@@ -371,9 +455,13 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SplatRoute: typeof SplatRoute
+  AboutDotmdRoute: typeof AboutDotmdRoute
   AnalyticsRoute: typeof AnalyticsRoute
   ChatgptRoute: typeof ChatgptRoute
+  FaqDotmdRoute: typeof FaqDotmdRoute
   KnowledgeRoute: typeof KnowledgeRoute
+  LlmsFullDottxtRoute: typeof LlmsFullDottxtRoute
+  LlmsDottxtRoute: typeof LlmsDottxtRoute
   ManageRoute: typeof ManageRoute
   McpRoute: typeof McpRoute
   PreviewRoute: typeof PreviewRoute
@@ -381,12 +469,15 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   PublishRoute: typeof PublishRoute
   RefundsRoute: typeof RefundsRoute
+  ServicesDotmdRoute: typeof ServicesDotmdRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SupportRoute: typeof SupportRoute
   TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  ApiEntityDotjsonRoute: typeof ApiEntityDotjsonRoute
+  ApiServicesDotjsonRoute: typeof ApiServicesDotjsonRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicMcpHealthRoute: typeof ApiPublicMcpHealthRoute
   PSlugSplatRoute: typeof PSlugSplatRoute
@@ -415,6 +506,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/about.md': {
+      id: '/about.md'
+      path: '/about.md'
+      fullPath: '/about.md'
+      preLoaderRoute: typeof AboutDotmdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/analytics': {
       id: '/analytics'
       path: '/analytics'
@@ -429,11 +527,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChatgptRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/faq.md': {
+      id: '/faq.md'
+      path: '/faq.md'
+      fullPath: '/faq.md'
+      preLoaderRoute: typeof FaqDotmdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/knowledge': {
       id: '/knowledge'
       path: '/knowledge'
       fullPath: '/knowledge'
       preLoaderRoute: typeof KnowledgeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/llms-full.txt': {
+      id: '/llms-full.txt'
+      path: '/llms-full.txt'
+      fullPath: '/llms-full.txt'
+      preLoaderRoute: typeof LlmsFullDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/llms.txt': {
+      id: '/llms.txt'
+      path: '/llms.txt'
+      fullPath: '/llms.txt'
+      preLoaderRoute: typeof LlmsDottxtRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/manage': {
@@ -485,6 +604,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RefundsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/services.md': {
+      id: '/services.md'
+      path: '/services.md'
+      fullPath: '/services.md'
+      preLoaderRoute: typeof ServicesDotmdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
@@ -525,6 +651,20 @@ declare module '@tanstack/react-router' {
       path: '/.well-known/oauth-protected-resource'
       fullPath: '/.well-known/oauth-protected-resource'
       preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/entity.json': {
+      id: '/api/entity.json'
+      path: '/api/entity.json'
+      fullPath: '/api/entity.json'
+      preLoaderRoute: typeof ApiEntityDotjsonRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/services.json': {
+      id: '/api/services.json'
+      path: '/api/services.json'
+      fullPath: '/api/services.json'
+      preLoaderRoute: typeof ApiServicesDotjsonRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.mcp/invoke-tool/$tool': {
@@ -603,9 +743,13 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SplatRoute: SplatRoute,
+  AboutDotmdRoute: AboutDotmdRoute,
   AnalyticsRoute: AnalyticsRoute,
   ChatgptRoute: ChatgptRoute,
+  FaqDotmdRoute: FaqDotmdRoute,
   KnowledgeRoute: KnowledgeRoute,
+  LlmsFullDottxtRoute: LlmsFullDottxtRoute,
+  LlmsDottxtRoute: LlmsDottxtRoute,
   ManageRoute: ManageRoute,
   McpRoute: McpRoute,
   PreviewRoute: PreviewRoute,
@@ -613,6 +757,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   PublishRoute: PublishRoute,
   RefundsRoute: RefundsRoute,
+  ServicesDotmdRoute: ServicesDotmdRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SupportRoute: SupportRoute,
   TeamRoute: TeamRoute,
@@ -620,6 +765,8 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  ApiEntityDotjsonRoute: ApiEntityDotjsonRoute,
+  ApiServicesDotjsonRoute: ApiServicesDotjsonRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicMcpHealthRoute: ApiPublicMcpHealthRoute,
   PSlugSplatRoute: PSlugSplatRoute,
