@@ -3,6 +3,7 @@ import { Copy, Download, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { trackFunnel } from "@/lib/funnel";
 
 /**
  * The management secret is shown exactly once, at publish time. Crawler stores
@@ -10,6 +11,7 @@ import { Button } from "@/components/ui/button";
  */
 export function RecoveryCodeCard({ code, slug }: { code: string; slug: string }) {
   const [acknowledged, setAcknowledged] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
 
   function download() {
     const body = [
@@ -70,6 +72,21 @@ export function RecoveryCodeCard({ code, slug }: { code: string; slug: string })
           Presence.
         </p>
       ) : null}
+
+      <label className="mt-4 flex cursor-pointer items-start gap-2 text-xs">
+        <input
+          type="checkbox"
+          className="mt-0.5 h-3.5 w-3.5 accent-current"
+          checked={confirmed}
+          onChange={(e) => {
+            setConfirmed(e.target.checked);
+            if (e.target.checked) trackFunnel("management_code_acknowledged", { presenceSlug: slug });
+          }}
+        />
+        <span className={confirmed ? "text-muted-foreground" : ""}>
+          I have saved my recovery code and understand it cannot be restored.
+        </span>
+      </label>
     </div>
   );
 }

@@ -11,6 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { interviewTurn } from "@/lib/interview.functions";
 import { emptyCore, isCoreEmpty, type KnowledgeCore } from "@/lib/knowledge";
 import { uid, useChat, useCore, type ChatMessage } from "@/lib/store";
+import { trackFunnel } from "@/lib/funnel";
+import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -63,6 +65,7 @@ function Index() {
   const endRef = useRef<HTMLDivElement>(null);
 
   const started = messages.length > 0;
+  const ready = started && !isCoreEmpty(core);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -79,6 +82,7 @@ function Index() {
     const userMsg: ChatMessage = { id: uid(), role: "user", content: value };
     const history = messages.map((m) => ({ role: m.role, content: m.content }));
     setMessages((prev) => [...prev, userMsg]);
+    trackFunnel(messages.length === 0 ? "interview_started" : "interview_question_answered");
     setBusy(true);
     try {
       const res = await turn({ data: { message: value, history, core: isCoreEmpty(core) ? undefined : core } });
@@ -117,6 +121,12 @@ function Index() {
               Crawler is a digital SaaS subscription. The paid product is online hosting for AI-readable text files
               and data endpoints. Access is delivered electronically; no physical product is sold, included or shipped.
             </p>
+            <ul className="mt-6 space-y-1.5 text-[13px] text-muted-foreground">
+              <li>· Interview, Knowledge Core and all file previews are free.</li>
+              <li>· You only pay when you want your Presence hosted online, from $5/month.</li>
+              <li>· No registration and no account — a one-time recovery code controls your Presence.</li>
+              <li>· Crawler provides structured information; whether AI systems use it is their decision.</li>
+            </ul>
 
           </div>
         ) : (
@@ -199,10 +209,24 @@ function Index() {
             ))}
           </div>
         ) : (
-          <div className="mt-12">
+          <div className="mt-12 space-y-6">
+            {ready ? (
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-5">
+                <div>
+                  <div className="text-sm font-medium">See what Crawler built for you</div>
+                  <p className="text-xs text-muted-foreground">
+                    Full result view with all facts and generated files — free, no payment required.
+                  </p>
+                </div>
+                <Button asChild size="sm">
+                  <Link to="/result">Show my result</Link>
+                </Button>
+              </div>
+            ) : null}
             <PresenceStatus core={core} />
           </div>
         )}
+
 
         {started ? (
           <button

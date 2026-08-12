@@ -182,6 +182,42 @@ export type Database = {
         }
         Relationships: []
       }
+      funnel_events: {
+        Row: {
+          error_category: string | null
+          event_type: string
+          from_step: string | null
+          id: string
+          occurred_at: string
+          plan: string | null
+          presence_slug: string | null
+          session_hash: string
+          to_step: string | null
+        }
+        Insert: {
+          error_category?: string | null
+          event_type: string
+          from_step?: string | null
+          id?: string
+          occurred_at?: string
+          plan?: string | null
+          presence_slug?: string | null
+          session_hash: string
+          to_step?: string | null
+        }
+        Update: {
+          error_category?: string | null
+          event_type?: string
+          from_step?: string | null
+          id?: string
+          occurred_at?: string
+          plan?: string | null
+          presence_slug?: string | null
+          session_hash?: string
+          to_step?: string | null
+        }
+        Relationships: []
+      }
       improvement_recommendations: {
         Row: {
           affected_files: string[]
