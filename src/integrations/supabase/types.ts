@@ -14,6 +14,120 @@ export type Database = {
   }
   public: {
     Tables: {
+      cancellation_feedback: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          outcome: string
+          plan: string | null
+          presence_slug: string | null
+          reason_code: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          outcome?: string
+          plan?: string | null
+          presence_slug?: string | null
+          reason_code: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          outcome?: string
+          plan?: string | null
+          presence_slug?: string | null
+          reason_code?: string
+        }
+        Relationships: []
+      }
+      improvement_recommendations: {
+        Row: {
+          affected_files: string[]
+          change_id: string | null
+          confidence: string
+          created_at: string
+          current_value: string | null
+          decided_at: string | null
+          dedupe_key: string | null
+          evidence: string | null
+          expected_benefit: string | null
+          field_path: string
+          id: string
+          issue: string
+          kind: string
+          presence_slug: string
+          proposed_value: string | null
+          published_at: string | null
+          rejection_reason: string | null
+          state: string
+          updated_at: string
+          verification_status: string
+        }
+        Insert: {
+          affected_files?: string[]
+          change_id?: string | null
+          confidence?: string
+          created_at?: string
+          current_value?: string | null
+          decided_at?: string | null
+          dedupe_key?: string | null
+          evidence?: string | null
+          expected_benefit?: string | null
+          field_path: string
+          id?: string
+          issue: string
+          kind: string
+          presence_slug: string
+          proposed_value?: string | null
+          published_at?: string | null
+          rejection_reason?: string | null
+          state?: string
+          updated_at?: string
+          verification_status?: string
+        }
+        Update: {
+          affected_files?: string[]
+          change_id?: string | null
+          confidence?: string
+          created_at?: string
+          current_value?: string | null
+          decided_at?: string | null
+          dedupe_key?: string | null
+          evidence?: string | null
+          expected_benefit?: string | null
+          field_path?: string
+          id?: string
+          issue?: string
+          kind?: string
+          presence_slug?: string
+          proposed_value?: string | null
+          published_at?: string | null
+          rejection_reason?: string | null
+          state?: string
+          updated_at?: string
+          verification_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "improvement_recommendations_change_id_fkey"
+            columns: ["change_id"]
+            isOneToOne: false
+            referencedRelation: "source_changes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "improvement_recommendations_presence_slug_fkey"
+            columns: ["presence_slug"]
+            isOneToOne: false
+            referencedRelation: "published_presences"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
       mcp_rate_limits: {
         Row: {
           bucket_key: string
@@ -74,6 +188,45 @@ export type Database = {
           token?: string
           transcript?: Json
           updated_at?: string
+        }
+        Relationships: []
+      }
+      notification_events: {
+        Row: {
+          channel: string
+          created_at: string
+          dedupe_key: string
+          error: string | null
+          event_type: string
+          id: string
+          presence_slug: string | null
+          reason: string | null
+          recipient: string | null
+          status: string
+        }
+        Insert: {
+          channel?: string
+          created_at?: string
+          dedupe_key: string
+          error?: string | null
+          event_type: string
+          id?: string
+          presence_slug?: string | null
+          reason?: string | null
+          recipient?: string | null
+          status?: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          dedupe_key?: string
+          error?: string | null
+          event_type?: string
+          id?: string
+          presence_slug?: string | null
+          reason?: string | null
+          recipient?: string | null
+          status?: string
         }
         Relationships: []
       }
@@ -198,6 +351,94 @@ export type Database = {
           },
         ]
       }
+      presence_health_scores: {
+        Row: {
+          computed_at: string
+          id: string
+          presence_slug: string
+          reasons: Json
+          score: number
+          state: string
+        }
+        Insert: {
+          computed_at?: string
+          id?: string
+          presence_slug: string
+          reasons?: Json
+          score: number
+          state: string
+        }
+        Update: {
+          computed_at?: string
+          id?: string
+          presence_slug?: string
+          reasons?: Json
+          score?: number
+          state?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presence_health_scores_presence_slug_fkey"
+            columns: ["presence_slug"]
+            isOneToOne: false
+            referencedRelation: "published_presences"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      presence_sources: {
+        Row: {
+          approved: boolean
+          consecutive_failures: number
+          created_at: string
+          id: string
+          label: string | null
+          last_error: string | null
+          last_scanned_at: string | null
+          last_status: string | null
+          presence_slug: string
+          scan_frequency: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          approved?: boolean
+          consecutive_failures?: number
+          created_at?: string
+          id?: string
+          label?: string | null
+          last_error?: string | null
+          last_scanned_at?: string | null
+          last_status?: string | null
+          presence_slug: string
+          scan_frequency?: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          approved?: boolean
+          consecutive_failures?: number
+          created_at?: string
+          id?: string
+          label?: string | null
+          last_error?: string | null
+          last_scanned_at?: string | null
+          last_status?: string | null
+          presence_slug?: string
+          scan_frequency?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presence_sources_presence_slug_fkey"
+            columns: ["presence_slug"]
+            isOneToOne: false
+            referencedRelation: "published_presences"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
       presence_team_members: {
         Row: {
           code_hash: string
@@ -304,6 +545,8 @@ export type Database = {
       }
       published_presences: {
         Row: {
+          baseline: Json | null
+          baseline_at: string | null
           billing_customer_id: string | null
           billing_subscription_id: string | null
           claim_token: string | null
@@ -316,9 +559,13 @@ export type Database = {
           files: Json
           id: string
           intent_ref: string | null
+          last_source_scan_at: string | null
           manage_secret_hash: string | null
           manage_secret_updated_at: string
           mode: string
+          notify_billing: boolean
+          notify_reports: boolean
+          notify_source_changes: boolean
           plan: string
           publication_error: string | null
           publication_state: string
@@ -334,6 +581,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          baseline?: Json | null
+          baseline_at?: string | null
           billing_customer_id?: string | null
           billing_subscription_id?: string | null
           claim_token?: string | null
@@ -346,9 +595,13 @@ export type Database = {
           files?: Json
           id?: string
           intent_ref?: string | null
+          last_source_scan_at?: string | null
           manage_secret_hash?: string | null
           manage_secret_updated_at?: string
           mode?: string
+          notify_billing?: boolean
+          notify_reports?: boolean
+          notify_source_changes?: boolean
           plan?: string
           publication_error?: string | null
           publication_state?: string
@@ -364,6 +617,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          baseline?: Json | null
+          baseline_at?: string | null
           billing_customer_id?: string | null
           billing_subscription_id?: string | null
           claim_token?: string | null
@@ -376,9 +631,13 @@ export type Database = {
           files?: Json
           id?: string
           intent_ref?: string | null
+          last_source_scan_at?: string | null
           manage_secret_hash?: string | null
           manage_secret_updated_at?: string
           mode?: string
+          notify_billing?: boolean
+          notify_reports?: boolean
+          notify_source_changes?: boolean
           plan?: string
           publication_error?: string | null
           publication_state?: string
@@ -394,6 +653,97 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      source_changes: {
+        Row: {
+          classification: string
+          created_at: string
+          detected_at: string
+          evidence: string | null
+          id: string
+          presence_slug: string
+          resolved_at: string | null
+          source_id: string | null
+          status: string
+          summary: string
+          updated_at: string
+        }
+        Insert: {
+          classification: string
+          created_at?: string
+          detected_at?: string
+          evidence?: string | null
+          id?: string
+          presence_slug: string
+          resolved_at?: string | null
+          source_id?: string | null
+          status?: string
+          summary: string
+          updated_at?: string
+        }
+        Update: {
+          classification?: string
+          created_at?: string
+          detected_at?: string
+          evidence?: string | null
+          id?: string
+          presence_slug?: string
+          resolved_at?: string | null
+          source_id?: string | null
+          status?: string
+          summary?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "source_changes_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "presence_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      source_snapshots: {
+        Row: {
+          byte_size: number | null
+          excerpt: string | null
+          fetched_at: string
+          fingerprint: string
+          http_status: number | null
+          id: string
+          presence_slug: string
+          source_id: string
+        }
+        Insert: {
+          byte_size?: number | null
+          excerpt?: string | null
+          fetched_at?: string
+          fingerprint: string
+          http_status?: number | null
+          id?: string
+          presence_slug: string
+          source_id: string
+        }
+        Update: {
+          byte_size?: number | null
+          excerpt?: string | null
+          fetched_at?: string
+          fingerprint?: string
+          http_status?: number | null
+          id?: string
+          presence_slug?: string
+          source_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "source_snapshots_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "presence_sources"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       support_tickets: {
         Row: {
