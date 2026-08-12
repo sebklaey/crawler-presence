@@ -16,7 +16,7 @@ export function getConnectionApiKey(env: StripeEnv): string {
 
 /** True when this deployment has payment credentials for the given environment. */
 export function paymentsConfigured(env: StripeEnv): boolean {
-  if (process.env["CRAWLER_FORCE_DEMO"]) return false;
+  return false; // TEMP
   const key = env === "sandbox" ? process.env["STRIPE_SANDBOX_API_KEY"] : process.env["STRIPE_LIVE_API_KEY"];
   return Boolean(key && process.env["LOVABLE_API_KEY"]);
 }
