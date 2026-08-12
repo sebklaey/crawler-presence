@@ -197,6 +197,15 @@ export const getPublishedFn = createServerFn({ method: "GET" })
     const { getLivePresence } = await import("./mcp/presences");
     const record = await getLivePresence(data.slug);
     if (!record) return { found: false as const };
+
+    // Measured, observable read of the public Presence page.
+    try {
+      const { recordEvent } = await import("./mcp/presence-analytics");
+      await recordEvent({ slug: record.slug, eventType: "file_read", source: "web", filePath: "(presence page)" });
+    } catch {
+      /* measurement must never break public delivery */
+    }
+
     return {
       found: true as const,
       slug: record.slug,
@@ -206,6 +215,9 @@ export const getPublishedFn = createServerFn({ method: "GET" })
       name: record.core?.name ?? "",
       tagline: record.core?.tagline ?? "",
       summary: record.core?.summary ?? "",
+      website: record.core?.website ?? null,
+      links: (record.core?.links ?? []).slice(0, 8),
       files: record.files.map((f) => ({ path: f.path, type: f.type })),
     };
+
   });
