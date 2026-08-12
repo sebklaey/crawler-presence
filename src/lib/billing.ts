@@ -3,6 +3,15 @@ export type PlanId = "plus" | "pro" | "business";
 export type Plan = {
   id: PlanId;
   name: string;
+  /** Who this plan is for, in one line. */
+  subtitle: string;
+  /** Concrete audiences, shown as chips. */
+  audience: string[];
+  /** Benefit-first bullets shown in the plan cards. */
+  benefits: string[];
+  /** Explicit CTA label, never a bare "Continue". */
+  cta: string;
+  recommended?: boolean;
   price: number;
   /** Shipped and enforced today. */
   features: string[];
@@ -14,6 +23,7 @@ export type Plan = {
 };
 
 export const PLANS: Plan[] = [
+
   {
     id: "plus",
     name: "Plus",
