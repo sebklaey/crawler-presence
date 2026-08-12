@@ -33,8 +33,8 @@ export default defineTool({
         sessionToken: session.id,
         intentRef: intent.intentRef,
         billing: {
-          stripeCustomerId: intent.stripeCustomerId,
-          stripeSubscriptionId: intent.stripeSubscriptionId,
+          billingCustomerId: intent.billingCustomerId,
+          billingSubscriptionId: intent.billingSubscriptionId,
           subscriptionStatus: intent.subscriptionStatus,
           currentPeriodEnd: intent.currentPeriodEnd,
         },

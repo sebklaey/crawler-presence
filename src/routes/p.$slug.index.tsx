@@ -71,7 +71,7 @@ function PublicPresence() {
 
         {data.mode === "demo" ? (
           <div className="mb-8 rounded-xl border border-dashed border-border bg-secondary/60 px-4 py-3 text-xs text-muted-foreground">
-            <strong className="text-foreground">DEMO / TEST publish.</strong> No Stripe keys are configured on this
+            <strong className="text-foreground">DEMO / TEST publish.</strong> No payment credentials are configured on this
             deployment, so this presence was published without any payment. The files below are real and served from
             this address; the subscription is simulated.
           </div>

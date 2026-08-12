@@ -11,7 +11,9 @@ export function siteUrl(): string {
   return (env("PUBLIC_SITE_URL") ?? "https://crawler-presence.lovable.app").replace(/\/$/, "");
 }
 
-/** No invented secrets: without a Stripe key the checkout tool reports demo mode. */
-export function stripeConfigured(): boolean {
-  return Boolean(env("STRIPE_SECRET_KEY"));
+/** No invented secrets: without Paddle credentials the checkout tool reports demo mode. */
+export function paymentsConfigured(): boolean {
+  return Boolean(
+    env("PADDLE_API_KEY") && env("PADDLE_PRICE_PLUS") && env("PADDLE_PRICE_PRO") && env("PADDLE_PRICE_BUSINESS"),
+  );
 }

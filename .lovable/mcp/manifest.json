@@ -308,7 +308,7 @@
       {
         "name": "get_checkout_link",
         "title": "Get checkout link",
-        "description": "Use this when the user wants to pay for hosting and needs a checkout link. Returns the external Crawler checkout URL for the chosen plan. If Stripe is not configured, returns a clearly labelled test/demo checkout state instead of a fake success.",
+        "description": "Use this when the user wants to pay for hosting and needs a checkout link. Returns the external Crawler checkout URL for the chosen plan. If no payment credentials are configured, returns a clearly labelled test/demo checkout state instead of a fake success.",
         "annotations": {
           "readOnlyHint": true,
           "destructiveHint": false,

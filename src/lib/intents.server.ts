@@ -12,11 +12,11 @@
 import { db } from "./mcp/db.server";
 import { opaqueToken } from "./mcp/sessions";
 
-export type StripeEnv = "sandbox" | "live";
+export type BillingEnv = "sandbox" | "live";
 
-/** Which environment this deployment bills in. Live keys win when present. */
-export function billingEnvironment(): StripeEnv {
-  return process.env["STRIPE_LIVE_API_KEY"] ? "live" : "sandbox";
+/** Which environment this deployment bills in, derived from the Paddle key. */
+export function billingEnvironment(): BillingEnv {
+  return process.env["PADDLE_API_KEY"]?.includes("_live_") ? "live" : "sandbox";
 }
 
 export type IntentStatus = "pending" | "paid" | "published" | "demo";
@@ -26,9 +26,9 @@ export type PublishIntent = {
   sessionToken: string | null;
   plan: string;
   status: IntentStatus;
-  environment: StripeEnv;
-  stripeCustomerId: string | null;
-  stripeSubscriptionId: string | null;
+  environment: BillingEnv;
+  billingCustomerId: string | null;
+  billingSubscriptionId: string | null;
   subscriptionStatus: string | null;
   currentPeriodEnd: string | null;
   presenceSlug: string | null;
@@ -40,15 +40,15 @@ type Row = {
   plan: string;
   status: string;
   environment: string;
-  stripe_customer_id: string | null;
-  stripe_subscription_id: string | null;
+  billing_customer_id: string | null;
+  billing_subscription_id: string | null;
   subscription_status: string | null;
   current_period_end: string | null;
   presence_slug: string | null;
 };
 
 const COLUMNS =
-  "intent_ref, session_token, plan, status, environment, stripe_customer_id, stripe_subscription_id, subscription_status, current_period_end, presence_slug";
+  "intent_ref, session_token, plan, status, environment, billing_customer_id, billing_subscription_id, subscription_status, current_period_end, presence_slug";
 
 function fromRow(row: Row): PublishIntent {
   return {
@@ -57,8 +57,8 @@ function fromRow(row: Row): PublishIntent {
     plan: row.plan,
     status: (["pending", "paid", "published", "demo"].includes(row.status) ? row.status : "pending") as IntentStatus,
     environment: row.environment === "live" ? "live" : "sandbox",
-    stripeCustomerId: row.stripe_customer_id,
-    stripeSubscriptionId: row.stripe_subscription_id,
+    billingCustomerId: row.billing_customer_id,
+    billingSubscriptionId: row.billing_subscription_id,
     subscriptionStatus: row.subscription_status,
     currentPeriodEnd: row.current_period_end,
     presenceSlug: row.presence_slug,
@@ -107,15 +107,15 @@ export async function getIntent(intentRef: string): Promise<PublishIntent | null
 export async function attachCheckout(intentRef: string, checkoutId: string): Promise<void> {
   const supabase = db();
   if (!supabase) return;
-  await supabase.from("publish_intents").update({ stripe_checkout_id: checkoutId }).eq("intent_ref", intentRef);
+  await supabase.from("publish_intents").update({ billing_checkout_id: checkoutId }).eq("intent_ref", intentRef);
 }
 
 /** Called from the verified payment webhook only. */
 export async function markIntentPaid(
   intentRef: string,
   billing: {
-    stripeCustomerId?: string | null;
-    stripeSubscriptionId?: string | null;
+    billingCustomerId?: string | null;
+    billingSubscriptionId?: string | null;
     subscriptionStatus?: string | null;
     currentPeriodEnd?: string | null;
   },
@@ -133,8 +133,8 @@ export async function markIntentPaid(
     .update({
       // Never downgrade an already redeemed intent.
       status: current === "published" ? "published" : "paid",
-      stripe_customer_id: billing.stripeCustomerId ?? null,
-      stripe_subscription_id: billing.stripeSubscriptionId ?? null,
+      billing_customer_id: billing.billingCustomerId ?? null,
+      billing_subscription_id: billing.billingSubscriptionId ?? null,
       subscription_status: billing.subscriptionStatus ?? null,
       current_period_end: billing.currentPeriodEnd ?? null,
     })

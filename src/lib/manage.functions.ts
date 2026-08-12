@@ -55,7 +55,7 @@ export const manageOverviewFn = createServerFn({ method: "POST" })
       publishedAt: p.publishedAt,
       subscriptionStatus: p.subscriptionStatus,
       currentPeriodEnd: p.currentPeriodEnd,
-      billingPortalAvailable: Boolean(p.stripeCustomerId),
+      billingPortalAvailable: Boolean(p.billingCustomerId),
       secretUpdatedAt: p.manageSecretUpdatedAt,
       paths: p.files.map((f) => f.path),
     };
@@ -90,19 +90,14 @@ export const manageBillingPortalFn = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<{ ok: boolean; url?: string; reason?: string }> => {
     const resolved = await resolve(data.code);
     if ("error" in resolved) return { ok: false, reason: resolved.error };
-    const customerId = resolved.presence.stripeCustomerId;
+    const customerId = resolved.presence.billingCustomerId;
     if (!customerId) return { ok: false, reason: "no-subscription" };
 
-    const { billingEnvironment } = await import("./intents.server");
-    const { createStripeClient, getStripeErrorMessage } = await import("./stripe.server");
+    const { createPortalUrl, getPaddleErrorMessage } = await import("./paddle.server");
     try {
-      const stripe = createStripeClient(billingEnvironment());
-      const portal = await stripe.billingPortal.sessions.create({
-        customer: customerId,
-        ...(data.returnUrl ? { return_url: data.returnUrl } : {}),
-      });
-      return { ok: true, url: portal.url };
+      const url = await createPortalUrl(customerId, resolved.presence.billingSubscriptionId);
+      return { ok: true, url };
     } catch (error) {
-      return { ok: false, reason: getStripeErrorMessage(error) };
+      return { ok: false, reason: getPaddleErrorMessage(error) };
     }
   });

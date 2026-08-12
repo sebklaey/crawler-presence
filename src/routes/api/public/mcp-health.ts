@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { SESSION_TTL_MS, sessionCount, storeMode } from "@/lib/mcp/sessions";
-import { stripeConfigured } from "@/lib/mcp/site";
+import { paymentsConfigured } from "@/lib/mcp/site";
 
 export const Route = createFileRoute("/api/public/mcp-health")({
   server: {
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/api/public/mcp-health")({
               "Public no-auth endpoint. No ChatGPT account identity is available. Crawler has no user registration, no login and no user accounts. Published Presences are controlled by a capability-based recovery code, of which only a hash is stored.",
             interview_model_configured: Boolean(process.env["LOVABLE_API_KEY"]),
             analytics_mode: "demo",
-            checkout_mode: stripeConfigured() ? "live" : "demo",
+            checkout_mode: paymentsConfigured() ? "live" : "demo",
             session_store: {
               type: mode,
               durable: mode === "database",
