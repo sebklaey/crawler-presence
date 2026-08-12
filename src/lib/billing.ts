@@ -54,9 +54,9 @@ export const PLANS: Plan[] = [
       "Custom domain with DNS verification",
       "REST API for Presence and analytics data",
       "Priority support by email",
+      "Shared team access",
+      "Scheduled report emails",
     ],
-    planned: ["Shared team access", "Scheduled report emails"],
-
   },
 ];
 
