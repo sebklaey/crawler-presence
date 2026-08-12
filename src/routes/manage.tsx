@@ -268,51 +268,78 @@ function ManagePage() {
               </p>
             </div>
 
-            <div className="rounded-2xl border border-border bg-card p-6">
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <div className="text-sm font-medium">Presence analytics · last {data.analytics.windowDays} days</div>
-                <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                  Demo data
-                </span>
+            {data.restricted || data.hiddenCatalogEntries > 0 ? (
+              <div className="rounded-2xl border border-border bg-muted/40 p-6 text-sm">
+                {data.restricted ? (
+                  <p>
+                    <span className="font-medium">Restricted mode.</span> Your subscription is{" "}
+                    {data.subscriptionStatus ?? "inactive"}, so this Presence stays online and publicly readable, but
+                    analytics and editing are locked until billing is active again.
+                  </p>
+                ) : null}
+                {data.hiddenCatalogEntries > 0 ? (
+                  <p className={data.restricted ? "mt-3" : undefined}>
+                    <span className="font-medium">
+                      {data.hiddenCatalogEntries} catalog {data.hiddenCatalogEntries === 1 ? "entry is" : "entries are"}{" "}
+                      hidden.
+                    </span>{" "}
+                    Your {data.plan} plan publishes up to {data.catalogLimit.toLocaleString()} entries. The rest stay
+                    stored and reappear automatically after an upgrade.
+                  </p>
+                ) : null}
               </div>
-              <p className="mt-2 text-xs text-muted-foreground">
-                Seeded DEMO numbers in this build. Crawler only ever measures its own events and observable reads of
-                your public files — it has no access to private ChatGPT, Claude, Gemini or other assistant
-                conversations.
-              </p>
+            ) : null}
 
-              <dl className="mt-5 grid gap-4 sm:grid-cols-3">
-                {data.analytics.metrics.map((metric) => (
-                  <div key={metric.label}>
-                    <dt className="text-xs text-muted-foreground">{metric.label}</dt>
-                    <dd className="display text-2xl">{metric.value.toLocaleString()}</dd>
-                    <p className="text-[11px] text-muted-foreground">{metric.hint}</p>
+            {data.analytics ? (
+              <div className="rounded-2xl border border-border bg-card p-6">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <div className="text-sm font-medium">
+                    Presence analytics · last {data.analytics.windowDays} days
                   </div>
-                ))}
-              </dl>
-
-              <div className="mt-6 grid gap-6 sm:grid-cols-2">
-                <div>
-                  <div className="text-xs text-muted-foreground">Most asked about</div>
-                  <ul className="mt-2 space-y-1 text-sm">
-                    {data.analytics.topQuestions.map((q) => (
-                      <li key={q.label} className="flex justify-between gap-3">
-                        <span>{q.label}</span>
-                        <span className="font-mono text-xs text-muted-foreground">{q.count}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                    Demo data
+                  </span>
                 </div>
-                <div>
-                  <div className="text-xs text-muted-foreground">Missing information</div>
-                  <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
-                    {data.analytics.gaps.map((gap) => (
-                      <li key={gap}>{gap}</li>
-                    ))}
-                  </ul>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Seeded DEMO numbers in this build. Crawler only ever measures its own events and observable reads of
+                  your public files — it has no access to private ChatGPT, Claude, Gemini or other assistant
+                  conversations.
+                </p>
+
+                <dl className="mt-5 grid gap-4 sm:grid-cols-3">
+                  {data.analytics.metrics.map((metric) => (
+                    <div key={metric.label}>
+                      <dt className="text-xs text-muted-foreground">{metric.label}</dt>
+                      <dd className="display text-2xl">{metric.value.toLocaleString()}</dd>
+                      <p className="text-[11px] text-muted-foreground">{metric.hint}</p>
+                    </div>
+                  ))}
+                </dl>
+
+                <div className="mt-6 grid gap-6 sm:grid-cols-2">
+                  <div>
+                    <div className="text-xs text-muted-foreground">Most asked about</div>
+                    <ul className="mt-2 space-y-1 text-sm">
+                      {data.analytics.topQuestions.map((q) => (
+                        <li key={q.label} className="flex justify-between gap-3">
+                          <span>{q.label}</span>
+                          <span className="font-mono text-xs text-muted-foreground">{q.count}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground">Missing information</div>
+                    <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+                      {data.analytics.gaps.map((gap) => (
+                        <li key={gap}>{gap}</li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : null}
+
           </div>
         ) : null}
 

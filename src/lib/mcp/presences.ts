@@ -174,7 +174,10 @@ export async function publishDraft(input: {
       }
     | undefined;
 }): Promise<PublishResult> {
-  const files = generatedFiles(input.core).map((f) => ({ path: f.path, type: f.type, content: f.content }));
+  const { applyCatalogLimit } = await import("../entitlements");
+  const visible = applyCatalogLimit(input.core, input.plan).core;
+  const files = generatedFiles(visible).map((f) => ({ path: f.path, type: f.type, content: f.content }));
+
   const manageSecret = newManageSecret();
   const manageSecretHash = await hashManageSecret(manageSecret);
   const now = new Date().toISOString();
@@ -315,22 +318,54 @@ export async function setPresenceStatus(slug: string, status: PresenceStatus): P
   memory.set(slug, { ...local, status });
 }
 
-/** Keeps a presence in sync with subscription lifecycle events. */
+/**
+ * Keeps a presence in sync with subscription lifecycle events.
+ *
+ * A plan change takes effect immediately: the stored plan is updated and the
+ * public files are regenerated so the new catalog limit applies at once. A
+ * canceled or past-due subscription only changes the status — the Presence
+ * stays online and simply becomes restricted in management.
+ */
 export async function syncPresenceBilling(
   billingSubscriptionId: string,
-  billing: { subscriptionStatus?: string | null; currentPeriodEnd?: string | null },
+  billing: { subscriptionStatus?: string | null; currentPeriodEnd?: string | null; plan?: string | null },
 ): Promise<void> {
   const supabase = await client();
   if (!supabase) return;
+
+  const patch: Record<string, unknown> = {
+    subscription_status: billing.subscriptionStatus ?? null,
+    current_period_end: billing.currentPeriodEnd ?? null,
+  };
+
+  if (billing.plan) {
+    patch["plan"] = billing.plan;
+    const { data, error: readError } = await supabase
+      .from("published_presences")
+      .select("slug, core")
+      .eq("billing_subscription_id", billingSubscriptionId);
+    if (readError) storeFailure("billing-sync", readError.message);
+
+    const { applyCatalogLimit } = await import("../entitlements");
+    for (const row of (data ?? []) as { slug: string; core: KnowledgeCore }[]) {
+      const visible = applyCatalogLimit(row.core, billing.plan).core;
+      const files = generatedFiles(visible).map((f) => ({ path: f.path, type: f.type, content: f.content }));
+      const { error } = await supabase
+        .from("published_presences")
+        .update({ ...patch, files })
+        .eq("slug", row.slug);
+      if (error) storeFailure("billing-sync", error.message);
+    }
+    return;
+  }
+
   const { error } = await supabase
     .from("published_presences")
-    .update({
-      subscription_status: billing.subscriptionStatus ?? null,
-      current_period_end: billing.currentPeriodEnd ?? null,
-    })
+    .update(patch)
     .eq("billing_subscription_id", billingSubscriptionId);
   if (error) storeFailure("billing-sync", error.message);
 }
+
 
 /* ------------------------------------------------------------------ */
 /* Rate limiting                                                       */

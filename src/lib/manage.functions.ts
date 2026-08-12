@@ -35,8 +35,14 @@ export type ManageOverview =
       billingPortalAvailable: boolean;
       secretUpdatedAt: string | null;
       paths: string[];
-      analytics: ManageAnalytics;
+      /** Billing lapsed: still public, but analytics and editing are locked. */
+      restricted: boolean;
+      /** Catalog entries stored but hidden because the plan limit is smaller. */
+      hiddenCatalogEntries: number;
+      catalogLimit: number;
+      analytics: ManageAnalytics | null;
     };
+
 
 type ResolveError = { error: "invalid-code" | "not-found" | "rate-limited" | "unavailable" };
 
@@ -92,6 +98,9 @@ export const manageOverviewFn = createServerFn({ method: "POST" })
     const resolved = await resolve(data.code);
     if ("error" in resolved) return { ok: false, reason: resolved.error };
     const p = resolved.presence;
+    const { applyCatalogLimit, isRestricted } = await import("./entitlements");
+    const limited = applyCatalogLimit(p.core, p.plan);
+    const restricted = isRestricted(p.subscriptionStatus, p.mode);
     return {
       ok: true,
       slug: p.slug,
@@ -105,8 +114,13 @@ export const manageOverviewFn = createServerFn({ method: "POST" })
       billingPortalAvailable: Boolean(p.billingCustomerId),
       secretUpdatedAt: p.manageSecretUpdatedAt,
       paths: p.files.map((f) => f.path),
-      analytics: await analyticsFor(),
+      restricted,
+      hiddenCatalogEntries: limited.hidden,
+      catalogLimit: limited.limit,
+      // Analytics are part of the paid plan — locked while billing has lapsed.
+      analytics: restricted ? null : await analyticsFor(),
     };
+
   });
 
 const statusSchema = codeSchema.extend({ status: z.enum(["live", "offline"]) });

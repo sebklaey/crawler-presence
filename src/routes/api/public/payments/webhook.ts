@@ -42,10 +42,19 @@ function subscriptionShape(subscription: AnyRecord) {
   };
 }
 
+/** Upgrades and downgrades arrive as a changed price on the subscription. */
+async function planOf(subscription: AnyRecord): Promise<string | null> {
+  const items = Array.isArray(subscription["items"]) ? (subscription["items"] as AnyRecord[]) : [];
+  const externalId = str(items[0]?.["price"]?.import_meta?.external_id);
+  const { planFromPriceExternalId } = await import("@/lib/entitlements");
+  return planFromPriceExternalId(externalId);
+}
+
 async function handleSubscription(subscription: AnyRecord, forcedStatus?: string) {
   const shape = subscriptionShape(subscription);
   const ref = intentRefOf(subscription);
   const status = forcedStatus ?? shape.status;
+  const plan = await planOf(subscription);
 
   if (ref) {
     const { markIntentPaid } = await import("@/lib/intents.server");
@@ -62,9 +71,12 @@ async function handleSubscription(subscription: AnyRecord, forcedStatus?: string
     await syncPresenceBilling(shape.subscriptionId, {
       subscriptionStatus: status,
       currentPeriodEnd: shape.periodEnd,
+      // Plan changes apply immediately; cancellation never changes the plan.
+      plan: forcedStatus === "canceled" ? null : plan,
     });
   }
 }
+
 
 export const Route = createFileRoute("/api/public/payments/webhook")({
   server: {
