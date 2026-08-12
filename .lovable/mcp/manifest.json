@@ -109,7 +109,7 @@
       {
         "name": "get_knowledge_core",
         "title": "Get Knowledge Core",
-        "description": "Use this when you need the full structured Knowledge Core for a Crawler session: identity, verified facts, unconfirmed claims, narrative/positioning, catalog, FAQ, CV, links and known gaps.",
+        "description": "Use this when you need the full structured Knowledge Core for a Crawler session: identity, verified facts, unconfirmed claims, narrative/positioning, digital content records, FAQ, CV, links and known gaps.",
         "annotations": {
           "readOnlyHint": true,
           "destructiveHint": false,

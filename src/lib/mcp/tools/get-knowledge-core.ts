@@ -7,7 +7,7 @@ export default defineTool({
   name: "get_knowledge_core",
   title: "Get Knowledge Core",
   description:
-    "Use this when you need the full structured Knowledge Core for a Crawler session: identity, verified facts, unconfirmed claims, narrative/positioning, catalog, FAQ, CV, links and known gaps.",
+    "Use this when you need the full structured Knowledge Core for a Crawler session: identity, verified facts, unconfirmed claims, narrative/positioning, digital content records, FAQ, CV, links and known gaps.",
   inputSchema: {
     session_id: z.string().trim().min(6).describe("Opaque session id returned by start_interview."),
   },

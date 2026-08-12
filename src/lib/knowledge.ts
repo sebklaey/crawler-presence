@@ -107,7 +107,7 @@ export function presenceChecks(c: KnowledgeCore): PresenceCheck[] {
     { label: "At least 3 verified facts", done: c.facts.filter((f) => f.status === "verified").length >= 3, weight: 20 },
     { label: "Positioning confirmed", done: c.stories.some((s) => s.confirmed), weight: 10 },
     {
-      label: "Catalog (offerings, projects or services)",
+      label: "Content records (offerings, projects or services)",
       done: offerings.length + projects.length + services.length > 0,
       weight: 20,
     },

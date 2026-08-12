@@ -7,7 +7,7 @@
  *  - A canceled or past-due subscription keeps the Presence online, but locks
  *    analytics and editing (read-only, restricted).
  *  - Plan changes take effect immediately (the provider prorates the money).
- *  - After a downgrade, catalog entries above the new limit stay stored but
+ *  - After a downgrade, content records above the new limit stay stored but
  *    are hidden from the public files.
  */
 import { planById, PLANS, type PlanId } from "./billing";
@@ -18,7 +18,7 @@ export const isPlanId = (value: unknown): value is PlanId =>
 
 export const asPlanId = (value: unknown): PlanId => (isPlanId(value) ? value : "plus");
 
-/** Human-readable price ids used in the payment catalog. */
+/** Human-readable price ids used in the subscription pricing registry. */
 export const PRICE_EXTERNAL_IDS: Record<PlanId, string> = {
   plus: "crawler_plus_monthly",
   pro: "crawler_pro_monthly",
@@ -47,7 +47,7 @@ export function isRestricted(subscriptionStatus: string | null | undefined, mode
 export type CatalogLimitResult = { core: KnowledgeCore; hidden: number; limit: number };
 
 /**
- * Applies the plan's catalog limit. Entries beyond the limit are kept in the
+ * Applies the plan's digital content limit. Records beyond the limit are kept in the
  * stored Knowledge Core but never rendered into the public files, so an
  * upgrade brings them straight back.
  */

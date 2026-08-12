@@ -18,7 +18,7 @@ export const Route = createFileRoute("/knowledge")({
       { title: "Knowledge Core — Crawler" },
       {
         name: "description",
-        content: "One structured Knowledge Core: verified facts, positioning, catalog, FAQ and CV entries.",
+        content: "One structured Knowledge Core: verified facts, positioning, digital content records, FAQ and CV entries.",
       },
       { property: "og:title", content: "Knowledge Core — Crawler" },
       { property: "og:description", content: "Verified facts stay separate from storytelling. You confirm every claim." },
