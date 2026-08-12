@@ -88,8 +88,39 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
           return Response.json({ received: true, ignored: "invalid env" });
         }
         const env: PaddleEnv = rawEnv;
+
+        let event: Awaited<ReturnType<typeof verifyWebhook>>;
         try {
-          const event = await verifyWebhook(request, env);
+          event = await verifyWebhook(request, env);
+        } catch (e) {
+          console.error("[crawler] payments webhook verification failed:", e);
+          return new Response("Webhook error", { status: 400 });
+        }
+
+        // Idempotency: claim the event id before doing any work. A retry or a
+        // replay of the same event must never publish or charge twice.
+        const { claimPaymentEvent, finishPaymentEvent } = await import("@/lib/payment-events.server");
+        const eventId = event.id ?? str(event.data["event_id"]);
+        if (!eventId) {
+          console.error("[crawler] payment event without id:", event.type);
+          return new Response("Webhook error", { status: 400 });
+        }
+        const claim = await claimPaymentEvent({
+          eventId,
+          eventType: event.type,
+          environment: env,
+          intentRef: intentRefOf(event.data),
+          subscriptionId: str(event.data["subscription_id"]) ?? str(event.data["id"]),
+          occurredAt: event.occurredAt,
+        });
+        if (!claim.durable) {
+          // Backend unavailable: fail loudly so Paddle retries instead of the
+          // event being silently dropped.
+          return new Response("Storage unavailable", { status: 503 });
+        }
+        if (!claim.claimed) return Response.json({ received: true, duplicate: true });
+
+        try {
           switch (event.type) {
             case "transaction.completed":
               await handleTransactionCompleted(event.data);
@@ -97,21 +128,28 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
             case "subscription.created":
             case "subscription.updated":
             case "subscription.activated":
-　            case "subscription.resumed":
+            case "subscription.resumed":
               await handleSubscription(event.data);
               break;
             case "subscription.canceled":
               await handleSubscription(event.data, "canceled");
               break;
+            case "transaction.payment_failed":
+              // A failed payment never publishes; the intent simply stays unpaid.
+              console.log("[crawler] payment failed for intent:", intentRefOf(event.data));
+              break;
             default:
               console.log("[crawler] unhandled payment event:", event.type);
           }
+          await finishPaymentEvent(eventId);
           return Response.json({ received: true });
         } catch (e) {
           console.error("[crawler] payments webhook error:", e);
-          return new Response("Webhook error", { status: 400 });
+          await finishPaymentEvent(eventId, e);
+          return new Response("Webhook error", { status: 500 });
         }
       },
     },
   },
 });
+

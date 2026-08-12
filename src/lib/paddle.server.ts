@@ -5,14 +5,15 @@
  * carries only the anonymous publish-intent reference (`pi_…`) in Paddle's
  * `custom_data`, and the webhook matches events back to that reference.
  *
- * Required secrets (Project Settings → Secrets):
- *   PADDLE_API_KEY          `pdl_sdbx_apikey_…` (sandbox) or `pdl_live_apikey_…`
- *   PADDLE_WEBHOOK_SECRET   notification-destination secret, `pdl_ntfset_…`
- *   PADDLE_PRICE_PLUS       `pri_…` monthly price for the Plus plan
- *   PADDLE_PRICE_PRO        `pri_…` monthly price for the Pro plan
- *   PADDLE_PRICE_BUSINESS   `pri_…` monthly price for the Business plan
+ * Required secrets (Project Settings → Secrets), per environment:
+ *   PADDLE_SANDBOX_API_KEY / PADDLE_LIVE_API_KEY   `pdl_sdbx_apikey_…` / `pdl_live_apikey_…`
+ *   PAYMENTS_SANDBOX_WEBHOOK_SECRET / PAYMENTS_LIVE_WEBHOOK_SECRET   `pdl_ntfset_…`
+ *   PADDLE_PRICE_PLUS / _PRO / _BUSINESS (optional)  explicit `pri_…` overrides;
+ *     without them the price is resolved from the catalog by its external id.
+ *   PADDLE_ENV (optional)  force "sandbox" or "live" instead of deriving it.
  *
- * Without them the whole publish flow still runs, in clearly labelled DEMO mode.
+ * Missing credentials never fake a charge: the publish flow then runs in
+ * clearly labelled DEMO mode.
  */
 import type { PlanId } from "./billing";
 
@@ -25,18 +26,34 @@ const API_BASE: Record<PaddleEnv, string> = {
 
 const env = (name: string): string | undefined => process.env[name]?.trim() || undefined;
 
-export function paddleApiKey(): string | undefined {
-  // Managed connection keys first, then the legacy single-key secret.
-  return env("PADDLE_LIVE_API_KEY") ?? env("PADDLE_SANDBOX_API_KEY") ?? env("PADDLE_API_KEY");
+/** API key for one specific environment — never a live key for a test charge. */
+export function paddleApiKeyFor(target: PaddleEnv): string | undefined {
+  const scoped = target === "live" ? env("PADDLE_LIVE_API_KEY") : env("PADDLE_SANDBOX_API_KEY");
+  const legacy = env("PADDLE_API_KEY");
+  if (scoped) return scoped;
+  if (!legacy) return undefined;
+  const legacyIsLive = !legacy.includes("_sdbx_");
+  return legacyIsLive === (target === "live") ? legacy : undefined;
 }
 
-/** Sandbox vs live is derived from the API key itself — never guessed. */
+/**
+ * Which environment this deployment charges in. The preview/dev build always
+ * uses test, so a preview click can never take real money; the production
+ * build uses live when a live key exists.
+ */
 export function paddleEnvironment(): PaddleEnv {
-  const key = paddleApiKey();
-  if (!key) return "sandbox";
-  if (env("PADDLE_LIVE_API_KEY")) return "live";
-  return key.includes("_live_") ? "live" : "sandbox";
+  const forced = env("PADDLE_ENV");
+  if (forced === "sandbox" || forced === "live") return forced;
+  const isProduction = env("NODE_ENV") === "production";
+  if (isProduction && paddleApiKeyFor("live")) return "live";
+  if (paddleApiKeyFor("sandbox")) return "sandbox";
+  return paddleApiKeyFor("live") ? "live" : "sandbox";
 }
+
+export function paddleApiKey(): string | undefined {
+  return paddleApiKeyFor(paddleEnvironment());
+}
+
 
 /** Human-readable price ids, stable across test and live. */
 const PRICE_EXTERNAL_ID: Record<PlanId, string> = {
@@ -76,12 +93,18 @@ export async function resolvePriceId(plan: PlanId): Promise<string> {
   return id;
 }
 
-/** True when this deployment can really charge for the given environment. */
+/**
+
+ * True only when this deployment can really charge in `target`: an API key for
+ * that environment AND a webhook secret to confirm the payment afterwards.
+ * Without confirmation a checkout could never unlock publishing, so a missing
+ * webhook secret counts as unconfigured rather than half-live.
+ */
 export function paymentsConfigured(target: PaddleEnv): boolean {
-  const key = paddleApiKey();
-  if (!key || paddleEnvironment() !== target) return false;
-  return true;
+  if (paddleEnvironment() !== target) return false;
+  return Boolean(paddleApiKeyFor(target) && paddleWebhookSecretFor(target));
 }
+
 
 
 export function getPaddleErrorMessage(error: unknown): string {
@@ -174,14 +197,35 @@ export async function createPortalUrl(customerId: string, subscriptionId?: strin
 /* Webhook verification                                                */
 /* ------------------------------------------------------------------ */
 
-export type PaddleEvent = { type: string; data: Record<string, unknown> };
+export type PaddleEvent = {
+  type: string;
+  /** Paddle notification/event id — the idempotency key for retries and replays. */
+  id: string | null;
+  occurredAt: string | null;
+  data: Record<string, unknown>;
+};
+
+/** Notification-destination secret for one environment. */
+export function paddleWebhookSecretFor(target: PaddleEnv): string | undefined {
+  return (
+    // Names used by the managed Payments connection …
+    env(target === "sandbox" ? "PAYMENTS_SANDBOX_WEBHOOK_SECRET" : "PAYMENTS_LIVE_WEBHOOK_SECRET") ??
+    // … then the project-local names, then the single legacy secret.
+    env(target === "sandbox" ? "PADDLE_SANDBOX_WEBHOOK_SECRET" : "PADDLE_LIVE_WEBHOOK_SECRET") ??
+    env("PADDLE_WEBHOOK_SECRET")
+  );
+}
 
 function webhookSecret(target: PaddleEnv): string {
-  const scoped = target === "sandbox" ? env("PADDLE_SANDBOX_WEBHOOK_SECRET") : env("PADDLE_LIVE_WEBHOOK_SECRET");
-  const secret = scoped ?? env("PADDLE_WEBHOOK_SECRET");
-  if (!secret) throw new Error("PADDLE_WEBHOOK_SECRET is not configured");
+  const secret = paddleWebhookSecretFor(target);
+  if (!secret) {
+    throw new Error(
+      `No webhook secret for ${target}: set PAYMENTS_${target === "sandbox" ? "SANDBOX" : "LIVE"}_WEBHOOK_SECRET`,
+    );
+  }
   return secret;
 }
+
 
 /** Verifies `Paddle-Signature: ts=<unix>;h1=<hmac>` over `<ts>:<raw body>`. */
 export async function verifyWebhook(req: Request, target: PaddleEnv): Promise<PaddleEvent> {
@@ -212,6 +256,17 @@ export async function verifyWebhook(req: Request, target: PaddleEnv): Promise<Pa
   const expected = [...new Uint8Array(signed)].map((b) => b.toString(16).padStart(2, "0")).join("");
   if (!signatures.includes(expected)) throw new Error("Invalid webhook signature");
 
-  const parsed = JSON.parse(body) as { event_type?: string; data?: Record<string, unknown> };
-  return { type: parsed.event_type ?? "", data: parsed.data ?? {} };
+  const parsed = JSON.parse(body) as {
+    event_type?: string;
+    event_id?: string;
+    notification_id?: string;
+    occurred_at?: string;
+    data?: Record<string, unknown>;
+  };
+  return {
+    type: parsed.event_type ?? "",
+    id: parsed.event_id ?? parsed.notification_id ?? null,
+    occurredAt: parsed.occurred_at ?? null,
+    data: parsed.data ?? {},
+  };
 }
