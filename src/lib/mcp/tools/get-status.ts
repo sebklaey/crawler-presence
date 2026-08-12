@@ -1,6 +1,6 @@
 import { defineTool } from "@lovable.dev/mcp-js";
 import { sessionCount, SESSION_TTL_MS, storeMode } from "../sessions";
-import { paymentsConfigured, siteUrl } from "../site";
+import { paymentsConfigured, paymentsEnvironment, siteUrl } from "../site";
 
 export default defineTool({
   name: "get_status",
@@ -18,7 +18,7 @@ export default defineTool({
       content: [
         {
           type: "text",
-          text: `Crawler MCP is healthy. Auth mode: none (public MVP). Session store: ${mode}. Interview model ${modelConfigured ? "configured" : "NOT configured"}. Analytics: demo data. Checkout: ${paymentsConfigured() ? "live" : "demo"}.`,
+          text: `Crawler MCP is healthy. Auth mode: none (public MVP). Session store: ${mode}. Interview model ${modelConfigured ? "configured" : "NOT configured"}. Analytics: measured Crawler events only. Checkout: ${paymentsConfigured() ? `live (${paymentsEnvironment()})` : "demo"}.`,
         },
       ],
       structuredContent: {
@@ -28,8 +28,11 @@ export default defineTool({
         auth_note:
           "All tools are public and unauthenticated (auth type none). No ChatGPT account identity is available to this server. Crawler has no user registration, no login and no user accounts at all. Building and previewing are free; publishing is the paid step on the Crawler website and hands out a one-time recovery code that is the sole means of managing a published Presence.",
         interview_model_configured: modelConfigured,
-        analytics_mode: "demo",
+        analytics_mode: "measured",
+        analytics_note:
+          "Counts only Crawler-observable events (published file reads, API reads, Crawler tool interactions, outbound clicks). Never private assistant conversations, never a guarantee of external citation or ranking.",
         checkout_mode: paymentsConfigured() ? "live" : "demo",
+        checkout_environment: paymentsEnvironment(),
         session_store: {
           type: mode,
           durable: mode === "database",
