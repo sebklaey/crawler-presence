@@ -33,10 +33,11 @@ export const Route = createFileRoute("/")({
 
 const EXAMPLES = [
   "I'm a documentary photographer in Lisbon shooting for magazines.",
-  "We make handmade skincare in small batches and ship across Europe.",
-  "https://example-bikes.com — we build gravel and city bikes.",
+  "We're a two-person design studio doing brand and web work.",
+  "https://example-analytics.com — we build a privacy-first analytics tool.",
   "I run an open-source project for local-first sync.",
 ];
+
 
 function Index() {
   const [core, setCore] = useCore();
@@ -94,10 +95,15 @@ function Index() {
           <div className="fade-up">
             <h1 className="display text-5xl sm:text-6xl">Tell Crawler what you do.</h1>
             <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
-              Describe your work in your own words, or paste a website or product link. Crawler works out what
+              Describe your work in your own words, or paste a website link. Crawler works out what
               kind of entity you are and asks the questions that matter for it — then builds one structured
               Knowledge Core that AI systems can read.
             </p>
+            <p className="mt-3 max-w-xl text-[13px] leading-relaxed text-muted-foreground/80">
+              Crawler is a software subscription. We host AI-readable text files for your public Presence. We do not
+              sell, ship or fulfil any physical goods, and nothing is ever posted to you.
+            </p>
+
           </div>
         ) : (
           <div className="space-y-6">

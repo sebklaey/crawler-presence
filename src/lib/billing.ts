@@ -21,7 +21,7 @@ export const PLANS: Plan[] = [
     analyticsDays: 7,
     features: [
       "1 published presence",
-      "Small catalog (up to 10 products, projects or services)",
+      "Small catalog (up to 10 offerings, projects or services)",
       "Measured analytics, 7-day window",
       "llms.txt, markdown pages and JSON endpoints",
       "Accountless management via recovery code",

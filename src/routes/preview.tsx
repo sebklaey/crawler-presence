@@ -39,7 +39,7 @@ function PreviewPage() {
         <PageHead
           eyebrow="Free preview"
           title="Generated presence"
-          description="One Knowledge Core, many renderings. Files only appear when they are relevant to your entity — a photographer gets projects and a CV, a manufacturer gets products."
+          description="One Knowledge Core, many renderings. Files only appear when they are relevant to your entity — a photographer gets projects and a CV, a software company gets services and an FAQ."
         />
         <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
           <aside className="space-y-1">
