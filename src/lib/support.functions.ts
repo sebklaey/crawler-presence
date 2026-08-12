@@ -24,6 +24,7 @@ export const submitSupportFn = createServerFn({ method: "POST" })
     const mail = await sendMail({
       to: CRAWLER_SUPPORT_EMAIL,
       replyTo: data.email,
+      template: "support-request",
       subject: `Crawler support · ${data.subject}`,
       text: [
         `From: ${data.email}`,
@@ -32,6 +33,7 @@ export const submitSupportFn = createServerFn({ method: "POST" })
         data.message,
       ].join("\n"),
     });
+
 
     try {
       const { db } = await import("./mcp/db.server");
