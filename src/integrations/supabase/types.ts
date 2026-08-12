@@ -77,6 +77,51 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_events: {
+        Row: {
+          created_at: string
+          environment: string
+          error: string | null
+          event_id: string
+          event_type: string
+          id: string
+          intent_ref: string | null
+          occurred_at: string | null
+          processed_at: string | null
+          status: string
+          subscription_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          environment?: string
+          error?: string | null
+          event_id: string
+          event_type: string
+          id?: string
+          intent_ref?: string | null
+          occurred_at?: string | null
+          processed_at?: string | null
+          status?: string
+          subscription_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          environment?: string
+          error?: string | null
+          event_id?: string
+          event_type?: string
+          id?: string
+          intent_ref?: string | null
+          occurred_at?: string | null
+          processed_at?: string | null
+          status?: string
+          subscription_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       presence_aliases: {
         Row: {
           alias: string
@@ -206,8 +251,10 @@ export type Database = {
           current_period_end: string | null
           environment: string
           expires_at: string
+          failure_reason: string | null
           id: string
           intent_ref: string
+          last_event_id: string | null
           plan: string
           presence_slug: string | null
           session_token: string | null
@@ -223,8 +270,10 @@ export type Database = {
           current_period_end?: string | null
           environment?: string
           expires_at?: string
+          failure_reason?: string | null
           id?: string
           intent_ref: string
+          last_event_id?: string | null
           plan?: string
           presence_slug?: string | null
           session_token?: string | null
@@ -240,8 +289,10 @@ export type Database = {
           current_period_end?: string | null
           environment?: string
           expires_at?: string
+          failure_reason?: string | null
           id?: string
           intent_ref?: string
+          last_event_id?: string | null
           plan?: string
           presence_slug?: string | null
           session_token?: string | null
@@ -269,6 +320,9 @@ export type Database = {
           manage_secret_updated_at: string
           mode: string
           plan: string
+          publication_error: string | null
+          publication_state: string
+          published_version: number
           report_email: string | null
           report_frequency: string
           report_last_sent_at: string | null
@@ -296,6 +350,9 @@ export type Database = {
           manage_secret_updated_at?: string
           mode?: string
           plan?: string
+          publication_error?: string | null
+          publication_state?: string
+          published_version?: number
           report_email?: string | null
           report_frequency?: string
           report_last_sent_at?: string | null
@@ -323,6 +380,9 @@ export type Database = {
           manage_secret_updated_at?: string
           mode?: string
           plan?: string
+          publication_error?: string | null
+          publication_state?: string
+          published_version?: number
           report_email?: string | null
           report_frequency?: string
           report_last_sent_at?: string | null
