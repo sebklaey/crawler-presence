@@ -32,10 +32,11 @@ export default defineTool({
 
     let turn;
     try {
-      turn = await runInterviewTurn({ core: {}, transcript: `USER: ${message}` });
+      turn = await runInterviewTurn({ core: {}, answer: message });
     } catch (e) {
-      throw new ToolError(`Interview model unavailable: ${String((e as Error).message ?? e)}`);
+      throw new ToolError(`Interview could not be started: ${String((e as Error).message ?? e)}`);
     }
+
 
     session.core = toKnowledgeCore(turn.core);
     session.confidence = turn.confidence;
