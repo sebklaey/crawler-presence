@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { usePlan } from "@/lib/store";
 import { usePaymentsStatus } from "@/hooks/use-payments-status";
 import { PLANS } from "@/lib/billing";
+import { useFunnelOnce } from "@/lib/funnel";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
@@ -24,6 +25,7 @@ export const Route = createFileRoute("/pricing")({
 });
 
 function PricingPage() {
+  useFunnelOnce("pricing_viewed");
   const [plan, setPlan] = usePlan();
   const { status: payments } = usePaymentsStatus();
 
