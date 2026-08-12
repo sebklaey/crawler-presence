@@ -41,6 +41,7 @@ import { Route as ApiPublicMcpHealthRouteImport } from './routes/api/public/mcp-
 import { Route as ManageSlugAnalyticsRouteImport } from './routes/manage_.$slug.analytics'
 import { Route as PSlugIndexRouteImport } from './routes/p.$slug.index'
 import { Route as PSlugSplatRouteImport } from './routes/p.$slug.$'
+import { Route as PSlugAnalyticsRouteImport } from './routes/p.$slug.analytics'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicReportsRunRouteImport } from './routes/api/public/reports/run'
 import { Route as ApiPublicTrackClickRouteImport } from './routes/api/public/track/click'
@@ -212,6 +213,11 @@ const PSlugSplatRoute = PSlugSplatRouteImport.update({
   path: '/p/$slug/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PSlugAnalyticsRoute = PSlugAnalyticsRouteImport.update({
+  id: '/p/$slug/analytics',
+  path: '/p/$slug/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -277,6 +283,7 @@ export interface FileRoutesByFullPath {
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
   '/manage/$slug/analytics': typeof ManageSlugAnalyticsRoute
   '/p/$slug/$': typeof PSlugSplatRoute
+  '/p/$slug/analytics': typeof PSlugAnalyticsRoute
   '/p/$slug/': typeof PSlugIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/reports/run': typeof ApiPublicReportsRunRoute
@@ -317,6 +324,7 @@ export interface FileRoutesByTo {
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
   '/manage/$slug/analytics': typeof ManageSlugAnalyticsRoute
   '/p/$slug/$': typeof PSlugSplatRoute
+  '/p/$slug/analytics': typeof PSlugAnalyticsRoute
   '/p/$slug': typeof PSlugIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/reports/run': typeof ApiPublicReportsRunRoute
@@ -358,6 +366,7 @@ export interface FileRoutesById {
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
   '/manage_/$slug/analytics': typeof ManageSlugAnalyticsRoute
   '/p/$slug/$': typeof PSlugSplatRoute
+  '/p/$slug/analytics': typeof PSlugAnalyticsRoute
   '/p/$slug/': typeof PSlugIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/reports/run': typeof ApiPublicReportsRunRoute
@@ -400,6 +409,7 @@ export interface FileRouteTypes {
     | '/api/public/mcp-health'
     | '/manage/$slug/analytics'
     | '/p/$slug/$'
+    | '/p/$slug/analytics'
     | '/p/$slug/'
     | '/api/public/payments/webhook'
     | '/api/public/reports/run'
@@ -440,6 +450,7 @@ export interface FileRouteTypes {
     | '/api/public/mcp-health'
     | '/manage/$slug/analytics'
     | '/p/$slug/$'
+    | '/p/$slug/analytics'
     | '/p/$slug'
     | '/api/public/payments/webhook'
     | '/api/public/reports/run'
@@ -480,6 +491,7 @@ export interface FileRouteTypes {
     | '/api/public/mcp-health'
     | '/manage_/$slug/analytics'
     | '/p/$slug/$'
+    | '/p/$slug/analytics'
     | '/p/$slug/'
     | '/api/public/payments/webhook'
     | '/api/public/reports/run'
@@ -521,6 +533,7 @@ export interface RootRouteChildren {
   ApiPublicMcpHealthRoute: typeof ApiPublicMcpHealthRoute
   ManageSlugAnalyticsRoute: typeof ManageSlugAnalyticsRoute
   PSlugSplatRoute: typeof PSlugSplatRoute
+  PSlugAnalyticsRoute: typeof PSlugAnalyticsRoute
   PSlugIndexRoute: typeof PSlugIndexRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   ApiPublicReportsRunRoute: typeof ApiPublicReportsRunRoute
@@ -756,6 +769,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PSlugSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/p/$slug/analytics': {
+      id: '/p/$slug/analytics'
+      path: '/p/$slug/analytics'
+      fullPath: '/p/$slug/analytics'
+      preLoaderRoute: typeof PSlugAnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
@@ -835,6 +855,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicMcpHealthRoute: ApiPublicMcpHealthRoute,
   ManageSlugAnalyticsRoute: ManageSlugAnalyticsRoute,
   PSlugSplatRoute: PSlugSplatRoute,
+  PSlugAnalyticsRoute: PSlugAnalyticsRoute,
   PSlugIndexRoute: PSlugIndexRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   ApiPublicReportsRunRoute: ApiPublicReportsRunRoute,
