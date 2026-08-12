@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { generateJson } from "./ai-gateway.server";
 import { emptyCore, type KnowledgeCore } from "./knowledge";
 
 export const factSchema = z.object({
