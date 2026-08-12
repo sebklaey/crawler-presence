@@ -62,7 +62,7 @@ const tools: { name: string; kind: string; text: string }[] = [
   { name: "get_analytics", kind: "read", text: "Ask \u201c@Crawler wie oft wurde \u00fcber sebklaey.app geredet?\u201d \u2014 returns the free public aggregate for a published Presence (distinct anonymous Crawler sessions, mention events, public reads) for 7/30/90 days or all time. Detailed analytics need the recovery code. Scope: measured inside Crawler only." },
   { name: "improve_presence", kind: "read", text: "Turns an insight into the fields to clarify and one targeted question." },
   { name: "get_checkout_link", kind: "read", text: "External checkout URL; labelled demo mode when no payment credentials are configured." },
-  { name: "get_status", kind: "read", text: "Health and debug output: auth mode (none), model availability, session store, checkout mode." },
+  { name: "get_status", kind: "read", text: "Health and debug output: auth mode (none), model availability, session storage and subscription mode." },
 ];
 
 function ChatGptPage() {

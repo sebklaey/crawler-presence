@@ -101,7 +101,7 @@ export default defineTool({
       content: [
         {
           type: "text",
-          text: `Read ${url}. Found ${extracted.candidate_facts.length} candidate facts and ${extracted.candidate_items.length} catalog candidates. All values still need user confirmation.`,
+          text: `Read ${url}. Found ${extracted.candidate_facts.length} candidate facts and ${extracted.candidate_items.length} content-record candidates. All values still need user confirmation.`,
         },
       ],
       structuredContent: {

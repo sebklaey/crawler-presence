@@ -38,7 +38,7 @@ export type ManageOverview =
       paths: string[];
       /** Billing lapsed: still public, but analytics and editing are locked. */
       restricted: boolean;
-      /** Catalog entries stored but hidden because the plan limit is smaller. */
+      /** Content records stored but hidden because the plan limit is smaller. */
       hiddenCatalogEntries: number;
       catalogLimit: number;
       analytics: ManageAnalytics | null;

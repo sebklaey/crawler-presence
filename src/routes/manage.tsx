@@ -284,10 +284,10 @@ function ManagePage() {
                 {data.hiddenCatalogEntries > 0 ? (
                   <p className={data.restricted ? "mt-3" : undefined}>
                     <span className="font-medium">
-                      {data.hiddenCatalogEntries} catalog {data.hiddenCatalogEntries === 1 ? "entry is" : "entries are"}{" "}
+                      {data.hiddenCatalogEntries} content {data.hiddenCatalogEntries === 1 ? "record is" : "records are"}{" "}
                       hidden.
                     </span>{" "}
-                    Your {data.plan} plan publishes up to {data.catalogLimit.toLocaleString()} entries. The rest stay
+                    Your {data.plan} plan hosts up to {data.catalogLimit.toLocaleString()} AI-readable content records. The rest stay
                     stored and reappear automatically after an upgrade.
                   </p>
                 ) : null}
