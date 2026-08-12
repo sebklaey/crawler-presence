@@ -174,7 +174,10 @@ export async function publishDraft(input: {
       }
     | undefined;
 }): Promise<PublishResult> {
-  const files = generatedFiles(input.core).map((f) => ({ path: f.path, type: f.type, content: f.content }));
+  const { applyCatalogLimit } = await import("../entitlements");
+  const visible = applyCatalogLimit(input.core, input.plan).core;
+  const files = generatedFiles(visible).map((f) => ({ path: f.path, type: f.type, content: f.content }));
+
   const manageSecret = newManageSecret();
   const manageSecretHash = await hashManageSecret(manageSecret);
   const now = new Date().toISOString();
