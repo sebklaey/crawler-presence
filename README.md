@@ -29,7 +29,8 @@ Health: **https://crawler-presence.lovable.app/api/public/mcp-health**
   All four are RLS-locked with no policies and reachable only through the
   server-side service-role client in `src/lib/mcp/db.server.ts` — never from the
   browser.
-- **Accountless ownership**: publishing issues a 160-bit management secret. The
+- **Accountless ownership**: publishing issues a 256-bit management secret
+  (32 random bytes → `crw_` + 64 hex). The
   user receives it once as a recovery code `<slug>~crw_…`; only its SHA-256 hash
   is stored. It gates `/manage`: take offline, put back online, rotate the code
   and open the billing portal. A lost code cannot be recovered by anyone.
