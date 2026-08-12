@@ -179,7 +179,7 @@ function Index() {
             />
             <div className="flex items-center justify-between px-2 pb-1">
               <span className="text-[11px] text-muted-foreground">No fixed questionnaire. One question at a time.</span>
-              <Button size="sm" disabled={busy || !input.trim()} onClick={() => void send(input)}>
+              <Button size="sm" aria-label="Send message" disabled={busy || !input.trim()} onClick={() => void send(input)}>
                 {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-4 w-4" />}
               </Button>
             </div>

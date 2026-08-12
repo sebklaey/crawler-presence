@@ -110,6 +110,7 @@ function KnowledgePage() {
                           <Button
                             size="sm"
                             variant="ghost"
+                            aria-label={`Remove fact: ${f.label}`}
                             onClick={() => setCore({ ...core, facts: core.facts.filter((x) => x.id !== f.id) })}
                           >
                             <X className="h-3 w-3" />
