@@ -209,10 +209,24 @@ function Index() {
             ))}
           </div>
         ) : (
-          <div className="mt-12">
+          <div className="mt-12 space-y-6">
+            {ready ? (
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-5">
+                <div>
+                  <div className="text-sm font-medium">See what Crawler built for you</div>
+                  <p className="text-xs text-muted-foreground">
+                    Full result view with all facts and generated files — free, no payment required.
+                  </p>
+                </div>
+                <Button asChild size="sm">
+                  <Link to="/result">Show my result</Link>
+                </Button>
+              </div>
+            ) : null}
             <PresenceStatus core={core} />
           </div>
         )}
+
 
         {started ? (
           <button
