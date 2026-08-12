@@ -33,6 +33,7 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as ApiEntityDotjsonRouteImport } from './routes/api/entity[.]json'
+import { Route as ApiServicesDotjsonRouteImport } from './routes/api/services[.]json'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as ApiPublicMcpHealthRouteImport } from './routes/api/public/mcp-health'
 import { Route as PSlugIndexRouteImport } from './routes/p.$slug.index'
@@ -166,6 +167,11 @@ const ApiEntityDotjsonRoute = ApiEntityDotjsonRouteImport.update({
   path: '/api/entity.json',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiServicesDotjsonRoute = ApiServicesDotjsonRouteImport.update({
+  id: '/api/services.json',
+  path: '/api/services.json',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
     id: '/.mcp/invoke-tool/$tool',
@@ -245,6 +251,7 @@ export interface FileRoutesByFullPath {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/api/entity.json': typeof ApiEntityDotjsonRoute
+  '/api/services.json': typeof ApiServicesDotjsonRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
   '/p/$slug/$': typeof PSlugSplatRoute
@@ -281,6 +288,7 @@ export interface FileRoutesByTo {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/api/entity.json': typeof ApiEntityDotjsonRoute
+  '/api/services.json': typeof ApiServicesDotjsonRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
   '/p/$slug/$': typeof PSlugSplatRoute
@@ -318,6 +326,7 @@ export interface FileRoutesById {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/api/entity.json': typeof ApiEntityDotjsonRoute
+  '/api/services.json': typeof ApiServicesDotjsonRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
   '/p/$slug/$': typeof PSlugSplatRoute
@@ -356,6 +365,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/api/entity.json'
+    | '/api/services.json'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
     | '/p/$slug/$'
@@ -392,6 +402,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/api/entity.json'
+    | '/api/services.json'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
     | '/p/$slug/$'
@@ -428,6 +439,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/api/entity.json'
+    | '/api/services.json'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
     | '/p/$slug/$'
@@ -465,6 +477,7 @@ export interface RootRouteChildren {
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   ApiEntityDotjsonRoute: typeof ApiEntityDotjsonRoute
+  ApiServicesDotjsonRoute: typeof ApiServicesDotjsonRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicMcpHealthRoute: typeof ApiPublicMcpHealthRoute
   PSlugSplatRoute: typeof PSlugSplatRoute
@@ -647,6 +660,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiEntityDotjsonRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/services.json': {
+      id: '/api/services.json'
+      path: '/api/services.json'
+      fullPath: '/api/services.json'
+      preLoaderRoute: typeof ApiServicesDotjsonRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/.mcp/invoke-tool/$tool': {
       id: '/.mcp/invoke-tool/$tool'
       path: '/.mcp/invoke-tool/$tool'
@@ -746,6 +766,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   ApiEntityDotjsonRoute: ApiEntityDotjsonRoute,
+  ApiServicesDotjsonRoute: ApiServicesDotjsonRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicMcpHealthRoute: ApiPublicMcpHealthRoute,
   PSlugSplatRoute: PSlugSplatRoute,
