@@ -4,6 +4,16 @@ import { CreditCard, Eye, EyeOff, KeyRound, Loader2, RefreshCw } from "lucide-re
 import { toast } from "sonner";
 
 import { AppShell, PageHead } from "@/components/app-shell";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { RecoveryCodeCard } from "@/components/recovery-code-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,7 +51,11 @@ const REASONS: Record<string, string> = {
   "not-found": "No Presence matches this recovery code.",
   "rate-limited": "Too many attempts. Wait a minute and try again.",
   "no-subscription": "This Presence has no subscription — it was published in demo mode.",
+  unavailable:
+    "The Crawler database is temporarily unavailable, so nothing was changed. Please try again in a moment.",
 };
+
+type Confirming = "offline" | "rotate" | null;
 
 function ManagePage() {
   const [code, setCode] = useState("");
@@ -49,6 +63,7 @@ function ManagePage() {
   const [busy, setBusy] = useState(false);
   const [data, setData] = useState<Extract<ManageOverview, { ok: true }> | null>(null);
   const [rotated, setRotated] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState<Confirming>(null);
 
   async function open(next = code) {
     setBusy(true);
@@ -139,7 +154,7 @@ function ManagePage() {
               spellCheck={false}
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              placeholder="my-presence-1a2b3c~crw_…"
+              placeholder="my-presence-1a2b3c~crw_… (64 hex characters)"
               className="font-mono"
             />
             <Button
@@ -230,7 +245,7 @@ function ManagePage() {
               <div className="text-sm font-medium">Controls</div>
               <div className="mt-4 flex flex-wrap gap-2">
                 {data.status === "live" ? (
-                  <Button variant="outline" disabled={busy} onClick={() => void setStatus("offline")}>
+                  <Button variant="outline" disabled={busy} onClick={() => setConfirming("offline")}>
                     Take offline
                   </Button>
                 ) : (
@@ -238,7 +253,7 @@ function ManagePage() {
                     Put back online
                   </Button>
                 )}
-                <Button variant="outline" disabled={busy} onClick={() => void rotate()}>
+                <Button variant="outline" disabled={busy} onClick={() => setConfirming("rotate")}>
                   <RefreshCw className="mr-2 h-3.5 w-3.5" /> Rotate recovery code
                 </Button>
                 {data.billingPortalAvailable ? (
@@ -252,8 +267,92 @@ function ManagePage() {
                 and invalidates the current one — the new code is shown once.
               </p>
             </div>
+
+            <div className="rounded-2xl border border-border bg-card p-6">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <div className="text-sm font-medium">Presence analytics · last {data.analytics.windowDays} days</div>
+                <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                  Demo data
+                </span>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Seeded DEMO numbers in this build. Crawler only ever measures its own events and observable reads of
+                your public files — it has no access to private ChatGPT, Claude, Gemini or other assistant
+                conversations.
+              </p>
+
+              <dl className="mt-5 grid gap-4 sm:grid-cols-3">
+                {data.analytics.metrics.map((metric) => (
+                  <div key={metric.label}>
+                    <dt className="text-xs text-muted-foreground">{metric.label}</dt>
+                    <dd className="display text-2xl">{metric.value.toLocaleString()}</dd>
+                    <p className="text-[11px] text-muted-foreground">{metric.hint}</p>
+                  </div>
+                ))}
+              </dl>
+
+              <div className="mt-6 grid gap-6 sm:grid-cols-2">
+                <div>
+                  <div className="text-xs text-muted-foreground">Most asked about</div>
+                  <ul className="mt-2 space-y-1 text-sm">
+                    {data.analytics.topQuestions.map((q) => (
+                      <li key={q.label} className="flex justify-between gap-3">
+                        <span>{q.label}</span>
+                        <span className="font-mono text-xs text-muted-foreground">{q.count}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground">Missing information</div>
+                  <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+                    {data.analytics.gaps.map((gap) => (
+                      <li key={gap}>{gap}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
           </div>
         ) : null}
+
+        <AlertDialog open={confirming !== null} onOpenChange={(open) => (open ? null : setConfirming(null))}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {confirming === "rotate" ? "Rotate the recovery code?" : "Take this Presence offline?"}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {confirming === "rotate" ? (
+                  <>
+                    A brand-new recovery code is issued and the current one stops working immediately. The new code is
+                    shown exactly once — if you do not save it, the Presence can never be managed again. Anyone still
+                    holding the old code loses access.
+                  </>
+                ) : (
+                  <>
+                    Every public file (llms.txt, the markdown pages and the JSON endpoints) stops being served right
+                    away and starts returning 404 for AI crawlers and visitors. The Presence and its content are kept —
+                    you can put it back online at any time with this recovery code.
+                  </>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  const action = confirming;
+                  setConfirming(null);
+                  if (action === "rotate") void rotate();
+                  if (action === "offline") void setStatus("offline");
+                }}
+              >
+                {confirming === "rotate" ? "Rotate code" : "Take offline"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </AppShell>
   );
