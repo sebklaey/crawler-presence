@@ -275,11 +275,6 @@
             "filter": {
               "type": "string",
               "description": "Optional product or entity name filter."
-            },
-            "include_ai_summary": {
-              "type": "boolean",
-              "default": false,
-              "description": "Include a seeded demo AI summary (no measured data)."
             }
           },
           "additionalProperties": false,
