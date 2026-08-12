@@ -52,6 +52,7 @@ function PublishPage() {
   const [recovered, setRecovered] = useState(false);
   const [issued, setIssued] = useState<Issued | null>(null);
   const [awaitingPayment, setAwaitingPayment] = useState(Boolean(search.intent));
+  const { status: paymentsStatus } = usePaymentsStatus();
 
   // Handoff from ChatGPT: recover the anonymous draft carried in the URL.
   useEffect(() => {

@@ -24,6 +24,7 @@ export const Route = createFileRoute("/pricing")({
 
 function PricingPage() {
   const [plan, setPlan] = usePlan();
+  const { status: payments } = usePaymentsStatus();
 
   return (
     <AppShell>
