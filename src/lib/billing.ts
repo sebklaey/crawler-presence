@@ -38,8 +38,8 @@ export const PLANS: Plan[] = [
       "Analytics with a 90-day window",
       "Detailed conversation insights (recurring questions, gaps)",
       "Improve my Presence recommendations",
+      "Custom domain with DNS verification",
     ],
-    planned: ["Custom domain"],
   },
   {
     id: "business",
@@ -51,9 +51,12 @@ export const PLANS: Plan[] = [
       "Large catalog (up to 5,000 entries)",
       "Analytics with a 90-day window over the full event retention",
       "Detailed conversation insights and improvement recommendations",
+      "Custom domain with DNS verification",
+      "REST API for Presence and analytics data",
       "Priority support by email",
     ],
-    planned: ["Shared team access", "API access and scheduled reports"],
+    planned: ["Shared team access", "Scheduled report emails"],
+
   },
 ];
 
