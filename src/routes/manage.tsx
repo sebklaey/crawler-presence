@@ -14,7 +14,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { ApiAccessSection, CustomDomainSection } from "@/components/manage-sections";
 import { RecoveryCodeCard } from "@/components/recovery-code-card";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
