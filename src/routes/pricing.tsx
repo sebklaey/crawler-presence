@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check } from "lucide-react";
 
 import { AppShell, PageHead } from "@/components/app-shell";
+import { PaymentTestModeBanner } from "@/components/payment-test-mode-banner";
 import { Button } from "@/components/ui/button";
 import { usePlan } from "@/lib/store";
 import { usePaymentsStatus } from "@/hooks/use-payments-status";
