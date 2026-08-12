@@ -341,10 +341,14 @@ export type Database = {
           delivered: boolean
           email: string
           id: string
+          is_follow_up: boolean
           message: string
+          notified_at: string | null
+          notified_status: string | null
           presence_slug: string | null
           status: string
           subject: string
+          thread_id: string | null
           updated_at: string
         }
         Insert: {
@@ -352,10 +356,14 @@ export type Database = {
           delivered?: boolean
           email: string
           id?: string
+          is_follow_up?: boolean
           message: string
+          notified_at?: string | null
+          notified_status?: string | null
           presence_slug?: string | null
           status?: string
           subject: string
+          thread_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -363,10 +371,14 @@ export type Database = {
           delivered?: boolean
           email?: string
           id?: string
+          is_follow_up?: boolean
           message?: string
+          notified_at?: string | null
+          notified_status?: string | null
           presence_slug?: string | null
           status?: string
           subject?: string
+          thread_id?: string | null
           updated_at?: string
         }
         Relationships: []
