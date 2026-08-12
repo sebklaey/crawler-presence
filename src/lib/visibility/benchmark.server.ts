@@ -35,57 +35,55 @@ export type BenchmarkOutcome = z.infer<typeof evaluationSchema> & {
   prompt_key: string;
 };
 
-/** Führt das Prompt-Set aus und speichert nur die ausgewerteten Ergebnisse. */
-export async function runBenchmark(slug: string, entityName: string): Promise<{ runs: number; error?: string }> {
+/**
+ * Crawler betreibt kein eigenes Sprachmodell und kann den Benchmark daher
+ * nicht selbst ausführen. Die Testfragen werden vom verbundenen Assistenten
+ * (ChatGPT über MCP) beantwortet und bewertet; hier werden ausschließlich die
+ * eingereichten Bewertungen gespeichert — niemals Prompt oder Antworttext.
+ */
+export const BENCHMARK_UNAVAILABLE =
+  "Crawler nutzt kein eigenes AI-Modell. Der kontrollierte Benchmark wird vom verbundenen Assistenten (ChatGPT über MCP) ausgeführt; Crawler speichert nur die eingereichten Bewertungen.";
+
+export async function runBenchmark(_slug: string, _entityName: string): Promise<{ runs: number; error?: string }> {
+  return { runs: 0, error: BENCHMARK_UNAVAILABLE };
+}
+
+/** Speichert vom aufrufenden Assistenten eingereichte Benchmark-Bewertungen. */
+export async function recordBenchmarkResults(
+  slug: string,
+  provider: string,
+  model: string,
+  results: unknown[],
+): Promise<{ runs: number; error?: string }> {
   const { db } = await import("../mcp/db.server");
   const supabase = db();
   if (!supabase) return { runs: 0, error: "Datenbank nicht verfügbar." };
 
-  let generateJson: typeof import("../ai-gateway.server").generateJson;
-  let model: string;
-  try {
-    const gateway = await import("../ai-gateway.server");
-    generateJson = gateway.generateJson;
-    model = gateway.CRAWLER_MODEL;
-  } catch {
-    return { runs: 0, error: "AI-Gateway nicht verfügbar." };
-  }
-
   const rows: Record<string, unknown>[] = [];
-  for (const prompt of BENCHMARK_PROMPTS) {
-    try {
-      const evaluated = await generateJson({
-        schema: evaluationSchema,
-        shape: `{"entity_mentioned": true, "description_correct": true, "source_cited": false, "position": 1, "detected_issues": ["kurz benannte Fehlinterpretation"], "result_summary": "1-2 Sätze"}`,
-        system: `Du beantwortest zuerst die Testfrage aus deinem eigenen Modellwissen und bewertest anschließend deine eigene Antwort in Bezug auf die Entität "${entityName}".
-entity_mentioned: wurde die Entität in deiner Antwort genannt?
-description_correct: war die Beschreibung sachlich korrekt?
-source_cited: hast du eine Quelle der Entität angegeben?
-position: an welcher Stelle einer Aufzählung erschien sie, sonst null.
-detected_issues: kurze Stichworte zu Fehlinterpretationen, z.B. "als Web-Scraper eingeordnet".
-Gib nur die Bewertung als JSON zurück, nicht die Antwort selbst.`,
-        prompt: `Testfrage: ${prompt.question}`,
-      });
-      rows.push({
-        presence_slug: slug,
-        provider: "lovable-ai-gateway",
-        model,
-        prompt_key: prompt.key,
-        prompt_version: BENCHMARK_VERSION,
-        entity_mentioned: evaluated.entity_mentioned,
-        description_correct: evaluated.description_correct,
-        source_cited: evaluated.source_cited,
-        position: evaluated.position,
-        detected_issues: evaluated.detected_issues,
-        result_summary: evaluated.result_summary.slice(0, 400),
-      });
-    } catch (error) {
-      console.error("[crawler] benchmark run failed", prompt.key, String(error));
-    }
+  for (const raw of results) {
+    const entry = (raw ?? {}) as Record<string, unknown>;
+    const promptKey = String(entry["prompt_key"] ?? "");
+    if (!BENCHMARK_PROMPTS.some((p) => p.key === promptKey)) continue;
+    const parsed = evaluationSchema.safeParse(entry);
+    if (!parsed.success) continue;
+    rows.push({
+      presence_slug: slug,
+      provider: provider.slice(0, 60),
+      model: model.slice(0, 80),
+      prompt_key: promptKey,
+      prompt_version: BENCHMARK_VERSION,
+      entity_mentioned: parsed.data.entity_mentioned,
+      description_correct: parsed.data.description_correct,
+      source_cited: parsed.data.source_cited,
+      position: parsed.data.position,
+      detected_issues: parsed.data.detected_issues,
+      result_summary: parsed.data.result_summary.slice(0, 400),
+    });
   }
 
-  if (!rows.length) return { runs: 0, error: "Kein Benchmark-Lauf konnte ausgewertet werden." };
+  if (!rows.length) return { runs: 0, error: "Keine gültigen Benchmark-Bewertungen übermittelt." };
   const { error } = await supabase.from("visibility_benchmarks").insert(rows);
   if (error) return { runs: 0, error: "Benchmark-Ergebnisse konnten nicht gespeichert werden." };
   return { runs: rows.length };
 }
+

@@ -48,7 +48,7 @@
       {
         "name": "continue_interview",
         "title": "Continue Presence interview",
-        "description": "Use this after start_interview to submit the user's answer and get the next adaptive question. Merges the answer into the Knowledge Core, keeps verified facts separate from narrative claims, and returns either the next most valuable tailored question or interview_complete=true.",
+        "description": "Use this after start_interview to record the user's answer. Crawler runs NO language model of its own: you (the calling assistant) do the interviewing. Extract what the user said into core_update (facts, offerings, FAQ, links, summary) and send it here — Crawler merges it deterministically into the Knowledge Core, keeps verified facts separate from claims, and returns the next open gap so you can phrase the next domain-specific question yourself. Without core_update, Crawler falls back to a rule-based merge of the raw answer.",
         "annotations": {
           "readOnlyHint": false,
           "destructiveHint": false,
@@ -67,7 +67,17 @@
               "type": "string",
               "minLength": 1,
               "maxLength": 6000,
-              "description": "The user's answer to the previous question."
+              "description": "The user's answer to the previous question, verbatim."
+            },
+            "core_update": {
+              "type": "object",
+              "additionalProperties": {},
+              "description": "Structured Knowledge Core fragment you extracted from the answer: {entityType,name,tagline,summary,location,website,languages,facts:[{label,value,status:'verified'|'claimed',source}],stories,items:[{kind,name,summary}],faqs,cv,links}. Only include what the user actually stated — never invent values."
+            },
+            "assistant_question": {
+              "type": "string",
+              "maxLength": 500,
+              "description": "The question you asked before this answer, for the stored transcript."
             }
           },
           "required": [
@@ -82,7 +92,7 @@
       {
         "name": "analyze_source_url",
         "title": "Analyze a public URL",
-        "description": "Use this when the user pastes a website or landing-page URL and wants Crawler to extract candidate facts from the public page. Returns extracted information with provenance (source_url) and per-fact confidence. If fetching fails or is blocked, returns an honest structured unavailable result instead of invented data.",
+        "description": "Use this when the user pastes a website or landing-page URL. Crawler fetches the public page and returns its readable text, title, meta description and headings with provenance (source_url). Crawler runs no language model of its own — YOU extract the candidate facts from the returned text, keep hard facts separate from marketing narrative, and send them as core_update to continue_interview. If fetching fails or is blocked, an honest structured unavailable result is returned instead of invented data.",
         "annotations": {
           "readOnlyHint": true,
           "destructiveHint": false,
@@ -285,7 +295,7 @@
       {
         "name": "improve_presence",
         "title": "Improve the Presence",
-        "description": "Use this when the user has an analytics insight or a requested change and wants to know what to fix in their Presence. Identifies which Knowledge Core fields need clarification and returns one targeted next question. Never invents facts.",
+        "description": "Use this when the user has an analytics insight or a requested change and wants to know what to fix in their Presence. Crawler runs no language model of its own: it returns a deterministic gap analysis of the Knowledge Core plus the insight, and you phrase the targeted follow-up question. Never invents facts.",
         "annotations": {
           "readOnlyHint": true,
           "destructiveHint": false,
@@ -304,7 +314,7 @@
               "type": "string",
               "minLength": 3,
               "maxLength": 2000,
-              "description": "The analytics insight or requested change, e.g. 'people keep asking about frame sizes'."
+              "description": "The analytics insight or requested change, e.g. 'people keep asking about licensing'."
             }
           },
           "required": [

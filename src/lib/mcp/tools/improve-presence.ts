@@ -1,24 +1,15 @@
 import { defineTool, ToolError } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 import { allowRequest } from "../presences";
-import { generateJson } from "../../ai-gateway.server";
+import { INTERVIEWER_INSTRUCTIONS, normalizeCore, reviewCore } from "../../interview-rules";
 import { presenceChecks, presenceScore } from "../../knowledge";
 import { getSession } from "../sessions";
-
-const schema = z.object({
-  assessment: z.string(),
-  fields_to_clarify: z
-    .array(z.object({ field: z.string(), why: z.string() }))
-    .default([]),
-  next_question: z.string(),
-  example_answers: z.array(z.string()).default([]),
-});
 
 export default defineTool({
   name: "improve_presence",
   title: "Improve the Presence",
   description:
-    "Use this when the user has an analytics insight or a requested change and wants to know what to fix in their Presence. Identifies which Knowledge Core fields need clarification and returns one targeted next question. Never invents facts.",
+    "Use this when the user has an analytics insight or a requested change and wants to know what to fix in their Presence. Crawler runs no language model of its own: it returns a deterministic gap analysis of the Knowledge Core plus the insight, and you phrase the targeted follow-up question. Never invents facts.",
   inputSchema: {
     session_id: z.string().trim().min(6).describe("Opaque session id returned by start_interview."),
     insight: z
@@ -26,7 +17,7 @@ export default defineTool({
       .trim()
       .min(3)
       .max(2000)
-      .describe("The analytics insight or requested change, e.g. 'people keep asking about frame sizes'."),
+      .describe("The analytics insight or requested change, e.g. 'people keep asking about licensing'."),
   },
   annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
   handler: async ({ session_id, insight }) => {
@@ -35,27 +26,28 @@ export default defineTool({
     const session = await getSession(session_id);
     if (!session) throw new ToolError("Unknown or expired session_id. Call start_interview to begin a new session.");
 
-    let result;
-    try {
-      result = await generateJson({
-        schema: schema as unknown as z.ZodType<z.infer<typeof schema>>,
-        shape: `{"assessment":"2-3 sentences","fields_to_clarify":[{"field":"knowledge core field or file","why":""}],"next_question":"ONE targeted question","example_answers":["up to 3"]}`,
-        system:
-          "You review an AI-readable Presence Knowledge Core against a specific insight and say precisely which fields must be clarified so AI assistants can answer well. Be concrete and specific to the entity type. Never invent facts; name gaps instead.",
-        prompt: `Insight or requested change: ${insight}\n\nKnowledge Core:\n${JSON.stringify(session.core, null, 2)}`,
-      });
-    } catch (e) {
-      throw new ToolError(`Improvement model unavailable: ${String((e as Error).message ?? e)}`);
-    }
+    const review = reviewCore(normalizeCore(session.core), insight);
 
     return {
-      content: [{ type: "text", text: `${result.assessment}\n\n${result.next_question}` }],
+      content: [
+        {
+          type: "text",
+          text: `${review.headline}\n\n${review.nextQuestion || "Nothing critical is missing — ask the user what they want to refine."}`,
+        },
+      ],
       structuredContent: {
         session_id: session.id,
+        no_own_model: true,
+        interviewer_instructions: INTERVIEWER_INSTRUCTIONS,
         presence_score: presenceScore(session.core),
         open_checks: presenceChecks(session.core).filter((c) => !c.done).map((c) => c.label),
-        ...result,
-        apply_hint: "Send the user's answer to continue_interview to merge it into the Knowledge Core.",
+        assessment: review.headline,
+        strengths: review.strengths,
+        fields_to_clarify: review.suggestions.map((s) => ({ field: s.title, why: s.why })),
+        next_question: review.nextQuestion,
+        example_answers: review.exampleAnswers,
+        apply_hint:
+          "Extract the user's answer into core_update and send it to continue_interview so Crawler merges it deterministically.",
       },
     };
   },

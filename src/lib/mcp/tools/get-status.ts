@@ -10,15 +10,12 @@ export default defineTool({
   inputSchema: {},
   annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   handler: async () => {
-    const modelConfigured = Boolean(
-      (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.["LOVABLE_API_KEY"],
-    );
     const mode = await storeMode();
     return {
       content: [
         {
           type: "text",
-          text: `Crawler MCP is healthy. Auth mode: none (public MVP). Session store: ${mode}. Interview model ${modelConfigured ? "configured" : "NOT configured"}. Analytics: measured Crawler events only. Checkout: ${paymentsConfigured() ? `live (${paymentsEnvironment()})` : `Free Beta ${releaseVersion()} — publishing is free until live payments are enabled`}.`,
+          text: `Crawler MCP is healthy. Auth mode: none (public MVP). Session store: ${mode}. Crawler runs no language model of its own: the connected assistant does the interviewing, Crawler stores and structures. Analytics: measured Crawler events only. Checkout: ${paymentsConfigured() ? `live (${paymentsEnvironment()})` : `Free Beta ${releaseVersion()} — publishing is free until live payments are enabled`}.`,
         },
       ],
       structuredContent: {
@@ -27,7 +24,9 @@ export default defineTool({
         auth_mode: "none",
         auth_note:
           "All tools are public and unauthenticated (auth type none). No ChatGPT account identity is available to this server. Crawler has no user registration, no login and no user accounts at all. Building and previewing are free; publishing is the paid step on the Crawler website and hands out a one-time recovery code that is the sole means of managing a published Presence.",
-        interview_model_configured: modelConfigured,
+        own_ai_model: false,
+        model_note:
+          "Crawler has no own AI model. The calling assistant (e.g. ChatGPT via MCP) asks the questions and extracts structured data; Crawler merges it deterministically, generates the files and publishes.",
         analytics_mode: "measured",
         analytics_note:
           "Counts only Crawler-observable events (published file reads, API reads, Crawler tool interactions, outbound clicks). Never private assistant conversations, never a guarantee of external citation or ranking.",

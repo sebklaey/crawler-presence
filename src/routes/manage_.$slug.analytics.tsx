@@ -8,11 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScopeNotice, VisibilityDashboardView } from "@/components/visibility-dashboard";
 import { SCOPE_NOTICE, type EventType, type Period, type SourceType, type VisibilityDashboard } from "@/lib/visibility/model";
-import {
-  visibilityBenchmarkFn,
-  visibilityDashboardFn,
-  visibilityExportFn,
-} from "@/lib/visibility.functions";
+import { visibilityDashboardFn, visibilityExportFn } from "@/lib/visibility.functions";
 import { useRecoveryCode } from "@/lib/store";
 
 export const Route = createFileRoute("/manage_/$slug/analytics")({
@@ -51,7 +47,6 @@ function VisibilityPage() {
   const [name, setName] = useState<string>(slug);
   const [maxDays, setMaxDays] = useState(7);
   const [busy, setBusy] = useState(false);
-  const [benchmarkBusy, setBenchmarkBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<{ period: Period; source: SourceType | "all"; eventType: EventType | "all" }>({
     period: 30,
@@ -99,23 +94,6 @@ function VisibilityPage() {
     const merged = { ...filters, ...next };
     setFilters(merged);
     void load(storedCode || code, merged);
-  }
-
-  async function onBenchmark() {
-    const activeCode = storedCode || code;
-    setBenchmarkBusy(true);
-    try {
-      const result = await visibilityBenchmarkFn({ data: { code: activeCode } });
-      if (!result.ok) toast.error(result.error);
-      else {
-        toast.success(`${result.runs} kontrollierte Testfragen ausgewertet.`);
-        await load(activeCode);
-      }
-    } catch {
-      toast.error("Benchmark konnte nicht ausgeführt werden.");
-    } finally {
-      setBenchmarkBusy(false);
-    }
   }
 
   async function onExport() {
@@ -202,9 +180,7 @@ function VisibilityPage() {
             filters={filters}
             maxDays={maxDays}
             onFilterChange={onFilterChange}
-            onBenchmark={onBenchmark}
             onExport={onExport}
-            benchmarkBusy={benchmarkBusy}
           />
         ) : null}
       </div>
