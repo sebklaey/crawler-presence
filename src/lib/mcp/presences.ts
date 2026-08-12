@@ -341,6 +341,58 @@ export async function setPresenceStatus(slug: string, status: PresenceStatus): P
 }
 
 /**
+ * Republishes an existing Presence from an updated Knowledge Core.
+ *
+ * Used by the improvement workflow after the owner approved a change: the
+ * public files are regenerated, the version counter increases and the change
+ * only becomes public once this write succeeded.
+ */
+export async function republishCore(slug: string, core: KnowledgeCore): Promise<PublishedPresence> {
+  const existing = await getPublished(slug);
+  if (!existing) storeFailure("republish", "unknown presence");
+
+  const { applyCatalogLimit } = await import("../entitlements");
+  const visible = applyCatalogLimit(core, existing.plan).core;
+  const files = generatedFiles(visible).map((f) => ({ path: f.path, type: f.type, content: f.content }));
+  const now = new Date().toISOString();
+
+  const supabase = await client();
+  if (supabase) {
+    const { data, error } = await supabase
+      .from("published_presences")
+      .update({ core, files, publication_state: "published", publication_error: null, updated_at: now })
+      .eq("slug", slug)
+      .select("slug");
+    if (error) storeFailure("republish", error.message);
+    if (!data || data.length !== 1) storeFailure("republish", `unexpected affected rows: ${data?.length ?? 0}`);
+    try {
+      const { syncAliases } = await import("./presence-analytics");
+      await syncAliases(slug, core);
+    } catch {
+      /* alias sync is best effort */
+    }
+  } else {
+    const local = memory.get(slug);
+    if (!local) storeFailure("republish", "unknown presence");
+    memory.set(slug, { ...local, core, files });
+  }
+
+  return { ...existing, core, files };
+}
+
+/** Stores the post-publication baseline exactly once per Presence. */
+export async function saveBaseline(slug: string, baseline: unknown): Promise<void> {
+  const supabase = await client();
+  if (!supabase) return;
+  await supabase
+    .from("published_presences")
+    .update({ baseline, baseline_at: new Date().toISOString() })
+    .eq("slug", slug)
+    .is("baseline", null);
+}
+
+
+/**
  * Keeps a presence in sync with subscription lifecycle events.
  *
  * A plan change takes effect immediately: the stored plan is updated and the
