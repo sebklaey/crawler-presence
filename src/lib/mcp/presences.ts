@@ -34,6 +34,29 @@ type MemoryRecord = PublishedPresence & { manageSecretHash: string };
 
 const memory = new Map<string, MemoryRecord>();
 
+/**
+ * Raised when the database is configured but a read or write failed. Callers
+ * must fail closed: ownership, publishing and status changes are never served
+ * from process memory while a real database exists, because a worker-local
+ * fallback would silently diverge from the durable record.
+ */
+export class PresenceStoreError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "PresenceStoreError";
+  }
+}
+
+const UNAVAILABLE =
+  "The Crawler database is temporarily unavailable, so this action was not performed. Nothing was changed — please try again in a moment.";
+
+function storeFailure(operation: string, detail: string): never {
+  // Never include secrets or hashes in logs.
+  console.error(`[crawler] presence store failure (${operation})`, detail);
+  throw new PresenceStoreError(UNAVAILABLE);
+}
+
+/** Returns the client, or null only when no database is configured at all. */
 async function client() {
   try {
     const { db } = await import("./db.server");
@@ -53,9 +76,12 @@ function randomSuffix() {
 /* Management secret (capability-based ownership)                      */
 /* ------------------------------------------------------------------ */
 
-/** 160 bits of entropy. Shown once, never stored in raw form. */
+/** 256 bits of entropy (32 random bytes → `crw_` + 64 hex). Shown once, never stored raw. */
+export const MANAGE_SECRET_BYTES = 32;
+export const MANAGE_SECRET_PATTERN = /^crw_[a-f0-9]{64}$/;
+
 export function newManageSecret(): string {
-  return opaqueToken("crw", 20);
+  return opaqueToken("crw", MANAGE_SECRET_BYTES);
 }
 
 export async function hashManageSecret(secret: string): Promise<string> {
@@ -82,7 +108,7 @@ export function parseRecoveryCode(value: string): { slug: string; secret: string
   if (at <= 0) return null;
   const slug = trimmed.slice(0, at);
   const secret = trimmed.slice(at + 1);
-  if (!/^[a-z0-9-]{1,120}$/.test(slug) || !/^crw_[a-f0-9]{40}$/.test(secret)) return null;
+  if (!/^[a-z0-9-]{1,120}$/.test(slug) || !MANAGE_SECRET_PATTERN.test(secret)) return null;
   return { slug, secret };
 }
 
@@ -187,10 +213,11 @@ export async function publishDraft(input: {
       subscription_status: input.billing?.subscriptionStatus ?? null,
       current_period_end: input.billing?.currentPeriodEnd ?? null,
     });
-    if (!error) return { presence, manageSecret };
-    console.error("[crawler] presence insert failed", error.message);
+    if (error) storeFailure("publish", error.message);
+    return { presence, manageSecret };
   }
 
+  // No database configured at all (local/demo runtime): keep it in memory.
   memory.set(presence.slug, { ...presence, manageSecretHash });
   return { presence, manageSecret };
 }
@@ -199,8 +226,13 @@ export async function getPublished(slug: string): Promise<PublishedPresence | un
   if (typeof slug !== "string" || !/^[a-z0-9-]{1,120}$/.test(slug)) return undefined;
   const supabase = await client();
   if (supabase) {
-    const { data } = await supabase.from("published_presences").select(COLUMNS).eq("slug", slug).maybeSingle();
-    if (data) return fromRow(data as Row);
+    const { data, error } = await supabase
+      .from("published_presences")
+      .select(COLUMNS)
+      .eq("slug", slug)
+      .maybeSingle();
+    if (error) storeFailure("read", error.message);
+    return data ? fromRow(data as Row) : undefined;
   }
   const local = memory.get(slug);
   if (!local) return undefined;
@@ -220,16 +252,17 @@ export async function getLivePresence(slug: string): Promise<PublishedPresence |
 
 /** Verifies the management secret for a slug. Returns null on any mismatch. */
 export async function verifyManageSecret(slug: string, secret: string): Promise<PublishedPresence | null> {
-  if (!/^[a-z0-9-]{1,120}$/.test(slug) || !/^crw_[a-f0-9]{40}$/.test(secret)) return null;
+  if (!/^[a-z0-9-]{1,120}$/.test(slug) || !MANAGE_SECRET_PATTERN.test(secret)) return null;
   const provided = await hashManageSecret(secret);
 
   const supabase = await client();
   if (supabase) {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("published_presences")
       .select(`${COLUMNS}, manage_secret_hash`)
       .eq("slug", slug)
       .maybeSingle();
+    if (error) storeFailure("verify", error.message);
     if (!data) return null;
     const row = data as Row & { manage_secret_hash: string | null };
     if (!row.manage_secret_hash || !constantTimeEqual(row.manage_secret_hash, provided)) return null;
@@ -250,26 +283,36 @@ export async function rotateManageSecret(slug: string): Promise<string> {
 
   const supabase = await client();
   if (supabase) {
-    await supabase
+    const { data, error } = await supabase
       .from("published_presences")
       .update({ manage_secret_hash: hash, manage_secret_updated_at: now })
-      .eq("slug", slug);
+      .eq("slug", slug)
+      .select("slug");
+    if (error) storeFailure("rotate", error.message);
+    if (!data || data.length !== 1) storeFailure("rotate", `unexpected affected rows: ${data?.length ?? 0}`);
+    return secret;
   }
   const local = memory.get(slug);
-  if (local) memory.set(slug, { ...local, manageSecretHash: hash, manageSecretUpdatedAt: now });
+  if (!local) storeFailure("rotate", "unknown presence");
+  memory.set(slug, { ...local, manageSecretHash: hash, manageSecretUpdatedAt: now });
   return secret;
 }
 
 export async function setPresenceStatus(slug: string, status: PresenceStatus): Promise<void> {
   const supabase = await client();
   if (supabase) {
-    await supabase
+    const { data, error } = await supabase
       .from("published_presences")
       .update({ status, unpublished_at: status === "offline" ? new Date().toISOString() : null })
-      .eq("slug", slug);
+      .eq("slug", slug)
+      .select("slug");
+    if (error) storeFailure("status", error.message);
+    if (!data || data.length !== 1) storeFailure("status", `unexpected affected rows: ${data?.length ?? 0}`);
+    return;
   }
   const local = memory.get(slug);
-  if (local) memory.set(slug, { ...local, status });
+  if (!local) storeFailure("status", "unknown presence");
+  memory.set(slug, { ...local, status });
 }
 
 /** Keeps a presence in sync with subscription lifecycle events. */
@@ -279,13 +322,14 @@ export async function syncPresenceBilling(
 ): Promise<void> {
   const supabase = await client();
   if (!supabase) return;
-  await supabase
+  const { error } = await supabase
     .from("published_presences")
     .update({
       subscription_status: billing.subscriptionStatus ?? null,
       current_period_end: billing.currentPeriodEnd ?? null,
     })
     .eq("billing_subscription_id", billingSubscriptionId);
+  if (error) storeFailure("billing-sync", error.message);
 }
 
 /* ------------------------------------------------------------------ */
@@ -301,22 +345,38 @@ export async function allowRequest(bucketKey: string, limit: number): Promise<bo
   const supabase = await client();
   if (supabase) {
     const iso = new Date(windowStart).toISOString();
-    const { data } = await supabase
+    const { data, error: readError } = await supabase
       .from("mcp_rate_limits")
       .select("id, hits")
       .eq("bucket_key", bucketKey)
       .eq("window_start", iso)
       .maybeSingle();
+    // Fail closed: a broken limiter must not become an open door.
+    if (readError) {
+      console.error("[crawler] rate limit read failed", readError.message);
+      return false;
+    }
     if (data) {
       const row = data as { id: string; hits: number };
       if (row.hits >= limit) return false;
-      await supabase.from("mcp_rate_limits").update({ hits: row.hits + 1 }).eq("id", row.id);
+      const { error } = await supabase
+        .from("mcp_rate_limits")
+        .update({ hits: row.hits + 1 })
+        .eq("id", row.id);
+      if (error) {
+        console.error("[crawler] rate limit update failed", error.message);
+        return false;
+      }
       return true;
     }
     const { error } = await supabase
       .from("mcp_rate_limits")
       .insert({ bucket_key: bucketKey, window_start: iso, hits: 1 });
-    if (!error) return true;
+    if (error) {
+      console.error("[crawler] rate limit insert failed", error.message);
+      return false;
+    }
+    return true;
   }
 
   const local = memoryHits.get(bucketKey);

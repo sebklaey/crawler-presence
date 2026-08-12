@@ -122,7 +122,7 @@ function ChatGptPage() {
           </li>
           <li>
             <strong className="text-foreground">Ownership is a code, not an account.</strong> When you publish, Crawler
-            issues a one-time recovery code. It controls the Presence: take it offline, put it back online, rotate the
+            issues a one-time 256-bit recovery code. It controls the Presence: take it offline, put it back online, rotate the
             code and manage the subscription at /manage. Only a one-way hash is stored, so a lost code cannot be
             recovered by anyone — including Crawler.
           </li>
