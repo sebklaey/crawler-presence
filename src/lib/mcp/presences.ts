@@ -445,3 +445,95 @@ export async function allowRequest(bucketKey: string, limit: number): Promise<bo
   local.hits += 1;
   return true;
 }
+
+/* ------------------------------------------------------------------ */
+/* Custom domain (Pro and Business)                                    */
+/* ------------------------------------------------------------------ */
+
+/** Lowercased hostname without protocol, port, path or a trailing dot. */
+export function normalizeDomain(input: string): string | null {
+  let value = input.trim().toLowerCase();
+  value = value.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/:\d+$/, "").replace(/\.$/, "");
+  if (value.startsWith("www.")) value = value.slice(4);
+  if (value.length < 4 || value.length > 253) return null;
+  if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(value)) return null;
+  if (value.endsWith(".lovable.app") || value === "crawler.today") return null;
+  return value;
+}
+
+/** Attaches (or replaces) an unverified custom domain and returns its TXT token. */
+export async function setCustomDomain(slug: string, domain: string): Promise<string> {
+  const token = opaqueToken("crwdom", 16);
+  const supabase = await client();
+  if (supabase) {
+    const { data, error } = await supabase
+      .from("published_presences")
+      .update({ custom_domain: domain, custom_domain_token: token, custom_domain_verified_at: null })
+      .eq("slug", slug)
+      .select("slug");
+    if (error) storeFailure("custom-domain", error.message);
+    if (!data || data.length !== 1) storeFailure("custom-domain", `unexpected affected rows: ${data?.length ?? 0}`);
+    return token;
+  }
+  const local = memory.get(slug);
+  if (!local) storeFailure("custom-domain", "unknown presence");
+  memory.set(slug, { ...local, customDomain: domain, customDomainToken: token, customDomainVerifiedAt: null });
+  return token;
+}
+
+export async function clearCustomDomain(slug: string): Promise<void> {
+  const supabase = await client();
+  if (supabase) {
+    const { error } = await supabase
+      .from("published_presences")
+      .update({ custom_domain: null, custom_domain_token: null, custom_domain_verified_at: null })
+      .eq("slug", slug);
+    if (error) storeFailure("custom-domain", error.message);
+    return;
+  }
+  const local = memory.get(slug);
+  if (!local) storeFailure("custom-domain", "unknown presence");
+  memory.set(slug, { ...local, customDomain: null, customDomainToken: null, customDomainVerifiedAt: null });
+}
+
+export async function markCustomDomainVerified(slug: string): Promise<string> {
+  const now = new Date().toISOString();
+  const supabase = await client();
+  if (supabase) {
+    const { error } = await supabase
+      .from("published_presences")
+      .update({ custom_domain_verified_at: now })
+      .eq("slug", slug);
+    if (error) storeFailure("custom-domain", error.message);
+    return now;
+  }
+  const local = memory.get(slug);
+  if (!local) storeFailure("custom-domain", "unknown presence");
+  memory.set(slug, { ...local, customDomainVerifiedAt: now });
+  return now;
+}
+
+/** Resolves a live presence from a verified custom domain (host header). */
+export async function getLivePresenceByDomain(host: string): Promise<PublishedPresence | undefined> {
+  const domain = normalizeDomain(host);
+  if (!domain) return undefined;
+  const supabase = await client();
+  if (supabase) {
+    const { data, error } = await supabase
+      .from("published_presences")
+      .select(COLUMNS)
+      .eq("custom_domain", domain)
+      .not("custom_domain_verified_at", "is", null)
+      .eq("status", "live")
+      .maybeSingle();
+    if (error) storeFailure("read", error.message);
+    return data ? fromRow(data as Row) : undefined;
+  }
+  for (const record of memory.values()) {
+    if (record.customDomain === domain && record.customDomainVerifiedAt && record.status === "live") {
+      const { manageSecretHash: _hash, ...rest } = record;
+      return rest;
+    }
+  }
+  return undefined;
+}
