@@ -28,6 +28,7 @@ import { Route as ApiPublicMcpHealthRouteImport } from './routes/api/public/mcp-
 import { Route as PSlugIndexRouteImport } from './routes/p.$slug.index'
 import { Route as PSlugSplatRouteImport } from './routes/p.$slug.$'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
+import { Route as ApiPublicV1PresenceRouteImport } from './routes/api/public/v1/presence'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -128,6 +129,11 @@ const ApiPublicPaymentsWebhookRoute =
     path: '/api/public/payments/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1PresenceRoute = ApiPublicV1PresenceRouteImport.update({
+  id: '/api/public/v1/presence',
+  path: '/api/public/v1/presence',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -149,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/p/$slug/$': typeof PSlugSplatRoute
   '/p/$slug/': typeof PSlugIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/v1/presence': typeof ApiPublicV1PresenceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -170,6 +177,7 @@ export interface FileRoutesByTo {
   '/p/$slug/$': typeof PSlugSplatRoute
   '/p/$slug': typeof PSlugIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/v1/presence': typeof ApiPublicV1PresenceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -192,6 +200,7 @@ export interface FileRoutesById {
   '/p/$slug/$': typeof PSlugSplatRoute
   '/p/$slug/': typeof PSlugIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/v1/presence': typeof ApiPublicV1PresenceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -215,6 +224,7 @@ export interface FileRouteTypes {
     | '/p/$slug/$'
     | '/p/$slug/'
     | '/api/public/payments/webhook'
+    | '/api/public/v1/presence'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -236,6 +246,7 @@ export interface FileRouteTypes {
     | '/p/$slug/$'
     | '/p/$slug'
     | '/api/public/payments/webhook'
+    | '/api/public/v1/presence'
   id:
     | '__root__'
     | '/'
@@ -257,6 +268,7 @@ export interface FileRouteTypes {
     | '/p/$slug/$'
     | '/p/$slug/'
     | '/api/public/payments/webhook'
+    | '/api/public/v1/presence'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -279,6 +291,7 @@ export interface RootRouteChildren {
   PSlugSplatRoute: typeof PSlugSplatRoute
   PSlugIndexRoute: typeof PSlugIndexRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
+  ApiPublicV1PresenceRoute: typeof ApiPublicV1PresenceRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -416,6 +429,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/presence': {
+      id: '/api/public/v1/presence'
+      path: '/api/public/v1/presence'
+      fullPath: '/api/public/v1/presence'
+      preLoaderRoute: typeof ApiPublicV1PresenceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -440,6 +460,7 @@ const rootRouteChildren: RootRouteChildren = {
   PSlugSplatRoute: PSlugSplatRoute,
   PSlugIndexRoute: PSlugIndexRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
+  ApiPublicV1PresenceRoute: ApiPublicV1PresenceRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
