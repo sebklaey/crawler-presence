@@ -54,9 +54,19 @@ export function AppShell({ children }: { children: ReactNode }) {
       </header>
       <main>{children}</main>
       <footer className="mx-auto mt-24 max-w-6xl border-t border-border/70 px-5 py-10 text-xs text-muted-foreground">
-        Crawler builds AI-readable presences. It measures activity inside Crawler and on your published
-        files only — never private conversations in ChatGPT, Claude, Gemini or other assistants.
+        <p>
+          Crawler builds AI-readable presences. It measures activity inside Crawler and on your published
+          files only — never private conversations in ChatGPT, Claude, Gemini or other assistants.
+        </p>
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <span>© {new Date().getFullYear()} SEBKLAEY</span>
+          <Link to="/terms" className="hover:text-foreground">Terms &amp; Conditions</Link>
+          <Link to="/privacy" className="hover:text-foreground">Privacy Notice</Link>
+          <Link to="/refunds" className="hover:text-foreground">Refund Policy</Link>
+          <Link to="/pricing" className="hover:text-foreground">Pricing</Link>
+        </div>
       </footer>
+
     </div>
   );
 }
