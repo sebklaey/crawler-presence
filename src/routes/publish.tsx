@@ -312,25 +312,68 @@ function PublishPage() {
                 </p>
               )}
 
-              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <div className="mt-4 grid gap-4 sm:grid-cols-3">
                 {PLANS.map((p) => (
-                  <button
+                  <div
                     key={p.id}
                     onClick={() => setSelected(p.id)}
-                    aria-label={`Choose the ${p.name} plan at $${p.price} per month`}
-                    className={`rounded-xl border p-4 text-left transition-colors ${
+                    className={`flex flex-col rounded-2xl border p-5 text-left transition-colors ${
                       selected === p.id ? "border-foreground bg-secondary" : "border-border hover:border-foreground/40"
                     }`}
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">{p.name}</span>
-                      {selected === p.id ? <Check className="h-3.5 w-3.5" /> : null}
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium">{p.name}</span>
+                          {p.id === "pro" ? (
+                            <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] uppercase tracking-wide text-primary-foreground">
+                              Most chosen
+                            </span>
+                          ) : null}
+                        </div>
+                        <div className="mt-1 flex items-baseline gap-1">
+                          <span className="display text-2xl">${p.price}</span>
+                          <span className="text-xs text-muted-foreground">/month</span>
+                        </div>
+                      </div>
+                      {selected === p.id ? <Check className="h-4 w-4 shrink-0" /> : null}
                     </div>
-                    <div className="display mt-1 text-2xl">${p.price}</div>
-                    <div className="text-[11px] text-muted-foreground">per month</div>
-                  </button>
+                    <ul className="mt-4 flex-1 space-y-1.5">
+                      {p.features.map((f) => (
+                        <li key={f} className="flex gap-2 text-xs text-muted-foreground">
+                          <Check className="mt-0.5 h-3 w-3 shrink-0" />
+                          <span>{f}</span>
+                        </li>
+                      ))}
+                      {(p.planned ?? []).map((f) => (
+                        <li key={f} className="flex gap-2 text-xs text-muted-foreground/60">
+                          <Check className="mt-0.5 h-3 w-3 shrink-0 opacity-30" />
+                          <span>
+                            {f} <span className="text-[10px] uppercase tracking-wide">— planned</span>
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                    <Button
+                      className="mt-5"
+                      variant={selected === p.id ? "default" : "outline"}
+                      size="sm"
+                      disabled={busy}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void publish(p.id);
+                      }}
+                    >
+                      {busy && selected === p.id
+                        ? "Working…"
+                        : selected === p.id
+                          ? `Continue with ${p.name}`
+                          : `Choose ${p.name}`}
+                    </Button>
+                  </div>
                 ))}
               </div>
+
 
               <p className="mt-3 text-xs text-muted-foreground">
                 Compare everything on the{" "}
