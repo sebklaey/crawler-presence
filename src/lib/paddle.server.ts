@@ -94,11 +94,17 @@ export async function resolvePriceId(plan: PlanId): Promise<string> {
 }
 
 /** True when this deployment can really charge for the given environment. */
+/**
+ * True only when this deployment can really charge in `target`: an API key for
+ * that environment AND a webhook secret to confirm the payment afterwards.
+ * Without confirmation a checkout could never unlock publishing, so a missing
+ * webhook secret counts as unconfigured rather than half-live.
+ */
 export function paymentsConfigured(target: PaddleEnv): boolean {
-  const key = paddleApiKey();
-  if (!key || paddleEnvironment() !== target) return false;
-  return true;
+  if (paddleEnvironment() !== target) return false;
+  return Boolean(paddleApiKeyFor(target) && paddleWebhookSecretFor(target));
 }
+
 
 
 export function getPaddleErrorMessage(error: unknown): string {
