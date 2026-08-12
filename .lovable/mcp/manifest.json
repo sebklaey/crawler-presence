@@ -48,7 +48,7 @@
       {
         "name": "continue_interview",
         "title": "Continue Presence interview",
-        "description": "Use this after start_interview to submit the user's answer and get the next adaptive question. Merges the answer into the Knowledge Core, keeps verified facts separate from narrative claims, and returns either the next most valuable tailored question or interview_complete=true.",
+        "description": "Use this after start_interview to record the user's answer. Crawler runs NO language model of its own: you (the calling assistant) do the interviewing. Extract what the user said into core_update (facts, offerings, FAQ, links, summary) and send it here — Crawler merges it deterministically into the Knowledge Core, keeps verified facts separate from claims, and returns the next open gap so you can phrase the next domain-specific question yourself. Without core_update, Crawler falls back to a rule-based merge of the raw answer.",
         "annotations": {
           "readOnlyHint": false,
           "destructiveHint": false,
@@ -67,7 +67,17 @@
               "type": "string",
               "minLength": 1,
               "maxLength": 6000,
-              "description": "The user's answer to the previous question."
+              "description": "The user's answer to the previous question, verbatim."
+            },
+            "core_update": {
+              "type": "object",
+              "additionalProperties": {},
+              "description": "Structured Knowledge Core fragment you extracted from the answer: {entityType,name,tagline,summary,location,website,languages,facts:[{label,value,status:'verified'|'claimed',source}],stories,items:[{kind,name,summary}],faqs,cv,links}. Only include what the user actually stated — never invent values."
+            },
+            "assistant_question": {
+              "type": "string",
+              "maxLength": 500,
+              "description": "The question you asked before this answer, for the stored transcript."
             }
           },
           "required": [
