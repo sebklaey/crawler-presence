@@ -64,10 +64,10 @@ function TermsPage() {
               part of a subscription. There is no shipping, no delivery address and no postage at any point.
             </p>
             <p className="mt-3">
-              Some Presences describe their owner's own catalogue — for example a studio's services or a company's
-              product range. Those descriptions are text written by the Presence owner and published as AI-readable
-              files. Crawler never sells, brokers, processes orders for or takes payment for anything a Presence
-              describes; the only transaction on this site is the Crawler subscription itself.
+              A Presence may contain text supplied by its owner about their work, services or projects. That material
+              is hosted only as digital text and structured data. Crawler is not a marketplace or online shop and does
+              not broker sales, process third-party orders or take payment for anything described in a Presence. The
+              only product sold on this site is access to Crawler's digital software and online hosting service.
             </p>
           </section>
 

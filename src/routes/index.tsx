@@ -114,8 +114,8 @@ function Index() {
               Knowledge Core that AI systems can read.
             </p>
             <p className="mt-3 max-w-xl text-[13px] leading-relaxed text-muted-foreground/80">
-              Crawler is a software subscription. We host AI-readable text files for your public Presence. We do not
-              sell, ship or fulfil any physical goods, and nothing is ever posted to you.
+              Crawler is a digital SaaS subscription. The paid product is online hosting for AI-readable text files
+              and data endpoints. Access is delivered electronically; no physical product is sold, included or shipped.
             </p>
 
           </div>

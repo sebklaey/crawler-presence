@@ -13,7 +13,7 @@ export default defineTool({
     content: [
       {
         type: "text",
-        text: "Plus $5/mo — 1 presence, up to 10 catalog entries, 7-day measured analytics. Pro $20/mo — up to 200 entries, 90-day analytics, detailed conversation insights and Improve my Presence. Business $80/mo — up to 5,000 entries, 90-day analytics and priority support. Creating and previewing is free. Custom domain, shared team access and API/scheduled reports are planned, not available yet.",
+        text: "Crawler sells digital SaaS subscriptions for online AI-readable Presence hosting; no physical goods are sold or shipped. Plus $5/mo — 1 hosted Presence, up to 10 AI-readable content records and 7-day measured analytics. Pro $20/mo — up to 200 content records, 90-day analytics, detailed conversation insights, recommendations and a custom domain. Business $80/mo — up to 5,000 content records, 90-day analytics, REST API, shared team access, scheduled reports and priority support. Creating and previewing is free.",
       },
     ],
     structuredContent: {
