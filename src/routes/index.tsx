@@ -27,7 +27,21 @@ export const Route = createFileRoute("/")({
         content: "Build an AI-readable presence through an adaptive interview. Creation and preview are free.",
       },
     ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "Crawler",
+          url: "https://crawler.today",
+          description:
+            "Crawler turns what you do into an AI-readable public presence: llms.txt, markdown pages and JSON endpoints.",
+        }),
+      },
+    ],
   }),
+
   component: Index,
 });
 
@@ -165,7 +179,7 @@ function Index() {
             />
             <div className="flex items-center justify-between px-2 pb-1">
               <span className="text-[11px] text-muted-foreground">No fixed questionnaire. One question at a time.</span>
-              <Button size="sm" disabled={busy || !input.trim()} onClick={() => void send(input)}>
+              <Button size="sm" aria-label="Send message" disabled={busy || !input.trim()} onClick={() => void send(input)}>
                 {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-4 w-4" />}
               </Button>
             </div>
