@@ -13,7 +13,8 @@ import { z } from "zod";
 const codeSchema = z.object({ code: z.string().trim().min(10).max(200) });
 
 export type ManageAnalytics = {
-  mode: "demo" | "measured";
+  /** "measured" once real events exist, "empty" before the first event. */
+  mode: "measured" | "empty";
   windowDays: number;
   metrics: { label: string; value: number; hint: string }[];
   topQuestions: { label: string; count: number }[];
@@ -79,58 +80,118 @@ async function resolve(code: string) {
 async function analyticsFor(slug: string, plan: string): Promise<ManageAnalytics> {
   const { planById } = await import("./billing");
   const { asPlanId } = await import("./entitlements");
-  const windowDays = Math.min(planById(asPlanId(plan)).analyticsDays, 90);
+  const allowed = planById(asPlanId(plan)).analyticsDays;
+  const period = (allowed >= 90 ? 90 : 7) as 7 | 90;
 
-  try {
-    const { hasEvents, publicSummary, detailedSummary } = await import("./mcp/presence-analytics");
-    if (await hasEvents(slug)) {
-      const period = (windowDays >= 90 ? 90 : 7) as 7 | 90;
-      const summary = await publicSummary(slug, slug, period);
-      const detail = await detailedSummary(slug, period);
-      if (summary) {
-        return {
-          mode: "measured",
-          windowDays: period,
-          metrics: [
-            {
-              label: "Crawler conversations",
-              value: summary.conversations_mentioning,
-              hint: "Distinct anonymous Crawler sessions that mentioned this Presence",
-            },
-            { label: "Mention events", value: summary.mention_events, hint: "Crawler tool calls referencing it" },
-            { label: "Public reads", value: summary.crawler_reads, hint: "Observable reads of your public files" },
-            {
-              label: "Outbound clicks",
-              value: detail?.outbound_clicks ?? 0,
-              hint: "Trackable clicks on your links",
-            },
-          ],
-          topQuestions: (detail?.file_reads ?? []).slice(0, 4).map((f) => ({ label: f.path, count: f.count })),
-          gaps: [],
-        };
-      }
-    }
-  } catch {
-    /* fall through to the clearly labelled demo numbers */
-  }
+  const { publicSummary, detailedSummary } = await import("./mcp/presence-analytics");
+  const [summary, detail] = await Promise.all([publicSummary(slug, slug, period), detailedSummary(slug, period)]);
 
-  const { demoDays, demoMissing, demoTopics, totals, windowRows } = await import("./demo-analytics");
-  const rows = windowRows(demoDays(90), 7);
-  const t = totals(rows);
+  const metrics = [
+    {
+      label: "Crawler conversations",
+      value: summary?.conversations_mentioning ?? 0,
+      hint: "Distinct anonymous Crawler sessions that mentioned this Presence",
+    },
+    {
+      label: "Mention events",
+      value: summary?.mention_events ?? 0,
+      hint: "Crawler tool calls referencing this Presence",
+    },
+    {
+      label: "Public reads",
+      value: summary?.crawler_reads ?? 0,
+      hint: "Observable reads of your public files and Presence page",
+    },
+    {
+      label: "Outbound clicks",
+      value: detail?.outbound_clicks ?? 0,
+      hint: "Trackable clicks on your links",
+    },
+  ];
+
+  const measured = metrics.some((m) => m.value > 0);
+
   return {
-    mode: "demo",
-    windowDays: 7,
-    metrics: [
-      { label: "Crawler conversations", value: t.conversations, hint: "Interviews and questions inside Crawler" },
-      { label: "Queries", value: t.queries, hint: "Individual questions asked about this Presence" },
-      { label: "Entity appearances", value: t.appearances, hint: "Times your entity or products were surfaced" },
-      { label: "Outbound clicks", value: t.outboundClicks, hint: "Trackable clicks on your links" },
-      { label: "Crawler reads", value: t.crawlerReads, hint: "Observable reads of your public files" },
-    ],
-    topQuestions: demoTopics.slice(0, 4).map((topic) => ({ label: topic.label, count: topic.count })),
-    gaps: demoMissing.slice(0, 3),
+    mode: measured ? "measured" : "empty",
+    windowDays: period,
+    metrics,
+    topQuestions: (detail?.file_reads ?? []).slice(0, 6).map((f) => ({ label: f.path, count: f.count })),
+    gaps: [],
   };
 }
+
+export type PresenceAnalyticsResult =
+  | { ok: false; reason: "invalid-code" | "not-found" | "rate-limited" | "unavailable" }
+  | {
+      ok: true;
+      slug: string;
+      name: string;
+      plan: string;
+      windowDays: number;
+      maxWindowDays: number;
+      measured: boolean;
+      totals: {
+        conversations: number;
+        mentions: number;
+        reads: number;
+        outboundClicks: number;
+      };
+      daily: { date: string; mentions: number; reads: number; clicks: number }[];
+      fileReads: { path: string; count: number }[];
+      sources: { source: string; count: number }[];
+      dataSince: string | null;
+      privacyNote: string;
+    };
+
+const analyticsSchema = codeSchema.extend({ days: z.union([z.literal(7), z.literal(30), z.literal(90)]).default(7) });
+
+/**
+ * Measured Presence analytics for the /analytics page. Capability-based: the
+ * recovery code is the only key. Everything returned was actually observed
+ * inside Crawler — there is no seeded or demo data anywhere in this path.
+ */
+export const presenceAnalyticsFn = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => analyticsSchema.parse(input))
+  .handler(async ({ data }): Promise<PresenceAnalyticsResult> => {
+    const resolved = await resolve(data.code);
+    if ("error" in resolved) return { ok: false, reason: resolved.error };
+    const p = resolved.presence;
+
+    const { planById } = await import("./billing");
+    const { asPlanId } = await import("./entitlements");
+    const maxWindowDays = planById(asPlanId(p.plan)).analyticsDays >= 90 ? 90 : 7;
+    const period = Math.min(data.days, maxWindowDays) as 7 | 30 | 90;
+
+    const { publicSummary, detailedSummary, PRIVACY_NOTE } = await import("./mcp/presence-analytics");
+    const [summary, detail] = await Promise.all([
+      publicSummary(p.slug, p.core?.name || p.slug, period),
+      detailedSummary(p.slug, period),
+    ]);
+    if (!summary || !detail) return { ok: false, reason: "unavailable" };
+
+    const totals = {
+      conversations: summary.conversations_mentioning,
+      mentions: summary.mention_events,
+      reads: summary.crawler_reads,
+      outboundClicks: detail.outbound_clicks,
+    };
+
+    return {
+      ok: true,
+      slug: p.slug,
+      name: p.core?.name || p.slug,
+      plan: p.plan,
+      windowDays: period,
+      maxWindowDays,
+      measured: Object.values(totals).some((value) => value > 0),
+      totals,
+      daily: detail.daily,
+      fileReads: detail.file_reads,
+      sources: detail.sources,
+      dataSince: summary.data_since,
+      privacyNote: PRIVACY_NOTE,
+    };
+  });
 
 export const manageOverviewFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => codeSchema.parse(input))

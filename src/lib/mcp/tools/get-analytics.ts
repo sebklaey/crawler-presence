@@ -2,7 +2,6 @@ import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 import { planById } from "../../billing";
 import { asPlanId } from "../../entitlements";
-import { demoDays, demoEntities, demoMissing, demoSources, demoTopics, totals, windowRows } from "../../demo-analytics";
 import { allowRequest, getPublished, parseRecoveryCode, verifyManageSecret } from "../presences";
 import { getSession } from "../sessions";
 
@@ -50,10 +49,9 @@ export default defineTool({
       .describe("Optional Presence recovery code (<slug>~crw_...) that unlocks detailed analytics."),
     session_id: z.string().trim().min(6).optional().describe("Optional Crawler session for session-local metrics."),
     filter: z.string().trim().optional().describe("Optional product or entity name filter."),
-    include_ai_summary: z.boolean().default(false).describe("Include a seeded demo AI summary (no measured data)."),
   },
   annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
-  handler: async ({ entity_or_domain, period_days, recovery_code, session_id, filter, include_ai_summary }) => {
+  handler: async ({ entity_or_domain, period_days, recovery_code, session_id, filter }) => {
     const period = (period_days ?? 30) as 7 | 30 | 90 | "all";
 
     // Reading analytics never records a mention: counts stay stable.
@@ -146,34 +144,24 @@ export default defineTool({
       };
     }
 
-    /* -------- no lookup: seeded demo overview, clearly labelled -------- */
-    const days = period === "all" ? 90 : period;
-    const rows = windowRows(demoDays(90), days);
-    const t = totals(rows);
-    const match = (label: string) => (filter ? label.toLowerCase().includes(filter.toLowerCase()) : true);
+    /* -------- no lookup: nothing to measure -------- */
     const session = session_id ? await getSession(session_id) : undefined;
 
     return {
       content: [
         {
           type: "text" as const,
-          text: `No entity_or_domain was given, so these are seeded DEMO numbers, not measured data. Ask again with a domain, e.g. entity_or_domain: "sebklaey.app". DEMO last ${days} days: ${t.conversations} conversations, ${t.queries} queries, ${t.crawlerReads} reads.`,
+          text: "No entity_or_domain was given, so there is nothing to measure. Crawler only reports data it actually observed for a published Presence — ask again with a domain, URL, entity name or Presence slug, e.g. entity_or_domain: \"sebklaey.app\".",
         },
       ],
       structuredContent: {
-        data_mode: "demo",
-        demo_notice:
-          "Seeded demo data, not real traffic. Pass entity_or_domain to get the measured public aggregate of a published Presence.",
-        not_measurable: NOT_MEASURABLE,
-        period_days: days,
+        data_mode: "measured_only",
+        found: false,
+        hint: "Pass entity_or_domain to get the measured public aggregate of a published Presence. Crawler serves no demo or seeded analytics.",
+        period_days: period === "all" ? "all" : period,
         filter: filter ?? null,
-        totals: t,
-        top_topics: demoTopics.filter((x) => match(x.label)),
-        top_entities: demoEntities.filter((x) => match(x.label)),
-        sources: demoSources,
-        known_gaps: demoMissing,
-        ai_summary: null,
-        ai_summary_requested: include_ai_summary === true,
+        metric_definitions: METRIC_DEFINITIONS,
+        not_measurable: NOT_MEASURABLE,
         session_local: session
           ? {
               session_id: session.id,
