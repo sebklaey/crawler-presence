@@ -57,7 +57,7 @@ const tools: { name: string; kind: string; text: string }[] = [
   { name: "get_pricing", kind: "read", text: "Plus $5, Pro $20, Business $80 per month with feature differences." },
   { name: "get_analytics", kind: "read", text: "Clearly labelled demo analytics for 7/30/90 days, plus an AI summary of recurring questions and gaps." },
   { name: "improve_presence", kind: "read", text: "Turns an insight into the fields to clarify and one targeted question." },
-  { name: "get_checkout_link", kind: "read", text: "External checkout URL; labelled demo mode when Stripe is not configured." },
+  { name: "get_checkout_link", kind: "read", text: "External checkout URL; labelled demo mode when no payment credentials are configured." },
   { name: "get_status", kind: "read", text: "Health and debug output: auth mode (none), model availability, session store, checkout mode." },
 ];
 

@@ -4,7 +4,8 @@ import { Check } from "lucide-react";
 import { AppShell, PageHead } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { usePlan } from "@/lib/store";
-import { PLANS, stripeConfigured } from "@/lib/billing";
+import { usePaymentsStatus } from "@/hooks/use-payments-status";
+import { PLANS } from "@/lib/billing";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
@@ -33,10 +34,10 @@ function PricingPage() {
           description="Building your Knowledge Core and previewing every generated file costs nothing. Hosting your published presence is the paid part."
         />
 
-        {!stripeConfigured() ? (
+        {!payments.configured ? (
           <div className="mb-8 rounded-xl border border-dashed border-border bg-secondary/60 px-4 py-3 text-xs text-muted-foreground">
-            <strong className="text-foreground">Demo / test mode.</strong> No Stripe keys are configured, so
-            checkout simulates a subscription locally instead of charging anything. Add Stripe keys later to
+            <strong className="text-foreground">Demo / test mode.</strong> No payment credentials are configured, so
+            checkout simulates a subscription locally instead of charging anything. Add Paddle credentials later to
             switch the same flow to live checkout.
           </div>
         ) : null}

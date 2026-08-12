@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { PLANS, type PlanId } from "@/lib/billing";
 import { generatedFiles, isCoreEmpty, presenceScore, type KnowledgeCore } from "@/lib/knowledge";
 import { finalizePublishFn, loadDraft, startPublishFn } from "@/lib/presence.functions";
-import { paymentsAvailable } from "@/lib/stripe";
+import { usePaymentsStatus } from "@/hooks/use-payments-status";
 import { useCore, usePublished } from "@/lib/store";
 import { Empty } from "./knowledge";
 
@@ -180,7 +180,7 @@ function PublishPage() {
 
   const score = presenceScore(core);
   const files = generatedFiles(core);
-  const payments = paymentsAvailable();
+  const payments = paymentsStatus.configured;
 
   async function publish() {
     if (!selected) {
