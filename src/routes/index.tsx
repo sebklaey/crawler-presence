@@ -33,10 +33,11 @@ export const Route = createFileRoute("/")({
 
 const EXAMPLES = [
   "I'm a documentary photographer in Lisbon shooting for magazines.",
-  "We make handmade skincare in small batches and ship across Europe.",
-  "https://example-bikes.com — we build gravel and city bikes.",
+  "We're a two-person design studio doing brand and web work.",
+  "https://example-analytics.com — we build a privacy-first analytics tool.",
   "I run an open-source project for local-first sync.",
 ];
+
 
 function Index() {
   const [core, setCore] = useCore();
