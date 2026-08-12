@@ -13,7 +13,13 @@ export const Route = createFileRoute("/p/$slug/$")({
   server: {
     handlers: {
       GET: async ({ params }) => {
-        const record = await getLivePresence(params.slug);
+        let record;
+        try {
+          record = await getLivePresence(params.slug);
+        } catch {
+          // Database unavailable: say so instead of serving a stale copy.
+          return new Response("Presence temporarily unavailable", { status: 503 });
+        }
         if (!record) return new Response("Presence not found", { status: 404 });
         const path = (params._splat ?? "").replace(/^\/+/, "");
         const file = record.files.find((f) => f.path === path);
