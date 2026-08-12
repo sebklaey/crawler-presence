@@ -56,7 +56,21 @@ function TermsPage() {
               (llms.txt, markdown pages, JSON endpoints) for a public Presence. Creating and previewing a Presence
               is free; hosting a published Presence is a paid subscription (Plus, Pro or Business).
             </p>
+            <p className="mt-3">
+              <strong className="text-foreground">Crawler is a purely digital software service.</strong> Everything we
+              sell is a monthly software subscription delivered electronically and available immediately after
+              purchase. We do not sell, resell, ship, deliver, fulfil, warehouse or dropship any physical goods,
+              hardware or printed material, and no physical item is ever included with, bundled into or dispatched as
+              part of a subscription. There is no shipping, no delivery address and no postage at any point.
+            </p>
+            <p className="mt-3">
+              Some Presences describe their owner's own catalogue — for example a studio's services or a company's
+              product range. Those descriptions are text written by the Presence owner and published as AI-readable
+              files. Crawler never sells, brokers, processes orders for or takes payment for anything a Presence
+              describes; the only transaction on this site is the Crawler subscription itself.
+            </p>
           </section>
+
 
           <section>
             <h2 className="mb-2 text-base font-medium text-foreground">4. Accountless ownership</h2>
