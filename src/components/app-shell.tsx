@@ -63,6 +63,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Link to="/terms" className="hover:text-foreground">Terms &amp; Conditions</Link>
           <Link to="/privacy" className="hover:text-foreground">Privacy Notice</Link>
           <Link to="/refunds" className="hover:text-foreground">Refund Policy</Link>
+          <Link to="/support" className="hover:text-foreground">Support</Link>
+          <Link to="/team" className="hover:text-foreground">Team access</Link>
+
           <Link to="/pricing" className="hover:text-foreground">Pricing</Link>
         </div>
       </footer>
