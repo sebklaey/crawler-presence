@@ -361,7 +361,11 @@ function PublishPage() {
                       disabled={busy}
                       onClick={(e) => {
                         e.stopPropagation();
-                        void publish(p.id);
+                        if (selected === p.id) {
+                          void publish(p.id);
+                        } else {
+                          setSelected(p.id);
+                        }
                       }}
                     >
                       {busy && selected === p.id
@@ -370,6 +374,7 @@ function PublishPage() {
                           ? `Continue with ${p.name}`
                           : `Choose ${p.name}`}
                     </Button>
+
                   </div>
                 ))}
               </div>
