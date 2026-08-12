@@ -384,3 +384,31 @@ export const manageRemoveDomainFn = createServerFn({ method: "POST" })
     }
     return { ok: true };
   });
+
+/* ------------------------------------------------------------------ */
+/* Restore the full Knowledge Core into the browser workspace          */
+/* ------------------------------------------------------------------ */
+
+export type ManageRestoreResult =
+  | { ok: false; reason: "invalid-code" | "not-found" | "rate-limited" | "unavailable" }
+  | {
+      ok: true;
+      slug: string;
+      plan: string;
+      publishedAt: string;
+      core: import("./knowledge").KnowledgeCore;
+    };
+
+/**
+ * Returns the stored Knowledge Core for a Presence so /knowledge, /preview and
+ * /publish can show the owner's real data after the recovery code was entered.
+ * Capability-based: the recovery code is the only key.
+ */
+export const manageRestoreCoreFn = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => codeSchema.parse(input))
+  .handler(async ({ data }): Promise<ManageRestoreResult> => {
+    const resolved = await resolve(data.code);
+    if ("error" in resolved) return { ok: false, reason: resolved.error };
+    const p = resolved.presence;
+    return { ok: true, slug: p.slug, plan: p.plan, publishedAt: p.publishedAt, core: p.core };
+  });

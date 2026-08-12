@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { KeyRound, Loader2, Sparkles } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { analyticsSummary, askAnalytics } from "@/lib/analytics.functions";
 import { presenceAnalyticsFn, type PresenceAnalyticsResult } from "@/lib/manage.functions";
+import { useRecoveryCode } from "@/lib/store";
 
 export const Route = createFileRoute("/analytics")({
   head: () => ({
@@ -71,6 +72,17 @@ function AnalyticsPage() {
   const load = useServerFn(presenceAnalyticsFn);
   const ask = useServerFn(askAnalytics);
   const summarise = useServerFn(analyticsSummary);
+  const [storedCode, setStoredCode, codeHydrated] = useRecoveryCode();
+  const autoOpened = useRef(false);
+
+  // The recovery code entered on /manage opens analytics for the same Presence.
+  useEffect(() => {
+    if (!codeHydrated || autoOpened.current || !storedCode) return;
+    autoOpened.current = true;
+    setCode(storedCode);
+    void open(range, storedCode);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [codeHydrated, storedCode]);
 
   async function open(days = range, next = code) {
     if (!next.trim()) return;
@@ -84,6 +96,7 @@ function AnalyticsPage() {
       }
       setData(result);
       setRange(result.windowDays);
+      setStoredCode(next);
     } catch {
       toast.error("Could not open those analytics.");
     } finally {

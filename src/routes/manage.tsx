@@ -25,9 +25,12 @@ import {
   manageBillingPortalFn,
   manageOverviewFn,
   manageRotateSecretFn,
+  manageRestoreCoreFn,
   manageSetStatusFn,
   type ManageOverview,
 } from "@/lib/manage.functions";
+import { useCore, usePlan, usePublished, useRecoveryCode } from "@/lib/store";
+import type { KnowledgeCore } from "@/lib/knowledge";
 
 export const Route = createFileRoute("/manage")({
   head: () => ({
@@ -68,6 +71,27 @@ function ManagePage() {
   const [data, setData] = useState<Extract<ManageOverview, { ok: true }> | null>(null);
   const [rotated, setRotated] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<Confirming>(null);
+  const [, setCore] = useCore();
+  const [, setPlan] = usePlan();
+  const [, setPublished] = usePublished();
+  const [, setStoredCode] = useRecoveryCode();
+
+  /**
+   * Pull the owner's real data into the browser workspace so /knowledge,
+   * /preview, /analytics and /publish show this Presence, not an empty draft.
+   */
+  async function restoreWorkspace(next: string) {
+    try {
+      const restored = await manageRestoreCoreFn({ data: { code: next } });
+      if (!restored.ok) return;
+      setCore(restored.core as KnowledgeCore);
+      setPlan(restored.plan as "free" | "plus" | "pro" | "business");
+      setPublished({ at: restored.publishedAt, slug: restored.slug });
+      setStoredCode(next);
+    } catch {
+      /* the overview already loaded — restoring the workspace is best effort */
+    }
+  }
 
   async function open(next = code) {
     setBusy(true);
@@ -79,6 +103,8 @@ function ManagePage() {
         return;
       }
       setData(result);
+      await restoreWorkspace(next);
+      toast.success("Presence data loaded into Knowledge, Preview, Analytics and Publish.");
     } catch {
       toast.error("Could not open that Presence.");
     } finally {

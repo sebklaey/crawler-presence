@@ -5,6 +5,7 @@ const CORE_KEY = "crawler.core.v1";
 const CHAT_KEY = "crawler.chat.v1";
 const PLAN_KEY = "crawler.plan.v1";
 const PUBLISH_KEY = "crawler.published.v1";
+const CODE_KEY = "crawler.code.v1";
 
 export type ChatMessage = {
   id: string;
@@ -57,3 +58,6 @@ export const useCore = () => useLocal<KnowledgeCore>(CORE_KEY, emptyCore());
 export const useChat = () => useLocal<ChatMessage[]>(CHAT_KEY, []);
 export const usePlan = () => useLocal<"free" | "plus" | "pro" | "business">(PLAN_KEY, "free");
 export const usePublished = () => useLocal<{ at: string; slug: string } | null>(PUBLISH_KEY, null);
+/** Recovery code of the Presence currently opened on /manage (capability, not an account). */
+export const useRecoveryCode = () => useLocal<string>(CODE_KEY, "");
+export const readRecoveryCode = () => read<string>(CODE_KEY, "");
