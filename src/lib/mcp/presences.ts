@@ -122,7 +122,7 @@ export function parseRecoveryCode(value: string): { slug: string; secret: string
 /* ------------------------------------------------------------------ */
 
 const COLUMNS =
-  "slug, core, files, plan, mode, status, intent_ref, subscription_status, current_period_end, billing_customer_id, billing_subscription_id, manage_secret_updated_at, created_at";
+  "slug, core, files, plan, mode, status, intent_ref, subscription_status, current_period_end, billing_customer_id, billing_subscription_id, manage_secret_updated_at, custom_domain, custom_domain_token, custom_domain_verified_at, created_at";
 
 type Row = {
   slug: string;
@@ -137,6 +137,9 @@ type Row = {
   billing_customer_id: string | null;
   billing_subscription_id: string | null;
   manage_secret_updated_at: string | null;
+  custom_domain: string | null;
+  custom_domain_token: string | null;
+  custom_domain_verified_at: string | null;
   created_at: string;
 };
 
@@ -155,8 +158,12 @@ function fromRow(row: Row): PublishedPresence {
     billingCustomerId: row.billing_customer_id,
     billingSubscriptionId: row.billing_subscription_id,
     manageSecretUpdatedAt: row.manage_secret_updated_at,
+    customDomain: row.custom_domain,
+    customDomainToken: row.custom_domain_token,
+    customDomainVerifiedAt: row.custom_domain_verified_at,
   };
 }
+
 
 export type PublishResult = { presence: PublishedPresence; manageSecret: string };
 
