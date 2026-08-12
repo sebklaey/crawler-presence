@@ -25,7 +25,8 @@ export type PublishedPresence = {
   intentRef: string | null;
   subscriptionStatus: string | null;
   currentPeriodEnd: string | null;
-  stripeCustomerId: string | null;
+  billingCustomerId: string | null;
+  billingSubscriptionId: string | null;
   manageSecretUpdatedAt: string | null;
 };
 
@@ -90,7 +91,7 @@ export function parseRecoveryCode(value: string): { slug: string; secret: string
 /* ------------------------------------------------------------------ */
 
 const COLUMNS =
-  "slug, core, files, plan, mode, status, intent_ref, subscription_status, current_period_end, stripe_customer_id, manage_secret_updated_at, created_at";
+  "slug, core, files, plan, mode, status, intent_ref, subscription_status, current_period_end, billing_customer_id, billing_subscription_id, manage_secret_updated_at, created_at";
 
 type Row = {
   slug: string;
@@ -102,7 +103,8 @@ type Row = {
   intent_ref: string | null;
   subscription_status: string | null;
   current_period_end: string | null;
-  stripe_customer_id: string | null;
+  billing_customer_id: string | null;
+  billing_subscription_id: string | null;
   manage_secret_updated_at: string | null;
   created_at: string;
 };
@@ -119,7 +121,8 @@ function fromRow(row: Row): PublishedPresence {
     intentRef: row.intent_ref,
     subscriptionStatus: row.subscription_status,
     currentPeriodEnd: row.current_period_end,
-    stripeCustomerId: row.stripe_customer_id,
+    billingCustomerId: row.billing_customer_id,
+    billingSubscriptionId: row.billing_subscription_id,
     manageSecretUpdatedAt: row.manage_secret_updated_at,
   };
 }
@@ -138,8 +141,8 @@ export async function publishDraft(input: {
   intentRef?: string | undefined;
   billing?:
     | {
-        stripeCustomerId?: string | null;
-        stripeSubscriptionId?: string | null;
+        billingCustomerId?: string | null;
+        billingSubscriptionId?: string | null;
         subscriptionStatus?: string | null;
         currentPeriodEnd?: string | null;
       }
@@ -161,7 +164,8 @@ export async function publishDraft(input: {
     intentRef: input.intentRef ?? null,
     subscriptionStatus: input.billing?.subscriptionStatus ?? null,
     currentPeriodEnd: input.billing?.currentPeriodEnd ?? null,
-    stripeCustomerId: input.billing?.stripeCustomerId ?? null,
+    billingCustomerId: input.billing?.billingCustomerId ?? null,
+    billingSubscriptionId: input.billing?.billingSubscriptionId ?? null,
     manageSecretUpdatedAt: now,
   };
 
@@ -178,8 +182,8 @@ export async function publishDraft(input: {
       manage_secret_hash: manageSecretHash,
       manage_secret_updated_at: now,
       intent_ref: input.intentRef ?? null,
-      stripe_customer_id: input.billing?.stripeCustomerId ?? null,
-      stripe_subscription_id: input.billing?.stripeSubscriptionId ?? null,
+      billing_customer_id: input.billing?.billingCustomerId ?? null,
+      billing_subscription_id: input.billing?.billingSubscriptionId ?? null,
       subscription_status: input.billing?.subscriptionStatus ?? null,
       current_period_end: input.billing?.currentPeriodEnd ?? null,
     });
@@ -270,7 +274,7 @@ export async function setPresenceStatus(slug: string, status: PresenceStatus): P
 
 /** Keeps a presence in sync with subscription lifecycle events. */
 export async function syncPresenceBilling(
-  stripeSubscriptionId: string,
+  billingSubscriptionId: string,
   billing: { subscriptionStatus?: string | null; currentPeriodEnd?: string | null },
 ): Promise<void> {
   const supabase = await client();
@@ -281,7 +285,7 @@ export async function syncPresenceBilling(
       subscription_status: billing.subscriptionStatus ?? null,
       current_period_end: billing.currentPeriodEnd ?? null,
     })
-    .eq("stripe_subscription_id", stripeSubscriptionId);
+    .eq("billing_subscription_id", billingSubscriptionId);
 }
 
 /* ------------------------------------------------------------------ */
