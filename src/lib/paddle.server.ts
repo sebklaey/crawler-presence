@@ -197,7 +197,13 @@ export async function createPortalUrl(customerId: string, subscriptionId?: strin
 /* Webhook verification                                                */
 /* ------------------------------------------------------------------ */
 
-export type PaddleEvent = { type: string; data: Record<string, unknown> };
+export type PaddleEvent = {
+  type: string;
+  /** Paddle notification/event id — the idempotency key for retries and replays. */
+  id: string | null;
+  occurredAt: string | null;
+  data: Record<string, unknown>;
+};
 
 /** Notification-destination secret for one environment. */
 export function paddleWebhookSecretFor(target: PaddleEnv): string | undefined {
@@ -250,6 +256,17 @@ export async function verifyWebhook(req: Request, target: PaddleEnv): Promise<Pa
   const expected = [...new Uint8Array(signed)].map((b) => b.toString(16).padStart(2, "0")).join("");
   if (!signatures.includes(expected)) throw new Error("Invalid webhook signature");
 
-  const parsed = JSON.parse(body) as { event_type?: string; data?: Record<string, unknown> };
-  return { type: parsed.event_type ?? "", data: parsed.data ?? {} };
+  const parsed = JSON.parse(body) as {
+    event_type?: string;
+    event_id?: string;
+    notification_id?: string;
+    occurred_at?: string;
+    data?: Record<string, unknown>;
+  };
+  return {
+    type: parsed.event_type ?? "",
+    id: parsed.event_id ?? parsed.notification_id ?? null,
+    occurredAt: parsed.occurred_at ?? null,
+    data: parsed.data ?? {},
+  };
 }

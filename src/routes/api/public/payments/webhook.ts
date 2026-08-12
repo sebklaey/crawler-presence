@@ -100,7 +100,7 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
         // Idempotency: claim the event id before doing any work. A retry or a
         // replay of the same event must never publish or charge twice.
         const { claimPaymentEvent, finishPaymentEvent } = await import("@/lib/payment-events.server");
-        const eventId = str((event as AnyRecord)["eventId"]) ?? str(event.data["event_id"]) ?? str(event.id);
+        const eventId = event.id ?? str(event.data["event_id"]);
         if (!eventId) {
           console.error("[crawler] payment event without id:", event.type);
           return new Response("Webhook error", { status: 400 });
@@ -111,7 +111,7 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
           environment: env,
           intentRef: intentRefOf(event.data),
           subscriptionId: str(event.data["subscription_id"]) ?? str(event.data["id"]),
-          occurredAt: event.occurredAt ?? null,
+          occurredAt: event.occurredAt,
         });
         if (!claim.durable) {
           // Backend unavailable: fail loudly so Paddle retries instead of the
