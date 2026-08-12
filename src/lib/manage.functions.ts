@@ -41,6 +41,9 @@ export type ManageOverview =
       hiddenCatalogEntries: number;
       catalogLimit: number;
       analytics: ManageAnalytics | null;
+      customDomain: CustomDomainState;
+      apiAccess: boolean;
+
     };
 
 
