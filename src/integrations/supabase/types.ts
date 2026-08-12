@@ -153,6 +153,50 @@ export type Database = {
           },
         ]
       }
+      presence_team_members: {
+        Row: {
+          code_hash: string
+          created_at: string
+          id: string
+          label: string
+          last_used_at: string | null
+          presence_slug: string
+          revoked_at: string | null
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          code_hash: string
+          created_at?: string
+          id?: string
+          label: string
+          last_used_at?: string | null
+          presence_slug: string
+          revoked_at?: string | null
+          role?: string
+          updated_at?: string
+        }
+        Update: {
+          code_hash?: string
+          created_at?: string
+          id?: string
+          label?: string
+          last_used_at?: string | null
+          presence_slug?: string
+          revoked_at?: string | null
+          role?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presence_team_members_presence_slug_fkey"
+            columns: ["presence_slug"]
+            isOneToOne: false
+            referencedRelation: "published_presences"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
       publish_intents: {
         Row: {
           billing_checkout_id: string | null
@@ -225,6 +269,9 @@ export type Database = {
           manage_secret_updated_at: string
           mode: string
           plan: string
+          report_email: string | null
+          report_frequency: string
+          report_last_sent_at: string | null
           session_token: string | null
           slug: string
           status: string
@@ -249,6 +296,9 @@ export type Database = {
           manage_secret_updated_at?: string
           mode?: string
           plan?: string
+          report_email?: string | null
+          report_frequency?: string
+          report_last_sent_at?: string | null
           session_token?: string | null
           slug: string
           status?: string
@@ -273,11 +323,50 @@ export type Database = {
           manage_secret_updated_at?: string
           mode?: string
           plan?: string
+          report_email?: string | null
+          report_frequency?: string
+          report_last_sent_at?: string | null
           session_token?: string | null
           slug?: string
           status?: string
           subscription_status?: string | null
           unpublished_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      support_tickets: {
+        Row: {
+          created_at: string
+          delivered: boolean
+          email: string
+          id: string
+          message: string
+          presence_slug: string | null
+          status: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          delivered?: boolean
+          email: string
+          id?: string
+          message: string
+          presence_slug?: string | null
+          status?: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          delivered?: boolean
+          email?: string
+          id?: string
+          message?: string
+          presence_slug?: string | null
+          status?: string
+          subject?: string
           updated_at?: string
         }
         Relationships: []

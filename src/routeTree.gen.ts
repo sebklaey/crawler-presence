@@ -21,6 +21,8 @@ import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PublishRouteImport } from './routes/publish'
 import { Route as RefundsRouteImport } from './routes/refunds'
+import { Route as SupportRouteImport } from './routes/support'
+import { Route as TeamRouteImport } from './routes/team'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
@@ -29,6 +31,7 @@ import { Route as ApiPublicMcpHealthRouteImport } from './routes/api/public/mcp-
 import { Route as PSlugIndexRouteImport } from './routes/p.$slug.index'
 import { Route as PSlugSplatRouteImport } from './routes/p.$slug.$'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
+import { Route as ApiPublicReportsRunRouteImport } from './routes/api/public/reports/run'
 import { Route as ApiPublicTrackClickRouteImport } from './routes/api/public/track/click'
 import { Route as ApiPublicV1AnalyticsRouteImport } from './routes/api/public/v1/analytics'
 import { Route as ApiPublicV1PresenceRouteImport } from './routes/api/public/v1/presence'
@@ -93,6 +96,16 @@ const RefundsRoute = RefundsRouteImport.update({
   path: '/refunds',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SupportRoute = SupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeamRoute = TeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
@@ -137,6 +150,11 @@ const ApiPublicPaymentsWebhookRoute =
     path: '/api/public/payments/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicReportsRunRoute = ApiPublicReportsRunRouteImport.update({
+  id: '/api/public/reports/run',
+  path: '/api/public/reports/run',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicTrackClickRoute = ApiPublicTrackClickRouteImport.update({
   id: '/api/public/track/click',
   path: '/api/public/track/click',
@@ -166,6 +184,8 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/publish': typeof PublishRoute
   '/refunds': typeof RefundsRoute
+  '/support': typeof SupportRoute
+  '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -174,6 +194,7 @@ export interface FileRoutesByFullPath {
   '/p/$slug/$': typeof PSlugSplatRoute
   '/p/$slug/': typeof PSlugIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/reports/run': typeof ApiPublicReportsRunRoute
   '/api/public/track/click': typeof ApiPublicTrackClickRoute
   '/api/public/v1/analytics': typeof ApiPublicV1AnalyticsRoute
   '/api/public/v1/presence': typeof ApiPublicV1PresenceRoute
@@ -191,6 +212,8 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/publish': typeof PublishRoute
   '/refunds': typeof RefundsRoute
+  '/support': typeof SupportRoute
+  '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -199,6 +222,7 @@ export interface FileRoutesByTo {
   '/p/$slug/$': typeof PSlugSplatRoute
   '/p/$slug': typeof PSlugIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/reports/run': typeof ApiPublicReportsRunRoute
   '/api/public/track/click': typeof ApiPublicTrackClickRoute
   '/api/public/v1/analytics': typeof ApiPublicV1AnalyticsRoute
   '/api/public/v1/presence': typeof ApiPublicV1PresenceRoute
@@ -217,6 +241,8 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/publish': typeof PublishRoute
   '/refunds': typeof RefundsRoute
+  '/support': typeof SupportRoute
+  '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -225,6 +251,7 @@ export interface FileRoutesById {
   '/p/$slug/$': typeof PSlugSplatRoute
   '/p/$slug/': typeof PSlugIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/reports/run': typeof ApiPublicReportsRunRoute
   '/api/public/track/click': typeof ApiPublicTrackClickRoute
   '/api/public/v1/analytics': typeof ApiPublicV1AnalyticsRoute
   '/api/public/v1/presence': typeof ApiPublicV1PresenceRoute
@@ -244,6 +271,8 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/publish'
     | '/refunds'
+    | '/support'
+    | '/team'
     | '/terms'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -252,6 +281,7 @@ export interface FileRouteTypes {
     | '/p/$slug/$'
     | '/p/$slug/'
     | '/api/public/payments/webhook'
+    | '/api/public/reports/run'
     | '/api/public/track/click'
     | '/api/public/v1/analytics'
     | '/api/public/v1/presence'
@@ -269,6 +299,8 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/publish'
     | '/refunds'
+    | '/support'
+    | '/team'
     | '/terms'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -277,6 +309,7 @@ export interface FileRouteTypes {
     | '/p/$slug/$'
     | '/p/$slug'
     | '/api/public/payments/webhook'
+    | '/api/public/reports/run'
     | '/api/public/track/click'
     | '/api/public/v1/analytics'
     | '/api/public/v1/presence'
@@ -294,6 +327,8 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/publish'
     | '/refunds'
+    | '/support'
+    | '/team'
     | '/terms'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -302,6 +337,7 @@ export interface FileRouteTypes {
     | '/p/$slug/$'
     | '/p/$slug/'
     | '/api/public/payments/webhook'
+    | '/api/public/reports/run'
     | '/api/public/track/click'
     | '/api/public/v1/analytics'
     | '/api/public/v1/presence'
@@ -320,6 +356,8 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   PublishRoute: typeof PublishRoute
   RefundsRoute: typeof RefundsRoute
+  SupportRoute: typeof SupportRoute
+  TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -328,6 +366,7 @@ export interface RootRouteChildren {
   PSlugSplatRoute: typeof PSlugSplatRoute
   PSlugIndexRoute: typeof PSlugIndexRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
+  ApiPublicReportsRunRoute: typeof ApiPublicReportsRunRoute
   ApiPublicTrackClickRoute: typeof ApiPublicTrackClickRoute
   ApiPublicV1AnalyticsRoute: typeof ApiPublicV1AnalyticsRoute
   ApiPublicV1PresenceRoute: typeof ApiPublicV1PresenceRoute
@@ -419,6 +458,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RefundsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/support': {
+      id: '/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof SupportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/team': {
+      id: '/team'
+      path: '/team'
+      fullPath: '/team'
+      preLoaderRoute: typeof TeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/terms': {
       id: '/terms'
       path: '/terms'
@@ -475,6 +528,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/reports/run': {
+      id: '/api/public/reports/run'
+      path: '/api/public/reports/run'
+      fullPath: '/api/public/reports/run'
+      preLoaderRoute: typeof ApiPublicReportsRunRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/track/click': {
       id: '/api/public/track/click'
       path: '/api/public/track/click'
@@ -512,6 +572,8 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   PublishRoute: PublishRoute,
   RefundsRoute: RefundsRoute,
+  SupportRoute: SupportRoute,
+  TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
@@ -521,6 +583,7 @@ const rootRouteChildren: RootRouteChildren = {
   PSlugSplatRoute: PSlugSplatRoute,
   PSlugIndexRoute: PSlugIndexRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
+  ApiPublicReportsRunRoute: ApiPublicReportsRunRoute,
   ApiPublicTrackClickRoute: ApiPublicTrackClickRoute,
   ApiPublicV1AnalyticsRoute: ApiPublicV1AnalyticsRoute,
   ApiPublicV1PresenceRoute: ApiPublicV1PresenceRoute,

@@ -15,6 +15,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ApiAccessSection, CustomDomainSection } from "@/components/manage-sections";
+import { TeamAndReportsSection } from "@/components/team-sections";
+
 import { RecoveryCodeCard } from "@/components/recovery-code-card";
 
 import { Button } from "@/components/ui/button";
@@ -347,6 +349,8 @@ function ManagePage() {
 
             <CustomDomainSection code={code} data={data} refresh={() => open()} />
             <ApiAccessSection data={data} />
+            <TeamAndReportsSection code={code} plan={data.plan} />
+
 
 
 
