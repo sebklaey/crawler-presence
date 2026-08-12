@@ -92,20 +92,30 @@ Rules:
 - Write summaries in the user's language.
 - Keep "reply" warm, calm and brief.`;
 
+/**
+ * Deterministischer Interview-Schritt — Crawler nutzt kein eigenes Modell.
+ * Die adaptive Formulierung übernimmt das aufrufende Modell (ChatGPT via MCP);
+ * hier wird nur regelbasiert zusammengeführt und die nächste Lücke bestimmt.
+ */
 export async function runInterviewTurn({
   core,
-  transcript,
+  answer,
 }: {
   core: unknown;
-  transcript: string;
+  answer: string;
 }): Promise<InterviewTurn> {
-  return await generateJson<InterviewTurn>({
-    schema: turnSchema as unknown as z.ZodType<InterviewTurn>,
-    shape: CORE_SHAPE,
-    system: SYSTEM,
-    prompt: `Current Knowledge Core (JSON):\n${JSON.stringify(core ?? {}, null, 2)}\n\nConversation so far:\n${transcript}\n\nReturn the acknowledgement, the single next question and the fully merged Knowledge Core.`,
-  });
+  const { interviewStep } = await import("./interview-rules");
+  const step = interviewStep({ core, message: answer });
+  return turnSchema.parse({
+    reply: step.reply,
+    question: step.question,
+    suggestions: step.suggestions,
+    confidence: step.confidence,
+    interviewComplete: step.interviewComplete,
+    core: step.core,
+  }) as InterviewTurn;
 }
+
 
 const rid = () => Math.random().toString(36).slice(2, 10);
 
