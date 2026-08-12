@@ -15,7 +15,6 @@ export const crawlerCore = (): KnowledgeCore => ({
   tagline: "Turn scattered business information into one verified, continuously updated AI Presence.",
   summary:
     "Crawler interviews you adaptively, builds one structured Knowledge Core that separates verified facts from positioning, and publishes it in human- and AI-readable formats (llms.txt, Markdown and JSON endpoints). Creating and previewing is free; hosting a published Presence is the paid step. Crawler measures what it can observe itself — reads of your published Presence files and Crawler tool interactions — and never claims access to private ChatGPT, Claude, Gemini or other assistant conversations, and never guarantees rankings, indexing, citations or mentions by external AI systems.",
-  location: undefined,
   website: "https://crawler.today",
   languages: ["en", "de"],
   facts: [
