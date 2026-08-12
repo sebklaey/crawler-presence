@@ -1,5 +1,9 @@
 import type { ComponentType } from 'react'
 
+import { template as presenceReportTemplate } from './presence-report'
+import { template as supportRequestTemplate } from './support-request'
+
+
 export interface TemplateEntry {
   component: ComponentType<any>
   subject: string | ((data: Record<string, any>) => string)
