@@ -371,7 +371,15 @@ function ManagePage() {
                     </ul>
                   </div>
                 </div>
+
+                <a
+                  href={`/manage/${data.slug}/analytics`}
+                  className="mt-6 inline-block rounded-full border border-border px-4 py-1.5 text-xs hover:border-foreground/40"
+                >
+                  AI Visibility Analytics öffnen
+                </a>
               </div>
+
             ) : null}
 
             <CustomDomainSection code={code} data={data} refresh={() => open()} />

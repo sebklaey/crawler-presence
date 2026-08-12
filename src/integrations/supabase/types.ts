@@ -14,6 +14,144 @@ export type Database = {
   }
   public: {
     Tables: {
+      analytics_daily_rollups: {
+        Row: {
+          created_at: string
+          date: string
+          event_count: number
+          event_type: string
+          id: string
+          presence_slug: string
+          source_type: string
+          unique_sessions: number
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          event_count?: number
+          event_type: string
+          id?: string
+          presence_slug: string
+          source_type: string
+          unique_sessions?: number
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          event_count?: number
+          event_type?: string
+          id?: string
+          presence_slug?: string
+          source_type?: string
+          unique_sessions?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_daily_rollups_presence_slug_fkey"
+            columns: ["presence_slug"]
+            isOneToOne: false
+            referencedRelation: "published_presences"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      analytics_events: {
+        Row: {
+          anonymous_session_hash: string | null
+          confidence: number | null
+          created_at: string
+          entity_match: string | null
+          event_type: string
+          id: string
+          metadata: Json
+          occurred_at: string
+          presence_slug: string
+          public_source_url: string | null
+          referrer_category: string | null
+          resource_path: string | null
+          source_type: string
+        }
+        Insert: {
+          anonymous_session_hash?: string | null
+          confidence?: number | null
+          created_at?: string
+          entity_match?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json
+          occurred_at?: string
+          presence_slug: string
+          public_source_url?: string | null
+          referrer_category?: string | null
+          resource_path?: string | null
+          source_type: string
+        }
+        Update: {
+          anonymous_session_hash?: string | null
+          confidence?: number | null
+          created_at?: string
+          entity_match?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json
+          occurred_at?: string
+          presence_slug?: string
+          public_source_url?: string | null
+          referrer_category?: string | null
+          resource_path?: string | null
+          source_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_events_presence_slug_fkey"
+            columns: ["presence_slug"]
+            isOneToOne: false
+            referencedRelation: "published_presences"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      analytics_integrations: {
+        Row: {
+          configuration: Json
+          connection_status: string
+          created_at: string
+          id: string
+          integration_type: string
+          last_synced_at: string | null
+          presence_slug: string
+          updated_at: string
+        }
+        Insert: {
+          configuration?: Json
+          connection_status?: string
+          created_at?: string
+          id?: string
+          integration_type: string
+          last_synced_at?: string | null
+          presence_slug: string
+          updated_at?: string
+        }
+        Update: {
+          configuration?: Json
+          connection_status?: string
+          created_at?: string
+          id?: string
+          integration_type?: string
+          last_synced_at?: string | null
+          presence_slug?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_integrations_presence_slug_fkey"
+            columns: ["presence_slug"]
+            isOneToOne: false
+            referencedRelation: "published_presences"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
       cancellation_feedback: {
         Row: {
           comment: string | null
@@ -792,6 +930,65 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      visibility_benchmarks: {
+        Row: {
+          created_at: string
+          description_correct: boolean | null
+          detected_issues: Json
+          entity_mentioned: boolean
+          id: string
+          model: string
+          position: number | null
+          presence_slug: string
+          prompt_key: string
+          prompt_version: string
+          provider: string
+          result_summary: string | null
+          source_cited: boolean
+          tested_at: string
+        }
+        Insert: {
+          created_at?: string
+          description_correct?: boolean | null
+          detected_issues?: Json
+          entity_mentioned?: boolean
+          id?: string
+          model: string
+          position?: number | null
+          presence_slug: string
+          prompt_key: string
+          prompt_version?: string
+          provider: string
+          result_summary?: string | null
+          source_cited?: boolean
+          tested_at?: string
+        }
+        Update: {
+          created_at?: string
+          description_correct?: boolean | null
+          detected_issues?: Json
+          entity_mentioned?: boolean
+          id?: string
+          model?: string
+          position?: number | null
+          presence_slug?: string
+          prompt_key?: string
+          prompt_version?: string
+          provider?: string
+          result_summary?: string | null
+          source_cited?: boolean
+          tested_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visibility_benchmarks_presence_slug_fkey"
+            columns: ["presence_slug"]
+            isOneToOne: false
+            referencedRelation: "published_presences"
+            referencedColumns: ["slug"]
+          },
+        ]
       }
     }
     Views: {

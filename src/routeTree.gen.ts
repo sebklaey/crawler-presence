@@ -38,8 +38,10 @@ import { Route as ApiEntityDotjsonRouteImport } from './routes/api/entity[.]json
 import { Route as ApiServicesDotjsonRouteImport } from './routes/api/services[.]json'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as ApiPublicMcpHealthRouteImport } from './routes/api/public/mcp-health'
+import { Route as ManageSlugAnalyticsRouteImport } from './routes/manage_.$slug.analytics'
 import { Route as PSlugIndexRouteImport } from './routes/p.$slug.index'
 import { Route as PSlugSplatRouteImport } from './routes/p.$slug.$'
+import { Route as PSlugAnalyticsRouteImport } from './routes/p.$slug.analytics'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicReportsRunRouteImport } from './routes/api/public/reports/run'
 import { Route as ApiPublicTrackClickRouteImport } from './routes/api/public/track/click'
@@ -196,6 +198,11 @@ const ApiPublicMcpHealthRoute = ApiPublicMcpHealthRouteImport.update({
   path: '/api/public/mcp-health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ManageSlugAnalyticsRoute = ManageSlugAnalyticsRouteImport.update({
+  id: '/manage_/$slug/analytics',
+  path: '/manage/$slug/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PSlugIndexRoute = PSlugIndexRouteImport.update({
   id: '/p/$slug/',
   path: '/p/$slug/',
@@ -204,6 +211,11 @@ const PSlugIndexRoute = PSlugIndexRouteImport.update({
 const PSlugSplatRoute = PSlugSplatRouteImport.update({
   id: '/p/$slug/$',
   path: '/p/$slug/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PSlugAnalyticsRoute = PSlugAnalyticsRouteImport.update({
+  id: '/p/$slug/analytics',
+  path: '/p/$slug/analytics',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicPaymentsWebhookRoute =
@@ -269,7 +281,9 @@ export interface FileRoutesByFullPath {
   '/api/services.json': typeof ApiServicesDotjsonRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
+  '/manage/$slug/analytics': typeof ManageSlugAnalyticsRoute
   '/p/$slug/$': typeof PSlugSplatRoute
+  '/p/$slug/analytics': typeof PSlugAnalyticsRoute
   '/p/$slug/': typeof PSlugIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/reports/run': typeof ApiPublicReportsRunRoute
@@ -308,7 +322,9 @@ export interface FileRoutesByTo {
   '/api/services.json': typeof ApiServicesDotjsonRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
+  '/manage/$slug/analytics': typeof ManageSlugAnalyticsRoute
   '/p/$slug/$': typeof PSlugSplatRoute
+  '/p/$slug/analytics': typeof PSlugAnalyticsRoute
   '/p/$slug': typeof PSlugIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/reports/run': typeof ApiPublicReportsRunRoute
@@ -348,7 +364,9 @@ export interface FileRoutesById {
   '/api/services.json': typeof ApiServicesDotjsonRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
+  '/manage_/$slug/analytics': typeof ManageSlugAnalyticsRoute
   '/p/$slug/$': typeof PSlugSplatRoute
+  '/p/$slug/analytics': typeof PSlugAnalyticsRoute
   '/p/$slug/': typeof PSlugIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/reports/run': typeof ApiPublicReportsRunRoute
@@ -389,7 +407,9 @@ export interface FileRouteTypes {
     | '/api/services.json'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
+    | '/manage/$slug/analytics'
     | '/p/$slug/$'
+    | '/p/$slug/analytics'
     | '/p/$slug/'
     | '/api/public/payments/webhook'
     | '/api/public/reports/run'
@@ -428,7 +448,9 @@ export interface FileRouteTypes {
     | '/api/services.json'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
+    | '/manage/$slug/analytics'
     | '/p/$slug/$'
+    | '/p/$slug/analytics'
     | '/p/$slug'
     | '/api/public/payments/webhook'
     | '/api/public/reports/run'
@@ -467,7 +489,9 @@ export interface FileRouteTypes {
     | '/api/services.json'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
+    | '/manage_/$slug/analytics'
     | '/p/$slug/$'
+    | '/p/$slug/analytics'
     | '/p/$slug/'
     | '/api/public/payments/webhook'
     | '/api/public/reports/run'
@@ -507,7 +531,9 @@ export interface RootRouteChildren {
   ApiServicesDotjsonRoute: typeof ApiServicesDotjsonRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicMcpHealthRoute: typeof ApiPublicMcpHealthRoute
+  ManageSlugAnalyticsRoute: typeof ManageSlugAnalyticsRoute
   PSlugSplatRoute: typeof PSlugSplatRoute
+  PSlugAnalyticsRoute: typeof PSlugAnalyticsRoute
   PSlugIndexRoute: typeof PSlugIndexRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   ApiPublicReportsRunRoute: typeof ApiPublicReportsRunRoute
@@ -722,6 +748,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicMcpHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/manage_/$slug/analytics': {
+      id: '/manage_/$slug/analytics'
+      path: '/manage/$slug/analytics'
+      fullPath: '/manage/$slug/analytics'
+      preLoaderRoute: typeof ManageSlugAnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/p/$slug/': {
       id: '/p/$slug/'
       path: '/p/$slug'
@@ -734,6 +767,13 @@ declare module '@tanstack/react-router' {
       path: '/p/$slug/$'
       fullPath: '/p/$slug/$'
       preLoaderRoute: typeof PSlugSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/p/$slug/analytics': {
+      id: '/p/$slug/analytics'
+      path: '/p/$slug/analytics'
+      fullPath: '/p/$slug/analytics'
+      preLoaderRoute: typeof PSlugAnalyticsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/payments/webhook': {
@@ -813,7 +853,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiServicesDotjsonRoute: ApiServicesDotjsonRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicMcpHealthRoute: ApiPublicMcpHealthRoute,
+  ManageSlugAnalyticsRoute: ManageSlugAnalyticsRoute,
   PSlugSplatRoute: PSlugSplatRoute,
+  PSlugAnalyticsRoute: PSlugAnalyticsRoute,
   PSlugIndexRoute: PSlugIndexRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   ApiPublicReportsRunRoute: ApiPublicReportsRunRoute,
