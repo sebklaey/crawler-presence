@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SplatRouteImport } from './routes/$'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as ChatgptRouteImport } from './routes/chatgpt'
 import { Route as KnowledgeRouteImport } from './routes/knowledge'
@@ -28,10 +29,17 @@ import { Route as ApiPublicMcpHealthRouteImport } from './routes/api/public/mcp-
 import { Route as PSlugIndexRouteImport } from './routes/p.$slug.index'
 import { Route as PSlugSplatRouteImport } from './routes/p.$slug.$'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
+import { Route as ApiPublicV1AnalyticsRouteImport } from './routes/api/public/v1/analytics'
+import { Route as ApiPublicV1PresenceRouteImport } from './routes/api/public/v1/presence'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SplatRoute = SplatRouteImport.update({
+  id: '/$',
+  path: '/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AnalyticsRoute = AnalyticsRouteImport.update({
@@ -128,9 +136,20 @@ const ApiPublicPaymentsWebhookRoute =
     path: '/api/public/payments/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1AnalyticsRoute = ApiPublicV1AnalyticsRouteImport.update({
+  id: '/api/public/v1/analytics',
+  path: '/api/public/v1/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1PresenceRoute = ApiPublicV1PresenceRouteImport.update({
+  id: '/api/public/v1/presence',
+  path: '/api/public/v1/presence',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/$': typeof SplatRoute
   '/analytics': typeof AnalyticsRoute
   '/chatgpt': typeof ChatgptRoute
   '/knowledge': typeof KnowledgeRoute
@@ -149,9 +168,12 @@ export interface FileRoutesByFullPath {
   '/p/$slug/$': typeof PSlugSplatRoute
   '/p/$slug/': typeof PSlugIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/v1/analytics': typeof ApiPublicV1AnalyticsRoute
+  '/api/public/v1/presence': typeof ApiPublicV1PresenceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/$': typeof SplatRoute
   '/analytics': typeof AnalyticsRoute
   '/chatgpt': typeof ChatgptRoute
   '/knowledge': typeof KnowledgeRoute
@@ -170,10 +192,13 @@ export interface FileRoutesByTo {
   '/p/$slug/$': typeof PSlugSplatRoute
   '/p/$slug': typeof PSlugIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/v1/analytics': typeof ApiPublicV1AnalyticsRoute
+  '/api/public/v1/presence': typeof ApiPublicV1PresenceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/$': typeof SplatRoute
   '/analytics': typeof AnalyticsRoute
   '/chatgpt': typeof ChatgptRoute
   '/knowledge': typeof KnowledgeRoute
@@ -192,11 +217,14 @@ export interface FileRoutesById {
   '/p/$slug/$': typeof PSlugSplatRoute
   '/p/$slug/': typeof PSlugIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/v1/analytics': typeof ApiPublicV1AnalyticsRoute
+  '/api/public/v1/presence': typeof ApiPublicV1PresenceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/$'
     | '/analytics'
     | '/chatgpt'
     | '/knowledge'
@@ -215,9 +243,12 @@ export interface FileRouteTypes {
     | '/p/$slug/$'
     | '/p/$slug/'
     | '/api/public/payments/webhook'
+    | '/api/public/v1/analytics'
+    | '/api/public/v1/presence'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/$'
     | '/analytics'
     | '/chatgpt'
     | '/knowledge'
@@ -236,9 +267,12 @@ export interface FileRouteTypes {
     | '/p/$slug/$'
     | '/p/$slug'
     | '/api/public/payments/webhook'
+    | '/api/public/v1/analytics'
+    | '/api/public/v1/presence'
   id:
     | '__root__'
     | '/'
+    | '/$'
     | '/analytics'
     | '/chatgpt'
     | '/knowledge'
@@ -257,10 +291,13 @@ export interface FileRouteTypes {
     | '/p/$slug/$'
     | '/p/$slug/'
     | '/api/public/payments/webhook'
+    | '/api/public/v1/analytics'
+    | '/api/public/v1/presence'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SplatRoute: typeof SplatRoute
   AnalyticsRoute: typeof AnalyticsRoute
   ChatgptRoute: typeof ChatgptRoute
   KnowledgeRoute: typeof KnowledgeRoute
@@ -279,6 +316,8 @@ export interface RootRouteChildren {
   PSlugSplatRoute: typeof PSlugSplatRoute
   PSlugIndexRoute: typeof PSlugIndexRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
+  ApiPublicV1AnalyticsRoute: typeof ApiPublicV1AnalyticsRoute
+  ApiPublicV1PresenceRoute: typeof ApiPublicV1PresenceRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -288,6 +327,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$': {
+      id: '/$'
+      path: '/$'
+      fullPath: '/$'
+      preLoaderRoute: typeof SplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/analytics': {
@@ -416,11 +462,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/analytics': {
+      id: '/api/public/v1/analytics'
+      path: '/api/public/v1/analytics'
+      fullPath: '/api/public/v1/analytics'
+      preLoaderRoute: typeof ApiPublicV1AnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/presence': {
+      id: '/api/public/v1/presence'
+      path: '/api/public/v1/presence'
+      fullPath: '/api/public/v1/presence'
+      preLoaderRoute: typeof ApiPublicV1PresenceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SplatRoute: SplatRoute,
   AnalyticsRoute: AnalyticsRoute,
   ChatgptRoute: ChatgptRoute,
   KnowledgeRoute: KnowledgeRoute,
@@ -440,6 +501,8 @@ const rootRouteChildren: RootRouteChildren = {
   PSlugSplatRoute: PSlugSplatRoute,
   PSlugIndexRoute: PSlugIndexRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
+  ApiPublicV1AnalyticsRoute: ApiPublicV1AnalyticsRoute,
+  ApiPublicV1PresenceRoute: ApiPublicV1PresenceRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -215,6 +215,9 @@ export type Database = {
           core: Json
           created_at: string
           current_period_end: string | null
+          custom_domain: string | null
+          custom_domain_token: string | null
+          custom_domain_verified_at: string | null
           files: Json
           id: string
           intent_ref: string | null
@@ -236,6 +239,9 @@ export type Database = {
           core: Json
           created_at?: string
           current_period_end?: string | null
+          custom_domain?: string | null
+          custom_domain_token?: string | null
+          custom_domain_verified_at?: string | null
           files?: Json
           id?: string
           intent_ref?: string | null
@@ -257,6 +263,9 @@ export type Database = {
           core?: Json
           created_at?: string
           current_period_end?: string | null
+          custom_domain?: string | null
+          custom_domain_token?: string | null
+          custom_domain_verified_at?: string | null
           files?: Json
           id?: string
           intent_ref?: string | null

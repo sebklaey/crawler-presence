@@ -41,6 +41,9 @@ export type ManageOverview =
       hiddenCatalogEntries: number;
       catalogLimit: number;
       analytics: ManageAnalytics | null;
+      customDomain: CustomDomainState;
+      apiAccess: boolean;
+
     };
 
 
@@ -156,7 +159,22 @@ export const manageOverviewFn = createServerFn({ method: "POST" })
       catalogLimit: limited.limit,
       // Analytics are part of the paid plan — locked while billing has lapsed.
       analytics: restricted ? null : await analyticsFor(p.slug, p.plan),
+      customDomain: {
+        domain: p.customDomain,
+        verified: Boolean(p.customDomainVerifiedAt),
+        verifiedAt: p.customDomainVerifiedAt,
+        allowedOnPlan: DOMAIN_PLANS.includes(p.plan),
+        instructions: p.customDomain
+          ? {
+              txtHost: CUSTOM_DOMAIN_TXT_HOST,
+              txtValue: p.customDomainToken,
+              cnameTarget: CUSTOM_DOMAIN_TARGET,
+            }
+          : null,
+      },
+      apiAccess: p.plan === "business",
     };
+
 
   });
 
@@ -209,4 +227,99 @@ export const manageBillingPortalFn = createServerFn({ method: "POST" })
     } catch (error) {
       return { ok: false, reason: getPaddleErrorMessage(error) };
     }
+  });
+
+/* ------------------------------------------------------------------ */
+/* Custom domain (Pro and Business)                                    */
+/* ------------------------------------------------------------------ */
+
+/** Plans that may attach a custom domain. */
+const DOMAIN_PLANS = ["pro", "business"];
+
+export const CUSTOM_DOMAIN_TARGET = "crawler.today";
+export const CUSTOM_DOMAIN_TXT_HOST = "_crawler";
+
+export type CustomDomainState = {
+  domain: string | null;
+  verified: boolean;
+  verifiedAt: string | null;
+  /** DNS records the user has to create. */
+  instructions: { txtHost: string; txtValue: string | null; cnameTarget: string } | null;
+  allowedOnPlan: boolean;
+};
+
+const domainSchema = codeSchema.extend({ domain: z.string().trim().min(4).max(253) });
+
+/** Looks up the verification TXT record over DNS-over-HTTPS. */
+async function txtRecords(name: string): Promise<string[]> {
+  const response = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(name)}&type=TXT`, {
+    headers: { accept: "application/dns-json" },
+  });
+  if (!response.ok) return [];
+  const payload = (await response.json()) as { Answer?: { data?: string }[] };
+  return (payload.Answer ?? []).map((a) => (a.data ?? "").replace(/^"|"$/g, "").trim()).filter(Boolean);
+}
+
+export const manageSetDomainFn = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => domainSchema.parse(input))
+  .handler(async ({ data }): Promise<{ ok: boolean; state?: CustomDomainState; reason?: string }> => {
+    const resolved = await resolve(data.code);
+    if ("error" in resolved) return { ok: false, reason: resolved.error };
+    if (!DOMAIN_PLANS.includes(resolved.presence.plan)) return { ok: false, reason: "plan" };
+
+    const { normalizeDomain, setCustomDomain, PresenceStoreError } = await import("./mcp/presences");
+    const domain = normalizeDomain(data.domain);
+    if (!domain) return { ok: false, reason: "invalid-domain" };
+    try {
+      const token = await setCustomDomain(resolved.slug, domain);
+      return {
+        ok: true,
+        state: {
+          domain,
+          verified: false,
+          verifiedAt: null,
+          allowedOnPlan: true,
+          instructions: { txtHost: CUSTOM_DOMAIN_TXT_HOST, txtValue: token, cnameTarget: CUSTOM_DOMAIN_TARGET },
+        },
+      };
+    } catch (error) {
+      if (error instanceof PresenceStoreError) return { ok: false, reason: "unavailable" };
+      return { ok: false, reason: "domain-taken" };
+    }
+  });
+
+export const manageVerifyDomainFn = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => codeSchema.parse(input))
+  .handler(async ({ data }): Promise<{ ok: boolean; verified?: boolean; reason?: string }> => {
+    const resolved = await resolve(data.code);
+    if ("error" in resolved) return { ok: false, reason: resolved.error };
+    const { customDomain, customDomainToken } = resolved.presence;
+    if (!customDomain || !customDomainToken) return { ok: false, reason: "no-domain" };
+
+    const found = await txtRecords(`${CUSTOM_DOMAIN_TXT_HOST}.${customDomain}`);
+    if (!found.includes(customDomainToken)) return { ok: true, verified: false, reason: "txt-missing" };
+
+    const { markCustomDomainVerified, PresenceStoreError } = await import("./mcp/presences");
+    try {
+      await markCustomDomainVerified(resolved.slug);
+    } catch (error) {
+      if (error instanceof PresenceStoreError) return { ok: false, reason: "unavailable" };
+      throw error;
+    }
+    return { ok: true, verified: true };
+  });
+
+export const manageRemoveDomainFn = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => codeSchema.parse(input))
+  .handler(async ({ data }): Promise<{ ok: boolean; reason?: string }> => {
+    const resolved = await resolve(data.code);
+    if ("error" in resolved) return { ok: false, reason: resolved.error };
+    const { clearCustomDomain, PresenceStoreError } = await import("./mcp/presences");
+    try {
+      await clearCustomDomain(resolved.slug);
+    } catch (error) {
+      if (error instanceof PresenceStoreError) return { ok: false, reason: "unavailable" };
+      throw error;
+    }
+    return { ok: true };
   });
