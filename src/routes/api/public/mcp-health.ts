@@ -22,7 +22,9 @@ export const Route = createFileRoute("/api/public/mcp-health")({
             auth_mode: "none",
             auth_note:
               "Public no-auth endpoint. No ChatGPT account identity is available. Crawler has no user registration, no login and no user accounts. Published Presences are controlled by a capability-based recovery code, of which only a hash is stored.",
-            interview_model_configured: Boolean(process.env["LOVABLE_API_KEY"]),
+            own_ai_model: false,
+            model_note:
+              "Crawler runs no language model of its own. The connected assistant does the interviewing and extraction; Crawler merges deterministically, generates the files and publishes.",
             analytics_mode: "measured",
             analytics_note:
               "Only Crawler-observable events are counted: reads of published Presence files and API endpoints, Crawler tool interactions and outbound link clicks. No access to private ChatGPT, Claude, Gemini or other assistant conversations, and no guarantee of external indexing, citation or ranking.",
