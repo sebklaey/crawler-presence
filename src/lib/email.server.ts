@@ -21,7 +21,7 @@ export type Mail = {
   text: string;
   replyTo?: string;
   /** Which registered template renders the message. */
-  template?: "presence-report" | "support-request";
+  template?: "presence-report" | "support-request" | "support-update";
   /** Dedupes retries of the same logical send. */
   idempotencyKey?: string;
 };

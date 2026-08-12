@@ -15,40 +15,76 @@ const schema = z.object({
 export const submitSupportFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => schema.parse(input))
   .handler(async ({ data }): Promise<{ ok: boolean; delivered: boolean; reason?: string }> => {
-    const { EMAIL_REGEX, CRAWLER_SUPPORT_EMAIL, sendMail } = await import("./email.server");
+    const { EMAIL_REGEX } = await import("./email.server");
     if (!EMAIL_REGEX.test(data.email)) return { ok: false, delivered: false, reason: "invalid-email" };
 
     const { allowRequest } = await import("./mcp/presences");
     if (!(await allowRequest("support", 30))) return { ok: false, delivered: false, reason: "rate-limited" };
 
-    const mail = await sendMail({
-      to: CRAWLER_SUPPORT_EMAIL,
-      replyTo: data.email,
-      template: "support-request",
-      subject: `Crawler support · ${data.subject}`,
-      text: [
-        `From: ${data.email}`,
-        data.slug ? `Presence: ${data.slug}` : "Presence: (none given)",
-        "",
-        data.message,
-      ].join("\n"),
-    });
+    const { findOpenThread, notifyNewTicket } = await import("./support-notify.server");
 
-
+    let supabase: any = null;
     try {
       const { db } = await import("./mcp/db.server");
-      const supabase = db();
-      if (supabase) {
-        await supabase.from("support_tickets").insert({
-          email: data.email,
-          subject: data.subject,
-          message: data.message,
-          presence_slug: data.slug || null,
-          delivered: mail.delivered,
-        });
+      supabase = db();
+    } catch {
+      supabase = null;
+    }
+
+    // Store first so the ticket id can be quoted in the notification and the
+    // request survives even if delivery fails.
+    let ticketId: string = crypto.randomUUID();
+    let thread: { thread_id: string; subject: string } | null = null;
+
+    if (supabase) {
+      try {
+        thread = await findOpenThread(supabase, data.email);
+        const { data: inserted, error } = await supabase
+          .from("support_tickets")
+          .insert({
+            email: data.email,
+            subject: data.subject,
+            message: data.message,
+            presence_slug: data.slug || null,
+            thread_id: thread?.thread_id ?? null,
+            is_follow_up: Boolean(thread),
+            delivered: false,
+          })
+          .select("id")
+          .single();
+        if (error) throw error;
+        ticketId = inserted.id as string;
+        if (!thread) {
+          await supabase.from("support_tickets").update({ thread_id: ticketId }).eq("id", ticketId);
+        }
+      } catch (error) {
+        console.error("[crawler] support ticket store failed", error instanceof Error ? error.message : "unknown");
       }
-    } catch (error) {
-      console.error("[crawler] support ticket store failed", error instanceof Error ? error.message : "unknown");
+    }
+
+    const mail = await notifyNewTicket({
+      id: ticketId,
+      email: data.email,
+      subject: data.subject,
+      message: data.message,
+      presence_slug: data.slug || null,
+      isFollowUp: Boolean(thread),
+      ...(thread ? { threadSubject: thread.subject } : {}),
+    });
+
+    if (supabase) {
+      try {
+        await supabase
+          .from("support_tickets")
+          .update({
+            delivered: mail.delivered,
+            notified_status: "open",
+            notified_at: new Date().toISOString(),
+          })
+          .eq("id", ticketId);
+      } catch {
+        // Bookkeeping only — the ticket itself is already stored.
+      }
     }
 
     // The request is recorded either way, so the user is never told it vanished.

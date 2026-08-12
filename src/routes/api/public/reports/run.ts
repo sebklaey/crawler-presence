@@ -23,12 +23,17 @@ export const Route = createFileRoute("/api/public/reports/run")({
 
         try {
           const { runDueReports } = await import("@/lib/reports.server");
+          const { notifyTicketUpdates } = await import("@/lib/support-notify.server");
           const result = await runDueReports();
-          return Response.json({ ok: true, ...result });
+          // Same schedule announces support ticket status changes, so no
+          // second scheduler is needed.
+          const tickets = await notifyTicketUpdates();
+          return Response.json({ ok: true, ...result, ticketNotifications: tickets });
         } catch (error) {
           console.error("[crawler] report run failed", error instanceof Error ? error.message : "unknown error");
           return Response.json({ ok: false, error: "Report run failed." }, { status: 500 });
         }
+
       },
     },
   },
