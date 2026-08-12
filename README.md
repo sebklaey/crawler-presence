@@ -52,7 +52,8 @@ pay only to be online.
 
 ## Demo-only in this build
 
-- **Checkout**: no Stripe keys → the whole plan/publish flow runs in clearly
+- **Checkout**: Paddle Billing (hosted checkout + webhook). Without Paddle
+  credentials → the whole plan/publish flow runs in clearly
   labelled DEMO/TEST mode. No charge, no real subscription.
 - **Analytics**: seeded and prominently labelled DEMO. Crawler only ever
   measures Crawler-internal events and observable reads of published files —
