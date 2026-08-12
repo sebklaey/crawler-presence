@@ -87,7 +87,7 @@ export const retentionOverviewFn = createServerFn({ method: "POST" })
         mode: p.mode === "demo" ? "demo" : "live",
         approvedSources: sources.length,
         lastSourceScanAt: sources.map((s) => s.lastScannedAt).filter(Boolean).sort().at(-1) ?? null,
-        openConflicts: changes.filter((c) => c.classification === "conflict").length,
+        openConflicts: changes.filter((c) => c.classification === "conflicting_fact").length,
         measuredEvents30d,
         acceptedImprovements: accepted,
         pendingRecommendations: recommendations.length,
@@ -152,7 +152,7 @@ export const scanSourcesFn = createServerFn({ method: "POST" })
     const { scanPresence } = await import("./sources.server");
     try {
       const outcomes = await scanPresence(resolved.presence.slug, { force: true });
-      return { ok: true, scanned: outcomes.length, changed: outcomes.filter((o) => o.changed).length };
+      return { ok: true, scanned: outcomes.length, changed: outcomes.filter((o) => o.classification !== "no_change").length };
     } catch {
       return { ok: false, reason: "unavailable" };
     }
