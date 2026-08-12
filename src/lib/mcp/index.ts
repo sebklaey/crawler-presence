@@ -1,4 +1,4 @@
-import { defineMcp } from "@lovable.dev/mcp-js";
+import { auth, defineMcp } from "@lovable.dev/mcp-js";
 import analyzeSourceUrl from "./tools/analyze-source-url";
 import continueInterview from "./tools/continue-interview";
 import getAnalytics from "./tools/get-analytics";
