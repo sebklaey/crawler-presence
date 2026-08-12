@@ -71,7 +71,7 @@ export const startPublishFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => startSchema.parse(input))
   .handler(async ({ data }): Promise<StartPublishResult> => {
     const { billingEnvironment, createIntent, attachCheckout } = await import("./intents.server");
-    const { paymentsConfigured } = await import("./stripe.server");
+    const { paymentsConfigured } = await import("./paddle.server");
     const { publishDraft, recoveryCode } = await import("./mcp/presences");
     const environment = billingEnvironment();
 
@@ -109,30 +109,13 @@ export const startPublishFn = createServerFn({ method: "POST" })
     });
     if (!intent) return { kind: "error", message: "Could not start checkout. Please try again." };
 
-    const { createStripeClient, getStripeErrorMessage } = await import("./stripe.server");
-    const { PRICE_BY_PLAN } = await import("./billing");
+    const { createHostedCheckout, getPaddleErrorMessage } = await import("./paddle.server");
     try {
-      const stripe = createStripeClient(environment);
-      const prices = await stripe.prices.list({ lookup_keys: [PRICE_BY_PLAN[data.plan]] });
-      const price = prices.data[0];
-      if (!price) throw new Error(`Price ${PRICE_BY_PLAN[data.plan]} is not configured`);
-
-      const session = await stripe.checkout.sessions.create({
-        line_items: [{ price: price.id, quantity: 1 }],
-        mode: "subscription",
-        success_url: `${data.origin}/publish?intent=${intent.intentRef}`,
-        cancel_url: `${data.origin}/publish?canceled=1`,
-        managed_payments: { enabled: true },
-        // Only the anonymous intent reference travels with the payment.
-        metadata: { intent_ref: intent.intentRef, plan: data.plan, managed_payments: "true" },
-        subscription_data: { metadata: { intent_ref: intent.intentRef, plan: data.plan } },
-      } as Parameters<typeof stripe.checkout.sessions.create>[0]);
-
-      if (!session.url) throw new Error("Checkout session has no URL");
-      await attachCheckout(intent.intentRef, session.id);
-      return { kind: "checkout", url: session.url, intentRef: intent.intentRef };
+      const checkout = await createHostedCheckout({ plan: data.plan, intentRef: intent.intentRef });
+      await attachCheckout(intent.intentRef, checkout.transactionId);
+      return { kind: "checkout", url: checkout.url, intentRef: intent.intentRef };
     } catch (error) {
-      return { kind: "error", message: getStripeErrorMessage(error) };
+      return { kind: "error", message: getPaddleErrorMessage(error) };
     }
   });
 
@@ -185,8 +168,8 @@ export const finalizePublishFn = createServerFn({ method: "POST" })
       ...(intent.sessionToken ? { sessionToken: intent.sessionToken } : {}),
       intentRef: intent.intentRef,
       billing: {
-        stripeCustomerId: intent.stripeCustomerId,
-        stripeSubscriptionId: intent.stripeSubscriptionId,
+        billingCustomerId: intent.billingCustomerId,
+        billingSubscriptionId: intent.billingSubscriptionId,
         subscriptionStatus: intent.subscriptionStatus,
         currentPeriodEnd: intent.currentPeriodEnd,
       },
