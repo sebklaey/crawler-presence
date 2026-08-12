@@ -28,6 +28,13 @@ export const Route = createFileRoute("/p/$slug/$")({
             status: 404,
           });
         }
+        try {
+          const { recordEvent } = await import("@/lib/mcp/presence-analytics");
+          await recordEvent({ slug: record.slug, eventType: "file_read", source: "crawler", filePath: file.path });
+        } catch {
+          /* measurement must never break public delivery */
+        }
+
         return new Response(file.content, {
           headers: {
             "content-type": contentType(file.type, file.path),

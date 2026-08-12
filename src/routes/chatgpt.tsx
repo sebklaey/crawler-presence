@@ -42,6 +42,10 @@ const steps = [
     body: "@ invocation of connectors is currently documented for ChatGPT Work. Use that surface for the steps below.",
   },
   {
+    title: "Ask for analytics in plain language",
+    body: "Example: \u201c@Crawler wie oft wurde \u00fcber sebklaey.app geredet?\u201d Crawler answers with numbers measured inside Crawler \u2014 anonymous Crawler sessions that mentioned the domain and observable reads of the published Presence files. It never claims to see ChatGPT, Claude or Gemini conversations.",
+  },
+  {
     title: "Type @ and select Crawler",
     body: "Then simply describe what you do, or paste your website link. Crawler infers your entity type and asks one adaptive question at a time.",
   },
@@ -55,7 +59,7 @@ const tools: { name: string; kind: string; text: string }[] = [
   { name: "preview_presence", kind: "read", text: "llms.txt, llms-full.txt, about.md and the relevant markdown and JSON previews." },
   { name: "publish_presence", kind: "write", text: "Publishes for real once hosting has been paid for this draft, and returns the one-time recovery code; otherwise returns publish_requires_payment and a handoff URL." },
   { name: "get_pricing", kind: "read", text: "Plus $5, Pro $20, Business $80 per month with feature differences." },
-  { name: "get_analytics", kind: "read", text: "Clearly labelled demo analytics for 7/30/90 days, plus an AI summary of recurring questions and gaps." },
+  { name: "get_analytics", kind: "read", text: "Ask \u201c@Crawler wie oft wurde \u00fcber sebklaey.app geredet?\u201d \u2014 returns the free public aggregate for a published Presence (distinct anonymous Crawler sessions, mention events, public reads) for 7/30/90 days or all time. Detailed analytics need the recovery code. Scope: measured inside Crawler only." },
   { name: "improve_presence", kind: "read", text: "Turns an insight into the fields to clarify and one targeted question." },
   { name: "get_checkout_link", kind: "read", text: "External checkout URL; labelled demo mode when no payment credentials are configured." },
   { name: "get_status", kind: "read", text: "Health and debug output: auth mode (none), model availability, session store, checkout mode." },

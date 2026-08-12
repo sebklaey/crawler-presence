@@ -217,6 +217,12 @@ export async function publishDraft(input: {
       current_period_end: input.billing?.currentPeriodEnd ?? null,
     });
     if (error) storeFailure("publish", error.message);
+    try {
+      const { syncAliases } = await import("./presence-analytics");
+      await syncAliases(presence.slug, presence.core);
+    } catch {
+      /* alias sync is best effort; publishing already succeeded */
+    }
     return { presence, manageSecret };
   }
 
