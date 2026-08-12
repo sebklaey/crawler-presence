@@ -35,6 +35,16 @@ function PricingPage() {
           description="Building your Knowledge Core and previewing every generated file costs nothing. Hosting your published presence is the paid part."
         />
 
+        <p className="-mt-4 mb-8 max-w-2xl text-xs text-muted-foreground">
+          Every plan is a digital software subscription, delivered online and active immediately after purchase. No
+          physical goods are sold or shipped, and no delivery address is ever required. Cancel any time; see the{" "}
+          <Link to="/refunds" className="underline underline-offset-4">
+            refund policy
+          </Link>
+          .
+        </p>
+
+
         {!payments.configured ? (
           <div className="mb-8 rounded-xl border border-dashed border-border bg-secondary/60 px-4 py-3 text-xs text-muted-foreground">
             <strong className="text-foreground">Demo / test mode.</strong> No payment credentials are configured, so
