@@ -21,6 +21,7 @@ import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PublishRouteImport } from './routes/publish'
 import { Route as RefundsRouteImport } from './routes/refunds'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SupportRouteImport } from './routes/support'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as TermsRouteImport } from './routes/terms'
@@ -95,6 +96,11 @@ const PublishRoute = PublishRouteImport.update({
 const RefundsRoute = RefundsRouteImport.update({
   id: '/refunds',
   path: '/refunds',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SupportRoute = SupportRouteImport.update({
@@ -191,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/publish': typeof PublishRoute
   '/refunds': typeof RefundsRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/support': typeof SupportRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
@@ -220,6 +227,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/publish': typeof PublishRoute
   '/refunds': typeof RefundsRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/support': typeof SupportRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
@@ -250,6 +258,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/publish': typeof PublishRoute
   '/refunds': typeof RefundsRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/support': typeof SupportRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
@@ -281,6 +290,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/publish'
     | '/refunds'
+    | '/sitemap.xml'
     | '/support'
     | '/team'
     | '/terms'
@@ -310,6 +320,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/publish'
     | '/refunds'
+    | '/sitemap.xml'
     | '/support'
     | '/team'
     | '/terms'
@@ -339,6 +350,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/publish'
     | '/refunds'
+    | '/sitemap.xml'
     | '/support'
     | '/team'
     | '/terms'
@@ -369,6 +381,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   PublishRoute: typeof PublishRoute
   RefundsRoute: typeof RefundsRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SupportRoute: typeof SupportRoute
   TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
@@ -470,6 +483,13 @@ declare module '@tanstack/react-router' {
       path: '/refunds'
       fullPath: '/refunds'
       preLoaderRoute: typeof RefundsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/support': {
@@ -593,6 +613,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   PublishRoute: PublishRoute,
   RefundsRoute: RefundsRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   SupportRoute: SupportRoute,
   TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,
