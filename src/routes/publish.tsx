@@ -201,17 +201,14 @@ function PublishPage() {
   const files = generatedFiles(core);
   const payments = paymentsStatus.configured;
 
-  async function publish() {
-    if (!selected) {
-      toast.error("Choose a plan first.");
-      return;
-    }
+  async function publish(planId: PlanId) {
+    setSelected(planId);
     setBusy(true);
     try {
       const result = await startPublishFn({
         data: {
           core,
-          plan: selected,
+          plan: planId,
           origin: window.location.origin,
           ...(search.session ? { sessionToken: search.session } : {}),
         },
@@ -240,6 +237,7 @@ function PublishPage() {
       setBusy(false);
     }
   }
+
 
   return (
     <AppShell>
