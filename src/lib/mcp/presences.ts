@@ -208,7 +208,11 @@ export async function publishDraft(input: {
     billingCustomerId: input.billing?.billingCustomerId ?? null,
     billingSubscriptionId: input.billing?.billingSubscriptionId ?? null,
     manageSecretUpdatedAt: now,
+    customDomain: null,
+    customDomainToken: null,
+    customDomainVerifiedAt: null,
   };
+
 
   const supabase = await client();
   if (supabase) {
