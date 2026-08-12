@@ -239,6 +239,17 @@ export async function publishDraft(input: {
     } catch {
       /* alias sync is best effort; publishing already succeeded */
     }
+    try {
+      // Baseline of what was true at publication, so later improvement can be
+      // measured against a fixed starting point instead of a moving target.
+      const { buildBaseline } = await import("../health");
+      await saveBaseline(
+        presence.slug,
+        buildBaseline({ core: presence.core, conflicts: 0, endpointsChecked: presence.files.length, endpointsHealthy: presence.files.length }),
+      );
+    } catch {
+      /* baseline capture is best effort */
+    }
     return { presence, manageSecret };
   }
 
