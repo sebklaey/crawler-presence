@@ -64,16 +64,16 @@ function PublicPresence() {
     <AppShell>
       <div className="mx-auto max-w-4xl px-5 pb-24 pt-14">
         <PageHead
-          eyebrow={data.mode === "demo" ? "Demo publish" : "Published presence"}
+          eyebrow={data.mode === "demo" ? "Free Beta 0.0.1" : "Published presence"}
           title={data.name || slug}
           description={data.summary || data.tagline || "AI-readable presence files served from a stable address."}
         />
 
         {data.mode === "demo" ? (
           <div className="mb-8 rounded-xl border border-dashed border-border bg-secondary/60 px-4 py-3 text-xs text-muted-foreground">
-            <strong className="text-foreground">DEMO / TEST publish.</strong> No payment credentials are configured on this
-            deployment, so this presence was published without any payment. The files below are real and served from
-            this address; the subscription is simulated.
+            <strong className="text-foreground">Free Beta 0.0.1.</strong> Live payments are not enabled yet, so this
+            Presence was published free of charge and no subscription exists. The files below are real and served from
+            this address. Once paid operation (version 0.0.2) starts, hosting becomes a paid plan.
           </div>
         ) : null}
 

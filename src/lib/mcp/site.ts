@@ -35,3 +35,16 @@ export function paymentsConfigured(): boolean {
   return Boolean((key ?? env("PADDLE_API_KEY")) && secret);
 }
 
+
+/**
+ * Free Beta gate. Until real Paddle live payments are configured, publishing is
+ * free (Crawler Free Beta 0.0.1). As soon as live credentials exist, the paid
+ * normal operation (0.0.2) takes over automatically — no code change needed.
+ */
+export function betaFree(): boolean {
+  return !paymentsConfigured();
+}
+
+export function releaseVersion(): "0.0.1" | "0.0.2" {
+  return betaFree() ? "0.0.1" : "0.0.2";
+}

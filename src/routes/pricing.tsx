@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check } from "lucide-react";
 
 import { AppShell, PageHead } from "@/components/app-shell";
+import { PaymentTestModeBanner } from "@/components/payment-test-mode-banner";
 import { Button } from "@/components/ui/button";
 import { usePlan } from "@/lib/store";
 import { usePaymentsStatus } from "@/hooks/use-payments-status";
@@ -28,7 +29,9 @@ function PricingPage() {
 
   return (
     <AppShell>
+      <PaymentTestModeBanner />
       <div className="mx-auto max-w-6xl px-5 pb-24 pt-14">
+
         <PageHead
           eyebrow="Digital SaaS hosting"
           title="Pay only to host your Presence online."
