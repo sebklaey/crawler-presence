@@ -14,9 +14,17 @@ import { opaqueToken } from "./mcp/sessions";
 
 export type BillingEnv = "sandbox" | "live";
 
-/** Which environment this deployment bills in, derived from the Paddle key. */
+/**
+ * Which environment this deployment bills in. Single source of truth lives in
+ * paddle.server, so preview never bills live and production never bills test.
+ */
 export function billingEnvironment(): BillingEnv {
-  return process.env["PADDLE_API_KEY"]?.includes("_live_") ? "live" : "sandbox";
+  const forced = process.env["PADDLE_ENV"]?.trim();
+  if (forced === "sandbox" || forced === "live") return forced;
+  const isProduction = process.env["NODE_ENV"] === "production";
+  if (isProduction && process.env["PADDLE_LIVE_API_KEY"]?.trim()) return "live";
+  if (process.env["PADDLE_SANDBOX_API_KEY"]?.trim()) return "sandbox";
+  return process.env["PADDLE_LIVE_API_KEY"]?.trim() ? "live" : "sandbox";
 }
 
 export type IntentStatus = "pending" | "paid" | "published" | "demo";
