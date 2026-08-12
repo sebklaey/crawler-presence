@@ -342,6 +342,11 @@ function ManagePage() {
               </div>
             ) : null}
 
+            <CustomDomainSection code={code} data={data} refresh={() => open()} />
+            <ApiAccessSection data={data} />
+
+
+
           </div>
         ) : null}
 
