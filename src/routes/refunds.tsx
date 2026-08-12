@@ -37,7 +37,12 @@ function RefundsPage() {
               of your order date. Building a Knowledge Core and previewing every generated file is always free, so
               you only ever pay for hosting a published Presence.
             </p>
+            <p className="mt-3">
+              Crawler sells digital software subscriptions only. Nothing physical is shipped or returned, so there are
+              no return shipments, restocking fees or postage costs — a refund simply reverses the charge.
+            </p>
           </section>
+
 
           <section>
             <h2 className="mb-2 text-base font-medium text-foreground">How to request a refund</h2>
