@@ -1,7 +1,7 @@
 import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 import { planById } from "../../billing";
-import { paymentsConfigured, siteUrl } from "../site";
+import { betaFree, paymentsConfigured, releaseVersion, siteUrl } from "../site";
 
 export default defineTool({
   name: "get_checkout_link",
@@ -25,7 +25,7 @@ export default defineTool({
           type: "text",
           text: live
             ? `${p.name} — $${p.price}/month. Complete checkout here: ${url}`
-            : `${p.name} — $${p.price}/month. No payment credentials are configured on this deployment, so checkout runs in clearly labelled DEMO/TEST mode. No payment will be taken: ${url}`,
+            : `Crawler is in Free Beta ${releaseVersion()}: publishing is currently free, no payment is taken and no subscription is created. ${p.name} will cost $${p.price}/month once the paid version 0.0.2 goes live. Publish here: ${url}`,
         },
       ],
       structuredContent: {
@@ -33,11 +33,13 @@ export default defineTool({
         plan_name: p.name,
         price_usd_per_month: p.price,
         checkout_url: url,
-        checkout_mode: live ? "live" : "demo",
+        checkout_mode: live ? "live" : "free_beta",
+        free_beta: betaFree(),
+        release_version: releaseVersion(),
         payment_possible: live,
         note: live
           ? "Checkout is completed on the Crawler website, not inside this conversation. No Crawler account is created: after payment the Presence goes live and a one-time recovery code is issued."
-          : "Payment credentials are absent on this deployment. The website shows a labelled demo checkout; no payment is processed and no subscription is created.",
+          : "Free Beta 0.0.1: publishing is free until live payments are enabled. No payment is processed and no subscription is created. When live payment credentials exist, Crawler switches automatically to the paid version 0.0.2.",
       },
     };
   },
