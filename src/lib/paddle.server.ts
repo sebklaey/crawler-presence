@@ -5,14 +5,15 @@
  * carries only the anonymous publish-intent reference (`pi_…`) in Paddle's
  * `custom_data`, and the webhook matches events back to that reference.
  *
- * Required secrets (Project Settings → Secrets):
- *   PADDLE_API_KEY          `pdl_sdbx_apikey_…` (sandbox) or `pdl_live_apikey_…`
- *   PADDLE_WEBHOOK_SECRET   notification-destination secret, `pdl_ntfset_…`
- *   PADDLE_PRICE_PLUS       `pri_…` monthly price for the Plus plan
- *   PADDLE_PRICE_PRO        `pri_…` monthly price for the Pro plan
- *   PADDLE_PRICE_BUSINESS   `pri_…` monthly price for the Business plan
+ * Required secrets (Project Settings → Secrets), per environment:
+ *   PADDLE_SANDBOX_API_KEY / PADDLE_LIVE_API_KEY   `pdl_sdbx_apikey_…` / `pdl_live_apikey_…`
+ *   PAYMENTS_SANDBOX_WEBHOOK_SECRET / PAYMENTS_LIVE_WEBHOOK_SECRET   `pdl_ntfset_…`
+ *   PADDLE_PRICE_PLUS / _PRO / _BUSINESS (optional)  explicit `pri_…` overrides;
+ *     without them the price is resolved from the catalog by its external id.
+ *   PADDLE_ENV (optional)  force "sandbox" or "live" instead of deriving it.
  *
- * Without them the whole publish flow still runs, in clearly labelled DEMO mode.
+ * Missing credentials never fake a charge: the publish flow then runs in
+ * clearly labelled DEMO mode.
  */
 import type { PlanId } from "./billing";
 
@@ -25,18 +26,34 @@ const API_BASE: Record<PaddleEnv, string> = {
 
 const env = (name: string): string | undefined => process.env[name]?.trim() || undefined;
 
-export function paddleApiKey(): string | undefined {
-  // Managed connection keys first, then the legacy single-key secret.
-  return env("PADDLE_LIVE_API_KEY") ?? env("PADDLE_SANDBOX_API_KEY") ?? env("PADDLE_API_KEY");
+/** API key for one specific environment — never a live key for a test charge. */
+export function paddleApiKeyFor(target: PaddleEnv): string | undefined {
+  const scoped = target === "live" ? env("PADDLE_LIVE_API_KEY") : env("PADDLE_SANDBOX_API_KEY");
+  const legacy = env("PADDLE_API_KEY");
+  if (scoped) return scoped;
+  if (!legacy) return undefined;
+  const legacyIsLive = !legacy.includes("_sdbx_");
+  return legacyIsLive === (target === "live") ? legacy : undefined;
 }
 
-/** Sandbox vs live is derived from the API key itself — never guessed. */
+/**
+ * Which environment this deployment charges in. The preview/dev build always
+ * uses test, so a preview click can never take real money; the production
+ * build uses live when a live key exists.
+ */
 export function paddleEnvironment(): PaddleEnv {
-  const key = paddleApiKey();
-  if (!key) return "sandbox";
-  if (env("PADDLE_LIVE_API_KEY")) return "live";
-  return key.includes("_live_") ? "live" : "sandbox";
+  const forced = env("PADDLE_ENV");
+  if (forced === "sandbox" || forced === "live") return forced;
+  const isProduction = env("NODE_ENV") === "production";
+  if (isProduction && paddleApiKeyFor("live")) return "live";
+  if (paddleApiKeyFor("sandbox")) return "sandbox";
+  return paddleApiKeyFor("live") ? "live" : "sandbox";
 }
+
+export function paddleApiKey(): string | undefined {
+  return paddleApiKeyFor(paddleEnvironment());
+}
+
 
 /** Human-readable price ids, stable across test and live. */
 const PRICE_EXTERNAL_ID: Record<PlanId, string> = {
