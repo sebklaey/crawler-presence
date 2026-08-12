@@ -132,8 +132,8 @@ export async function createHostedCheckout(input: {
   plan: PlanId;
   intentRef: string;
 }): Promise<{ transactionId: string; url: string }> {
-  const priceId = paddlePriceId(input.plan);
-  if (!priceId) throw new Error(`No Paddle price configured for the ${input.plan} plan`);
+  const priceId = await resolvePriceId(input.plan);
+
 
   const transaction = await paddleFetch<TransactionResponse>("/transactions", {
     method: "POST",
