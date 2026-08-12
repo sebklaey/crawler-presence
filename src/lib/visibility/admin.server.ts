@@ -24,7 +24,19 @@ export type AnalyticsExport = {
     referrer_category: string | null;
     public_source_url: string | null;
   }[];
-  benchmarks: unknown[];
+  benchmarks: {
+    tested_at: string;
+    provider: string;
+    model: string;
+    prompt_key: string;
+    prompt_version: string;
+    entity_mentioned: boolean;
+    description_correct: boolean | null;
+    source_cited: boolean;
+    position: number | null;
+    detected_issues: string[];
+    result_summary: string | null;
+  }[];
   note: string;
 };
 
@@ -51,7 +63,11 @@ export async function exportEvents(slug: string): Promise<AnalyticsExport> {
       .select("occurred_at, event_type, source_type, resource_path, referrer_category, public_source_url")
       .eq("presence_slug", slug)
       .limit(20000),
-    supabase.from("visibility_benchmarks").select("*").eq("presence_slug", slug).limit(2000),
+    supabase
+      .from("visibility_benchmarks")
+      .select(
+        "tested_at, provider, model, prompt_key, prompt_version, entity_mentioned, description_correct, source_cited, position, detected_issues, result_summary",
+      ).eq("presence_slug", slug).limit(2000),
   ]);
 
   const events = [
@@ -68,7 +84,7 @@ export async function exportEvents(slug: string): Promise<AnalyticsExport> {
     ...((modern.data ?? []) as AnalyticsExport["events"]),
   ].sort((a, b) => a.occurred_at.localeCompare(b.occurred_at));
 
-  return { ...empty, events, benchmarks: (benchmarks.data ?? []) as unknown[] };
+  return { ...empty, events, benchmarks: (benchmarks.data ?? []) as AnalyticsExport["benchmarks"] };
 }
 
 export async function purgeEvents(slug: string): Promise<void> {
