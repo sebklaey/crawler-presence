@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { SESSION_TTL_MS, sessionCount, storeMode } from "@/lib/mcp/sessions";
-import { paymentsConfigured } from "@/lib/mcp/site";
+import { paymentsConfigured, paymentsEnvironment } from "@/lib/mcp/site";
+
 
 export const Route = createFileRoute("/api/public/mcp-health")({
   server: {
