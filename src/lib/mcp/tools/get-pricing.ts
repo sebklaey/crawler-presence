@@ -13,7 +13,7 @@ export default defineTool({
     content: [
       {
         type: "text",
-        text: "Plus $5/mo — 1 presence, small catalog, 7-day analytics. Pro $20/mo — larger catalog, 90-day analytics, conversation insights, Improve my Presence, custom domain. Business $80/mo — team use, large catalog, unlimited analytics, API access and reports. Creating and previewing is free.",
+        text: "Plus $5/mo — 1 presence, up to 10 catalog entries, 7-day measured analytics. Pro $20/mo — up to 200 entries, 90-day analytics, detailed conversation insights and Improve my Presence. Business $80/mo — up to 5,000 entries, 90-day analytics and priority support. Creating and previewing is free. Custom domain, shared team access and API/scheduled reports are planned, not available yet.",
       },
     ],
     structuredContent: {
@@ -27,8 +27,10 @@ export default defineTool({
         catalog_limit: p.catalogLimit,
         analytics_window_days: p.analyticsDays,
         features: p.features,
+        planned_not_available_yet: p.planned ?? [],
       })),
       pricing_url: `${siteUrl()}/pricing`,
     },
   }),
+
 });
