@@ -11,7 +11,7 @@ const schema = z.object({
     .array(z.object({ label: z.string(), value: z.string(), confidence: z.number().min(0).max(1).default(0.5) }))
     .default([]),
   candidate_items: z
-    .array(z.object({ kind: z.string().default("product"), name: z.string(), summary: z.string().default("") }))
+    .array(z.object({ kind: z.string().default("offering"), name: z.string(), summary: z.string().default("") }))
     .default([]),
   narrative: z.array(z.string()).default([]),
   missing_information: z.array(z.string()).default([]),
@@ -31,7 +31,7 @@ export default defineTool({
   name: "analyze_source_url",
   title: "Analyze a public URL",
   description:
-    "Use this when the user pastes a website or product URL and wants Crawler to extract candidate facts from the public page. Returns extracted information with provenance (source_url) and per-fact confidence. If fetching fails or is blocked, returns an honest structured unavailable result instead of invented data.",
+    "Use this when the user pastes a website or landing-page URL and wants Crawler to extract candidate facts from the public page. Returns extracted information with provenance (source_url) and per-fact confidence. If fetching fails or is blocked, returns an honest structured unavailable result instead of invented data.",
   inputSchema: {
     url: z.string().url().describe("Public HTTPS URL to read."),
   },
@@ -88,7 +88,7 @@ export default defineTool({
     try {
       extracted = await generateJson({
         schema: schema as unknown as z.ZodType<z.infer<typeof schema>>,
-        shape: `{"entity_type_guess":"","name":"","summary":"","candidate_facts":[{"label":"","value":"","confidence":0.0}],"candidate_items":[{"kind":"product|project|service","name":"","summary":""}],"narrative":["marketing/positioning copy found on the page"],"missing_information":[""]}`,
+        shape: `{"entity_type_guess":"","name":"","summary":"","candidate_facts":[{"label":"","value":"","confidence":0.0}],"candidate_items":[{"kind":"offering|project|service","name":"","summary":""}],"narrative":["marketing/positioning copy found on the page"],"missing_information":[""]}`,
         system:
           "You extract structured, checkable information from a public web page for an AI-readable presence. Only report what the page actually states. Separate hard facts from marketing narrative. Never invent prices, numbers, awards or clients. Lower confidence when the page is ambiguous.",
         prompt: `Source URL: ${url}\n\nPage text:\n${text}`,

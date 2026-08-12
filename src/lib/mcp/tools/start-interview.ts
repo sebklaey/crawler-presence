@@ -9,19 +9,19 @@ export default defineTool({
   name: "start_interview",
   title: "Start Presence interview",
   description:
-    "Use this when a user wants to create or start an AI-readable Crawler Presence. Accepts a free-text description and optionally a website or product URL. Infers the entity type, returns an opaque anonymous session_id (durable ~30 days, not tied to any account), a first Knowledge Core draft, detected facts, detected narrative/positioning and the single most valuable adaptive follow-up question.",
+    "Use this when a user wants to create or start an AI-readable Crawler Presence. Accepts a free-text description and optionally a website URL. Infers the entity type, returns an opaque anonymous session_id (durable ~30 days, not tied to any account), a first Knowledge Core draft, detected facts, detected narrative/positioning and the single most valuable adaptive follow-up question.",
   inputSchema: {
     free_text: z
       .string()
       .trim()
       .min(3)
       .max(6000)
-      .describe("What the person, shop, brand, company or project does, in their own words."),
+      .describe("What the person, creator, studio, company or project does, in their own words."),
     source_url: z
       .string()
       .url()
       .optional()
-      .describe("Optional website or product URL the user pasted. Used as context only."),
+      .describe("Optional website or landing-page URL the user pasted. Used as context only."),
   },
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
   handler: async ({ free_text, source_url }) => {

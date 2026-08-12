@@ -7,7 +7,7 @@ export default defineTool({
   name: "preview_presence",
   title: "Preview generated Presence files",
   description:
-    "Use this when the user wants to see the AI-readable files Crawler would publish. Generates llms.txt, llms-full.txt, about.md and — only when relevant — products.md, projects.md, services.md, faq.md, cv.md, plus JSON payload previews for entity, products, projects and services. Contains only known facts; marketing/positioning copy is marked as narrative.",
+    "Use this when the user wants to see the AI-readable files Crawler would publish. Generates llms.txt, llms-full.txt, about.md and — only when relevant — offerings.md, projects.md, services.md, faq.md, cv.md, plus JSON payload previews for entity, offerings, projects and services. Contains only known facts; marketing/positioning copy is marked as narrative.",
   inputSchema: {
     session_id: z.string().trim().min(6).describe("Opaque session id returned by start_interview."),
     paths: z
