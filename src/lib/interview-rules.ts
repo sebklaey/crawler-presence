@@ -61,27 +61,31 @@ function str(v: unknown): string {
 
 export function normalizeCore(raw: unknown): LooseCore {
   const r = (raw ?? {}) as Record<string, unknown>;
-  const entityType = str(r.entityType) as LooseCore["entityType"];
+  const entityType = str(r["entityType"]) as LooseCore["entityType"];
+  const location = str(r["location"]);
+  const website = str(r["website"]);
+  const languages = arr<string>(r["languages"]);
   return {
     ...EMPTY,
     entityType: (["person", "creator", "studio", "company", "organization", "project"].includes(entityType)
       ? entityType
       : "unknown") as LooseCore["entityType"],
-    name: str(r.name),
-    tagline: str(r.tagline),
-    summary: str(r.summary),
-    ...(str(r.location) ? { location: str(r.location) } : {}),
-    ...(str(r.website) ? { website: str(r.website) } : {}),
-    ...(arr<string>(r.languages).length ? { languages: arr<string>(r.languages) } : {}),
-    facts: arr<LooseFact>(r.facts).filter((f) => f && str(f.label) && str(f.value)),
-    stories: arr<LooseCore["stories"][number]>(r.stories).filter((s) => s && str(s.text)),
-    items: arr<LooseItem>(r.items).filter((i) => i && str(i.name)),
-    faqs: arr<LooseCore["faqs"][number]>(r.faqs).filter((f) => f && str(f.question)),
-    cv: arr<LooseCore["cv"][number]>(r.cv).filter((c) => c && str(c.role)),
-    links: arr<LooseCore["links"][number]>(r.links).filter((l) => l && str(l.url)),
-    gaps: arr<string>(r.gaps).filter(Boolean),
+    name: str(r["name"]),
+    tagline: str(r["tagline"]),
+    summary: str(r["summary"]),
+    ...(location ? { location } : {}),
+    ...(website ? { website } : {}),
+    ...(languages.length ? { languages } : {}),
+    facts: arr<LooseFact>(r["facts"]).filter((f) => f && str(f.label) && str(f.value)),
+    stories: arr<LooseCore["stories"][number]>(r["stories"]).filter((s) => s && str(s.text)),
+    items: arr<LooseItem>(r["items"]).filter((i) => i && str(i.name)),
+    faqs: arr<LooseCore["faqs"][number]>(r["faqs"]).filter((f) => f && str(f.question)),
+    cv: arr<LooseCore["cv"][number]>(r["cv"]).filter((c) => c && str(c.role)),
+    links: arr<LooseCore["links"][number]>(r["links"]).filter((l) => l && str(l.url)),
+    gaps: arr<string>(r["gaps"]).filter(Boolean),
   };
 }
+
 
 /* ------------------------------ Entity-Typ ------------------------------ */
 
