@@ -272,7 +272,7 @@ function ManagePage() {
             </div>
 
             <div className="rounded-2xl border border-border bg-card p-6">
-              <div className="text-sm font-medium">Controls</div>
+              <h2 className="text-sm font-medium">Controls</h2>
               <div className="mt-4 flex flex-wrap gap-2">
                 {data.status === "live" ? (
                   <Button variant="outline" disabled={busy} onClick={() => setConfirming("offline")}>
@@ -323,9 +323,9 @@ function ManagePage() {
             {data.analytics ? (
               <div className="rounded-2xl border border-border bg-card p-6">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <div className="text-sm font-medium">
+                  <h2 className="text-sm font-medium">
                     Presence analytics · last {data.analytics.windowDays} days
-                  </div>
+                  </h2>
                   <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                     {data.analytics.mode === "measured" ? "Measured" : "No events yet"}
                   </span>

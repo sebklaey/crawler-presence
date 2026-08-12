@@ -62,9 +62,9 @@ export function CustomDomainSection({
   return (
     <div className="rounded-2xl border border-border bg-card p-6">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <div className="flex items-center gap-2 text-sm font-medium">
+        <h2 className="flex items-center gap-2 text-sm font-medium">
           <Globe className="h-4 w-4" /> Custom domain
-        </div>
+        </h2>
         <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
           {state.verified ? "Verified" : state.domain ? "Pending DNS" : "Not connected"}
         </span>
@@ -132,7 +132,7 @@ export function ApiAccessSection({ data }: { data: Overview }) {
   if (!data.apiAccess) return null;
   return (
     <div className="rounded-2xl border border-border bg-card p-6">
-      <div className="text-sm font-medium">API access</div>
+      <h2 className="text-sm font-medium">API access</h2>
       <p className="mt-2 text-xs text-muted-foreground">
         Authenticate with your recovery code — there is no separate API key and no account. Rate limit: 120 requests
         per minute.
