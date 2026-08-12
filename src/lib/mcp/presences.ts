@@ -28,6 +28,11 @@ export type PublishedPresence = {
   billingCustomerId: string | null;
   billingSubscriptionId: string | null;
   manageSecretUpdatedAt: string | null;
+  /** Optional custom domain (Pro and Business). Only served once verified. */
+  customDomain: string | null;
+  customDomainToken: string | null;
+  customDomainVerifiedAt: string | null;
+
 };
 
 type MemoryRecord = PublishedPresence & { manageSecretHash: string };
