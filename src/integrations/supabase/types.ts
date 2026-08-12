@@ -47,7 +47,6 @@ export type Database = {
           expires_at: string
           id: string
           origin: string
-          owner_user_id: string | null
           token: string
           transcript: Json
           updated_at: string
@@ -60,7 +59,6 @@ export type Database = {
           expires_at?: string
           id?: string
           origin?: string
-          owner_user_id?: string | null
           token: string
           transcript?: Json
           updated_at?: string
@@ -73,100 +71,129 @@ export type Database = {
           expires_at?: string
           id?: string
           origin?: string
-          owner_user_id?: string | null
           token?: string
           transcript?: Json
           updated_at?: string
         }
         Relationships: []
       }
-      published_presences: {
+      publish_intents: {
         Row: {
-          claim_token: string
-          core: Json
           created_at: string
-          files: Json
+          current_period_end: string | null
+          environment: string
+          expires_at: string
           id: string
-          mode: string
-          owner_user_id: string | null
+          intent_ref: string
           plan: string
+          presence_slug: string | null
           session_token: string | null
-          slug: string
+          status: string
+          stripe_checkout_id: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_status: string | null
           updated_at: string
         }
         Insert: {
-          claim_token: string
-          core: Json
           created_at?: string
-          files?: Json
+          current_period_end?: string | null
+          environment?: string
+          expires_at?: string
           id?: string
-          mode?: string
-          owner_user_id?: string | null
+          intent_ref: string
           plan?: string
+          presence_slug?: string | null
           session_token?: string | null
-          slug: string
+          status?: string
+          stripe_checkout_id?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string | null
           updated_at?: string
         }
         Update: {
-          claim_token?: string
-          core?: Json
           created_at?: string
-          files?: Json
+          current_period_end?: string | null
+          environment?: string
+          expires_at?: string
           id?: string
-          mode?: string
-          owner_user_id?: string | null
+          intent_ref?: string
           plan?: string
+          presence_slug?: string | null
           session_token?: string | null
-          slug?: string
+          status?: string
+          stripe_checkout_id?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string | null
           updated_at?: string
         }
         Relationships: []
       }
-      subscriptions: {
+      published_presences: {
         Row: {
-          cancel_at_period_end: boolean
+          claim_token: string | null
+          core: Json
           created_at: string
           current_period_end: string | null
-          current_period_start: string | null
-          environment: string
+          files: Json
           id: string
-          price_id: string
-          product_id: string
+          intent_ref: string | null
+          manage_secret_hash: string | null
+          manage_secret_updated_at: string
+          mode: string
+          plan: string
+          session_token: string | null
+          slug: string
           status: string
-          stripe_customer_id: string
-          stripe_subscription_id: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_status: string | null
+          unpublished_at: string | null
           updated_at: string
-          user_id: string
         }
         Insert: {
-          cancel_at_period_end?: boolean
+          claim_token?: string | null
+          core: Json
           created_at?: string
           current_period_end?: string | null
-          current_period_start?: string | null
-          environment?: string
+          files?: Json
           id?: string
-          price_id: string
-          product_id: string
+          intent_ref?: string | null
+          manage_secret_hash?: string | null
+          manage_secret_updated_at?: string
+          mode?: string
+          plan?: string
+          session_token?: string | null
+          slug: string
           status?: string
-          stripe_customer_id: string
-          stripe_subscription_id: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string | null
+          unpublished_at?: string | null
           updated_at?: string
-          user_id: string
         }
         Update: {
-          cancel_at_period_end?: boolean
+          claim_token?: string | null
+          core?: Json
           created_at?: string
           current_period_end?: string | null
-          current_period_start?: string | null
-          environment?: string
+          files?: Json
           id?: string
-          price_id?: string
-          product_id?: string
+          intent_ref?: string | null
+          manage_secret_hash?: string | null
+          manage_secret_updated_at?: string
+          mode?: string
+          plan?: string
+          session_token?: string | null
+          slug?: string
           status?: string
-          stripe_customer_id?: string
-          stripe_subscription_id?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string | null
+          unpublished_at?: string | null
           updated_at?: string
-          user_id?: string
         }
         Relationships: []
       }
@@ -175,10 +202,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      has_active_subscription: {
-        Args: { check_env?: string; user_uuid: string }
-        Returns: boolean
-      }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never

@@ -1,34 +1,34 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useCallback, useEffect, useState } from "react";
 import { Check, Globe, Loader2, Lock } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell, PageHead } from "@/components/app-shell";
 import { PaymentTestModeBanner } from "@/components/payment-test-mode-banner";
-import { PresenceCheckout } from "@/components/presence-checkout";
 import { PresenceStatus } from "@/components/presence-status";
+import { RecoveryCodeCard } from "@/components/recovery-code-card";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/use-auth";
 import { PLANS, type PlanId } from "@/lib/billing";
 import { generatedFiles, isCoreEmpty, presenceScore, type KnowledgeCore } from "@/lib/knowledge";
-import { getMySubscription } from "@/lib/payments.functions";
-import { loadDraft, publishPresenceFn } from "@/lib/presence.functions";
-import { currentPaymentEnvironment, paymentsAvailable } from "@/lib/stripe";
+import { finalizePublishFn, loadDraft, startPublishFn } from "@/lib/presence.functions";
+import { paymentsAvailable } from "@/lib/stripe";
 import { useCore, usePublished } from "@/lib/store";
 import { Empty } from "./knowledge";
 
 export const Route = createFileRoute("/publish")({
-  validateSearch: (s: Record<string, unknown>): { session?: string; plan?: string } => ({
+  validateSearch: (s: Record<string, unknown>): { session?: string; plan?: string; intent?: string; canceled?: string } => ({
     ...(typeof s["session"] === "string" ? { session: s["session"] as string } : {}),
     ...(typeof s["plan"] === "string" ? { plan: s["plan"] as string } : {}),
+    ...(typeof s["intent"] === "string" ? { intent: s["intent"] as string } : {}),
+    ...(typeof s["canceled"] === "string" ? { canceled: s["canceled"] as string } : {}),
   }),
   head: () => ({
     meta: [
       { title: "Publish — Crawler" },
       {
         name: "description",
-        content: "Publish your Knowledge Core as a hosted, AI-readable presence with llms.txt and JSON endpoints.",
+        content:
+          "Publish your Knowledge Core as a hosted, AI-readable presence with llms.txt and JSON endpoints. No account, no login — a one-time recovery code controls it.",
       },
       { property: "og:title", content: "Publish — Crawler" },
       { property: "og:description", content: "Creation and preview are free. You only pay to be online." },
@@ -39,23 +39,19 @@ export const Route = createFileRoute("/publish")({
   component: PublishPage,
 });
 
+type Issued = { slug: string; publishedAt: string; paths: string[]; recoveryCode: string; mode: "live" | "demo" };
+
 function PublishPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
-  const { loading: authLoading, user } = useAuth();
   const [core, setCore] = useCore();
   const [published, setPublished] = usePublished();
   const [selected, setSelected] = useState<PlanId | null>(null);
-  const [publishing, setPublishing] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [recovering, setRecovering] = useState(Boolean(search.session));
   const [recovered, setRecovered] = useState(false);
-  const env = currentPaymentEnvironment();
-
-  const subscription = useQuery({
-    queryKey: ["subscription", env],
-    enabled: Boolean(user) && Boolean(env),
-    queryFn: () => getMySubscription({ data: { environment: env! } }),
-  });
+  const [issued, setIssued] = useState<Issued | null>(null);
+  const [awaitingPayment, setAwaitingPayment] = useState(Boolean(search.intent));
 
   // Handoff from ChatGPT: recover the anonymous draft carried in the URL.
   useEffect(() => {
@@ -90,6 +86,71 @@ function PublishPage() {
     if (p === "plus" || p === "pro" || p === "business") setSelected(p);
   }, [search.plan]);
 
+  useEffect(() => {
+    if (search.canceled) toast.message("Checkout canceled. Nothing was charged and nothing was published.");
+  }, [search.canceled]);
+
+  const finalize = useCallback(
+    async (intentRef: string) => {
+      const result = await finalizePublishFn({ data: { intentRef, core } });
+      if (result.kind === "published") {
+        setIssued({
+          slug: result.slug,
+          publishedAt: result.publishedAt,
+          paths: result.paths,
+          recoveryCode: result.recoveryCode,
+          mode: result.mode,
+        });
+        setPublished({ at: result.publishedAt, slug: result.slug });
+        setAwaitingPayment(false);
+        toast.success("Payment confirmed — your Presence is live.");
+        return true;
+      }
+      if (result.kind === "already") {
+        setPublished({ at: new Date().toISOString(), slug: result.slug });
+        setAwaitingPayment(false);
+        toast.message("This Presence is already published. Use your recovery code to manage it.");
+        return true;
+      }
+      if (result.kind === "expired") {
+        setAwaitingPayment(false);
+        toast.error("That checkout link has expired. Nothing was published.");
+        return true;
+      }
+      return false;
+    },
+    [core, setPublished],
+  );
+
+  // Return from hosted checkout: poll until the payment webhook has landed.
+  useEffect(() => {
+    const intentRef = search.intent;
+    if (!intentRef) return;
+    let cancelled = false;
+    let attempts = 0;
+    const tick = async () => {
+      if (cancelled) return;
+      attempts += 1;
+      try {
+        const done = await finalize(intentRef);
+        if (done || cancelled) return;
+      } catch {
+        /* keep polling */
+      }
+      if (attempts >= 20) {
+        setAwaitingPayment(false);
+        toast.error("Payment confirmation is taking unusually long. Reload this page in a minute.");
+        return;
+      }
+      window.setTimeout(() => void tick(), 3000);
+    };
+    void tick();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search.intent]);
+
   if (recovering) {
     return (
       <AppShell>
@@ -100,37 +161,63 @@ function PublishPage() {
     );
   }
 
-  if (isCoreEmpty(core) && !recovered) return <Empty />;
+  if (awaitingPayment) {
+    return (
+      <AppShell>
+        <div className="mx-auto max-w-xl px-5 py-24">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" /> Confirming your payment and publishing…
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Keep this tab open. Your recovery code appears here once, right after publishing.
+          </p>
+        </div>
+      </AppShell>
+    );
+  }
+
+  if (isCoreEmpty(core) && !recovered && !issued) return <Empty />;
 
   const score = presenceScore(core);
   const files = generatedFiles(core);
-  const active = Boolean(subscription.data?.active);
-  const canCheckout = paymentsAvailable() && Boolean(user);
+  const payments = paymentsAvailable();
 
   async function publish() {
-    if (!user) {
-      void navigate({ to: "/auth", search: { next: "/publish" } });
+    if (!selected) {
+      toast.error("Choose a plan first.");
       return;
     }
-    setPublishing(true);
+    setBusy(true);
     try {
-      const result = await publishPresenceFn({
+      const result = await startPublishFn({
         data: {
           core,
-          plan: (subscription.data?.plan as PlanId | null) ?? selected ?? "plus",
+          plan: selected,
+          origin: window.location.origin,
           ...(search.session ? { sessionToken: search.session } : {}),
         },
       });
-      setPublished({ at: result.publishedAt, slug: result.slug });
-      toast.success(
-        result.mode === "live"
-          ? "Presence published and hosted."
-          : "Demo publish complete — files are live but clearly labelled as a demo.",
-      );
+      if (result.kind === "checkout") {
+        window.location.href = result.url;
+        return;
+      }
+      if (result.kind === "demo") {
+        setIssued({
+          slug: result.slug,
+          publishedAt: result.publishedAt,
+          paths: result.paths,
+          recoveryCode: result.recoveryCode,
+          mode: "demo",
+        });
+        setPublished({ at: result.publishedAt, slug: result.slug });
+        toast.success("Demo publish complete — files are live but clearly labelled as a demo.");
+        return;
+      }
+      toast.error(result.message);
     } catch (e) {
       toast.error(`Publishing failed: ${String((e as Error).message ?? e)}`);
     } finally {
-      setPublishing(false);
+      setBusy(false);
     }
   }
 
@@ -141,17 +228,48 @@ function PublishPage() {
         <PageHead
           eyebrow="Go live"
           title="Publish your presence"
-          description="Everything up to this point is free. You only pay to be online: hosting keeps your files reachable at a stable address so AI systems and crawlers can read them."
+          description="Everything up to this point is free. You only pay to be online. There is no account and no login: publishing hands you a one-time recovery code that controls the Presence."
         />
 
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
           <div className="space-y-6">
+            {issued ? (
+              <>
+                <RecoveryCodeCard code={issued.recoveryCode} slug={issued.slug} />
+                <div className="rounded-2xl border border-border bg-card p-6">
+                  <div className="text-sm font-medium">
+                    {issued.mode === "demo" ? "Demo publish complete" : "Live since"}{" "}
+                    {new Date(issued.publishedAt).toLocaleString()}
+                  </div>
+                  <a href={`/p/${issued.slug}`} className="mt-1 block break-all text-sm underline underline-offset-4">
+                    /p/{issued.slug}
+                  </a>
+                  <ul className="mt-3 grid gap-1 font-mono text-[11px] text-muted-foreground">
+                    {issued.paths.map((path) => (
+                      <li key={path}>
+                        <a className="break-all hover:text-foreground" href={`/p/${issued.slug}/${path}`}>
+                          /p/{issued.slug}/{path}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-4 text-xs text-muted-foreground">
+                    Manage it any time at{" "}
+                    <Link to="/manage" className="underline underline-offset-4">
+                      /manage
+                    </Link>{" "}
+                    with the code above.
+                  </p>
+                </div>
+              </>
+            ) : null}
+
             <div className="rounded-2xl border border-border bg-card p-6">
               <div className="text-sm font-medium">What goes live</div>
               <ul className="mt-4 grid gap-1.5 font-mono text-xs text-muted-foreground sm:grid-cols-2">
                 {files.map((f) => (
                   <li key={f.path} className="break-all">
-                    /p/{published?.slug ?? "<slug>"}/{f.path}
+                    /p/{issued?.slug ?? published?.slug ?? "<slug>"}/{f.path}
                   </li>
                 ))}
               </ul>
@@ -159,60 +277,42 @@ function PublishPage() {
 
             <div className="rounded-2xl border border-border bg-card p-6">
               <div className="flex items-center gap-2 text-sm font-medium">
-                {active ? <Globe className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
-                {active ? "Hosting active" : "Hosting required"}
+                {payments ? <Globe className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+                Choose your plan
               </div>
 
-              {!user ? (
-                <div className="mt-3 rounded-lg border border-dashed border-border bg-secondary/60 px-3 py-3 text-xs text-muted-foreground">
-                  Sign in to claim this draft, subscribe and own the published Presence.
-                  <div className="mt-3">
-                    <Button asChild size="sm">
-                      <Link to="/auth" search={{ next: "/publish" }}>
-                        Sign in with Google
-                      </Link>
-                    </Button>
-                  </div>
-                </div>
-              ) : null}
-
-              {!paymentsAvailable() ? (
+              {!payments ? (
                 <div className="mt-3 rounded-lg border border-dashed border-border bg-secondary/60 px-3 py-2 text-xs text-muted-foreground">
                   <strong className="text-foreground">Demo / test mode.</strong> No payment credentials are configured
-                  on this deployment, so no subscription can be created and publishing is labelled as a demo.
+                  on this deployment, so no subscription is created and no charge is made. The same flow runs and the
+                  Presence is published, clearly labelled as a demo.
                 </div>
-              ) : null}
+              ) : (
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Checkout happens with our payment provider. Crawler creates no account and sends no personal
+                  identifier — only an anonymous reference to this publish request.
+                </p>
+              )}
 
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
                 {PLANS.map((p) => (
                   <button
                     key={p.id}
                     onClick={() => setSelected(p.id)}
-                    disabled={active}
                     aria-label={`Choose the ${p.name} plan at $${p.price} per month`}
-                    className={`rounded-xl border p-4 text-left transition-colors disabled:opacity-60 ${
-                      (subscription.data?.plan ?? selected) === p.id
-                        ? "border-foreground bg-secondary"
-                        : "border-border hover:border-foreground/40"
+                    className={`rounded-xl border p-4 text-left transition-colors ${
+                      selected === p.id ? "border-foreground bg-secondary" : "border-border hover:border-foreground/40"
                     }`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">{p.name}</span>
-                      {(subscription.data?.plan ?? selected) === p.id ? <Check className="h-3.5 w-3.5" /> : null}
+                      {selected === p.id ? <Check className="h-3.5 w-3.5" /> : null}
                     </div>
                     <div className="display mt-1 text-2xl">${p.price}</div>
                     <div className="text-[11px] text-muted-foreground">per month</div>
                   </button>
                 ))}
               </div>
-
-              {selected && canCheckout && !active ? (
-                <PresenceCheckout
-                  plan={selected}
-                  sessionToken={search.session}
-                  returnUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/account`}
-                />
-              ) : null}
 
               <p className="mt-3 text-xs text-muted-foreground">
                 Compare everything on the{" "}
@@ -231,40 +331,20 @@ function PublishPage() {
                   : "Your presence has enough substance to answer real questions."}
               </p>
               <div className="mt-4 flex flex-wrap items-center gap-3">
-                <Button disabled={publishing || authLoading} onClick={() => void publish()}>
-                  {publishing ? "Publishing…" : published ? "Publish again" : "Publish presence"}
+                <Button disabled={busy || !selected} onClick={() => void publish()}>
+                  {busy ? "Working…" : payments ? "Continue to checkout" : "Publish in demo mode"}
                 </Button>
-                {!active ? (
-                  <span className="text-xs text-muted-foreground">
-                    {user
-                      ? "Without an active subscription this publishes in labelled demo mode."
-                      : "Sign in first — publishing is the owned step."}
-                  </span>
-                ) : null}
+                <span className="text-xs text-muted-foreground">
+                  {payments
+                    ? "You will be redirected to the payment provider and back."
+                    : "No payment credentials — this publishes in labelled demo mode."}
+                </span>
               </div>
-
-              {published ? (
-                <div className="mt-5 rounded-lg border border-border bg-secondary/50 p-4">
-                  <div className="text-xs text-muted-foreground">
-                    Live since {new Date(published.at).toLocaleString()}
-                  </div>
-                  <a
-                    href={`/p/${published.slug}`}
-                    className="mt-1 block break-all text-sm underline underline-offset-4"
-                  >
-                    /p/{published.slug}
-                  </a>
-                  <ul className="mt-3 grid gap-1 font-mono text-[11px] text-muted-foreground">
-                    {files.map((f) => (
-                      <li key={f.path}>
-                        <a className="break-all hover:text-foreground" href={`/p/${published.slug}/${f.path}`}>
-                          /p/{published.slug}/{f.path}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
+              <div className="mt-4">
+                <Button variant="ghost" size="sm" onClick={() => void navigate({ to: "/manage" })}>
+                  Already published? Manage with your recovery code
+                </Button>
+              </div>
             </div>
           </div>
 
