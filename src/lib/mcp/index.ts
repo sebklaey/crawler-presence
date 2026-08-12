@@ -14,7 +14,7 @@ export default defineMcp({
   name: "presence-builder-01",
   title: "Presence Builder (01)",
   version: "0.1.0",
-  instructions: `Crawler builds an AI-readable public Presence (a Knowledge Core) for a person, creator, shop, product brand, manufacturer, company or project.
+  instructions: `Crawler builds an AI-readable public Presence (a Knowledge Core) for a person, creator, studio, company, organization or project. Crawler publishes AI-readable text files only — it never sells, ships or fulfils physical goods.
 
 Typical flow: start_interview -> continue_interview (repeat until interview_complete) -> preview_presence -> publish_presence / get_checkout_link. Use analyze_source_url when the user pastes a link, get_analytics for performance questions and improve_presence to turn an insight into the next question.
 

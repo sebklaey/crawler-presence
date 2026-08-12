@@ -15,7 +15,7 @@
       {
         "name": "start_interview",
         "title": "Start Presence interview",
-        "description": "Use this when a user wants to create or start an AI-readable Crawler Presence. Accepts a free-text description and optionally a website or product URL. Infers the entity type, returns an opaque anonymous session_id (durable ~30 days, not tied to any account), a first Knowledge Core draft, detected facts, detected narrative/positioning and the single most valuable adaptive follow-up question.",
+        "description": "Use this when a user wants to create or start an AI-readable Crawler Presence. Accepts a free-text description and optionally a website URL. Infers the entity type, returns an opaque anonymous session_id (durable ~30 days, not tied to any account), a first Knowledge Core draft, detected facts, detected narrative/positioning and the single most valuable adaptive follow-up question.",
         "annotations": {
           "readOnlyHint": false,
           "destructiveHint": false,
@@ -29,12 +29,12 @@
               "type": "string",
               "minLength": 3,
               "maxLength": 6000,
-              "description": "What the person, shop, brand, company or project does, in their own words."
+              "description": "What the person, creator, studio, company or project does, in their own words."
             },
             "source_url": {
               "type": "string",
               "format": "uri",
-              "description": "Optional website or product URL the user pasted. Used as context only."
+              "description": "Optional website or landing-page URL the user pasted. Used as context only."
             }
           },
           "required": [
@@ -82,7 +82,7 @@
       {
         "name": "analyze_source_url",
         "title": "Analyze a public URL",
-        "description": "Use this when the user pastes a website or product URL and wants Crawler to extract candidate facts from the public page. Returns extracted information with provenance (source_url) and per-fact confidence. If fetching fails or is blocked, returns an honest structured unavailable result instead of invented data.",
+        "description": "Use this when the user pastes a website or landing-page URL and wants Crawler to extract candidate facts from the public page. Returns extracted information with provenance (source_url) and per-fact confidence. If fetching fails or is blocked, returns an honest structured unavailable result instead of invented data.",
         "annotations": {
           "readOnlyHint": true,
           "destructiveHint": false,
@@ -136,7 +136,7 @@
       {
         "name": "preview_presence",
         "title": "Preview generated Presence files",
-        "description": "Use this when the user wants to see the AI-readable files Crawler would publish. Generates llms.txt, llms-full.txt, about.md and — only when relevant — products.md, projects.md, services.md, faq.md, cv.md, plus JSON payload previews for entity, products, projects and services. Contains only known facts; marketing/positioning copy is marked as narrative.",
+        "description": "Use this when the user wants to see the AI-readable files Crawler would publish. Generates llms.txt, llms-full.txt, about.md and — only when relevant — offerings.md, projects.md, services.md, faq.md, cv.md, plus JSON payload previews for entity, offerings, projects and services. Contains only known facts; marketing/positioning copy is marked as narrative.",
         "annotations": {
           "readOnlyHint": true,
           "destructiveHint": false,

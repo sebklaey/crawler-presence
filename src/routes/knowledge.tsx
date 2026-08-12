@@ -43,7 +43,7 @@ function KnowledgePage() {
 
   if (isCoreEmpty(core)) return <Empty />;
 
-  const products = core.items.filter((i) => i.kind === "product");
+  const offerings = core.items.filter((i) => i.kind === "offering");
   const projects = core.items.filter((i) => i.kind === "project");
   const services = core.items.filter((i) => i.kind === "service");
 
@@ -156,14 +156,14 @@ function KnowledgePage() {
             </Section>
 
             {[
-              ["Products", products],
+              ["Offerings", offerings],
               ["Projects", projects],
               ["Services", services],
             ].map(([title, list]) =>
-              (list as typeof products).length ? (
+              (list as typeof offerings).length ? (
                 <Section key={title as string} title={title as string}>
                   <ul className="divide-y divide-border">
-                    {(list as typeof products).map((i) => (
+                    {(list as typeof offerings).map((i) => (
                       <li key={i.id} className="py-3">
                         <div className="text-sm font-medium">{i.name}</div>
                         <div className="text-sm text-muted-foreground">{i.summary}</div>

@@ -1,9 +1,8 @@
 export type EntityType =
   | "person"
   | "creator"
-  | "shop"
-  | "product-brand"
-  | "manufacturer"
+  | "studio"
+  | "organization"
   | "company"
   | "project"
   | "unknown";
@@ -24,7 +23,7 @@ export type Story = {
   confirmed: boolean;
 };
 
-export type CatalogKind = "product" | "project" | "service";
+export type CatalogKind = "offering" | "project" | "service";
 
 export type CatalogItem = {
   id: string;
@@ -85,9 +84,8 @@ export const isCoreEmpty = (c: KnowledgeCore) =>
 export const entityLabel: Record<EntityType, string> = {
   person: "Person",
   creator: "Creator",
-  shop: "Shop",
-  "product-brand": "Product brand",
-  manufacturer: "Manufacturer",
+  studio: "Studio",
+  organization: "Organization",
   company: "Company",
   project: "Project",
   unknown: "Not yet identified",
@@ -100,7 +98,7 @@ export const entityLabel: Record<EntityType, string> = {
 export type PresenceCheck = { label: string; done: boolean; weight: number };
 
 export function presenceChecks(c: KnowledgeCore): PresenceCheck[] {
-  const products = c.items.filter((i) => i.kind === "product");
+  const offerings = c.items.filter((i) => i.kind === "offering");
   const projects = c.items.filter((i) => i.kind === "project");
   const services = c.items.filter((i) => i.kind === "service");
   return [
@@ -109,8 +107,8 @@ export function presenceChecks(c: KnowledgeCore): PresenceCheck[] {
     { label: "At least 3 verified facts", done: c.facts.filter((f) => f.status === "verified").length >= 3, weight: 20 },
     { label: "Positioning confirmed", done: c.stories.some((s) => s.confirmed), weight: 10 },
     {
-      label: "Catalog (products, projects or services)",
-      done: products.length + projects.length + services.length > 0,
+      label: "Catalog (offerings, projects or services)",
+      done: offerings.length + projects.length + services.length > 0,
       weight: 20,
     },
     { label: "3+ FAQ answers", done: c.faqs.length >= 3, weight: 10 },
@@ -154,13 +152,13 @@ const bullet = (s: string) => `- ${s}`;
 function filePaths(c: KnowledgeCore): string[] {
   const has = (k: CatalogKind) => c.items.some((i) => i.kind === k);
   const paths = ["about.md"];
-  if (has("product")) paths.push("products.md");
+  if (has("offering")) paths.push("offerings.md");
   if (has("project")) paths.push("projects.md");
   if (has("service")) paths.push("services.md");
   if (c.faqs.length) paths.push("faq.md");
   if (c.cv.length) paths.push("cv.md");
   paths.push("api/entity.json");
-  for (const k of ["product", "project", "service"] as CatalogKind[]) if (has(k)) paths.push(`api/${k}s.json`);
+  for (const k of ["offering", "project", "service"] as CatalogKind[]) if (has(k)) paths.push(`api/${k}s.json`);
   paths.push("llms-full.txt");
   return paths;
 }
@@ -295,21 +293,22 @@ export function catalogJson(c: KnowledgeCore, kind: CatalogKind) {
   };
 }
 
-/** Only relevant files are generated — a photographer gets no products.md. */
+/** Only relevant files are generated — a photographer gets no offerings.md. */
 function baseFiles(c: KnowledgeCore): GeneratedFile[] {
   const files: GeneratedFile[] = [];
   const has = (k: CatalogKind) => c.items.some((i) => i.kind === k);
 
   files.push({ path: "llms.txt", type: "text", content: buildLlmsTxt(c) });
   files.push({ path: "about.md", type: "markdown", content: buildAboutMd(c) });
-  if (has("product")) files.push({ path: "products.md", type: "markdown", content: catalogMd(c, "product", "Products") });
+  if (has("offering"))
+    files.push({ path: "offerings.md", type: "markdown", content: catalogMd(c, "offering", "Offerings") });
   if (has("project")) files.push({ path: "projects.md", type: "markdown", content: catalogMd(c, "project", "Projects") });
   if (has("service")) files.push({ path: "services.md", type: "markdown", content: catalogMd(c, "service", "Services") });
   if (c.faqs.length) files.push({ path: "faq.md", type: "markdown", content: buildFaqMd(c) });
   if (c.cv.length) files.push({ path: "cv.md", type: "markdown", content: buildCvMd(c) });
 
   files.push({ path: "api/entity.json", type: "json", content: JSON.stringify(entityJson(c), null, 2) });
-  for (const kind of ["product", "project", "service"] as CatalogKind[]) {
+  for (const kind of ["offering", "project", "service"] as CatalogKind[]) {
     if (has(kind))
       files.push({
         path: `api/${kind}s.json`,
