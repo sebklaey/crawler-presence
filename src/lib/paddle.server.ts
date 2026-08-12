@@ -193,12 +193,27 @@ export async function createPortalUrl(customerId: string, subscriptionId?: strin
 
 export type PaddleEvent = { type: string; data: Record<string, unknown> };
 
+/** Notification-destination secret for one environment. */
+export function paddleWebhookSecretFor(target: PaddleEnv): string | undefined {
+  return (
+    // Names used by the managed Payments connection …
+    env(target === "sandbox" ? "PAYMENTS_SANDBOX_WEBHOOK_SECRET" : "PAYMENTS_LIVE_WEBHOOK_SECRET") ??
+    // … then the project-local names, then the single legacy secret.
+    env(target === "sandbox" ? "PADDLE_SANDBOX_WEBHOOK_SECRET" : "PADDLE_LIVE_WEBHOOK_SECRET") ??
+    env("PADDLE_WEBHOOK_SECRET")
+  );
+}
+
 function webhookSecret(target: PaddleEnv): string {
-  const scoped = target === "sandbox" ? env("PADDLE_SANDBOX_WEBHOOK_SECRET") : env("PADDLE_LIVE_WEBHOOK_SECRET");
-  const secret = scoped ?? env("PADDLE_WEBHOOK_SECRET");
-  if (!secret) throw new Error("PADDLE_WEBHOOK_SECRET is not configured");
+  const secret = paddleWebhookSecretFor(target);
+  if (!secret) {
+    throw new Error(
+      `No webhook secret for ${target}: set PAYMENTS_${target === "sandbox" ? "SANDBOX" : "LIVE"}_WEBHOOK_SECRET`,
+    );
+  }
   return secret;
 }
+
 
 /** Verifies `Paddle-Signature: ts=<unix>;h1=<hmac>` over `<ts>:<raw body>`. */
 export async function verifyWebhook(req: Request, target: PaddleEnv): Promise<PaddleEvent> {
