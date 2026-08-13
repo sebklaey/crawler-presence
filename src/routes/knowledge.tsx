@@ -211,6 +211,22 @@ function KnowledgePage() {
                 </ul>
               </Section>
             ) : null}
+
+            {(core.documents ?? []).length ? (
+              <Section title="Documents">
+                <ul className="space-y-2 text-sm">
+                  {(core.documents ?? []).map((d) => (
+                    <li key={d.title}>
+                      <div className="font-medium">{d.title}</div>
+                      <div className="text-muted-foreground">
+                        {d.source ? `${d.source} · ` : ""}
+                        {d.text.length.toLocaleString("en-US")} characters
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </Section>
+            ) : null}
           </div>
 
           <div className="space-y-6">
