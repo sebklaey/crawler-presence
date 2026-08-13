@@ -38,6 +38,17 @@ export const Route = createFileRoute("/sitemap.xml")({
 
         ];
 
+        // Every live Presence gets its public, human- and AI-readable pages listed.
+        try {
+          const { listLivePresences } = await import("@/lib/mcp/presences");
+          for (const slug of await listLivePresences()) {
+            entries.push({ path: `/c/${slug}`, changefreq: "daily", priority: "0.8" });
+            entries.push({ path: `/p/${slug}`, changefreq: "daily", priority: "0.7" });
+          }
+        } catch {
+          /* the sitemap must never fail because of a database hiccup */
+        }
+
         const urls = entries.map((e) =>
           [
             `  <url>`,
