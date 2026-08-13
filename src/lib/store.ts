@@ -26,6 +26,22 @@ function read<T>(key: string, fallback: T): T {
   }
 }
 
+/** Cross-component listeners so every hook instance sees the same value. */
+const listeners = new Map<string, Set<(v: unknown) => void>>();
+
+function subscribe(key: string, fn: (v: unknown) => void) {
+  let set = listeners.get(key);
+  if (!set) listeners.set(key, (set = new Set()));
+  set.add(fn);
+  return () => {
+    set!.delete(fn);
+  };
+}
+
+function broadcast(key: string, value: unknown) {
+  listeners.get(key)?.forEach((fn) => fn(value));
+}
+
 function useLocal<T>(key: string, fallback: T) {
   const [value, setValue] = useState<T>(fallback);
   const [hydrated, setHydrated] = useState(false);
@@ -33,6 +49,19 @@ function useLocal<T>(key: string, fallback: T) {
   useEffect(() => {
     setValue(read<T>(key, fallback));
     setHydrated(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+
+  useEffect(() => {
+    const off = subscribe(key, (v) => setValue(v as T));
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === key) setValue(read<T>(key, fallback));
+    };
+    window.addEventListener("storage", onStorage);
+    return () => {
+      off();
+      window.removeEventListener("storage", onStorage);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 
@@ -45,6 +74,7 @@ function useLocal<T>(key: string, fallback: T) {
         } catch {
           /* ignore quota errors */
         }
+        broadcast(key, resolved);
         return resolved;
       });
     },
@@ -53,6 +83,7 @@ function useLocal<T>(key: string, fallback: T) {
 
   return [value, update, hydrated] as const;
 }
+
 
 export const useCore = () => useLocal<KnowledgeCore>(CORE_KEY, emptyCore());
 export const useChat = () => useLocal<ChatMessage[]>(CHAT_KEY, []);
