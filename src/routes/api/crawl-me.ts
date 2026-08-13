@@ -85,9 +85,12 @@ export const Route = createFileRoute("/api/crawl-me")({
           });
         }
 
+        if (wantsHtml(request)) return entityHtml(presence, body as Record<string, unknown>, variant);
+
         return jsonResponse(body, {
           headers: { etag, "last-modified": new Date(presence.updatedAt).toUTCString() },
         });
+
       },
     },
   },
