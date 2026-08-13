@@ -131,9 +131,10 @@ function PublishPage() {
   const { status: paymentsStatus } = usePaymentsStatus();
   const live = usePublishState();
   const [updating, setUpdating] = useState(false);
-  const [syncing, setSyncing] = useState(false);
+  const { syncing } = useSessionSync();
   const coreRef = useRef(core);
   coreRef.current = core;
+
 
   /** Already subscribed: push the current content live without a new checkout. */
   async function publishUpdate() {
