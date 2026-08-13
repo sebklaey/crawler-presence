@@ -607,6 +607,7 @@ export async function getLivePresenceByDomain(host: string): Promise<PublishedPr
       .eq("custom_domain", domain)
       .not("custom_domain_verified_at", "is", null)
       .eq("status", "live")
+      .eq("mode", "live")
       .maybeSingle();
     if (error) storeFailure("read", error.message);
     return data ? fromRow(data as Row) : undefined;
