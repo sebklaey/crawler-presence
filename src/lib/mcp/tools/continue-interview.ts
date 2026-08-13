@@ -14,6 +14,7 @@ import {
 } from "../../interview-rules";
 import { presenceChecks, presenceScore } from "../../knowledge";
 import { getSession, saveSession, SESSION_NOTE } from "../sessions";
+import { siteUrl } from "../site";
 
 export default defineTool({
   name: "continue_interview",
