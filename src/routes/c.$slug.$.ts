@@ -21,26 +21,38 @@ export const Route = createFileRoute("/c/$slug/$")({
           apiError,
           clientLabel,
           entityEtag,
+          entityHtml,
           entityPayload,
           entitySection,
           entitySummary,
+          htmlError,
           isInternalTraffic,
           jsonResponse,
           recordRetrieval,
           resolveEntity,
+          wantsHtml,
         } = await import("@/lib/crawlme.server");
         const { ENTITY_SECTIONS } = await import("@/lib/crawlme");
 
+        const html = wantsHtml(request);
         const presence = await resolveEntity({ id: params.slug, domain: params.slug });
         if (!presence)
-          return apiError(404, "No published Crawler Today entity matches this identifier.", "Try /api/search?q=…");
+          return html
+            ? htmlError(
+                404,
+                "Presence not found",
+                "No published Crawler Today entity matches this address. It may be offline or never published.",
+              )
+            : apiError(404, "No published Crawler Today entity matches this identifier.", "Try /api/search?q=…");
 
         const variant = (params._splat ?? "").replace(/^\/+|\/+$/g, "").toLowerCase();
         const isSection = ENTITY_SECTIONS.includes(variant as never);
         if (variant && variant !== "summary" && variant !== "full" && !isSection)
-          return apiError(404, `Unknown view "${variant}".`, `Available: summary, ${ENTITY_SECTIONS.join(", ")}`);
+          return html
+            ? htmlError(404, "Unknown view", `Available views: summary, ${ENTITY_SECTIONS.join(", ")}`)
+            : apiError(404, `Unknown view "${variant}".`, `Available: summary, ${ENTITY_SECTIONS.join(", ")}`);
 
-        const etag = entityEtag(presence, isSection ? `section:${variant}` : variant || "full");
+        const etag = entityEtag(presence, `${html ? "html" : "json"}:${isSection ? `section:${variant}` : variant || "full"}`);
         if (request.headers.get("if-none-match") === etag)
           return new Response(null, { status: 304, headers: { etag } });
 
@@ -59,10 +71,13 @@ export const Route = createFileRoute("/c/$slug/$")({
           });
         }
 
+        if (html) return entityHtml(presence, body as Record<string, unknown>, variant || "full");
+
         return jsonResponse(body, {
           headers: { etag, "last-modified": new Date(presence.updatedAt).toUTCString() },
         });
       },
+
     },
   },
 });
