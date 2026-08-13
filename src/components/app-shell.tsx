@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
 import type { ReactNode } from "react";
 
 const nav = [
@@ -7,10 +8,8 @@ const nav = [
   { to: "/knowledge", label: "Knowledge Core" },
   { to: "/preview", label: "Preview" },
   { to: "/analytics", label: "Analytics" },
-  { to: "/publish", label: "Publish" },
   { to: "/pricing", label: "Pricing" },
   { to: "/manage", label: "Manage" },
-
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
