@@ -28,10 +28,11 @@ import {
   manageRotateSecretFn,
   manageRestoreCoreFn,
   manageSetStatusFn,
+  manageUpdateCoreFn,
   type ManageOverview,
 } from "@/lib/manage.functions";
 import { useCore, usePlan, usePublished, useRecoveryCode } from "@/lib/store";
-import type { KnowledgeCore } from "@/lib/knowledge";
+import { isCoreEmpty, type KnowledgeCore } from "@/lib/knowledge";
 
 export const Route = createFileRoute("/manage")({
   head: () => ({
@@ -72,7 +73,7 @@ function ManagePage() {
   const [data, setData] = useState<Extract<ManageOverview, { ok: true }> | null>(null);
   const [rotated, setRotated] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<Confirming>(null);
-  const [, setCore] = useCore();
+  const [core, setCore] = useCore();
   const [, setPlan] = usePlan();
   const [, setPublished] = usePublished();
   const [, setStoredCode] = useRecoveryCode();
@@ -140,6 +141,27 @@ function ManagePage() {
       setCode(result.recoveryCode);
       toast.success("New recovery code issued. The old one no longer works.");
       await open(result.recoveryCode);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const liveIsEmpty = !data?.name;
+
+  async function updateContent() {
+    setBusy(true);
+    try {
+      const result = await manageUpdateCoreFn({ data: { code, core } });
+      if (!result.ok) {
+        toast.error(
+          result.reason === "empty-core"
+            ? "There is no Knowledge Core content in this browser yet."
+            : (REASONS[result.reason ?? ""] ?? "Could not publish the update."),
+        );
+        return;
+      }
+      toast.success("Published. Your public files were regenerated.");
+      await open();
     } finally {
       setBusy(false);
     }
