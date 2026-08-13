@@ -197,6 +197,13 @@ function PublishPage() {
         toast.message("This Presence is already published. Use your recovery code to manage it.");
         return true;
       }
+      if (result.kind === "empty") {
+        setPhase("payment_failed");
+        setFailure(
+          "Your payment is safe, but this browser has no Knowledge Core content, so nothing was published. Open your draft (or /knowledge) in the same browser and try again — nothing was published twice.",
+        );
+        return true;
+      }
       if (result.kind === "expired") {
         setPhase("payment_failed");
         setFailure("That checkout link has expired. Nothing was published and nothing was charged.");
