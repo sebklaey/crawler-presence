@@ -61,6 +61,9 @@ export function usePublishState(): PublishState {
   const remote = ok ? ((result as { core: unknown }).core as KnowledgeCore) : null;
   const plan = asPlanId(ok ? (result as { plan?: string }).plan : undefined);
   const limit = planById(plan).catalogLimit;
+  const documentLimit = planById(plan).documentLimit;
+  const documentCount = core.documents?.length ?? 0;
+  const overDocumentLimit = documentCount > documentLimit;
 
   const isLive = ok;
   const hasChanges = Boolean(isLive && remote && !isCoreEmpty(core) && stable(core) !== stable(remote));
