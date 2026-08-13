@@ -442,7 +442,10 @@ function PublishPage() {
                   Plan: <span className="text-foreground">{planById(selected ?? "plus").name}</span>
                 </div>
                 <div>
-                  Published: <span className="text-foreground">{new Date(issued.publishedAt).toLocaleString()}</span>
+                  Published:{" "}
+                  <span className="text-foreground">
+                    {new Date(issued.publishedAt).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  </span>
                 </div>
                 <div>
                   Status:{" "}
