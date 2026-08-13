@@ -148,9 +148,9 @@ function delta(current: number, previous: number): number | null {
 }
 
 /**
- * AI Visibility Score, 0–100, ausschließlich aus gemessenen Signalen:
- * beobachtete Erwähnungen, Dateizugriffe, Quellenvielfalt und Benchmark-Treffer.
- * Kein Ranking-Versprechen — eine Verdichtung vorhandener Messwerte.
+ * AI Visibility Score, 0–100, derived only from measured signals:
+ * observed mentions, file reads, source diversity and benchmark hits.
+ * No ranking promise — just a condensation of existing measurements.
  */
 function visibilityScore(input: {
   mentions: number;
@@ -171,73 +171,105 @@ function visibilityScore(input: {
 
 async function loadIntegrations(slug: string) {
   const supabase = await db();
-  if (!supabase) return new Map<string, { status: string; last: string | null }>();
+  if (!supabase) return new Map<string, { status: string; last: string | null; config: string | null }>();
   const { data } = await supabase
     .from("analytics_integrations")
-    .select("integration_type, connection_status, last_synced_at")
+    .select("integration_type, connection_status, last_synced_at, configuration")
     .eq("presence_slug", slug);
-  const map = new Map<string, { status: string; last: string | null }>();
-  for (const row of (data ?? []) as { integration_type: string; connection_status: string; last_synced_at: string | null }[]) {
-    map.set(row.integration_type, { status: row.connection_status, last: row.last_synced_at });
+  const map = new Map<string, { status: string; last: string | null; config: string | null }>();
+  for (const row of (data ?? []) as {
+    integration_type: string;
+    connection_status: string;
+    last_synced_at: string | null;
+    configuration: { value?: string } | null;
+  }[]) {
+    map.set(row.integration_type, {
+      status: row.connection_status,
+      last: row.last_synced_at,
+      config: typeof row.configuration?.value === "string" ? row.configuration.value : null,
+    });
   }
   return map;
 }
 
 const ADAPTER_META: Record<
   SourceType,
-  { builtIn: boolean; measured: string; notMeasured: string; connectHint: string | null }
+  {
+    builtIn: boolean;
+    measured: string;
+    notMeasured: string;
+    connectHint: string | null;
+    connectable: boolean;
+    configLabel: string | null;
+  }
 > = {
   crawler_internal: {
     builtIn: true,
-    measured: "Crawler-Tool-Aufrufe, deren Argumente diese Presence referenzieren.",
-    notMeasured: "Der Gesprächsinhalt selbst. Crawler erhält ihn nie.",
+    measured: "Crawler tool calls whose arguments reference this Presence.",
+    notMeasured: "The conversation content itself. Crawler never receives it.",
     connectHint: null,
+    connectable: false,
+    configLabel: null,
   },
   presence_read: {
     builtIn: true,
-    measured: "Abrufe der veröffentlichten Presence-Dateien unter /p/<slug>/…",
-    notMeasured: "Ob ein Abruf zu einer Zitierung oder Empfehlung geführt hat.",
+    measured: "Requests for the published Presence files under /p/<slug>/…",
+    notMeasured: "Whether a read led to a citation or a recommendation.",
     connectHint: null,
+    connectable: false,
+    configLabel: null,
   },
   ai_retrieval: {
     builtIn: true,
-    measured: "Abrufe des veröffentlichten Knowledge Core über die CrawlMe API oder MCP.",
-    notMeasured: "Ob das abrufende AI-System die Information anschließend verwendet hat.",
+    measured: "Retrievals of the published Knowledge Core through the CrawlMe API or MCP.",
+    notMeasured: "Whether the retrieving AI system actually used the information.",
     connectHint: null,
+    connectable: false,
+    configLabel: null,
   },
   authorized_ai: {
     builtIn: false,
-    measured: "Interaktionen aus ausdrücklich verbundenen API-Projekten.",
-    notMeasured: "Alle nicht verbundenen AI-Projekte und Assistenten.",
-    connectHint: "Business-API-Zugang mit dem Recovery-Code verwenden, um Projekte zu verbinden.",
+    measured: "Interactions from explicitly connected API projects.",
+    notMeasured: "All AI projects and assistants that are not connected.",
+    connectHint: "Turn this on to count requests made with your Business API access as authorized AI interactions.",
+    connectable: true,
+    configLabel: "Project label (optional)",
   },
   public_web: {
     builtIn: false,
-    measured: "Erwähnungen auf öffentlich zugänglichen Seiten mit erreichbarer URL.",
-    notMeasured: "Inhalte hinter Login, in Apps oder in privaten Chats.",
-    connectHint: "Öffentliche Quellen im Retention-Bereich hinterlegen, um sie beobachten zu lassen.",
+    measured: "Mentions on publicly accessible pages with a reachable URL.",
+    notMeasured: "Content behind a login, inside apps, or in private chats.",
+    connectHint: "Add the public domains or URLs Crawler should observe, separated by commas.",
+    connectable: true,
+    configLabel: "Public domains or URLs to watch",
   },
   search_console: {
     builtIn: false,
-    measured: "Impressionen und Klicks einer verbundenen Search-Console-Property.",
-    notMeasured: "Suchanfragen ohne Zuordnung zur Property.",
-    connectHint: "Search-Console-Property verbinden (Adapter vorbereitet, noch nicht konfiguriert).",
+    measured: "Impressions and clicks of a connected Search Console property.",
+    notMeasured: "Search queries that cannot be attributed to the property.",
+    connectHint: "Enter your Search Console property, for example sc-domain:example.com.",
+    connectable: true,
+    configLabel: "Search Console property",
   },
   visibility_benchmark: {
     builtIn: false,
-    measured: "Kontrollierte Testfragen an ausgewählte AI-Modelle.",
-    notMeasured: "Reale Nutzerfragen. Der Benchmark ist keine Nutzermessung.",
-    connectHint: "Benchmark-Läufe aktivieren, um regelmäßig neutrale Testfragen auszuführen.",
+    measured: "Controlled test questions sent to selected AI models.",
+    notMeasured: "Real user questions. The benchmark is not a user measurement.",
+    connectHint: "Enable benchmark runs to execute neutral test questions on a regular basis.",
+    connectable: true,
+    configLabel: null,
   },
   user_reported: {
     builtIn: false,
-    measured: "Von dir gemeldete Erwähnungen mit Quelle.",
-    notMeasured: "Alles Ungemeldete. Diese Angaben sind nicht verifiziert.",
-    connectHint: "Erwähnungen über den Business-API-Endpunkt melden.",
+    measured: "Mentions you reported yourself, including their source.",
+    notMeasured: "Everything unreported. These entries are not verified.",
+    connectHint: "Enable self-reporting to submit mentions through the Business API endpoint.",
+    connectable: true,
+    configLabel: null,
   },
 };
 
-function adapterStatus(type: SourceType, integrations: Map<string, { status: string; last: string | null }>, hasData: boolean): MetricStatus {
+function adapterStatus(type: SourceType, integrations: Map<string, { status: string; last: string | null; config: string | null }>, hasData: boolean): MetricStatus {
   if (ADAPTER_META[type].builtIn) return "live";
   const entry = integrations.get(type);
   if (!entry || entry.status === "not_connected") return hasData ? "delayed" : "not_connected";
@@ -302,33 +334,33 @@ function buildInsights(current: Row[], previous: Row[], benchmarks: BenchmarkRow
   for (const [path, count] of [...now.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3)) {
     const prev = before.get(path) ?? 0;
     if (count >= MIN_GROUP_SIZE && count > prev) {
-      out.push(`${path} wurde häufiger abgerufen als im vorherigen Zeitraum (${count} statt ${prev} Zugriffe).`);
+      out.push(`${path} was read more often than in the previous period (${count} instead of ${prev} reads).`);
     }
   }
 
   const mentions = current.filter(isMention).length;
   const reads = current.filter((r) => r.event_type === "file_read").length;
   if (mentions >= MIN_GROUP_SIZE && reads === 0) {
-    out.push("Die Presence wird erwähnt, aber ihre Dateien wurden im Zeitraum nicht abgerufen.");
+    out.push("The Presence is mentioned, but none of its files were read during this period.");
   }
   const citations = current.filter((r) => r.event_type === "citation").length;
   if (reads >= MIN_GROUP_SIZE && citations === 0) {
-    out.push("Die Presence wird gefunden, aber in beobachteten öffentlichen Quellen selten als Quelle verlinkt.");
+    out.push("The Presence is found, but rarely linked as a source in the observed public sources.");
   }
 
   if (benchmarks.length) {
     const issues = new Map<string, number>();
     for (const b of benchmarks) for (const issue of b.issues) issues.set(issue, (issues.get(issue) ?? 0) + 1);
     for (const [issue, count] of [...issues.entries()].sort((a, b) => b[1] - a[1]).slice(0, 2)) {
-      out.push(`Im kontrollierten Benchmark trat „${issue}" in ${count} von ${benchmarks.length} Testantworten auf.`);
+      out.push(`In the controlled benchmark, "${issue}" appeared in ${count} of ${benchmarks.length} test answers.`);
     }
     const notCited = benchmarks.filter((b) => b.mentioned && !b.sourceCited).length;
     if (notCited >= MIN_GROUP_SIZE) {
-      out.push(`${notCited} Benchmark-Antworten erwähnten die Presence, ohne eine Crawler-Quelle anzugeben.`);
+      out.push(`${notCited} benchmark answers mentioned the Presence without citing a Crawler source.`);
     }
   }
 
-  if (!out.length) out.push("Noch zu wenige gemessene Ereignisse für belastbare Hinweise.");
+  if (!out.length) out.push("Not enough measured events yet for reliable insights.");
   return out;
 }
 
@@ -401,7 +433,7 @@ export async function buildDashboard(input: {
     delta: delta(value, previous),
     ...(unit ? { unit } : {}),
     source,
-    sourceLabel: source === "computed" ? "Berechnet aus gemessenen Signalen" : SOURCE_LABELS[source].label,
+    sourceLabel: source === "computed" ? "Computed from measured signals" : SOURCE_LABELS[source].label,
     definition,
     status,
   });
@@ -412,47 +444,47 @@ export async function buildDashboard(input: {
   const kpis: Kpi[] = [
     kpi(
       "mentions",
-      "Beobachtete Erwähnungen",
+      "Observed mentions",
       mentionsNow,
       mentionsBefore,
       "crawler_internal",
-      "Ereignisse, bei denen ein Crawler-Tool-Aufruf oder eine beobachtete öffentliche Quelle diese Presence referenziert hat. Keine Aussage über Personen.",
+      "Events where a Crawler tool call or an observed public source referenced this Presence. No statement about individual people.",
       "live",
     ),
     kpi(
       "sessions",
-      "Unterschiedliche anonyme Sessions",
+      "Distinct anonymous sessions",
       sessionsNow,
       sessionsBefore,
       "crawler_internal",
-      "Anzahl unterschiedlicher, nicht rückführbarer Session-Hashes mit mindestens einem Ereignis.",
+      "Number of distinct, unlinkable session hashes with at least one event.",
       "live",
     ),
     kpi(
       "reads",
-      "Presence-Dateizugriffe",
+      "Presence file reads",
       readsNow,
       readsBefore,
       "presence_read",
-      "Abrufe der veröffentlichten Dateien. Ein Abruf ist keine nachgewiesene Zitierung oder Empfehlung.",
+      "Reads of the published files. A read is not a proven citation or recommendation.",
       "live",
     ),
     kpi(
       "public_web",
-      "Öffentliche Web-Erwähnungen",
+      "Public web mentions",
       webNow,
       webBefore,
       "public_web",
-      "Erwähnungen auf öffentlich zugänglichen Seiten, die Crawler beobachten konnte.",
+      "Mentions on publicly accessible pages that Crawler was able to observe.",
       webStatus,
     ),
     kpi(
       "authorized_ai",
-      "Autorisierte AI-Interaktionen",
+      "Authorized AI interactions",
       aiNow,
       aiBefore,
       "authorized_ai",
-      "Interaktionen aus ausdrücklich verbundenen API-Projekten. Private Assistenten-Gespräche sind nicht enthalten.",
+      "Interactions from explicitly connected API projects. Private assistant conversations are not included.",
       aiStatus,
     ),
     kpi(
@@ -461,7 +493,7 @@ export async function buildDashboard(input: {
       scoreNow,
       scoreBefore,
       "computed",
-      "Verdichtung der gemessenen Signale (Erwähnungen, Dateizugriffe, Sessions, Quellenvielfalt, Benchmark-Treffer) auf einen Wert von 0–100. Kein Ranking-Versprechen.",
+      "A condensation of the measured signals (mentions, file reads, sessions, source diversity, benchmark hits) into a value from 0–100. No ranking promise.",
       "live",
       "score",
     ),
@@ -473,11 +505,11 @@ export async function buildDashboard(input: {
   const byFile = new Map<string, { reads: number; sessions: Set<string>; referrer: Set<string> }>();
   for (const row of filtered) {
     if (row.event_type !== "file_read") continue;
-    const path = row.resource_path ?? "(unbekannt)";
+    const path = row.resource_path ?? "(unknown)";
     const entry = byFile.get(path) ?? { reads: 0, sessions: new Set<string>(), referrer: new Set<string>() };
     entry.reads += 1;
     if (row.session) entry.sessions.add(row.session);
-    entry.referrer.add(row.referrer_category ?? "unbekannt");
+    entry.referrer.add(row.referrer_category ?? "unknown");
     byFile.set(path, entry);
   }
 
@@ -487,7 +519,7 @@ export async function buildDashboard(input: {
       reads: entry.reads,
       uniqueSessions: entry.sessions.size,
       referrer: [...entry.referrer].join(", "),
-      client: [...entry.referrer].includes("bot/crawler") ? "Bot / Crawler" : "Unbekannter Client",
+      client: [...entry.referrer].includes("bot/crawler") ? "Bot / crawler" : "Unknown client",
     }))
     .sort((a, b) => b.reads - a.reads);
 
@@ -516,6 +548,9 @@ export async function buildDashboard(input: {
       measured: ADAPTER_META[type].measured,
       notMeasured: ADAPTER_META[type].notMeasured,
       connectHint: ADAPTER_META[type].connectHint,
+      connectable: ADAPTER_META[type].connectable,
+      configLabel: ADAPTER_META[type].configLabel,
+      configValue: entry?.config ?? null,
     };
   });
 
@@ -550,7 +585,7 @@ export async function buildDashboard(input: {
   };
 }
 
-/** Reduzierte, rein aggregierte öffentliche Ansicht. */
+/** Reduced, purely aggregated public view. */
 export async function buildPublic(slug: string, period: Period): Promise<PublicVisibility> {
   const rows = await loadRows(slug, period, 0);
   return {
