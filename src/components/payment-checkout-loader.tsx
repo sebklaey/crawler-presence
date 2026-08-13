@@ -4,7 +4,10 @@ declare global {
   interface Window {
     Paddle?: {
       Environment: { set: (environment: "sandbox" | "production") => void };
-      Initialize: (options: { token: string }) => void;
+      Initialize: (options: {
+        token: string;
+        eventCallback?: (event: { name?: string }) => void;
+      }) => void;
     };
   }
 }
@@ -23,7 +26,12 @@ export function PaymentCheckoutLoader() {
     const initialize = () => {
       if (!window.Paddle) return;
       window.Paddle.Environment.set(clientToken.startsWith("test_") ? "sandbox" : "production");
-      window.Paddle.Initialize({ token: clientToken });
+      window.Paddle.Initialize({
+        token: clientToken,
+        eventCallback: (event) => {
+          if (event.name === "checkout.completed") window.location.assign("/publish");
+        },
+      });
     };
 
     if (existing) {
