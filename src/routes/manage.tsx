@@ -399,10 +399,10 @@ function ManagePage() {
                 </div>
 
                 <a
-                  href={`/manage/${data.slug}/analytics`}
+                  href="/analytics"
                   className="mt-6 inline-block rounded-full border border-border px-4 py-1.5 text-xs hover:border-foreground/40"
                 >
-                  AI Visibility Analytics öffnen
+                  Open AI Visibility Analytics
                 </a>
               </div>
 
