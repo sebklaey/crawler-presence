@@ -360,10 +360,14 @@ function PublishPage() {
             Keep this tab open. Nothing is live until the server confirms the publication. Your recovery code appears
             here once, right afterwards.
           </p>
+          <Button variant="outline" size="sm" className="mt-6" onClick={abandonCheckout}>
+            Cancel and start over
+          </Button>
         </div>
       </AppShell>
     );
   }
+
 
   if (isCoreEmpty(core) && !recovered && !issued) return <Empty />;
 
