@@ -273,6 +273,16 @@ function ManagePage() {
                   </dd>
                 </div>
                 <div>
+                  <dt className="text-xs text-muted-foreground">Session ID</dt>
+                  <dd>
+                    {data.sessionToken ? (
+                      <code className="break-all font-mono text-[11px]">{data.sessionToken}</code>
+                    ) : (
+                      <span className="text-muted-foreground">Not linked to a ChatGPT session</span>
+                    )}
+                  </dd>
+                </div>
+                <div>
                   <dt className="text-xs text-muted-foreground">Published</dt>
                   <dd>
                     {new Date(data.publishedAt).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
