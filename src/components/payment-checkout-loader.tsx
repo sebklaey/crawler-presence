@@ -1,53 +1,22 @@
 import { useEffect } from "react";
 
-declare global {
-  interface Window {
-    Paddle?: {
-      Environment: { set: (environment: "sandbox" | "production") => void };
-      Initialize: (options: {
-        token: string;
-        eventCallback?: (event: { name?: string }) => void;
-      }) => void;
-    };
-  }
-}
-
-const clientToken = import.meta.env["VITE_PAYMENTS_CLIENT_TOKEN"] as string | undefined;
+import { usePaymentsStatus } from "@/hooks/use-payments-status";
+import { loadPaddle } from "@/lib/paddle-client";
 
 /**
- * Paddle transaction links return to `/?_ptxn=…`. Initializing Paddle on every
- * route lets its script recognize that parameter and open the secure overlay.
+ * Paddle transaction links can return to `/?_ptxn=…`. Having Paddle.js
+ * initialized (in the server-chosen environment) lets its script recognize
+ * that parameter and reopen the secure overlay.
  */
 export function PaymentCheckoutLoader() {
+  const { status, loading } = usePaymentsStatus();
+
   useEffect(() => {
-    if (!clientToken || window.Paddle) return;
-
-    const existing = document.querySelector<HTMLScriptElement>('script[data-crawler-paddle="true"]');
-    const initialize = () => {
-      if (!window.Paddle) return;
-      window.Paddle.Environment.set(clientToken.startsWith("test_") ? "sandbox" : "production");
-      window.Paddle.Initialize({
-        token: clientToken,
-        eventCallback: (event) => {
-          if (event.name === "checkout.completed") window.location.assign("/publish");
-        },
-      });
-    };
-
-    if (existing) {
-      existing.addEventListener("load", initialize, { once: true });
-      return () => existing.removeEventListener("load", initialize);
-    }
-
-    const script = document.createElement("script");
-    script.src = "https://cdn.paddle.com/paddle/v2/paddle.js";
-    script.async = true;
-    script.dataset["crawlerPaddle"] = "true";
-    script.addEventListener("load", initialize, { once: true });
-    document.head.appendChild(script);
-
-    return () => script.removeEventListener("load", initialize);
-  }, []);
+    if (loading || !status.configured || !status.clientToken) return;
+    void loadPaddle(status.environment, status.clientToken).catch(() => {
+      /* checkout is opened explicitly on /publish; silent here */
+    });
+  }, [loading, status.configured, status.clientToken, status.environment]);
 
   return null;
 }
