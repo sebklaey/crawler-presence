@@ -294,6 +294,36 @@ export async function getLivePresence(slug: string): Promise<PublishedPresence |
   return record && record.status === "live" && record.mode === "live" ? record : undefined;
 }
 
+/**
+ * Finds the Presence that was published from a given anonymous draft session.
+ *
+ * The opaque session token is the capability: whoever holds it created the
+ * draft, so the same session may push updated content to its own Presence
+ * without a recovery code.
+ */
+export async function getPublishedBySessionToken(token: string): Promise<PublishedPresence | undefined> {
+  if (typeof token !== "string" || token.length < 6) return undefined;
+  const supabase = await client();
+  if (supabase) {
+    const { data, error } = await supabase
+      .from("published_presences")
+      .select(COLUMNS)
+      .eq("session_token", token)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    if (error) storeFailure("read-by-session", error.message);
+    const row = (data ?? [])[0];
+    return row ? fromRow(row as Row) : undefined;
+  }
+  for (const record of memory.values()) {
+    // Memory fallback keeps no session index; nothing to resolve.
+    void record;
+  }
+  return undefined;
+}
+
+
+
 /* ------------------------------------------------------------------ */
 /* Capability checks and management                                    */
 /* ------------------------------------------------------------------ */
