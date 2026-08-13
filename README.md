@@ -64,6 +64,15 @@ pay only to be online.
 
 ## Testing
 
+Unit tests run on the built-in Bun test runner (no extra test dependency); the
+suites live in `src/**/__tests__/` and cover the deterministic core modules:
+
+```bash
+bun test              # or: bun run test
+bun run test:coverage # per-file function/line coverage
+bun run typecheck     # app + test type checking
+```
+
 ```bash
 curl -s https://crawler-presence.lovable.app/api/public/mcp-health
 curl -s -X POST https://crawler-presence.lovable.app/mcp \
