@@ -35,6 +35,15 @@ export function AppShell({ children }: { children: ReactNode }) {
           </nav>
           <div className="ml-auto flex items-center gap-3 text-xs text-muted-foreground">
             <span className="hidden lg:inline">Creation &amp; preview are free · no account</span>
+            <Button asChild size="sm" className="gap-1.5 rounded-full px-4">
+              <Link to="/publish">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary-foreground opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-primary-foreground" />
+                </span>
+                Publish
+              </Link>
+            </Button>
           </div>
         </div>
         <div className="flex gap-1 overflow-x-auto border-t border-border/70 px-5 py-2 md:hidden">
