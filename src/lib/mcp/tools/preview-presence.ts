@@ -2,6 +2,7 @@ import { defineTool, ToolError } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 import { generatedFiles, presenceScore } from "../../knowledge";
 import { getSession, SESSION_NOTE } from "../sessions";
+import { siteUrl } from "../site";
 
 export default defineTool({
   name: "preview_presence",
