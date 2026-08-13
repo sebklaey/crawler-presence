@@ -45,6 +45,16 @@ export const coreSchema = z.object({
     .default([]),
   links: z.array(z.object({ label: z.string(), url: z.string() })).default([]),
   gaps: z.array(z.string()).default([]),
+  documents: z
+    .array(
+      z.object({
+        title: z.string(),
+        text: z.string(),
+        source: z.string().optional(),
+        addedAt: z.string().optional(),
+      }),
+    )
+    .default([]),
 });
 
 export const turnSchema = z.object({
