@@ -20,6 +20,7 @@ export const Route = createFileRoute("/api/crawl-me")({
       GET: async ({ request }) => {
         const {
           apiError,
+          clientIp,
           clientLabel,
           entityEtag,
           entityPayload,
@@ -40,11 +41,7 @@ export const Route = createFileRoute("/api/crawl-me")({
         };
 
         const { allowRequest } = await import("@/lib/mcp/presences");
-        const ip =
-          request.headers.get("cf-connecting-ip") ??
-          request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-          "anonymous";
-        if (!(await allowRequest(`crawlme:${ip}`, 120)))
+        if (!(await allowRequest(`crawlme:${clientIp(request)}`, 120)))
           return apiError(429, "Rate limit exceeded.", "Up to 120 requests per minute per client.");
 
         const lookup = { id: q("id") ?? q("entity_id") ?? q("slug"), domain: q("domain"), url: q("url"), name: q("name") ?? q("q") };

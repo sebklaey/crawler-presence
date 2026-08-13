@@ -10,16 +10,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
-const codeSchema = z.object({ code: z.string().trim().min(10).max(200) });
+import type { ManageAnalytics } from "./manage-analytics";
 
-export type ManageAnalytics = {
-  /** "measured" once real events exist, "empty" before the first event. */
-  mode: "measured" | "empty";
-  windowDays: number;
-  metrics: { label: string; value: number; hint: string }[];
-  topQuestions: { label: string; count: number }[];
-  gaps: string[];
-};
+export type { ManageAnalytics };
+
+const codeSchema = z.object({ code: z.string().trim().min(10).max(200) });
 
 export type ManageOverview =
   | { ok: false; reason: "invalid-code" | "not-found" | "rate-limited" | "unavailable" }
@@ -73,55 +68,6 @@ async function resolve(code: string) {
     if (error instanceof PresenceStoreError) return { error: "unavailable" } as ResolveError;
     throw error;
   }
-}
-
-/**
- * Measurable Presence analytics only: Crawler-internal conversations/queries,
- * entity appearances, trackable outbound clicks and observable crawler reads
- * of the published files. This build serves seeded DEMO numbers and says so.
- * Crawler never sees private ChatGPT, Claude or Gemini conversations.
- */
-async function analyticsFor(slug: string, plan: string): Promise<ManageAnalytics> {
-  const { planById } = await import("./billing");
-  const { asPlanId } = await import("./entitlements");
-  const allowed = planById(asPlanId(plan)).analyticsDays;
-  const period = (allowed >= 90 ? 90 : 7) as 7 | 90;
-
-  const { publicSummary, detailedSummary } = await import("./mcp/presence-analytics");
-  const [summary, detail] = await Promise.all([publicSummary(slug, slug, period), detailedSummary(slug, period)]);
-
-  const metrics = [
-    {
-      label: "Crawler conversations",
-      value: summary?.conversations_mentioning ?? 0,
-      hint: "Distinct anonymous Crawler sessions that mentioned this Presence",
-    },
-    {
-      label: "Mention events",
-      value: summary?.mention_events ?? 0,
-      hint: "Crawler tool calls referencing this Presence",
-    },
-    {
-      label: "Public reads",
-      value: summary?.crawler_reads ?? 0,
-      hint: "Observable reads of your public files and Presence page",
-    },
-    {
-      label: "Outbound clicks",
-      value: detail?.outbound_clicks ?? 0,
-      hint: "Trackable clicks on your links",
-    },
-  ];
-
-  const measured = metrics.some((m) => m.value > 0);
-
-  return {
-    mode: measured ? "measured" : "empty",
-    windowDays: period,
-    metrics,
-    topQuestions: (detail?.file_reads ?? []).slice(0, 6).map((f) => ({ label: f.path, count: f.count })),
-    gaps: [],
-  };
 }
 
 export type PresenceAnalyticsResult =
@@ -204,6 +150,7 @@ export const manageOverviewFn = createServerFn({ method: "POST" })
     if ("error" in resolved) return { ok: false, reason: resolved.error };
     const p = resolved.presence;
     const { applyCatalogLimit, isRestricted } = await import("./entitlements");
+    const { analyticsFor } = await import("./manage-analytics");
     const limited = applyCatalogLimit(p.core, p.plan);
     const restricted = isRestricted(p.subscriptionStatus, p.mode);
     return {

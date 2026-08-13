@@ -14,7 +14,7 @@ export const Route = createFileRoute("/api/search")({
         return new Response(null, { status: 204, headers: CORS_HEADERS });
       },
       GET: async ({ request }) => {
-        const { apiError, jsonResponse, searchEntities } = await import("@/lib/crawlme.server");
+        const { apiError, clientIp, jsonResponse, searchEntities } = await import("@/lib/crawlme.server");
         const { CRAWLME_SOURCE } = await import("@/lib/crawlme");
         const { allowRequest } = await import("@/lib/mcp/presences");
 
@@ -22,11 +22,7 @@ export const Route = createFileRoute("/api/search")({
         const query = (url.searchParams.get("q") ?? url.searchParams.get("query") ?? "").trim().slice(0, 120);
         if (query.length < 2) return apiError(400, "Query too short.", "Pass ?q= with at least 2 characters.");
 
-        const ip =
-          request.headers.get("cf-connecting-ip") ??
-          request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-          "anonymous";
-        if (!(await allowRequest(`crawlme-search:${ip}`, 60)))
+        if (!(await allowRequest(`crawlme-search:${clientIp(request)}`, 60)))
           return apiError(429, "Rate limit exceeded.", "Up to 60 search requests per minute per client.");
 
         const typeParam = url.searchParams.get("type")?.trim().toLowerCase();

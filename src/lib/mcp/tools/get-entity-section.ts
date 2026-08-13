@@ -1,6 +1,8 @@
 import { defineTool, ToolError } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 
+import { ENTITY_LOOKUP_FIELDS, READ_ONLY_ANNOTATIONS, resolveEntityOrThrow } from "./entity-lookup";
+
 export default defineTool({
   name: "get_entity_section",
   title: "Get one section of a published entity",
@@ -12,21 +14,16 @@ export default defineTool({
       .trim()
       .max(30)
       .describe("about, offerings, products, services, projects, pricing, faq, facts, claims, contact, links, team, locations or terminology."),
-    entity_id: z.string().trim().max(120).optional().describe("Crawler entity id (public slug)."),
-    domain: z.string().trim().max(253).optional().describe("Canonical domain, e.g. 'sebklaey.app'."),
-    url: z.string().trim().max(300).optional().describe("Canonical website URL or published Crawler Today URL."),
-    name: z.string().trim().max(200).optional().describe("Entity name — only resolves when unambiguous."),
+    ...ENTITY_LOOKUP_FIELDS,
   },
-  annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  annotations: READ_ONLY_ANNOTATIONS,
   handler: async ({ section, entity_id, domain, url, name }) => {
     const { ENTITY_SECTIONS } = await import("../../crawlme");
-    const { entitySection, recordRetrieval, resolveEntity } = await import("../../crawlme.server");
+    const { entitySection, recordRetrieval } = await import("../../crawlme.server");
     const wanted = section.toLowerCase();
     if (!ENTITY_SECTIONS.includes(wanted as never))
       throw new ToolError(`Unknown section "${section}". Available: ${ENTITY_SECTIONS.join(", ")}`);
-    if (!entity_id && !domain && !url && !name) throw new ToolError("Pass entity_id, domain, url or name.");
-    const presence = await resolveEntity({ id: entity_id, domain, url, name });
-    if (!presence) throw new ToolError("No published Crawler Today entity matches this identifier.");
+    const presence = await resolveEntityOrThrow({ entity_id, domain, url, name });
     const payload = entitySection(presence, wanted as never);
     await recordRetrieval({ slug: presence.slug, channel: "mcp", section: wanted });
     return {
