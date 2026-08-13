@@ -22,6 +22,7 @@ export const Route = createFileRoute("/api/crawl-me")({
           apiError,
           clientLabel,
           entityEtag,
+          entityHtml,
           entityPayload,
           entitySection,
           entitySummary,
@@ -30,8 +31,10 @@ export const Route = createFileRoute("/api/crawl-me")({
           jsonResponse,
           recordRetrieval,
           resolveEntity,
+          wantsHtml,
         } = await import("@/lib/crawlme.server");
         const { ENTITY_SECTIONS } = await import("@/lib/crawlme");
+
 
         const url = new URL(request.url);
         const q = (name: string) => {
@@ -82,9 +85,12 @@ export const Route = createFileRoute("/api/crawl-me")({
           });
         }
 
+        if (wantsHtml(request)) return entityHtml(presence, body as Record<string, unknown>, variant);
+
         return jsonResponse(body, {
           headers: { etag, "last-modified": new Date(presence.updatedAt).toUTCString() },
         });
+
       },
     },
   },
