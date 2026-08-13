@@ -127,6 +127,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           logo: "https://crawler.today/favicon.png",
         }),
       },
+      {
+        src: "https://www.googletagmanager.com/gtag/js?id=G-3SM2STRBCN",
+        async: true,
+      },
+      {
+        children: `window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-3SM2STRBCN');`,
+      },
     ],
 
   }),
