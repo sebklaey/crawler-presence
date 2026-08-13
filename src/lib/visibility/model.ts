@@ -34,60 +34,60 @@ export type MetricStatus = "live" | "delayed" | "demo" | "not_connected";
 export type Period = 7 | 30 | 90 | "all";
 
 export const PERIODS: { value: Period; label: string }[] = [
-  { value: 7, label: "7 Tage" },
-  { value: 30, label: "30 Tage" },
-  { value: 90, label: "90 Tage" },
-  { value: "all", label: "Gesamt" },
+  { value: 7, label: "7 days" },
+  { value: 30, label: "30 days" },
+  { value: 90, label: "90 days" },
+  { value: "all", label: "All time" },
 ];
 
 export const SCOPE_NOTICE =
-  "Diese Analytics zeigen ausschließlich Ereignisse, die Crawler innerhalb verbundener oder öffentlich beobachtbarer Quellen messen kann. Sie umfassen nicht alle Gespräche im Internet und keine privaten Unterhaltungen in ChatGPT, Claude, Gemini oder anderen externen Assistenten.";
+  "These analytics show only events Crawler can measure inside connected or publicly observable sources. They do not cover every conversation on the internet, and never private conversations in ChatGPT, Claude, Gemini or any other external assistant.";
 
 export const SOURCE_LABELS: Record<SourceType, { label: string; definition: string }> = {
   crawler_internal: {
-    label: "Crawler-intern",
-    definition: "Crawler-Tool-Aufrufe, deren Argumente diese Presence referenziert haben.",
+    label: "Crawler internal",
+    definition: "Crawler tool calls whose arguments referenced this Presence.",
   },
   presence_read: {
-    label: "Presence-Dateizugriffe",
-    definition: "Abrufe von llms.txt, llms-full.txt, Markdown- oder JSON-Dateien dieser Presence.",
+    label: "Presence file reads",
+    definition: "Requests for llms.txt, llms-full.txt, Markdown or JSON files of this Presence.",
   },
   authorized_ai: {
-    label: "Autorisierte AI-Projekte",
-    definition: "Interaktionen aus ausdrücklich verbundenen API-Projekten (Business-API).",
+    label: "Authorized AI projects",
+    definition: "Interactions from explicitly connected API projects (Business API).",
   },
   public_web: {
-    label: "Öffentliches Web",
-    definition: "Erwähnungen auf öffentlich zugänglichen Websites mit erreichbarer URL.",
+    label: "Public web",
+    definition: "Mentions on publicly accessible websites with a reachable URL.",
   },
   search_console: {
     label: "Google Search Console",
-    definition: "Impressionen und Klicks aus einer verbundenen Search-Console-Property.",
+    definition: "Impressions and clicks from a connected Search Console property.",
   },
   visibility_benchmark: {
-    label: "Visibility Benchmark",
-    definition: "Kontrollierte Testfragen an ausgewählte AI-Modelle — keine reale Nutzermessung.",
+    label: "Visibility benchmark",
+    definition: "Controlled test questions sent to selected AI models — not a measurement of real users.",
   },
   user_reported: {
-    label: "Selbst gemeldet",
-    definition: "Freiwillig gemeldete Erwähnungen. Nicht von Crawler verifiziert.",
+    label: "Self-reported",
+    definition: "Mentions you reported yourself. Not verified by Crawler.",
   },
   ai_retrieval: {
-    label: "AI-Abruf",
+    label: "AI retrieval",
     definition:
-      "Ein AI-System oder Client hat den veröffentlichten Knowledge Core über die CrawlMe API oder MCP abgerufen. Ein Abruf ist keine Erwähnung.",
+      "An AI system or client fetched the published Knowledge Core through the CrawlMe API or MCP. A retrieval is not a mention.",
   },
 };
 
 export const EVENT_LABELS: Record<EventType, string> = {
-  mention: "Beobachtete Erwähnung",
-  file_read: "Dateizugriff",
-  outbound_click: "Ausgehender Klick",
+  mention: "Observed mention",
+  file_read: "File read",
+  outbound_click: "Outbound click",
   impression: "Impression",
-  click: "Klick",
-  citation: "Zitierung",
-  api_request: "CrawlMe API-Abruf",
-  mcp_retrieval: "MCP-Abruf",
+  click: "Click",
+  citation: "Citation",
+  api_request: "CrawlMe API request",
+  mcp_retrieval: "MCP retrieval",
 };
 
 export type Kpi = {
@@ -145,6 +145,12 @@ export type AdapterState = {
   measured: string;
   notMeasured: string;
   connectHint: string | null;
+  /** Whether this source can be connected or disconnected from the dashboard. */
+  connectable: boolean;
+  /** Label for the optional configuration field shown in the connect form. */
+  configLabel: string | null;
+  /** Current configuration value, if any (never a secret). */
+  configValue: string | null;
 };
 
 export type VisibilityDashboard = {
@@ -176,9 +182,9 @@ export type PublicVisibility = {
   scopeNotice: string;
 };
 
-/** Kleine Gruppen ausblenden: Werte unter dieser Schwelle werden nicht ausgewiesen. */
+/** Hide small groups: values below this threshold are not reported. */
 export const MIN_GROUP_SIZE = 3;
 
 export function periodLabel(period: Period): string {
-  return period === "all" ? "gesamter Zeitraum" : `letzte ${period} Tage`;
+  return period === "all" ? "all time" : `last ${period} days`;
 }
