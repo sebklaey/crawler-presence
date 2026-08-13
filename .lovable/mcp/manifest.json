@@ -327,6 +327,57 @@
         "outputSchema": null
       },
       {
+        "name": "import_document",
+        "title": "Import a text document",
+        "description": "Use this when the user uploads or pastes a text document (txt, md, csv, or the extracted text of a PDF/DOCX) in the chat and wants it in their Crawler Knowledge Core. YOU read the uploaded file and send its plain text here — Crawler stores no binaries and runs no model of its own. Each imported document becomes a public AI-readable page (docs/<slug>.md) plus an entry in api/documents.json once the Presence is published with publish_presence. Plan limits apply to how many documents stay public: Plus 3, Pro 50, Business unlimited.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "session_id": {
+              "type": "string",
+              "minLength": 6,
+              "maxLength": 128,
+              "description": "Opaque session id returned by start_interview."
+            },
+            "title": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 160,
+              "description": "Human-readable document title, e.g. the file name without extension."
+            },
+            "text": {
+              "type": "string",
+              "minLength": 20,
+              "maxLength": 60000,
+              "description": "Plain text content of the uploaded document, verbatim. No binary data, no base64, no invented content."
+            },
+            "source": {
+              "type": "string",
+              "maxLength": 200,
+              "description": "Original file name or origin, e.g. 'pricing-2026.pdf'."
+            },
+            "replace": {
+              "type": "boolean",
+              "description": "Replace an existing document with the same title (default true)."
+            }
+          },
+          "required": [
+            "session_id",
+            "title",
+            "text"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
         "name": "get_checkout_link",
         "title": "Get checkout link",
         "description": "Use this when the user wants to pay for hosting and needs a checkout link. Returns the external Crawler checkout URL for the chosen plan. If no payment credentials are configured, returns a clearly labelled test/demo checkout state instead of a fake success.",

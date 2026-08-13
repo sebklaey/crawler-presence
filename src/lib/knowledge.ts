@@ -45,6 +45,14 @@ export type CvEntry = {
   note?: string;
 };
 
+export type DocumentEntry = {
+  title: string;
+  text: string;
+  /** Original file name or origin, as reported by the user. */
+  source?: string;
+  addedAt?: string;
+};
+
 export type KnowledgeCore = {
   entityType: EntityType;
   name: string;
@@ -59,6 +67,8 @@ export type KnowledgeCore = {
   faqs: FaqItem[];
   cv: CvEntry[];
   links: { label: string; url: string }[];
+  /** Text documents uploaded in ChatGPT and imported into the Knowledge Core. */
+  documents: DocumentEntry[];
   gaps: string[];
   updatedAt: string;
 };
@@ -74,6 +84,7 @@ export const emptyCore = (): KnowledgeCore => ({
   faqs: [],
   cv: [],
   links: [],
+  documents: [],
   gaps: [],
   updatedAt: new Date().toISOString(),
 });
@@ -157,10 +168,37 @@ function filePaths(c: KnowledgeCore): string[] {
   if (has("service")) paths.push("services.md");
   if (c.faqs.length) paths.push("faq.md");
   if (c.cv.length) paths.push("cv.md");
+  for (const d of docs(c)) paths.push(`docs/${slug(d.title)}.md`);
   paths.push("api/entity.json");
+  if (docs(c).length) paths.push("api/documents.json");
   for (const k of ["offering", "project", "service"] as CatalogKind[]) if (has(k)) paths.push(`api/${k}s.json`);
   paths.push("llms-full.txt");
   return paths;
+}
+
+function docs(c: KnowledgeCore): DocumentEntry[] {
+  return (c.documents ?? []).filter((d) => d.title && d.text);
+}
+
+export function documentMd(d: DocumentEntry): string {
+  return [`# ${d.title}`, "", d.source ? `_Source: ${d.source}_` : "", d.source ? "" : "", d.text.trim(), ""]
+    .filter((l, i, a) => !(l === "" && a[i - 1] === ""))
+    .join("\n");
+}
+
+export function documentsJson(c: KnowledgeCore) {
+  const list = docs(c);
+  return {
+    count: list.length,
+    documents: list.map((d) => ({
+      id: slug(d.title),
+      title: d.title,
+      source: d.source ?? null,
+      added_at: d.addedAt ?? null,
+      path: `docs/${slug(d.title)}.md`,
+      characters: d.text.length,
+    })),
+  };
 }
 
 function verified(c: KnowledgeCore) {
@@ -306,8 +344,12 @@ function baseFiles(c: KnowledgeCore): GeneratedFile[] {
   if (has("service")) files.push({ path: "services.md", type: "markdown", content: catalogMd(c, "service", "Services") });
   if (c.faqs.length) files.push({ path: "faq.md", type: "markdown", content: buildFaqMd(c) });
   if (c.cv.length) files.push({ path: "cv.md", type: "markdown", content: buildCvMd(c) });
+  for (const d of docs(c))
+    files.push({ path: `docs/${slug(d.title)}.md`, type: "markdown", content: documentMd(d) });
 
   files.push({ path: "api/entity.json", type: "json", content: JSON.stringify(entityJson(c), null, 2) });
+  if (docs(c).length)
+    files.push({ path: "api/documents.json", type: "json", content: JSON.stringify(documentsJson(c), null, 2) });
   for (const kind of ["offering", "project", "service"] as CatalogKind[]) {
     if (has(kind))
       files.push({

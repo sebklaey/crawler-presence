@@ -11,6 +11,8 @@
 export type LooseFact = { label: string; value: string; status: "verified" | "claimed"; source?: string };
 export type LooseItem = { kind: "offering" | "project" | "service"; name: string; summary: string; details?: string; url?: string; tags?: string[] };
 
+export type LooseDocument = { title: string; text: string; source?: string; addedAt?: string };
+
 export type LooseCore = {
   entityType: "person" | "creator" | "studio" | "company" | "organization" | "project" | "unknown";
   name: string;
@@ -25,6 +27,7 @@ export type LooseCore = {
   faqs: { question: string; answer: string }[];
   cv: { role: string; organization?: string; period?: string; note?: string }[];
   links: { label: string; url: string }[];
+  documents: LooseDocument[];
   gaps: string[];
 };
 
@@ -49,6 +52,7 @@ const EMPTY: LooseCore = {
   faqs: [],
   cv: [],
   links: [],
+  documents: [],
   gaps: [],
 };
 
@@ -82,6 +86,7 @@ export function normalizeCore(raw: unknown): LooseCore {
     faqs: arr<LooseCore["faqs"][number]>(r["faqs"]).filter((f) => f && str(f.question)),
     cv: arr<LooseCore["cv"][number]>(r["cv"]).filter((c) => c && str(c.role)),
     links: arr<LooseCore["links"][number]>(r["links"]).filter((l) => l && str(l.url)),
+    documents: arr<LooseDocument>(r["documents"]).filter((d) => d && str(d.title) && str(d.text)),
     gaps: arr<string>(r["gaps"]).filter(Boolean),
   };
 }
@@ -224,6 +229,7 @@ export function coerceCoreUpdate(raw: unknown): LooseCore {
     cv: pick(r, ["cv", "experience", "resume", "lebenslauf"]),
     links: pick(r, ["links", "urls", "profiles"]),
     gaps: pick(r, ["gaps", "missing"]),
+    documents: pick(r, ["documents", "files", "uploads", "dokumente"]),
   };
 
   const faqSource = pick(r, ["faqs", "faq", "questions", "qa", "q_and_a", "fragen"]);
@@ -562,6 +568,7 @@ export function mergeCore(baseInput: LooseCore, update: unknown): LooseCore {
     faqs: [...base.faqs],
     cv: [...base.cv],
     links: [...base.links],
+    documents: [...(base.documents ?? [])],
     gaps: [],
   };
   for (const f of u.facts) {
@@ -578,6 +585,11 @@ export function mergeCore(baseInput: LooseCore, update: unknown): LooseCore {
   for (const f of u.faqs) if (!merged.faqs.some((x) => x.question.toLowerCase() === f.question.toLowerCase())) merged.faqs.push(f);
   for (const c of u.cv) if (!merged.cv.some((x) => x.role === c.role && x.organization === c.organization)) merged.cv.push(c);
   for (const l of u.links) if (!merged.links.some((x) => x.url === l.url)) merged.links.push(l);
+  for (const d of u.documents ?? []) {
+    const at = merged.documents.findIndex((x) => x.title.toLowerCase() === d.title.toLowerCase());
+    if (at >= 0) merged.documents[at] = d;
+    else merged.documents.push(d);
+  }
   return repairCore(merged);
 }
 
