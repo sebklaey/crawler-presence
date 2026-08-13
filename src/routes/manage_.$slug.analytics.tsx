@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScopeNotice, VisibilityDashboardView } from "@/components/visibility-dashboard";
 import { SCOPE_NOTICE, type EventType, type Period, type SourceType, type VisibilityDashboard } from "@/lib/visibility/model";
-import { visibilityDashboardFn, visibilityExportFn } from "@/lib/visibility.functions";
+import { visibilityConnectSourceFn, visibilityDashboardFn, visibilityExportFn } from "@/lib/visibility.functions";
 import { useRecoveryCode } from "@/lib/store";
 
 export const Route = createFileRoute("/manage_/$slug/analytics")({
@@ -18,12 +18,12 @@ export const Route = createFileRoute("/manage_/$slug/analytics")({
       {
         name: "description",
         content:
-          "Beobachtete Erwähnungen, Presence-Dateizugriffe, verbundene Quellen und kontrollierte AI-Benchmarks deiner Crawler Presence — mit Quelle, Zeitraum und Messgrenze je Kennzahl.",
+          "Observed mentions, Presence file reads, connected sources and controlled AI benchmarks for your Crawler Presence — each metric with source, period and measurement limits.",
       },
       { property: "og:title", content: "AI Visibility Analytics — Crawler" },
       {
         property: "og:description",
-        content: "Transparente, messbare Sichtbarkeitsanalyse für eine veröffentlichte Crawler Presence.",
+        content: "Transparent, measurable visibility analytics for a published Crawler Presence.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -33,10 +33,10 @@ export const Route = createFileRoute("/manage_/$slug/analytics")({
 });
 
 const REASONS: Record<string, string> = {
-  "invalid-code": "Das sieht nicht nach einem Crawler-Recovery-Code aus (Form: slug~crw_…).",
-  "not-found": "Kein Presence-Zugang für diesen Code.",
-  "rate-limited": "Zu viele Anfragen. Bitte kurz warten.",
-  unavailable: "Analytics sind momentan nicht verfügbar. Es wurde nichts verändert.",
+  "invalid-code": "That does not look like a Crawler recovery code (format: slug~crw_…).",
+  "not-found": "No Presence access for this code.",
+  "rate-limited": "Too many requests. Please wait a moment.",
+  unavailable: "Analytics are temporarily unavailable. Nothing was changed.",
 };
 
 function VisibilityPage() {
@@ -70,14 +70,14 @@ function VisibilityPage() {
         });
         if (!result.ok) {
           setData(null);
-          setError(REASONS[result.reason] ?? "Analytics konnten nicht geladen werden.");
+          setError(REASONS[result.reason] ?? "Analytics could not be loaded.");
           return;
         }
         setData(result.dashboard as VisibilityDashboard);
         setName(result.name);
         setMaxDays(result.maxDays);
       } catch {
-        setError("Analytics konnten nicht geladen werden.");
+        setError("Analytics could not be loaded.");
       } finally {
         setBusy(false);
       }
@@ -101,7 +101,7 @@ function VisibilityPage() {
     try {
       const result = await visibilityExportFn({ data: { code: activeCode } });
       if (!result.ok) {
-        toast.error("Export nicht möglich.");
+        toast.error("Export failed.");
         return;
       }
       const blob = new Blob([JSON.stringify(result.export, null, 2)], { type: "application/json" });
@@ -112,7 +112,29 @@ function VisibilityPage() {
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      toast.error("Export nicht möglich.");
+      toast.error("Export failed.");
+    }
+  }
+
+  async function onConnect(input: { source: string; connected: boolean; value?: string }) {
+    const activeCode = storedCode || code;
+    try {
+      const result = await visibilityConnectSourceFn({
+        data: {
+          code: activeCode,
+          source: input.source as "authorized_ai" | "public_web" | "search_console" | "visibility_benchmark" | "user_reported",
+          connected: input.connected,
+          ...(input.value ? { value: input.value } : {}),
+        },
+      });
+      if (!result.ok) {
+        toast.error(REASONS[result.reason] ?? "Could not update this source.");
+        return;
+      }
+      toast.success(input.connected ? "Source connected." : "Source disconnected.");
+      await load(activeCode);
+    } catch {
+      toast.error("Could not update this source.");
     }
   }
 
@@ -122,14 +144,14 @@ function VisibilityPage() {
         <PageHead
           eyebrow="AI Visibility Analytics"
           title={name}
-          description="Beobachtete Erwähnungen, Dateizugriffe, verbundene Quellen und kontrollierte Benchmarks — jede Zahl mit Quelle, Zeitraum und Definition."
+          description="Observed mentions, file reads, connected sources and controlled benchmarks — every number with its source, period and definition."
         />
 
         <p className="mb-6 text-xs text-muted-foreground">
           <Link to="/manage" className="underline underline-offset-4">
-            Zurück zur Presence-Verwaltung
+            Back to Presence management
           </Link>{" "}
-          · öffentliche Kurzansicht:{" "}
+          · public summary view:{" "}
           <Link to="/p/$slug/analytics" params={{ slug }} className="underline underline-offset-4">
             /p/{slug}/analytics
           </Link>
@@ -150,15 +172,15 @@ function VisibilityPage() {
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 placeholder="slug~crw_…"
-                aria-label="Recovery-Code"
+                aria-label="Recovery code"
                 autoComplete="off"
               />
               <Button type="submit" disabled={busy || code.length < 10}>
-                {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Analytics öffnen"}
+                {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Open analytics"}
               </Button>
             </form>
             <p className="text-xs text-muted-foreground">
-              Der Recovery-Code wird nur zur Prüfung an den Server gesendet — nie in die URL geschrieben, nie geloggt.
+              The recovery code is only sent to the server for verification — never written into the URL, never logged.
             </p>
             {error ? <p className="text-xs text-destructive">{error}</p> : null}
           </div>
@@ -166,7 +188,7 @@ function VisibilityPage() {
 
         {busy && !data ? (
           <div className="flex items-center gap-2 py-16 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" /> Analytics werden geladen…
+            <Loader2 className="h-4 w-4 animate-spin" /> Loading analytics…
           </div>
         ) : null}
 
@@ -181,6 +203,7 @@ function VisibilityPage() {
             maxDays={maxDays}
             onFilterChange={onFilterChange}
             onExport={onExport}
+            onConnect={onConnect}
           />
         ) : null}
       </div>

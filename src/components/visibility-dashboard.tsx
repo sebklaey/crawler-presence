@@ -1,11 +1,11 @@
 /**
- * UI des Moduls „AI Visibility Analytics".
+ * UI for the "AI Visibility Analytics" module.
  *
- * Jede Kennzahl weist Quelle, Zeitraum, Definition und Messstatus aus.
- * Es werden ausschließlich gemessene Werte dargestellt; nicht verbundene
- * Adapter zeigen „Nicht verbunden" und niemals Beispielzahlen.
+ * Every metric states its source, period, definition and measurement status.
+ * Only measured values are displayed; sources that are not connected show
+ * "Not connected" and never example numbers.
  */
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -37,15 +37,15 @@ import {
 
 const STATUS_LABEL: Record<MetricStatus, string> = {
   live: "Live",
-  delayed: "Verzögert",
+  delayed: "Delayed",
   demo: "Demo",
-  not_connected: "Nicht verbunden",
+  not_connected: "Not connected",
 };
 
 export function ScopeNotice({ text }: { text: string }) {
   return (
     <p className="rounded-xl border border-border/70 bg-secondary/50 px-4 py-3 text-xs leading-relaxed text-muted-foreground">
-      <strong className="text-foreground">Messumfang.</strong> {text}
+      <strong className="text-foreground">Measurement scope.</strong> {text}
     </p>
   );
 }
@@ -63,13 +63,13 @@ function StatusBadge({ status }: { status: MetricStatus }) {
 
 function DeltaLabel({ kpi }: { kpi: Kpi }) {
   if (kpi.delta === null) {
-    return <span className="text-xs text-muted-foreground">keine Vergleichsdaten</span>;
+    return <span className="text-xs text-muted-foreground">no comparison data</span>;
   }
   const sign = kpi.delta > 0 ? "+" : "";
   return (
     <span className="text-xs text-muted-foreground">
       {sign}
-      {kpi.delta}% ggü. vorheriger Periode ({kpi.previous})
+      {kpi.delta}% vs. previous period ({kpi.previous})
     </span>
   );
 }
@@ -81,7 +81,7 @@ function KpiCard({ kpi, windowLabel }: { kpi: Kpi; windowLabel: string }) {
         <div className="flex items-center gap-1.5">
           <h3 className="text-xs uppercase tracking-wide text-muted-foreground">{kpi.label}</h3>
           <Tooltip>
-            <TooltipTrigger aria-label={`Definition von ${kpi.label}`} className="text-muted-foreground">
+            <TooltipTrigger aria-label={`Definition of ${kpi.label}`} className="text-muted-foreground">
               <Info className="h-3.5 w-3.5" aria-hidden />
             </TooltipTrigger>
             <TooltipContent className="max-w-xs text-xs">{kpi.definition}</TooltipContent>
@@ -95,13 +95,13 @@ function KpiCard({ kpi, windowLabel }: { kpi: Kpi; windowLabel: string }) {
       </p>
       <div className="mt-1">
         {kpi.status === "not_connected" ? (
-          <span className="text-xs text-muted-foreground">Quelle nicht verbunden — keine Daten</span>
+          <span className="text-xs text-muted-foreground">Source not connected — no data</span>
         ) : (
           <DeltaLabel kpi={kpi} />
         )}
       </div>
       <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
-        Quelle: {kpi.sourceLabel} · Zeitraum: {windowLabel}
+        Source: {kpi.sourceLabel} · Period: {windowLabel}
       </p>
     </div>
   );
@@ -132,7 +132,7 @@ export function VisibilityFilters({
     "h-9 rounded-md border border-border bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring";
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <div className="flex flex-wrap gap-1" role="group" aria-label="Zeitraum">
+      <div className="flex flex-wrap gap-1" role="group" aria-label="Period">
         {PERIODS.map((p) => {
           const locked = p.value !== "all" ? p.value > maxDays : maxDays < 3650;
           return (
@@ -144,7 +144,7 @@ export function VisibilityFilters({
               className={`rounded-full border px-3 py-1 text-xs transition ${
                 period === p.value ? "border-foreground text-foreground" : "border-border text-muted-foreground"
               } ${locked ? "cursor-not-allowed opacity-40" : "hover:border-foreground/40"}`}
-              title={locked ? "Im aktuellen Plan nicht enthalten" : undefined}
+              title={locked ? "Not included in your current plan" : undefined}
             >
               {p.label}
             </button>
@@ -152,7 +152,7 @@ export function VisibilityFilters({
         })}
       </div>
       <label className="sr-only" htmlFor="filter-source">
-        Quelle
+        Source
       </label>
       <select
         id="filter-source"
@@ -160,7 +160,7 @@ export function VisibilityFilters({
         value={source}
         onChange={(e) => onChange({ source: e.target.value as SourceType | "all" })}
       >
-        <option value="all">Alle Quellen</option>
+        <option value="all">All sources</option>
         {(Object.keys(SOURCE_LABELS) as SourceType[]).map((key) => (
           <option key={key} value={key}>
             {SOURCE_LABELS[key].label}
@@ -168,7 +168,7 @@ export function VisibilityFilters({
         ))}
       </select>
       <label className="sr-only" htmlFor="filter-event">
-        Ereignistyp
+        Event type
       </label>
       <select
         id="filter-event"
@@ -176,7 +176,7 @@ export function VisibilityFilters({
         value={eventType}
         onChange={(e) => onChange({ eventType: e.target.value as EventType | "all" })}
       >
-        <option value="all">Alle Ereignistypen</option>
+        <option value="all">All event types</option>
         {(Object.keys(EVENT_LABELS) as EventType[]).map((key) => (
           <option key={key} value={key}>
             {EVENT_LABELS[key]}
@@ -190,10 +190,10 @@ export function VisibilityFilters({
 function TimeChart({ data }: { data: VisibilityDashboard["series"] }) {
   const hasData = useMemo(() => data.some((d) => d.mentions > 0 || d.reads > 0), [data]);
   if (!hasData) {
-    return <EmptyState>Noch keine Ereignisse im gewählten Zeitraum gemessen.</EmptyState>;
+    return <EmptyState>No events measured in the selected period yet.</EmptyState>;
   }
   return (
-    <div className="h-64 w-full" role="img" aria-label="Beobachtete Erwähnungen und Dateizugriffe pro Tag">
+    <div className="h-64 w-full" role="img" aria-label="Observed mentions and file reads per day">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
@@ -208,10 +208,100 @@ function TimeChart({ data }: { data: VisibilityDashboard["series"] }) {
             }}
           />
           <Legend wrapperStyle={{ fontSize: 11 }} />
-          <Bar dataKey="mentions" name="Beobachtete Erwähnungen" fill="hsl(var(--foreground))" radius={[2, 2, 0, 0]} />
-          <Bar dataKey="reads" name="Dateizugriffe" fill="hsl(var(--muted-foreground))" radius={[2, 2, 0, 0]} />
+          <Bar dataKey="mentions" name="Observed mentions" fill="hsl(var(--foreground))" radius={[2, 2, 0, 0]} />
+          <Bar dataKey="reads" name="File reads" fill="hsl(var(--muted-foreground))" radius={[2, 2, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
+    </div>
+  );
+}
+
+function AdapterCard({
+  adapter: a,
+  onConnect,
+}: {
+  adapter: VisibilityDashboard["adapters"][number];
+  onConnect?: ((input: { source: SourceType; connected: boolean; value?: string }) => Promise<void> | void) | undefined;
+}) {
+  const [value, setValue] = useState(a.configValue ?? "");
+  const [busy, setBusy] = useState(false);
+  const connected = a.status !== "not_connected";
+
+  async function submit(next: boolean) {
+    if (!onConnect) return;
+    setBusy(true);
+    try {
+      const trimmed = value.trim();
+      await onConnect({ source: a.type, connected: next, ...(trimmed ? { value: trimmed } : {}) });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="rounded-xl border border-border/70 p-4">
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="text-sm">{a.label}</h3>
+        <StatusBadge status={a.status} />
+      </div>
+      <p className="mt-2 text-xs text-muted-foreground">{a.definition}</p>
+      <dl className="mt-3 space-y-1 text-[11px] text-muted-foreground">
+        <div>
+          <dt className="inline text-foreground">Measured: </dt>
+          <dd className="inline">{a.measured}</dd>
+        </div>
+        <div>
+          <dt className="inline text-foreground">Not measured: </dt>
+          <dd className="inline">{a.notMeasured}</dd>
+        </div>
+        <div>
+          <dt className="inline text-foreground">Last sync: </dt>
+          <dd className="inline">{a.lastSyncedAt ? new Date(a.lastSyncedAt).toLocaleString("en-US") : "—"}</dd>
+        </div>
+      </dl>
+
+      {a.connectable && onConnect ? (
+        <div className="mt-3 space-y-2 rounded-lg border border-dashed border-border px-3 py-3">
+          {a.connectHint ? <p className="text-[11px] text-muted-foreground">{a.connectHint}</p> : null}
+          {a.configLabel ? (
+            <label className="block text-[11px] text-muted-foreground">
+              {a.configLabel}
+              <input
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                className="mt-1 h-9 w-full rounded-md border border-border bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                placeholder={a.configLabel}
+              />
+            </label>
+          ) : null}
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void submit(true)}
+              className="rounded-full border border-foreground px-4 py-1.5 text-xs hover:bg-secondary disabled:opacity-50"
+            >
+              {busy ? "Saving…" : connected ? "Update connection" : "Connect source"}
+            </button>
+            {connected ? (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void submit(false)}
+                className="rounded-full border border-border px-4 py-1.5 text-xs text-muted-foreground hover:border-foreground/40 disabled:opacity-50"
+              >
+                Disconnect
+              </button>
+            ) : null}
+          </div>
+        </div>
+      ) : !a.connectable ? (
+        <p className="mt-3 text-[11px] text-muted-foreground">Built into Crawler — always on, nothing to connect.</p>
+      ) : a.connectHint ? (
+        <p className="mt-3 rounded-lg border border-dashed border-border px-3 py-2 text-[11px] text-muted-foreground">
+          {a.connectHint}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -223,6 +313,7 @@ export function VisibilityDashboardView({
   onFilterChange,
   onBenchmark,
   onExport,
+  onConnect,
   benchmarkBusy,
 }: {
   data: VisibilityDashboard;
@@ -231,6 +322,7 @@ export function VisibilityDashboardView({
   onFilterChange: (next: { period?: Period; source?: SourceType | "all"; eventType?: EventType | "all" }) => void;
   onBenchmark?: () => void;
   onExport?: () => void;
+  onConnect?: (input: { source: SourceType; connected: boolean; value?: string }) => Promise<void> | void;
   benchmarkBusy?: boolean;
 }) {
   return (
@@ -264,13 +356,13 @@ export function VisibilityDashboardView({
             </div>
 
             <section>
-              <h2 className="display mb-3 text-xl">Erwähnungen und Dateizugriffe pro Tag</h2>
+              <h2 className="display mb-3 text-xl">Mentions and file reads per day</h2>
               <TimeChart data={data.series} />
             </section>
 
             <section className="grid gap-4 md:grid-cols-2">
               <div>
-                <h2 className="display mb-3 text-xl">Quellenverteilung</h2>
+                <h2 className="display mb-3 text-xl">Source breakdown</h2>
                 {data.sourceBreakdown.length ? (
                   <ul className="divide-y divide-border/70 rounded-xl border border-border/70 text-sm">
                     {data.sourceBreakdown.map((s) => (
@@ -281,11 +373,11 @@ export function VisibilityDashboardView({
                     ))}
                   </ul>
                 ) : (
-                  <EmptyState>Keine Ereignisse im Zeitraum.</EmptyState>
+                  <EmptyState>No events in this period.</EmptyState>
                 )}
               </div>
               <div>
-                <h2 className="display mb-3 text-xl">Wichtigste Veränderungen</h2>
+                <h2 className="display mb-3 text-xl">Biggest changes</h2>
                 <ul className="space-y-2 rounded-xl border border-border/70 p-4 text-sm">
                   {data.kpis
                     .filter((k) => k.delta !== null && k.delta !== 0)
@@ -297,7 +389,7 @@ export function VisibilityDashboardView({
                       </li>
                     ))}
                   {data.kpis.every((k) => k.delta === null || k.delta === 0) ? (
-                    <li className="text-muted-foreground">Keine messbaren Veränderungen gegenüber der Vorperiode.</li>
+                    <li className="text-muted-foreground">No measurable changes compared to the previous period.</li>
                   ) : null}
                 </ul>
               </div>
@@ -306,27 +398,27 @@ export function VisibilityDashboardView({
 
           <TabsContent value="mentions" className="space-y-4 pt-6">
             <p className="text-xs text-muted-foreground">
-              Beobachtete Erwähnungen mit Zeitpunkt, Quelle und – sofern öffentlich – URL. Private Gesprächsinhalte
-              werden nicht gespeichert und nicht angezeigt.
+              Observed mentions with timestamp, source and — where public — URL. Private conversation content is
+              never stored and never shown.
             </p>
             {data.mentions.length ? (
               <div className="overflow-x-auto rounded-xl border border-border/70">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Zeitpunkt</TableHead>
-                      <TableHead>Quelle</TableHead>
-                      <TableHead>Entität</TableHead>
-                      <TableHead>Typ</TableHead>
-                      <TableHead>Öffentliche URL</TableHead>
-                      <TableHead>Konfidenz</TableHead>
+                      <TableHead>Timestamp</TableHead>
+                      <TableHead>Source</TableHead>
+                      <TableHead>Entity</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Public URL</TableHead>
+                      <TableHead>Confidence</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {data.mentions.map((m, i) => (
                       <TableRow key={`${m.occurredAt}-${i}`}>
                         <TableCell className="whitespace-nowrap text-xs">
-                          {new Date(m.occurredAt).toLocaleString("de-DE")}
+                          {new Date(m.occurredAt).toLocaleString("en-US")}
                         </TableCell>
                         <TableCell className="text-xs">{SOURCE_LABELS[m.source]?.label ?? m.source}</TableCell>
                         <TableCell className="text-xs">{m.entity ?? "—"}</TableCell>
@@ -347,25 +439,25 @@ export function VisibilityDashboardView({
                 </Table>
               </div>
             ) : (
-              <EmptyState>Im gewählten Zeitraum wurden keine Erwähnungen beobachtet.</EmptyState>
+              <EmptyState>No mentions were observed in the selected period.</EmptyState>
             )}
           </TabsContent>
 
           <TabsContent value="reads" className="space-y-4 pt-6">
             <p className="text-xs text-muted-foreground">
-              Ein Dateiaufruf bedeutet <strong className="text-foreground">keine</strong> nachgewiesene Zitierung oder
-              Empfehlung. Gezählt werden ausschließlich Abrufe der veröffentlichten Dateien.
+              A file read is <strong className="text-foreground">not</strong> a proven citation or recommendation.
+              Only requests for the published files are counted.
             </p>
             {data.reads.length ? (
               <div className="overflow-x-auto rounded-xl border border-border/70">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Datei</TableHead>
+                      <TableHead>File</TableHead>
                       <TableHead>Reads</TableHead>
-                      <TableHead>Eindeutige Sessions</TableHead>
-                      <TableHead>Referrer-Kategorie</TableHead>
-                      <TableHead>Client-Kategorie</TableHead>
+                      <TableHead>Unique sessions</TableHead>
+                      <TableHead>Referrer category</TableHead>
+                      <TableHead>Client category</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -382,16 +474,15 @@ export function VisibilityDashboardView({
                 </Table>
               </div>
             ) : (
-              <EmptyState>Noch keine Dateizugriffe im Zeitraum gemessen.</EmptyState>
+              <EmptyState>No file reads measured in this period yet.</EmptyState>
             )}
           </TabsContent>
 
           <TabsContent value="benchmark" className="space-y-4 pt-6">
             <div className="rounded-xl border border-dashed border-border bg-secondary/50 px-4 py-3 text-xs text-muted-foreground">
-              <strong className="text-foreground">Kontrollierter Benchmark – keine reale Nutzermessung.</strong> Ein
-              festes Set neutraler Testfragen wird vom verbundenen Assistenten (ChatGPT über MCP) beantwortet und
-              bewertet — Crawler betreibt kein eigenes AI-Modell. Gespeichert werden nur die Bewertungen, keine
-              vollständigen Prompts oder Antworten.
+              <strong className="text-foreground">Controlled benchmark — not a measurement of real users.</strong> A
+              fixed set of neutral test questions is answered and rated by the connected assistant (ChatGPT via MCP) —
+              Crawler runs no AI model of its own. Only the ratings are stored, never full prompts or answers.
             </div>
             <div className="flex flex-wrap items-center gap-3">
               {onBenchmark ? (
@@ -401,14 +492,15 @@ export function VisibilityDashboardView({
                   disabled={benchmarkBusy}
                   className="rounded-full border border-border px-4 py-1.5 text-xs hover:border-foreground/40 disabled:opacity-50"
                 >
-                  {benchmarkBusy ? "Benchmark läuft…" : "Benchmark jetzt ausführen"}
+                  {benchmarkBusy ? "Benchmark running…" : "Run benchmark now"}
                 </button>
               ) : null}
               <span className="text-xs text-muted-foreground">
-                Läufe: {data.benchmarkSummary.runs} · Erwähnt:{" "}
-                {data.benchmarkSummary.mentionRate === null ? "—" : `${data.benchmarkSummary.mentionRate}%`} · Sachlich
-                korrekt: {data.benchmarkSummary.correctRate === null ? "—" : `${data.benchmarkSummary.correctRate}%`} ·
-                Quelle genannt: {data.benchmarkSummary.citedRate === null ? "—" : `${data.benchmarkSummary.citedRate}%`}
+                Runs: {data.benchmarkSummary.runs} · Mentioned:{" "}
+                {data.benchmarkSummary.mentionRate === null ? "—" : `${data.benchmarkSummary.mentionRate}%`} ·
+                Factually correct:{" "}
+                {data.benchmarkSummary.correctRate === null ? "—" : `${data.benchmarkSummary.correctRate}%`} · Source
+                cited: {data.benchmarkSummary.citedRate === null ? "—" : `${data.benchmarkSummary.citedRate}%`}
               </span>
             </div>
             {data.benchmarks.length ? (
@@ -416,21 +508,21 @@ export function VisibilityDashboardView({
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Zeitpunkt</TableHead>
-                      <TableHead>Modell</TableHead>
-                      <TableHead>Testfrage</TableHead>
-                      <TableHead>Erwähnt</TableHead>
-                      <TableHead>Korrekt</TableHead>
-                      <TableHead>Quelle</TableHead>
+                      <TableHead>Timestamp</TableHead>
+                      <TableHead>Model</TableHead>
+                      <TableHead>Test question</TableHead>
+                      <TableHead>Mentioned</TableHead>
+                      <TableHead>Correct</TableHead>
+                      <TableHead>Source cited</TableHead>
                       <TableHead>Position</TableHead>
-                      <TableHead>Fehlinterpretationen</TableHead>
+                      <TableHead>Misinterpretations</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {data.benchmarks.map((b, i) => (
                       <TableRow key={`${b.testedAt}-${i}`}>
                         <TableCell className="whitespace-nowrap text-xs">
-                          {new Date(b.testedAt).toLocaleString("de-DE")}
+                          {new Date(b.testedAt).toLocaleString("en-US")}
                         </TableCell>
                         <TableCell className="text-xs">
                           {b.provider} · {b.model}
@@ -438,11 +530,11 @@ export function VisibilityDashboardView({
                         <TableCell className="text-xs">
                           {b.prompt} <span className="text-muted-foreground">({b.promptVersion})</span>
                         </TableCell>
-                        <TableCell className="text-xs">{b.mentioned ? "ja" : "nein"}</TableCell>
+                        <TableCell className="text-xs">{b.mentioned ? "yes" : "no"}</TableCell>
                         <TableCell className="text-xs">
-                          {b.descriptionCorrect === null ? "—" : b.descriptionCorrect ? "ja" : "nein"}
+                          {b.descriptionCorrect === null ? "—" : b.descriptionCorrect ? "yes" : "no"}
                         </TableCell>
-                        <TableCell className="text-xs">{b.sourceCited ? "ja" : "nein"}</TableCell>
+                        <TableCell className="text-xs">{b.sourceCited ? "yes" : "no"}</TableCell>
                         <TableCell className="text-xs">{b.position ?? "—"}</TableCell>
                         <TableCell className="max-w-[240px] text-xs">{b.issues.join(", ") || "—"}</TableCell>
                       </TableRow>
@@ -451,45 +543,18 @@ export function VisibilityDashboardView({
                 </Table>
               </div>
             ) : (
-              <EmptyState>Noch keine Benchmark-Läufe für diese Presence.</EmptyState>
+              <EmptyState>No benchmark runs for this Presence yet.</EmptyState>
             )}
           </TabsContent>
 
           <TabsContent value="sources" className="space-y-4 pt-6">
             <p className="text-xs text-muted-foreground">
-              Crawler misst derzeit eigene Tool-Interaktionen, Presence-Dateizugriffe und verbundene öffentliche
-              Quellen. Private Unterhaltungen in externen AI-Assistenten sind nicht enthalten.
+              Crawler currently measures its own tool interactions, Presence file reads and connected public sources.
+              Private conversations in external AI assistants are never included.
             </p>
             <div className="grid gap-3 md:grid-cols-2">
               {data.adapters.map((a) => (
-                <div key={a.type} className="rounded-xl border border-border/70 p-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <h3 className="text-sm">{a.label}</h3>
-                    <StatusBadge status={a.status} />
-                  </div>
-                  <p className="mt-2 text-xs text-muted-foreground">{a.definition}</p>
-                  <dl className="mt-3 space-y-1 text-[11px] text-muted-foreground">
-                    <div>
-                      <dt className="inline text-foreground">Gemessen: </dt>
-                      <dd className="inline">{a.measured}</dd>
-                    </div>
-                    <div>
-                      <dt className="inline text-foreground">Nicht gemessen: </dt>
-                      <dd className="inline">{a.notMeasured}</dd>
-                    </div>
-                    <div>
-                      <dt className="inline text-foreground">Letzter Sync: </dt>
-                      <dd className="inline">
-                        {a.lastSyncedAt ? new Date(a.lastSyncedAt).toLocaleString("de-DE") : "—"}
-                      </dd>
-                    </div>
-                  </dl>
-                  {a.status === "not_connected" && a.connectHint ? (
-                    <p className="mt-3 rounded-lg border border-dashed border-border px-3 py-2 text-[11px] text-muted-foreground">
-                      {a.connectHint}
-                    </p>
-                  ) : null}
-                </div>
+                <AdapterCard key={a.type} adapter={a} onConnect={onConnect} />
               ))}
             </div>
             {onExport ? (
@@ -498,7 +563,7 @@ export function VisibilityDashboardView({
                 onClick={onExport}
                 className="rounded-full border border-border px-4 py-1.5 text-xs hover:border-foreground/40"
               >
-                Analytics exportieren (JSON)
+                Export analytics (JSON)
               </button>
             ) : null}
           </TabsContent>
@@ -510,14 +575,13 @@ export function VisibilityDashboardView({
               ))}
             </ul>
             <p className="text-[11px] text-muted-foreground">
-              Hinweise entstehen ausschließlich aus gemessenen Ereignissen. Keine Aussagen über Reichweite, Ranking
-              oder tatsächliche Personen.
+              Insights are derived only from measured events. No claims about reach, ranking or actual people.
             </p>
           </TabsContent>
         </Tabs>
 
         <p className="text-[11px] text-muted-foreground">
-          Datenerfassung seit: {data.dataSince ? new Date(data.dataSince).toLocaleString("de-DE") : "noch keine Ereignisse"}
+          Collecting data since: {data.dataSince ? new Date(data.dataSince).toLocaleString("en-US") : "no events yet"}
         </p>
       </div>
     </TooltipProvider>
