@@ -544,8 +544,9 @@ export function applyAnswer(input: LooseCore, answer: string, gap: GapKey): Loos
 }
 
 /** Tiefes, konservatives Zusammenführen eines strukturierten core_update. */
-export function mergeCore(base: LooseCore, update: unknown): LooseCore {
-  const u = normalizeCore(update);
+export function mergeCore(baseInput: LooseCore, update: unknown): LooseCore {
+  const base = repairCore(baseInput);
+  const u = coerceCoreUpdate(update);
   const merged: LooseCore = {
     ...base,
     entityType: u.entityType !== "unknown" ? u.entityType : base.entityType,
