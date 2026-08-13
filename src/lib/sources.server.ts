@@ -12,6 +12,7 @@
  *    recommendation that waits for review.
  */
 import { db } from "./mcp/db.server";
+import { assertPublicHttpsUrl, fetchPublicUrl } from "./url-guard";
 
 export type ScanClassification =
   | "no_change"
@@ -51,40 +52,8 @@ const FREQUENCY_DAYS: Record<string, number> = { daily: 1, weekly: 7, monthly: 3
 /* SSRF protection                                                     */
 /* ------------------------------------------------------------------ */
 
-const BLOCKED_HOSTNAMES = new Set(["localhost", "metadata.google.internal", "169.254.169.254"]);
-
-function isPrivateIPv4(host: string): boolean {
-  const m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(host);
-  if (!m) return false;
-  const [a, b] = [Number(m[1]), Number(m[2])];
-  if ([a, b].some((n) => Number.isNaN(n) || n > 255)) return true;
-  if (a === 10 || a === 127 || a === 0) return true;
-  if (a === 169 && b === 254) return true;
-  if (a === 172 && b >= 16 && b <= 31) return true;
-  if (a === 192 && b === 168) return true;
-  if (a === 100 && b >= 64 && b <= 127) return true;
-  return false;
-}
-
 /** Rejects anything that is not a public https URL. */
-export function assertSafeSourceUrl(raw: string): URL {
-  let url: URL;
-  try {
-    url = new URL(raw);
-  } catch {
-    throw new Error("That is not a valid URL.");
-  }
-  if (url.protocol !== "https:") throw new Error("Only https:// source URLs are allowed.");
-  const host = url.hostname.toLowerCase().replace(/^\[|\]$/g, "");
-  if (BLOCKED_HOSTNAMES.has(host)) throw new Error("That host is not allowed.");
-  if (host.endsWith(".local") || host.endsWith(".internal") || !host.includes(".")) {
-    throw new Error("Only public hostnames are allowed.");
-  }
-  if (isPrivateIPv4(host)) throw new Error("Private network addresses are not allowed.");
-  if (host.includes(":") || host === "::1") throw new Error("Raw IPv6 addresses are not allowed.");
-  if (url.username || url.password) throw new Error("Credentials in the URL are not allowed.");
-  return url;
-}
+export const assertSafeSourceUrl = assertPublicHttpsUrl;
 
 export type FetchedSource = {
   ok: boolean;
@@ -96,48 +65,21 @@ export type FetchedSource = {
 
 /** Fetches a source with manual redirect handling so every hop is revalidated. */
 export async function fetchSource(rawUrl: string): Promise<FetchedSource> {
-  let current = assertSafeSourceUrl(rawUrl);
-
-  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
-    try {
-      const res = await fetch(current.toString(), {
-        redirect: "manual",
-        signal: controller.signal,
-        headers: { "user-agent": "CrawlerFreshnessBot/1.0 (+https://crawler.today)", accept: "text/*, application/json" },
-      });
-
-      if (res.status >= 300 && res.status < 400) {
-        const location = res.headers.get("location");
-        if (!location) return { ok: false, status: res.status, text: "", bytes: 0, error: "Redirect without target" };
-        current = assertSafeSourceUrl(new URL(location, current).toString());
-        continue;
-      }
-
-      if (!res.ok) return { ok: false, status: res.status, text: "", bytes: 0, error: `HTTP ${res.status}` };
-
-      const type = res.headers.get("content-type") ?? "";
-      if (!/text\/|json|xml/.test(type)) {
-        return { ok: false, status: res.status, text: "", bytes: 0, error: `Unsupported content type: ${type}` };
-      }
-
-      const raw = await res.text();
-      const clipped = raw.slice(0, MAX_BYTES);
-      return { ok: true, status: res.status, text: normalizeText(clipped), bytes: clipped.length };
-    } catch (e) {
-      return {
-        ok: false,
-        status: null,
-        text: "",
-        bytes: 0,
-        error: e instanceof Error ? (e.name === "AbortError" ? "Timed out" : e.message) : "Fetch failed",
-      };
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-  return { ok: false, status: null, text: "", bytes: 0, error: "Too many redirects" };
+  const result = await fetchPublicUrl(rawUrl, {
+    accept: "text/*, application/json",
+    userAgent: "CrawlerFreshnessBot/1.0 (+https://crawler.today)",
+    timeoutMs: TIMEOUT_MS,
+    maxBytes: MAX_BYTES,
+    maxRedirects: MAX_REDIRECTS,
+    allowedContentType: /text\/|json|xml/,
+  });
+  return {
+    ok: result.ok,
+    status: result.status,
+    text: result.ok ? normalizeText(result.text) : "",
+    bytes: result.bytes,
+    ...(result.error ? { error: result.error } : {}),
+  };
 }
 
 /**
