@@ -5,23 +5,20 @@
  * (`paymentsStatusFn`), so the overlay can never run in a different
  * environment than the transaction that was created server-side.
  */
-declare global {
-  interface Window {
-    Paddle?: {
-      Environment: { set: (environment: "sandbox" | "production") => void };
-      Initialize: (options: { token: string; eventCallback?: (event: { name?: string }) => void }) => void;
-      Checkout: {
-        open: (options: {
-          transactionId?: string;
-          settings?: Record<string, unknown>;
-        }) => void;
-      };
-    };
-  }
-}
+type PaddleGlobal = {
+  Environment: { set: (environment: "sandbox" | "production") => void };
+  Initialize: (options: { token: string; eventCallback?: (event: { name?: string }) => void }) => void;
+  Checkout: {
+    open: (options: { transactionId?: string; settings?: Record<string, unknown> }) => void;
+  };
+};
 
-let loading: Promise<NonNullable<Window["Paddle"]>> | null = null;
+const getPaddle = (): PaddleGlobal | undefined =>
+  (window as unknown as { Paddle?: PaddleGlobal }).Paddle;
+
+let loading: Promise<PaddleGlobal> | null = null;
 let initializedFor: string | null = null;
+
 
 function injectScript(): Promise<void> {
   const existing = document.querySelector<HTMLScriptElement>('script[data-crawler-paddle="true"]');
