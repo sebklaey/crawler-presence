@@ -193,64 +193,8 @@ function PublishPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search.session]);
 
-  /** Pull the newest state of the remembered ChatGPT session. */
-  const syncFromSession = useCallback(
-    async (opts?: { silent?: boolean }) => {
-      let token = search.session ?? null;
-      if (!token) {
-        try {
-          token = localStorage.getItem(LAST_SESSION_KEY);
-        } catch {
-          token = null;
-        }
-      }
-      if (!token) {
-        if (!opts?.silent) toast.error("No ChatGPT session linked in this browser yet.");
-        return;
-      }
-      setSyncing(true);
-      try {
-        const result = await loadDraft({ data: { token } });
-        if (!result.found) {
-          if (!opts?.silent) toast.error("That ChatGPT session has expired.");
-          return;
-        }
-        const remote = result.core as KnowledgeCore;
-        const local = coreRef.current;
-        if (presenceScore(remote) >= presenceScore(local)) {
-          setCore(remote);
-          if (!opts?.silent) toast.success("Synced the latest content from ChatGPT.");
-        } else if (!opts?.silent) {
-          toast.info("Your browser draft is already more complete than the ChatGPT session.");
-        }
-      } catch {
-        if (!opts?.silent) toast.error("Could not sync from ChatGPT.");
-      } finally {
-        setSyncing(false);
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [search.session],
-  );
 
-  // Keep the page in sync with the ChatGPT interview automatically:
-  // on open, when the tab regains focus, and on a slow interval.
-  useEffect(() => {
-    if (search.session) return;
-    void syncFromSession({ silent: true });
-    const onFocus = () => {
-      if (document.visibilityState === "visible") void syncFromSession({ silent: true });
-    };
-    window.addEventListener("focus", onFocus);
-    document.addEventListener("visibilitychange", onFocus);
-    const timer = window.setInterval(() => void syncFromSession({ silent: true }), 20000);
-    return () => {
-      window.removeEventListener("focus", onFocus);
-      document.removeEventListener("visibilitychange", onFocus);
-      window.clearInterval(timer);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
 
 
   // Restore a plan chosen earlier (URL, or an abandoned checkout attempt).
