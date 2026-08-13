@@ -8,6 +8,13 @@ import { AppShell, PageHead } from "@/components/app-shell";
 import { PresenceStatus } from "@/components/presence-status";
 import { RecoveryCodeCard } from "@/components/recovery-code-card";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { HOSTING_BENEFITS, NO_GUARANTEE_NOTICE, PLANS, planById, recommendPlan, type PlanId } from "@/lib/billing";
 import { trackFunnel, useFunnelOnce } from "@/lib/funnel";
 import { generatedFiles, isCoreEmpty, presenceScore, type KnowledgeCore } from "@/lib/knowledge";
