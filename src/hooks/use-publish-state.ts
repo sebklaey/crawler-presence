@@ -26,9 +26,13 @@ export type PublishState = {
   plan: PlanId;
   /** Local Knowledge Core differs from what is published — an update is pending. */
   hasChanges: boolean;
-  /** Local content exceeds the plan's content-record limit. */
+  /** Local content exceeds the plan's content-record or document limit. */
   overLimit: boolean;
   limit: number;
+  /** Local imported documents exceed the plan's document limit. */
+  overDocumentLimit: boolean;
+  documentLimit: number;
+  documentCount: number;
   /** Recovery code stored in this browser; required to push updates. */
   code: string;
   loading: boolean;
