@@ -9,7 +9,7 @@ declare global {
   }
 }
 
-const clientToken = import.meta.env.VITE_PAYMENTS_CLIENT_TOKEN as string | undefined;
+const clientToken = import.meta.env["VITE_PAYMENTS_CLIENT_TOKEN"] as string | undefined;
 
 /**
  * Paddle transaction links return to `/?_ptxn=…`. Initializing Paddle on every
@@ -34,7 +34,7 @@ export function PaymentCheckoutLoader() {
     const script = document.createElement("script");
     script.src = "https://cdn.paddle.com/paddle/v2/paddle.js";
     script.async = true;
-    script.dataset.crawlerPaddle = "true";
+    script.dataset["crawlerPaddle"] = "true";
     script.addEventListener("load", initialize, { once: true });
     document.head.appendChild(script);
 
