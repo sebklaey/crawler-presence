@@ -22,7 +22,7 @@ let initializedFor: string | null = null;
 
 function injectScript(): Promise<void> {
   const existing = document.querySelector<HTMLScriptElement>('script[data-crawler-paddle="true"]');
-  if (existing && window.Paddle) return Promise.resolve();
+  if (existing && getPaddle()) return Promise.resolve();
   return new Promise((resolve, reject) => {
     const script = existing ?? document.createElement("script");
     script.addEventListener("load", () => resolve(), { once: true });
@@ -39,14 +39,15 @@ function injectScript(): Promise<void> {
 export async function loadPaddle(
   environment: "sandbox" | "live",
   token: string,
-): Promise<NonNullable<Window["Paddle"]>> {
+): Promise<PaddleGlobal> {
   if (!token) throw new Error("Checkout is not configured on this deployment.");
   const key = `${environment}:${token}`;
-  if (initializedFor === key && window.Paddle) return window.Paddle;
+  const ready = getPaddle();
+  if (initializedFor === key && ready) return ready;
   if (!loading) {
     loading = (async () => {
       await injectScript();
-      const paddle = window.Paddle;
+      const paddle = getPaddle();
       if (!paddle) throw new Error("Paddle.js is unavailable.");
       paddle.Environment.set(environment === "sandbox" ? "sandbox" : "production");
       paddle.Initialize({ token });
