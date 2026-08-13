@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, ArrowLeft, Check, Copy, ExternalLink, Globe, Loader2, Lock, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
@@ -51,6 +51,7 @@ export const Route = createFileRoute("/publish")({
 
 const PENDING_INTENT_KEY = "crawler:pending-intent";
 const PENDING_PLAN_KEY = "crawler:pending-plan";
+const LAST_SESSION_KEY = "crawler:last-session";
 /** A checkout attempt older than this is stale and must never block the page. */
 const PENDING_INTENT_TTL_MS = 30 * 60 * 1000;
 
@@ -130,6 +131,9 @@ function PublishPage() {
   const { status: paymentsStatus } = usePaymentsStatus();
   const live = usePublishState();
   const [updating, setUpdating] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const coreRef = useRef(core);
+  coreRef.current = core;
 
   /** Already subscribed: push the current content live without a new checkout. */
   async function publishUpdate() {
