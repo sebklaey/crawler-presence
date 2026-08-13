@@ -44,7 +44,16 @@ export function isRestricted(subscriptionStatus: string | null | undefined, mode
   return ["canceled", "past_due", "paused", "unpaid"].includes(subscriptionStatus);
 }
 
-export type CatalogLimitResult = { core: KnowledgeCore; hidden: number; limit: number };
+export type CatalogLimitResult = {
+  core: KnowledgeCore;
+  hidden: number;
+  limit: number;
+  hiddenDocuments: number;
+  documentLimit: number;
+};
+
+/** Maximum number of imported text documents for a plan. */
+export const documentLimitFor = (plan: string) => planById(asPlanId(plan)).documentLimit;
 
 /**
  * Applies the plan's digital content limit. Records beyond the limit are kept in the
@@ -53,10 +62,19 @@ export type CatalogLimitResult = { core: KnowledgeCore; hidden: number; limit: n
  */
 export function applyCatalogLimit(core: KnowledgeCore, plan: string): CatalogLimitResult {
   const limit = planById(asPlanId(plan)).catalogLimit;
-  if (core.items.length <= limit) return { core, hidden: 0, limit };
+  const documentLimit = documentLimitFor(plan);
+  const documents = core.documents ?? [];
+  const hiddenDocuments = Math.max(0, documents.length - (Number.isFinite(documentLimit) ? documentLimit : documents.length));
+  const trimmed: KnowledgeCore = {
+    ...core,
+    items: core.items.length > limit ? core.items.slice(0, limit) : core.items,
+    documents: hiddenDocuments ? documents.slice(0, documentLimit) : documents,
+  };
   return {
-    core: { ...core, items: core.items.slice(0, limit) },
-    hidden: core.items.length - limit,
+    core: trimmed,
+    hidden: Math.max(0, core.items.length - limit),
     limit,
+    hiddenDocuments,
+    documentLimit,
   };
 }

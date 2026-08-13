@@ -19,6 +19,8 @@ export type Plan = {
   planned?: string[];
   /** Maximum number of digital Knowledge Core records hosted by Crawler. */
   catalogLimit: number;
+  /** Maximum number of imported text documents (Infinity = unlimited). */
+  documentLimit: number;
   analyticsDays: number;
 };
 
@@ -39,6 +41,7 @@ export const PLANS: Plan[] = [
     cta: "Publish with Plus",
     price: 5,
     catalogLimit: 10,
+    documentLimit: 3,
     analyticsDays: 7,
     features: [
       "1 hosted digital Presence",
@@ -46,6 +49,7 @@ export const PLANS: Plan[] = [
       "Measured analytics, 7-day window",
       "llms.txt, markdown pages and JSON endpoints",
       "Accountless management via recovery code",
+      "Up to 3 imported text documents",
     ],
   },
   {
@@ -64,6 +68,7 @@ export const PLANS: Plan[] = [
     recommended: true,
     price: 20,
     catalogLimit: 200,
+    documentLimit: 50,
     analyticsDays: 90,
     features: [
       "Up to 200 AI-readable content records",
@@ -71,6 +76,7 @@ export const PLANS: Plan[] = [
       "Detailed conversation insights (recurring questions, gaps)",
       "Improve my Presence recommendations",
       "Custom domain with DNS verification",
+      "Up to 50 imported text documents",
     ],
   },
   {
@@ -88,6 +94,7 @@ export const PLANS: Plan[] = [
     cta: "Choose Business",
     price: 80,
     catalogLimit: 5000,
+    documentLimit: Number.POSITIVE_INFINITY,
     analyticsDays: 90,
     features: [
       "Up to 5,000 AI-readable content records",
@@ -95,6 +102,7 @@ export const PLANS: Plan[] = [
       "Detailed conversation insights and improvement recommendations",
       "Custom domain with DNS verification",
       "REST API for Presence and analytics data",
+      "Unlimited imported text documents",
       "Priority support by email",
       "Shared team access",
       "Scheduled report emails",
