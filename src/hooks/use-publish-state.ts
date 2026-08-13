@@ -26,9 +26,13 @@ export type PublishState = {
   plan: PlanId;
   /** Local Knowledge Core differs from what is published — an update is pending. */
   hasChanges: boolean;
-  /** Local content exceeds the plan's content-record limit. */
+  /** Local content exceeds the plan's content-record or document limit. */
   overLimit: boolean;
   limit: number;
+  /** Local imported documents exceed the plan's document limit. */
+  overDocumentLimit: boolean;
+  documentLimit: number;
+  documentCount: number;
   /** Recovery code stored in this browser; required to push updates. */
   code: string;
   loading: boolean;
@@ -57,6 +61,9 @@ export function usePublishState(): PublishState {
   const remote = ok ? ((result as { core: unknown }).core as KnowledgeCore) : null;
   const plan = asPlanId(ok ? (result as { plan?: string }).plan : undefined);
   const limit = planById(plan).catalogLimit;
+  const documentLimit = planById(plan).documentLimit;
+  const documentCount = core.documents?.length ?? 0;
+  const overDocumentLimit = documentCount > documentLimit;
 
   const isLive = ok;
   const hasChanges = Boolean(isLive && remote && !isCoreEmpty(core) && stable(core) !== stable(remote));
@@ -66,8 +73,11 @@ export function usePublishState(): PublishState {
     slug: ok ? ((result as { slug: string }).slug ?? null) : (published?.slug ?? null),
     plan,
     hasChanges,
-    overLimit: (core.items?.length ?? 0) > limit,
+    overLimit: (core.items?.length ?? 0) > limit || overDocumentLimit,
     limit,
+    overDocumentLimit,
+    documentLimit,
+    documentCount,
     code,
     loading: enabled && query.isLoading,
     refresh: () => void query.refetch(),

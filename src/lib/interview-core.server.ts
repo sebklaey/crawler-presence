@@ -45,6 +45,16 @@ export const coreSchema = z.object({
     .default([]),
   links: z.array(z.object({ label: z.string(), url: z.string() })).default([]),
   gaps: z.array(z.string()).default([]),
+  documents: z
+    .array(
+      z.object({
+        title: z.string(),
+        text: z.string(),
+        source: z.string().optional(),
+        addedAt: z.string().optional(),
+      }),
+    )
+    .default([]),
 });
 
 export const turnSchema = z.object({
@@ -109,6 +119,7 @@ export function toKnowledgeCore(raw: z.infer<typeof coreSchema>): KnowledgeCore 
     cv: raw.cv.map((e) => clean({ id: rid(), ...e })) as KnowledgeCore["cv"],
     links: raw.links,
     gaps: raw.gaps,
+    documents: (raw.documents ?? []).map((d) => clean({ ...d })) as KnowledgeCore["documents"],
     updatedAt: new Date().toISOString(),
   };
 }

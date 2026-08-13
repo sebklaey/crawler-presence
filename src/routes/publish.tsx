@@ -565,7 +565,9 @@ function PublishPage() {
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
               {live.overLimit
-                ? `Your ${planById(live.plan).name} plan serves ${live.limit} content records — the rest stays stored but stays offline until you upgrade.`
+                ? live.overDocumentLimit
+                  ? `Your ${planById(live.plan).name} plan keeps ${Number.isFinite(live.documentLimit) ? live.documentLimit : "unlimited"} imported documents public — you have ${live.documentCount}. The rest stays stored but offline until you upgrade.`
+                  : `Your ${planById(live.plan).name} plan serves ${live.limit} content records — the rest stays stored but stays offline until you upgrade.`
                 : live.isLive
                   ? live.hasChanges
                     ? "Your subscription is active. Publishing the update regenerates all public files immediately — no new checkout."
@@ -582,7 +584,7 @@ function PublishPage() {
                 setFlowOpen(true);
               }}
             >
-              Update now
+              Upgrade now
             </Button>
           ) : live.isLive ? (
             live.hasChanges ? (
