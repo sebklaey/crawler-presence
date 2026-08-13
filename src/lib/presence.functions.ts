@@ -50,37 +50,40 @@ const startSchema = z.object({
 });
 
 export type StartPublishResult =
-  | { kind: "checkout"; url: string; intentRef: string }
   | {
-      kind: "demo";
-      slug: string;
-      publishedAt: string;
-      paths: string[];
-      manageSecret: string;
-      recoveryCode: string;
+      kind: "checkout";
+      /** Paddle transaction to open in the overlay. */
+      transactionId: string;
+      /** Hosted fallback URL, used only if the overlay cannot open. */
+      url: string;
+      intentRef: string;
+      environment: "sandbox" | "live";
+      clientToken: string;
     }
   | { kind: "error"; message: string };
 
 /**
  * Step 1 of publishing. Crawler Alpha 0.0.2 is paid-only: this creates an
- * anonymous publish intent and a hosted checkout session — no Crawler account
- * is created and no personal identifier is sent to the payment provider.
+ * anonymous publish intent and a checkout transaction — no Crawler account is
+ * created and no personal identifier is sent to the payment provider.
  * Without working payment credentials nothing is published (no free fallback).
  */
 export const startPublishFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => startSchema.parse(input))
   .handler(async ({ data }): Promise<StartPublishResult> => {
-    const { billingEnvironment, createIntent, attachCheckout } = await import("./intents.server");
-    const { paymentsConfigured } = await import("./paddle.server");
-    const environment = billingEnvironment();
+    const { createIntent, attachCheckout } = await import("./intents.server");
+    const { paymentsEnv, paymentsReady, paymentsClientToken } = await import("./payments-config");
+    const environment = paymentsEnv();
 
-    if (!paymentsConfigured(environment)) {
+    if (!paymentsReady()) {
       return {
         kind: "error",
-        message: "Checkout is temporarily unavailable. Publishing requires an active paid subscription — please try again shortly.",
+        message:
+          environment === "sandbox"
+            ? "Test checkout is not configured on this preview. Publishing works on the live site."
+            : "Checkout is temporarily unavailable. Publishing requires an active paid subscription — please try again shortly.",
       };
     }
-
 
     const intent = await createIntent({
       plan: data.plan,
@@ -93,11 +96,19 @@ export const startPublishFn = createServerFn({ method: "POST" })
     try {
       const checkout = await createHostedCheckout({ plan: data.plan, intentRef: intent.intentRef });
       await attachCheckout(intent.intentRef, checkout.transactionId);
-      return { kind: "checkout", url: checkout.url, intentRef: intent.intentRef };
+      return {
+        kind: "checkout",
+        transactionId: checkout.transactionId,
+        url: checkout.url,
+        intentRef: intent.intentRef,
+        environment,
+        clientToken: paymentsClientToken(environment),
+      };
     } catch (error) {
       return { kind: "error", message: getPaddleErrorMessage(error) };
     }
   });
+
 
 const finalizeSchema = z.object({
   intentRef: z.string().trim().regex(/^pi_[a-f0-9]{32}$/),

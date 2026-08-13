@@ -42,6 +42,46 @@ export const Route = createFileRoute("/publish")({
 
 const PENDING_INTENT_KEY = "crawler:pending-intent";
 const PENDING_PLAN_KEY = "crawler:pending-plan";
+/** A checkout attempt older than this is stale and must never block the page. */
+const PENDING_INTENT_TTL_MS = 30 * 60 * 1000;
+
+/** Remembers the open checkout with a timestamp, so it can expire on its own. */
+function storePendingIntent(intentRef: string) {
+  try {
+    localStorage.setItem(PENDING_INTENT_KEY, JSON.stringify({ ref: intentRef, at: Date.now() }));
+  } catch {
+    /* ignore */
+  }
+}
+
+function readPendingIntent(): string | null {
+  try {
+    const raw = localStorage.getItem(PENDING_INTENT_KEY);
+    if (!raw) return null;
+    if (raw.startsWith("pi_")) {
+      // Legacy value without a timestamp — drop it rather than block the page.
+      localStorage.removeItem(PENDING_INTENT_KEY);
+      return null;
+    }
+    const parsed = JSON.parse(raw) as { ref?: string; at?: number };
+    if (!parsed.ref || !parsed.at || Date.now() - parsed.at > PENDING_INTENT_TTL_MS) {
+      localStorage.removeItem(PENDING_INTENT_KEY);
+      return null;
+    }
+    return parsed.ref;
+  } catch {
+    localStorage.removeItem(PENDING_INTENT_KEY);
+    return null;
+  }
+}
+
+function clearPendingIntent() {
+  try {
+    localStorage.removeItem(PENDING_INTENT_KEY);
+  } catch {
+    /* ignore */
+  }
+}
 
 type Issued = { slug: string; publishedAt: string; paths: string[]; recoveryCode: string; mode: "live" | "demo" };
 
@@ -52,6 +92,7 @@ type Issued = { slug: string; publishedAt: string; paths: string[]; recoveryCode
 type Phase =
   | "draft"
   | "ready_to_publish"
+  | "checkout_open"
   | "checkout_pending"
   | "payment_confirmed"
   | "publishing"
@@ -59,6 +100,7 @@ type Phase =
   | "payment_failed"
   | "publish_failed"
   | "demo";
+
 
 function PublishPage() {
   const search = Route.useSearch();
@@ -132,7 +174,7 @@ function PublishPage() {
   const finalize = useCallback(
     async (intentRef: string) => {
       const result = await finalizePublishFn({ data: { intentRef, core } });
-      if (result.kind !== "pending") localStorage.removeItem(PENDING_INTENT_KEY);
+      if (result.kind !== "pending") clearPendingIntent();
       if (result.kind === "published") {
         localStorage.removeItem(PENDING_PLAN_KEY);
         trackFunnel("payment_confirmed", { plan: result.plan as PlanId, presenceSlug: result.slug });
@@ -165,19 +207,21 @@ function PublishPage() {
     [core, setPublished],
   );
 
-  // Paddle's hosted checkout returns to the success URL configured in Paddle,
-  // which may not carry our query string — so the intent is also kept locally.
+  // Returning from checkout: the intent travels in the URL, and as a
+  // short-lived local fallback for hosted redirects that drop the query.
   useEffect(() => {
     if (search.intent) {
       setPendingIntent(search.intent);
+      setPhase("checkout_pending");
       return;
     }
-    const stored = localStorage.getItem(PENDING_INTENT_KEY);
+    const stored = readPendingIntent();
     if (stored) {
       setPendingIntent(stored);
       setPhase("checkout_pending");
     }
   }, [search.intent]);
+
 
   // Return from hosted checkout: poll until the payment webhook has landed.
   useEffect(() => {
@@ -223,7 +267,7 @@ function PublishPage() {
   );
 
   const retryIntent = useCallback(() => {
-    const stored = localStorage.getItem(PENDING_INTENT_KEY);
+    const stored = readPendingIntent();
     if (!stored) {
       setPhase("draft");
       setFailure(null);
@@ -235,11 +279,20 @@ function PublishPage() {
     window.setTimeout(() => setPendingIntent(stored), 50);
   }, []);
 
+  /** Escape hatch: never let an abandoned checkout lock the publish page. */
+  const abandonCheckout = useCallback(() => {
+    clearPendingIntent();
+    setPendingIntent(null);
+    setFailure(null);
+    setPhase("draft");
+    void navigate({ to: "/publish", search: {}, replace: true });
+  }, [navigate]);
+
+
   async function publish(planId: PlanId) {
     if (busy) return;
     setBusy(true);
     setFailure(null);
-    setPhase(payments ? "checkout_pending" : "publishing");
     trackFunnel("checkout_started", { plan: planId, fromStep: "plan_summary", toStep: "checkout" });
     try {
       localStorage.setItem(PENDING_PLAN_KEY, planId);
@@ -251,29 +304,30 @@ function PublishPage() {
           ...(search.session ? { sessionToken: search.session } : {}),
         },
       });
-      if (result.kind === "checkout") {
-        localStorage.setItem(PENDING_INTENT_KEY, result.intentRef);
-        window.location.href = result.url;
+      if (result.kind === "error") {
+        trackFunnel("publish_failed", { plan: planId, errorCategory: "checkout_start" });
+        setPhase("publish_failed");
+        setFailure(result.message);
         return;
       }
-      if (result.kind === "demo") {
-        localStorage.removeItem(PENDING_PLAN_KEY);
-        trackFunnel("publish_completed", { plan: planId, presenceSlug: result.slug });
-        setIssued({
-          slug: result.slug,
-          publishedAt: result.publishedAt,
-          paths: result.paths,
-          recoveryCode: result.recoveryCode,
-          mode: "demo",
+
+      const successUrl = `${window.location.origin}/publish?intent=${encodeURIComponent(result.intentRef)}`;
+      storePendingIntent(result.intentRef);
+      try {
+        // Overlay in this tab: the environment and token come from the server,
+        // so the overlay always matches the transaction that was created.
+        const { openPaddleCheckout } = await import("@/lib/paddle-client");
+        await openPaddleCheckout({
+          environment: result.environment,
+          token: result.clientToken,
+          transactionId: result.transactionId,
+          successUrl,
         });
-        setPublished({ at: result.publishedAt, slug: result.slug });
-        setPhase("demo");
-        toast.success("Published — your files are live.");
-        return;
+        setPhase("checkout_open");
+      } catch {
+        // Hosted fallback if Paddle.js cannot load (blocked script, etc.).
+        window.location.href = result.url;
       }
-      trackFunnel("publish_failed", { plan: planId, errorCategory: "checkout_start" });
-      setPhase("publish_failed");
-      setFailure(result.message);
     } catch (e) {
       trackFunnel("publish_failed", { plan: planId, errorCategory: "network" });
       setPhase("publish_failed");
@@ -282,6 +336,7 @@ function PublishPage() {
       setBusy(false);
     }
   }
+
 
   if (recovering) {
     return (
@@ -305,10 +360,14 @@ function PublishPage() {
             Keep this tab open. Nothing is live until the server confirms the publication. Your recovery code appears
             here once, right afterwards.
           </p>
+          <Button variant="outline" size="sm" className="mt-6" onClick={abandonCheckout}>
+            Cancel and start over
+          </Button>
         </div>
       </AppShell>
     );
   }
+
 
   if (isCoreEmpty(core) && !recovered && !issued) return <Empty />;
 
