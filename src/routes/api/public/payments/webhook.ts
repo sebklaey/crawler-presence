@@ -66,7 +66,7 @@ async function handleSubscription(subscription: AnyRecord, env: PaddleEnv, force
   const { subscriptionFromEvent, mirrorSubscription } = await import("@/lib/billing-mirror.server");
   const mirrored = subscriptionFromEvent(subscription);
   if (mirrored) {
-    await mirrorSubscription({ ...mirrored, status, plan }, env);
+    await mirrorSubscription({ ...mirrored, status: status ?? mirrored.status, plan }, env);
   }
 
   if (ref) {
