@@ -16,6 +16,12 @@ dist-ssr
 .nitro
 *.local
 
+# Secrets — only publishable client values may ever be committed (.env,
+# .env.development, .env.production). Server secrets belong in these files.
+.env.local
+.env.*.local
+.env.secrets
+
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars

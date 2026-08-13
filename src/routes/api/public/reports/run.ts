@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { timingSafeEqual } from "@/lib/secure-compare";
 
 /**
  * Scheduled report delivery. Public route with a shared-secret guard, so an
@@ -19,7 +20,7 @@ export const Route = createFileRoute("/api/public/reports/run")({
           request.headers.get("x-crawler-cron-secret")?.trim() ??
           request.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim() ??
           "";
-        if (provided !== secret) return new Response("Unauthorized", { status: 401 });
+        if (!timingSafeEqual(provided, secret)) return new Response("Unauthorized", { status: 401 });
 
         try {
           const { runDueReports } = await import("@/lib/reports.server");

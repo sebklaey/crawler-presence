@@ -21,17 +21,31 @@ const eventSchema = z.object({
 export const trackFunnelFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => eventSchema.parse(input))
   .handler(async ({ data }): Promise<{ ok: true }> => {
+    const { allowRequest } = await import("./mcp/presences");
+    // Unauthenticated writer: bounded so the funnel table cannot be flooded.
+    if (!(await allowRequest(`funnel:${data.sessionId}`, 120))) return { ok: true };
     const { recordFunnel } = await import("./funnel.server");
     await recordFunnel(data);
     return { ok: true };
   });
 
-const reportSchema = z.object({ days: z.number().int().min(1).max(180).default(30) });
+const reportSchema = z.object({
+  days: z.number().int().min(1).max(180).default(30),
+  secret: z.string().min(1),
+});
 
-/** Internal conversion report: distinct sessions and drop-off per step. */
+/**
+ * Internal conversion report: distinct sessions and drop-off per step. This is
+ * business data, so it requires FUNNEL_REPORT_SECRET and fails closed when the
+ * secret is not configured.
+ */
 export const funnelReportFn = createServerFn({ method: "GET" })
   .inputValidator((input: unknown) => reportSchema.parse(input))
   .handler(async ({ data }): Promise<FunnelReport> => {
+    const expected = process.env["FUNNEL_REPORT_SECRET"]?.trim();
+    if (!expected) throw new Error("Funnel reporting is not configured.");
+    const { timingSafeEqual } = await import("./secure-compare");
+    if (!timingSafeEqual(data.secret, expected)) throw new Error("Unauthorized");
     const { funnelReport } = await import("./funnel.server");
     return funnelReport(data.days);
   });

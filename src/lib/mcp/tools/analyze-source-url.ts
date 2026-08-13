@@ -1,6 +1,7 @@
 import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 import { allowRequest } from "../presences";
+import { fetchPublicUrl } from "../../url-guard";
 
 function stripHtml(html: string) {
   return html
@@ -57,25 +58,19 @@ export default defineTool({
       /* analytics must never break a URL analysis */
     }
 
-    let parsed: URL;
-    try {
-      parsed = new URL(url);
-    } catch {
-      return unavailable("invalid URL");
-    }
-    if (parsed.protocol !== "https:") return unavailable("only https URLs are fetched");
-
     let html: string;
     try {
-      const res = await fetch(parsed.toString(), {
-        redirect: "follow",
-        headers: { "user-agent": "CrawlerPresenceBot/1.0 (+https://crawler.today)", accept: "text/html" },
-        signal: AbortSignal.timeout(12000),
+      const result = await fetchPublicUrl(url, {
+        accept: "text/html",
+        userAgent: "CrawlerPresenceBot/1.0 (+https://crawler.today)",
+        timeoutMs: 12000,
+        maxBytes: 200000,
+        allowedContentType: /text\/html|application\/xhtml/,
       });
-      if (!res.ok) return unavailable(`HTTP ${res.status}`);
-      html = (await res.text()).slice(0, 200000);
+      if (!result.ok) return unavailable(result.error ?? "fetch failed");
+      html = result.text;
     } catch (e) {
-      return unavailable(`fetch failed (${String((e as Error).message ?? e)})`);
+      return unavailable(String((e as Error).message ?? e));
     }
 
     const text = stripHtml(html).slice(0, 12000);
