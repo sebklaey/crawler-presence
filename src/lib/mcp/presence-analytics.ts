@@ -17,6 +17,7 @@
  * path and an unlinkable session fingerprint. No prompts, no answers, no
  * query strings, no IPs, no user agents, no identities.
  */
+import { logBestEffortFailure } from "../best-effort";
 import type { KnowledgeCore } from "../knowledge";
 
 export type AnalyticsEventType = "mention" | "conversation" | "file_read" | "outbound_click";
@@ -32,7 +33,9 @@ async function client() {
   try {
     const { db } = await import("./db.server");
     return db();
-  } catch {
+  } catch (error) {
+    // Measurement must not break a retrieval, so this degrades — but visibly.
+    logBestEffortFailure("analytics-client", error);
     return null;
   }
 }
@@ -431,6 +434,9 @@ export async function hasEvents(slug: string): Promise<boolean> {
     .select("id")
     .eq("presence_slug", slug)
     .limit(1);
-  if (error) return false;
+  if (error) {
+    console.error("[crawler] analytics presence check failed", error.message);
+    return false;
+  }
   return Boolean(data && data.length);
 }

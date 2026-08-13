@@ -46,7 +46,11 @@ export const visibilityDashboardFn = createServerFn({ method: "POST" })
         eventType: (data.eventType ?? "all") as never,
       });
       return { ok: true as const, dashboard, name: presence.core?.name ?? presence.slug, maxDays: allowed };
-    } catch {
+    } catch (error) {
+      console.error(
+        "[crawler] visibility dashboard failed",
+        error instanceof Error ? error.message : String(error),
+      );
       return { ok: false as const, reason: "unavailable" as const };
     }
   });
@@ -63,8 +67,14 @@ export const publicVisibilityFn = createServerFn({ method: "GET" })
       const { buildPublic } = await import("./visibility/aggregate.server");
       const summary = await buildPublic(presence.slug, data.period as 7 | 30 | 90 | "all");
       return { found: true as const, name: presence.core?.name ?? presence.slug, summary };
-    } catch {
-      return { found: false as const };
+    } catch (error) {
+      // "Not published" and "could not be read" look identical to a visitor
+      // unless they are kept apart here.
+      console.error(
+        "[crawler] public visibility failed",
+        error instanceof Error ? error.message : String(error),
+      );
+      return { found: false as const, unavailable: true as const };
     }
   });
 

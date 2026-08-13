@@ -34,7 +34,12 @@ export async function authenticate(request: Request): Promise<ApiAuth> {
     if (!API_PLANS.includes(presence.plan))
       return { ok: false, status: 403, error: "API access requires the Business plan." };
     return { ok: true, presence };
-  } catch {
+  } catch (error) {
+    // 503, never 401: a failed lookup says nothing about the code the caller sent.
+    console.error(
+      "[crawler] api authentication failed",
+      error instanceof Error ? error.message : String(error),
+    );
     return { ok: false, status: 503, error: "Crawler is temporarily unavailable." };
   }
 }

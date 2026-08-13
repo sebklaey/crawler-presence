@@ -70,8 +70,13 @@ async function client() {
   try {
     const { db } = await import("./db.server");
     return db();
-  } catch {
-    return null;
+  } catch (error) {
+    // A failing import is a deployment problem, not "no database configured".
+    const detail = error instanceof Error ? error.message : String(error);
+    console.error("[crawler] session store client unavailable", detail);
+    throw new SessionPersistenceError(
+      "The Crawler database client could not be loaded. Nothing was changed — please retry in a moment.",
+    );
   }
 }
 
@@ -135,12 +140,20 @@ export async function getSession(id: string): Promise<Session | undefined> {
   if (typeof id !== "string" || id.length < 6 || id.length > 128) return undefined;
   const supabase = await client();
   if (supabase) {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("mcp_sessions")
       .select("token, core, transcript, confidence, complete, origin, created_at, updated_at")
       .eq("token", id)
       .gt("expires_at", new Date().toISOString())
       .maybeSingle();
+    // A failed read is not an expired session: reporting "unknown session"
+    // here would make the caller start a new interview and drop the draft.
+    if (error) {
+      console.error("[crawler] session read failed", { session_id: id, detail: error.message });
+      throw new SessionPersistenceError(
+        "Could not read your draft from the Crawler database. Nothing was lost — please retry in a moment.",
+      );
+    }
     if (data) return fromRow(data as Row);
   }
   return memory.get(id);
@@ -185,20 +198,39 @@ export async function saveSession(session: Session): Promise<void> {
   rememberLocally(session);
 }
 
-export async function sessionCount(): Promise<number> {
-  const supabase = await client();
-  if (supabase) {
-    const { count } = await supabase
-      .from("mcp_sessions")
-      .select("id", { count: "exact", head: true })
-      .gt("expires_at", new Date().toISOString());
-    if (typeof count === "number") return count;
+/**
+ * Diagnostics only, so this never throws — but a count that could not be read
+ * is reported as null instead of as a misleading in-memory number.
+ */
+export async function sessionCount(): Promise<number | null> {
+  let supabase;
+  try {
+    supabase = await client();
+  } catch (error) {
+    console.error(
+      "[crawler] session count failed",
+      error instanceof Error ? error.message : String(error),
+    );
+    return null;
   }
-  return memory.size;
+  if (!supabase) return memory.size;
+  const { count, error } = await supabase
+    .from("mcp_sessions")
+    .select("id", { count: "exact", head: true })
+    .gt("expires_at", new Date().toISOString());
+  if (error) {
+    console.error("[crawler] session count failed", error.message);
+    return null;
+  }
+  return typeof count === "number" ? count : null;
 }
 
-export async function storeMode(): Promise<"database" | "in-memory-fallback"> {
-  return (await client()) ? "database" : "in-memory-fallback";
+export async function storeMode(): Promise<"database" | "in-memory-fallback" | "unavailable"> {
+  try {
+    return (await client()) ? "database" : "in-memory-fallback";
+  } catch {
+    return "unavailable";
+  }
 }
 
 export const SESSION_NOTE =

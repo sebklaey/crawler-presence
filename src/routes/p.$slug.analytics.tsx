@@ -63,7 +63,9 @@ function PublicAnalytics() {
     return (
       <AppShell>
         <div className="mx-auto max-w-2xl px-5 py-24 text-sm text-muted-foreground">
-          Für „{slug}" gibt es keine veröffentlichte Presence.
+          {"unavailable" in data && data.unavailable
+            ? "Diese Kennzahlen konnten gerade nicht geladen werden. Das bedeutet nicht, dass es keine veröffentlichte Presence gibt — bitte in einem Moment erneut versuchen."
+            : `Für „${slug}" gibt es keine veröffentlichte Presence.`}
         </div>
       </AppShell>
     );

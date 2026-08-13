@@ -7,6 +7,7 @@
  * publication. Nothing personal is stored — only ids, the event type and the
  * anonymous publish-intent reference.
  */
+import { logInconsistentState } from "./best-effort";
 import { db } from "./mcp/db.server";
 
 export type PaymentEventClaim = {
@@ -48,7 +49,7 @@ export async function claimPaymentEvent(input: {
 export async function finishPaymentEvent(eventId: string, error?: unknown): Promise<void> {
   const supabase = db();
   if (!supabase) return;
-  await supabase
+  const { error: updateError } = await supabase
     .from("payment_events")
     .update({
       status: error ? "failed" : "processed",
@@ -56,4 +57,13 @@ export async function finishPaymentEvent(eventId: string, error?: unknown): Prom
       error: error ? String(error instanceof Error ? error.message : error).slice(0, 500) : null,
     })
     .eq("event_id", eventId);
+  // The event id stays claimed either way, so a retry is still deduplicated;
+  // only the audit row keeps its "received" status and needs to be findable.
+  if (updateError) {
+    logInconsistentState(
+      "payment-event-finish",
+      updateError,
+      `payment event ${eventId} was handled but its audit row still reads "received"`,
+    );
+  }
 }

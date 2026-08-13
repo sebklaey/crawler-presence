@@ -23,6 +23,28 @@ export const loadDraft = createServerFn({ method: "GET" })
 /* Publishing — accountless, capability-based                          */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Redeems the intent after the Presence is already live. Failing the request
+ * here would hide the one-time recovery code from a user whose Presence was
+ * published, so the inconsistency is logged loudly instead of thrown.
+ */
+async function markPublished(
+  intentRef: string,
+  slug: string,
+  mark: (intentRef: string, slug: string) => Promise<void>,
+): Promise<void> {
+  try {
+    await mark(intentRef, slug);
+  } catch (error) {
+    const { logInconsistentState } = await import("./best-effort");
+    logInconsistentState(
+      "mark-intent-published",
+      error,
+      `presence ${slug} is live but intent ${intentRef} still looks unredeemed`,
+    );
+  }
+}
+
 const originSchema = z
   .string()
   .url()
@@ -90,7 +112,7 @@ export const startPublishFn = createServerFn({ method: "POST" })
       });
       if (intent) {
         const { markIntentPublished } = await import("./intents.server");
-        await markIntentPublished(intent.intentRef, presence.slug);
+        await markPublished(intent.intentRef, presence.slug, markIntentPublished);
       }
       return {
         kind: "demo",
@@ -174,7 +196,7 @@ export const finalizePublishFn = createServerFn({ method: "POST" })
         currentPeriodEnd: intent.currentPeriodEnd,
       },
     });
-    await markIntentPublished(intent.intentRef, presence.slug);
+    await markPublished(intent.intentRef, presence.slug, markIntentPublished);
 
     return {
       kind: "published",
@@ -202,8 +224,9 @@ export const getPublishedFn = createServerFn({ method: "GET" })
     try {
       const { recordEvent } = await import("./mcp/presence-analytics");
       await recordEvent({ slug: record.slug, eventType: "file_read", source: "web", filePath: "(presence page)" });
-    } catch {
-      /* measurement must never break public delivery */
+    } catch (error) {
+      const { logBestEffortFailure } = await import("./best-effort");
+      logBestEffortFailure("presence-page-read-event", error);
     }
 
     return {

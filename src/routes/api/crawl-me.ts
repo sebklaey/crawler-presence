@@ -21,6 +21,7 @@ export const Route = createFileRoute("/api/crawl-me")({
         const {
           apiError,
           clientLabel,
+          EntityLookupError,
           entityEtag,
           entityPayload,
           entitySection,
@@ -51,7 +52,14 @@ export const Route = createFileRoute("/api/crawl-me")({
         if (!lookup.id && !lookup.domain && !lookup.url && !lookup.name)
           return apiError(400, "Missing identifier.", "Pass domain, url, id or name. Use /api/search to discover entities.");
 
-        const presence = await resolveEntity(lookup);
+        // A lookup that failed is not a lookup that found nothing.
+        let presence;
+        try {
+          presence = await resolveEntity(lookup);
+        } catch (error) {
+          if (!(error instanceof EntityLookupError)) throw error;
+          return apiError(503, error.message, "Retry shortly; this is not a 404.");
+        }
         if (!presence)
           return apiError(404, "No published Crawler Today entity matches this identifier.", "Try /api/search?q=…");
 

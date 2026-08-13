@@ -42,12 +42,23 @@ type Row = {
   confidence: number | null;
 };
 
+/**
+ * A dashboard built from a failed query would show measured zeros for events
+ * that did happen, so every read here fails loudly instead.
+ */
+function readFailure(operation: string, detail: string): never {
+  console.error(`[crawler] visibility read failed (${operation})`, detail);
+  throw new Error(
+    "Die Analytics konnten gerade nicht gelesen werden. Bitte in einem Moment erneut versuchen.",
+  );
+}
+
 async function db() {
   try {
     const { db } = await import("../mcp/db.server");
     return db();
-  } catch {
-    return null;
+  } catch (error) {
+    readFailure("client", error instanceof Error ? error.message : String(error));
   }
 }
 
@@ -86,6 +97,8 @@ async function loadRows(slug: string, period: Period, offset = 0): Promise<Row[]
   if (to) modern = modern.lt("occurred_at", to);
 
   const [legacyResult, modernResult] = await Promise.all([legacy, modern]);
+  if (legacyResult.error) readFailure("legacy-events", legacyResult.error.message);
+  if (modernResult.error) readFailure("events", modernResult.error.message);
   const rows: Row[] = [];
 
   for (const r of (legacyResult.data ?? []) as {
@@ -172,10 +185,12 @@ function visibilityScore(input: {
 async function loadIntegrations(slug: string) {
   const supabase = await db();
   if (!supabase) return new Map<string, { status: string; last: string | null }>();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("analytics_integrations")
     .select("integration_type, connection_status, last_synced_at")
     .eq("presence_slug", slug);
+  // Otherwise a connected integration would be shown as "not connected".
+  if (error) readFailure("integrations", error.message);
   const map = new Map<string, { status: string; last: string | null }>();
   for (const row of (data ?? []) as { integration_type: string; connection_status: string; last_synced_at: string | null }[]) {
     map.set(row.integration_type, { status: row.connection_status, last: row.last_synced_at });
@@ -257,7 +272,8 @@ async function loadBenchmarks(slug: string, period: Period): Promise<BenchmarkRo
     .order("tested_at", { ascending: false })
     .limit(100);
   if (period !== "all") query = query.gte("tested_at", new Date(Date.now() - period * 86_400_000).toISOString());
-  const { data } = await query;
+  const { data, error } = await query;
+  if (error) readFailure("benchmarks", error.message);
   return ((data ?? []) as Record<string, unknown>[]).map((r) => ({
     testedAt: String(r["tested_at"]),
     provider: String(r["provider"]),

@@ -9,6 +9,7 @@
  * Recipients are set by whoever holds the recovery code. Crawler's own
  * operations copy always goes to the Crawler support inbox.
  */
+import { logInconsistentState } from "./best-effort";
 import { PresenceStoreError } from "./mcp/presences";
 import { CRAWLER_SUPPORT_EMAIL, sendMail } from "./email.server";
 
@@ -60,12 +61,23 @@ export async function setReportSettings(
   if (error) throw new PresenceStoreError(UNAVAILABLE);
 }
 
+/**
+ * Records that the report went out. The mail already left, so this cannot
+ * fail the send — but an unrecorded timestamp makes the next run send again.
+ */
 async function markSent(slug: string): Promise<void> {
   const supabase = await client();
-  await supabase
+  const { error } = await supabase
     .from("published_presences")
     .update({ report_last_sent_at: new Date().toISOString() })
     .eq("slug", slug);
+  if (error) {
+    logInconsistentState(
+      "report-mark-sent",
+      error,
+      `report for ${slug} was delivered but may be sent again on the next run`,
+    );
+  }
 }
 
 /** Builds the plain-text report body from measured events only. */
@@ -159,9 +171,19 @@ export async function runDueReports(): Promise<{ checked: number; sent: number; 
     const last = row.report_last_sent_at ? Date.parse(row.report_last_sent_at) : 0;
     if (now - last < DUE_MS[frequency]) continue;
 
-    const result = await sendReport(row.slug, frequency === "monthly" ? 30 : 7, row.report_email);
-    if (result.delivered) sent += 1;
-    else failed += 1;
+    // One failing Presence must not stop the reports of all the others.
+    try {
+      const result = await sendReport(row.slug, frequency === "monthly" ? 30 : 7, row.report_email);
+      if (result.delivered) sent += 1;
+      else failed += 1;
+    } catch (error) {
+      failed += 1;
+      console.error(
+        "[crawler] report send failed for",
+        row.slug,
+        error instanceof Error ? error.message : "unknown",
+      );
+    }
   }
 
   return { checked: rows.length, sent, failed };

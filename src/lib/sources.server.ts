@@ -11,6 +11,7 @@
  *  - A detected change never overwrites an owner-approved fact. It creates a
  *    recommendation that waits for review.
  */
+import { logBestEffortFailure } from "./best-effort";
 import { db } from "./mcp/db.server";
 
 export type ScanClassification =
@@ -169,6 +170,15 @@ function store() {
   return supabase;
 }
 
+const SCAN_UNAVAILABLE =
+  "The scan result could not be stored, so this scan did not complete. Nothing was changed — please try again in a moment.";
+
+/** Keeps the technical reason in the logs while the caller sees a safe message. */
+function storeFailure(operation: string, detail: string, message: string): never {
+  console.error(`[crawler] source store failure (${operation})`, detail);
+  throw new Error(message);
+}
+
 type SourceRow = {
   id: string;
   presence_slug: string;
@@ -198,7 +208,7 @@ const COLUMNS = "id, presence_slug, url, label, scan_frequency, last_scanned_at,
 
 export async function listSources(slug: string): Promise<PresenceSource[]> {
   const { data, error } = await store().from("presence_sources").select(COLUMNS).eq("presence_slug", slug).order("created_at");
-  if (error) throw new Error("Could not load your sources right now.");
+  if (error) storeFailure("list", error.message, "Could not load your sources right now.");
   return ((data ?? []) as SourceRow[]).map(fromRow);
 }
 
@@ -214,13 +224,16 @@ export async function addSource(input: { slug: string; url: string; label?: stri
     })
     .select(COLUMNS)
     .single();
-  if (error) throw new Error(error.code === "23505" ? "That source is already approved." : "Could not add that source.");
+  if (error) {
+    if (error.code === "23505") throw new Error("That source is already approved.");
+    storeFailure("add", error.message, "Could not add that source.");
+  }
   return fromRow(data as SourceRow);
 }
 
 export async function removeSource(slug: string, id: string): Promise<void> {
   const { error } = await store().from("presence_sources").delete().eq("presence_slug", slug).eq("id", id);
-  if (error) throw new Error("Could not remove that source.");
+  if (error) storeFailure("remove", error.message, "Could not remove that source.");
 }
 
 /* ------------------------------------------------------------------ */
@@ -255,10 +268,13 @@ export async function scanSource(source: PresenceSource, options?: { force?: boo
   const now = new Date().toISOString();
 
   if (!result.ok) {
-    await supabase
+    // An unreachable source is an expected scan result; failing to *record*
+    // that result is not, and must not be reported as a completed scan.
+    const { error } = await supabase
       .from("presence_sources")
       .update({ last_scanned_at: now, last_status: "unavailable", last_error: result.error ?? "Unavailable" })
       .eq("id", source.id);
+    if (error) storeFailure("scan-status", error.message, SCAN_UNAVAILABLE);
     const outcome: ScanOutcome = {
       sourceId: source.id,
       url: source.url,
@@ -271,15 +287,18 @@ export async function scanSource(source: PresenceSource, options?: { force?: boo
   }
 
   const print = await fingerprint(result.text);
-  const { data: previous } = await supabase
+  const { data: previous, error: previousError } = await supabase
     .from("source_snapshots")
     .select("fingerprint, excerpt")
     .eq("source_id", source.id)
     .order("fetched_at", { ascending: false })
     .limit(1)
     .maybeSingle();
+  // Without the previous snapshot every scan looks like a first scan, so a
+  // real change would silently never be detected.
+  if (previousError) storeFailure("scan-previous", previousError.message, SCAN_UNAVAILABLE);
 
-  await supabase.from("source_snapshots").insert({
+  const { error: snapshotError } = await supabase.from("source_snapshots").insert({
     source_id: source.id,
     presence_slug: source.presenceSlug,
     fingerprint: print,
@@ -287,10 +306,12 @@ export async function scanSource(source: PresenceSource, options?: { force?: boo
     byte_size: result.bytes,
     http_status: result.status,
   });
-  await supabase
+  if (snapshotError) storeFailure("scan-snapshot", snapshotError.message, SCAN_UNAVAILABLE);
+  const { error: statusError } = await supabase
     .from("presence_sources")
     .update({ last_scanned_at: now, last_status: "ok", last_error: null, consecutive_failures: 0 })
     .eq("id", source.id);
+  if (statusError) storeFailure("scan-status", statusError.message, SCAN_UNAVAILABLE);
 
   if (!previous) {
     return {
@@ -318,7 +339,7 @@ export async function scanSource(source: PresenceSource, options?: { force?: boo
 
 async function recordChange(slug: string, sourceId: string, outcome: ScanOutcome): Promise<void> {
   const supabase = store();
-  await supabase.from("source_changes").insert({
+  const { error } = await supabase.from("source_changes").insert({
     source_id: sourceId,
     presence_slug: slug,
     classification: outcome.classification,
@@ -326,6 +347,8 @@ async function recordChange(slug: string, sourceId: string, outcome: ScanOutcome
     evidence: outcome.evidence,
     status: "open",
   });
+  // A detected change that is not stored is a change the owner never sees.
+  if (error) storeFailure("record-change", error.message, SCAN_UNAVAILABLE);
 }
 
 export type SourceChange = {
@@ -346,7 +369,7 @@ export async function listOpenChanges(slug: string, limit = 20): Promise<SourceC
     .eq("status", "open")
     .order("detected_at", { ascending: false })
     .limit(limit);
-  if (error) throw new Error("Could not load detected changes.");
+  if (error) storeFailure("list-changes", error.message, "Could not load detected changes.");
   return ((data ?? []) as Record<string, any>[]).map((r) => ({
     id: r["id"] as string,
     classification: r["classification"] as ScanClassification,
@@ -364,7 +387,7 @@ export async function resolveChange(slug: string, id: string, status: "reviewed"
     .update({ status, resolved_at: new Date().toISOString() })
     .eq("presence_slug", slug)
     .eq("id", id);
-  if (error) throw new Error("Could not update that change.");
+  if (error) storeFailure("resolve-change", error.message, "Could not update that change.");
 }
 
 /** Scans every due source of one Presence. Idempotent: due-ness gates the work. */
@@ -376,7 +399,13 @@ export async function scanPresence(slug: string, options?: { force?: boolean }):
     if (outcome) outcomes.push(outcome);
   }
   if (outcomes.length) {
-    await store().from("published_presences").update({ last_source_scan_at: new Date().toISOString() }).eq("slug", slug);
+    const { error } = await store()
+      .from("published_presences")
+      .update({ last_source_scan_at: new Date().toISOString() })
+      .eq("slug", slug);
+    // Not fatal: the scan results themselves are stored. Only the "last
+    // scanned" marker is missing, so the next run simply scans again.
+    if (error) logBestEffortFailure("scan-timestamp", error.message);
   }
   return outcomes;
 }

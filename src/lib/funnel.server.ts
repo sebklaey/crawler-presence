@@ -6,6 +6,8 @@
  * coarse error category. Never stored: interview answers, management codes,
  * payment data, e-mail addresses, IP addresses or any private content.
  */
+import { logBestEffortFailure } from "./best-effort";
+
 export const FUNNEL_EVENTS = [
   "interview_started",
   "interview_question_answered",
@@ -41,7 +43,8 @@ async function client() {
   try {
     const { db } = await import("./mcp/db.server");
     return db();
-  } catch {
+  } catch (error) {
+    logBestEffortFailure("funnel-client", error);
     return null;
   }
 }
@@ -53,7 +56,7 @@ export async function recordFunnel(input: FunnelInput): Promise<void> {
   try {
     const { sessionFingerprint } = await import("./mcp/presence-analytics");
     const sessionHash = await sessionFingerprint(`funnel:${input.sessionId}`);
-    await supabase.from("funnel_events").insert({
+    const { error } = await supabase.from("funnel_events").insert({
       event_type: input.event,
       session_hash: sessionHash,
       presence_slug: input.presenceSlug ?? null,
@@ -62,8 +65,10 @@ export async function recordFunnel(input: FunnelInput): Promise<void> {
       to_step: input.toStep ?? null,
       error_category: input.errorCategory ?? null,
     });
-  } catch {
-    /* measurement is best-effort */
+    // Best-effort, but a measurement gap has to be explainable afterwards.
+    if (error) logBestEffortFailure(`funnel-insert:${input.event}`, error.message);
+  } catch (error) {
+    logBestEffortFailure(`funnel-insert:${input.event}`, error);
   }
 }
 
@@ -117,7 +122,13 @@ export async function funnelReport(days: number): Promise<FunnelReport> {
     .select("event_type, session_hash")
     .gte("occurred_at", since)
     .limit(50_000);
-  if (error || !data) return empty;
+  // `available: false` already tells the reader the numbers are not usable;
+  // the reason belongs in the logs rather than nowhere.
+  if (error) {
+    logBestEffortFailure("funnel-report", error.message);
+    return empty;
+  }
+  if (!data) return empty;
 
   const bySteps = new Map<string, Set<string>>();
   for (const row of data as { event_type: string; session_hash: string }[]) {

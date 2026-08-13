@@ -12,6 +12,20 @@ async function db() {
   return db();
 }
 
+/**
+ * A partial export is a wrong export and a failed deletion is not a deletion —
+ * both are data-protection promises, so neither may fail quietly.
+ */
+function adminFailure(operation: string, detail: string, message: string): never {
+  console.error(`[crawler] analytics admin failure (${operation})`, detail);
+  throw new Error(message);
+}
+
+const EXPORT_FAILED =
+  "Der Export konnte nicht vollständig erstellt werden. Bitte in einem Moment erneut versuchen.";
+const DELETE_FAILED =
+  "Die Ereignisse konnten nicht gelöscht werden. Bitte in einem Moment erneut versuchen.";
+
 export type AnalyticsExport = {
   slug: string;
   exported_at: string;
@@ -69,6 +83,9 @@ export async function exportEvents(slug: string): Promise<AnalyticsExport> {
         "tested_at, provider, model, prompt_key, prompt_version, entity_mentioned, description_correct, source_cited, position, detected_issues, result_summary",
       ).eq("presence_slug", slug).limit(2000),
   ]);
+  if (legacy.error) adminFailure("export-legacy", legacy.error.message, EXPORT_FAILED);
+  if (modern.error) adminFailure("export-events", modern.error.message, EXPORT_FAILED);
+  if (benchmarks.error) adminFailure("export-benchmarks", benchmarks.error.message, EXPORT_FAILED);
 
   const events = [
     ...((legacy.data ?? []) as { occurred_at: string; event_type: string; source: string; file_path: string | null }[]).map(
@@ -90,11 +107,14 @@ export async function exportEvents(slug: string): Promise<AnalyticsExport> {
 export async function purgeEvents(slug: string): Promise<void> {
   const supabase = await db();
   if (!supabase) return;
-  await Promise.all([
+  const results = await Promise.all([
     supabase.from("analytics_events").delete().eq("presence_slug", slug),
     supabase.from("presence_analytics_events").delete().eq("presence_slug", slug),
     supabase.from("analytics_daily_rollups").delete().eq("presence_slug", slug),
   ]);
+  for (const result of results) {
+    if (result.error) adminFailure("purge", result.error.message, DELETE_FAILED);
+  }
 }
 
 /** Aufbewahrungsfrist anwenden: ältere Ereignisse werden entfernt. */
@@ -102,5 +122,6 @@ export async function applyRetention(days = DEFAULT_RETENTION_DAYS): Promise<voi
   const supabase = await db();
   if (!supabase) return;
   const cutoff = new Date(Date.now() - days * 86_400_000).toISOString();
-  await supabase.from("analytics_events").delete().lt("occurred_at", cutoff);
+  const { error } = await supabase.from("analytics_events").delete().lt("occurred_at", cutoff);
+  if (error) adminFailure("retention", error.message, DELETE_FAILED);
 }
