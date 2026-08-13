@@ -42,6 +42,46 @@ export const Route = createFileRoute("/publish")({
 
 const PENDING_INTENT_KEY = "crawler:pending-intent";
 const PENDING_PLAN_KEY = "crawler:pending-plan";
+/** A checkout attempt older than this is stale and must never block the page. */
+const PENDING_INTENT_TTL_MS = 30 * 60 * 1000;
+
+/** Remembers the open checkout with a timestamp, so it can expire on its own. */
+function storePendingIntent(intentRef: string) {
+  try {
+    localStorage.setItem(PENDING_INTENT_KEY, JSON.stringify({ ref: intentRef, at: Date.now() }));
+  } catch {
+    /* ignore */
+  }
+}
+
+function readPendingIntent(): string | null {
+  try {
+    const raw = localStorage.getItem(PENDING_INTENT_KEY);
+    if (!raw) return null;
+    if (raw.startsWith("pi_")) {
+      // Legacy value without a timestamp — drop it rather than block the page.
+      localStorage.removeItem(PENDING_INTENT_KEY);
+      return null;
+    }
+    const parsed = JSON.parse(raw) as { ref?: string; at?: number };
+    if (!parsed.ref || !parsed.at || Date.now() - parsed.at > PENDING_INTENT_TTL_MS) {
+      localStorage.removeItem(PENDING_INTENT_KEY);
+      return null;
+    }
+    return parsed.ref;
+  } catch {
+    localStorage.removeItem(PENDING_INTENT_KEY);
+    return null;
+  }
+}
+
+function clearPendingIntent() {
+  try {
+    localStorage.removeItem(PENDING_INTENT_KEY);
+  } catch {
+    /* ignore */
+  }
+}
 
 type Issued = { slug: string; publishedAt: string; paths: string[]; recoveryCode: string; mode: "live" | "demo" };
 
@@ -52,6 +92,7 @@ type Issued = { slug: string; publishedAt: string; paths: string[]; recoveryCode
 type Phase =
   | "draft"
   | "ready_to_publish"
+  | "checkout_open"
   | "checkout_pending"
   | "payment_confirmed"
   | "publishing"
@@ -59,6 +100,7 @@ type Phase =
   | "payment_failed"
   | "publish_failed"
   | "demo";
+
 
 function PublishPage() {
   const search = Route.useSearch();
