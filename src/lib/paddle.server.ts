@@ -114,18 +114,38 @@ export function getPaddleErrorMessage(error: unknown): string {
 
 type PaddleResponse<T> = { data?: T; error?: { detail?: string; code?: string } };
 
+const GATEWAY_BASE = "https://connector-gateway.lovable.dev/paddle";
+
+/** Lovable connector keys (`lovc_…`) are not Paddle keys — they route via the gateway. */
+function isConnectorKey(key: string): boolean {
+  return key.startsWith("lovc_");
+}
+
 async function paddleFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const key = paddleApiKey();
   if (!key) throw new Error("PADDLE_API_KEY is not configured");
 
-  const response = await fetch(`${API_BASE[paddleEnvironment()]}${path}`, {
+  const viaGateway = isConnectorKey(key);
+  const lovableKey = env("LOVABLE_API_KEY");
+  if (viaGateway && !lovableKey) throw new Error("LOVABLE_API_KEY is not configured");
+
+  const url = viaGateway
+    ? `${GATEWAY_BASE}${path}`
+    : `${API_BASE[paddleEnvironment()]}${path}`;
+
+  const auth: Record<string, string> = viaGateway
+    ? { Authorization: `Bearer ${lovableKey}`, "X-Connection-Api-Key": key }
+    : { Authorization: `Bearer ${key}` };
+
+  const response = await fetch(url, {
     ...init,
     headers: {
-      Authorization: `Bearer ${key}`,
+      ...auth,
       "Content-Type": "application/json",
       ...(init?.headers ?? {}),
     },
   });
+
 
   const payload = (await response.json().catch(() => ({}))) as PaddleResponse<T>;
   if (!response.ok || payload.error) {
