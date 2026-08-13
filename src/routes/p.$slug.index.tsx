@@ -64,7 +64,7 @@ function PublicPresence() {
     <AppShell>
       <div className="mx-auto max-w-4xl px-5 pb-24 pt-14">
         <PageHead
-          eyebrow={data.mode === "demo" ? "Free Beta 0.0.1" : "Published presence"}
+          eyebrow="Published presence"
           title={data.name || slug}
           description={data.summary || data.tagline || "AI-readable presence files served from a stable address."}
         />
