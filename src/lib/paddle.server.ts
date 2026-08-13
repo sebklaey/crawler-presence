@@ -42,9 +42,11 @@ export function paddleApiKeyFor(target: PaddleEnv): string | undefined {
  * build uses live when a live key exists.
  */
 export function paddleEnvironment(): PaddleEnv {
+  const isProduction = env("NODE_ENV") === "production";
+  // Preview must never create live transactions: its browser token is test-only.
+  if (!isProduction && paddleApiKeyFor("sandbox")) return "sandbox";
   const forced = env("PADDLE_ENV");
   if (forced === "sandbox" || forced === "live") return forced;
-  const isProduction = env("NODE_ENV") === "production";
   if (isProduction && paddleApiKeyFor("live")) return "live";
   if (paddleApiKeyFor("sandbox")) return "sandbox";
   return paddleApiKeyFor("live") ? "live" : "sandbox";

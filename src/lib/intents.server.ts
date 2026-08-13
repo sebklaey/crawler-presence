@@ -19,9 +19,11 @@ export type BillingEnv = "sandbox" | "live";
  * paddle.server, so preview never bills live and production never bills test.
  */
 export function billingEnvironment(): BillingEnv {
+  const isProduction = process.env["NODE_ENV"] === "production";
+  // Keep the server transaction environment aligned with the preview's test token.
+  if (!isProduction && process.env["PADDLE_SANDBOX_API_KEY"]?.trim()) return "sandbox";
   const forced = process.env["PADDLE_ENV"]?.trim();
   if (forced === "sandbox" || forced === "live") return forced;
-  const isProduction = process.env["NODE_ENV"] === "production";
   if (isProduction && process.env["PADDLE_LIVE_API_KEY"]?.trim()) return "live";
   if (process.env["PADDLE_SANDBOX_API_KEY"]?.trim()) return "sandbox";
   return process.env["PADDLE_LIVE_API_KEY"]?.trim() ? "live" : "sandbox";
