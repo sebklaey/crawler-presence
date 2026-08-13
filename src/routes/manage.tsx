@@ -243,7 +243,7 @@ function ManagePage() {
                 <div>
                   <dt className="text-xs text-muted-foreground">Plan</dt>
                   <dd className="capitalize">
-                    {data.plan} {data.mode === "demo" ? "(Free Beta 0.0.1, no charge)" : ""}
+                    {data.plan} {data.mode === "demo" ? "(beta publication, no charge)" : ""}
                   </dd>
                 </div>
                 <div>
@@ -253,7 +253,7 @@ function ManagePage() {
                 <div>
                   <dt className="text-xs text-muted-foreground">Subscription</dt>
                   <dd>
-                    {data.subscriptionStatus ?? (data.mode === "demo" ? "none (Free Beta 0.0.1)" : "pending")}
+                    {data.subscriptionStatus ?? (data.mode === "demo" ? "none (beta publication)" : "pending")}
                     {data.currentPeriodEnd
                       ? ` · renews ${new Date(data.currentPeriodEnd).toLocaleDateString()}`
                       : ""}

@@ -84,45 +84,25 @@ export type StartPublishResult =
   | { kind: "error"; message: string };
 
 /**
- * Step 1 of publishing. With payment credentials this creates an anonymous
- * publish intent and a hosted checkout session — no Crawler account is created
- * and no personal identifier is sent to the payment provider by Crawler.
- * Without credentials the very same flow runs in clearly labelled DEMO mode.
+ * Step 1 of publishing. Crawler Alpha 0.0.2 is paid-only: this creates an
+ * anonymous publish intent and a hosted checkout session — no Crawler account
+ * is created and no personal identifier is sent to the payment provider.
+ * Without working payment credentials nothing is published (no free fallback).
  */
 export const startPublishFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => startSchema.parse(input))
   .handler(async ({ data }): Promise<StartPublishResult> => {
     const { billingEnvironment, createIntent, attachCheckout } = await import("./intents.server");
     const { paymentsConfigured } = await import("./paddle.server");
-    const { publishDraft, recoveryCode } = await import("./mcp/presences");
     const environment = billingEnvironment();
 
     if (!paymentsConfigured(environment)) {
-      const intent = await createIntent({
-        plan: data.plan,
-        status: "demo",
-        ...(data.sessionToken ? { sessionToken: data.sessionToken } : {}),
-      });
-      const { presence, manageSecret } = await publishDraft({
-        core: data.core as KnowledgeCore,
-        plan: data.plan,
-        mode: "demo",
-        ...(data.sessionToken ? { sessionToken: data.sessionToken } : {}),
-        ...(intent ? { intentRef: intent.intentRef } : {}),
-      });
-      if (intent) {
-        const { markIntentPublished } = await import("./intents.server");
-        await markPublished(intent.intentRef, presence.slug, markIntentPublished);
-      }
       return {
-        kind: "demo",
-        slug: presence.slug,
-        publishedAt: presence.publishedAt,
-        paths: presence.files.map((f) => f.path),
-        manageSecret,
-        recoveryCode: recoveryCode(presence.slug, manageSecret),
+        kind: "error",
+        message: "Checkout is temporarily unavailable. Publishing requires an active paid subscription — please try again shortly.",
       };
     }
+
 
     const intent = await createIntent({
       plan: data.plan,

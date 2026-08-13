@@ -8,8 +8,8 @@ export function PaymentTestModeBanner() {
   if (!status.configured) {
     return (
       <div className="border-b border-border bg-secondary px-4 py-2 text-center text-xs text-muted-foreground">
-        <strong className="text-foreground">Free Beta 0.0.1.</strong> Publishing is free while live payments are not
-        enabled yet. As soon as they are, Crawler switches automatically to the paid version 0.0.2.
+        <strong className="text-foreground">Checkout temporarily unavailable.</strong> Crawler Alpha 0.0.2 is
+        paid-only — building and previewing stay free, publishing resumes as soon as checkout is reachable again.
       </div>
     );
   }
