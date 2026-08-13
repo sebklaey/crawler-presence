@@ -1,6 +1,8 @@
 import { defineMcp } from "@lovable.dev/mcp-js";
 import analyzeSourceUrl from "./tools/analyze-source-url";
 import continueInterview from "./tools/continue-interview";
+import deleteDocument from "./tools/delete-document";
+
 import getAnalytics from "./tools/get-analytics";
 import getCheckoutLink from "./tools/get-checkout-link";
 import getEntity from "./tools/get-entity";
