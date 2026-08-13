@@ -152,6 +152,84 @@ export type Database = {
           },
         ]
       }
+      billing_customers: {
+        Row: {
+          created_at: string
+          customer_id: string
+          email: string | null
+          environment: string
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          email?: string | null
+          environment?: string
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          email?: string | null
+          environment?: string
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      billing_subscriptions: {
+        Row: {
+          canceled_at: string | null
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          customer_id: string
+          environment: string
+          plan: string | null
+          price_id: string | null
+          product_id: string | null
+          scheduled_change_action: string | null
+          scheduled_change_at: string | null
+          status: string
+          subscription_id: string
+          updated_at: string
+        }
+        Insert: {
+          canceled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          customer_id: string
+          environment?: string
+          plan?: string | null
+          price_id?: string | null
+          product_id?: string | null
+          scheduled_change_action?: string | null
+          scheduled_change_at?: string | null
+          status: string
+          subscription_id: string
+          updated_at?: string
+        }
+        Update: {
+          canceled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          customer_id?: string
+          environment?: string
+          plan?: string | null
+          price_id?: string | null
+          product_id?: string | null
+          scheduled_change_action?: string | null
+          scheduled_change_at?: string | null
+          status?: string
+          subscription_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cancellation_feedback: {
         Row: {
           comment: string | null

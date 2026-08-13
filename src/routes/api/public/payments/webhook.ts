@@ -18,7 +18,12 @@ function intentRefOf(object: AnyRecord): string | null {
 
 const str = (value: unknown): string | null => (typeof value === "string" && value ? value : null);
 
-async function handleTransactionCompleted(transaction: AnyRecord) {
+async function handleTransactionCompleted(transaction: AnyRecord, env: PaddleEnv) {
+  const customerId = str(transaction["customer_id"]);
+  if (customerId) {
+    const { mirrorCustomer } = await import("@/lib/billing-mirror.server");
+    await mirrorCustomer({ id: customerId }, env);
+  }
   const ref = intentRefOf(transaction);
   if (!ref) {
     console.error("[crawler] transaction without intent_ref custom_data", str(transaction["id"]));
@@ -50,11 +55,19 @@ async function planOf(subscription: AnyRecord): Promise<string | null> {
   return planFromPriceExternalId(externalId);
 }
 
-async function handleSubscription(subscription: AnyRecord, forcedStatus?: string) {
+async function handleSubscription(subscription: AnyRecord, env: PaddleEnv, forcedStatus?: string) {
   const shape = subscriptionShape(subscription);
   const ref = intentRefOf(subscription);
   const status = forcedStatus ?? shape.status;
   const plan = await planOf(subscription);
+
+  // Durable mirror of provider state — upserted on the provider id, so retries
+  // and out-of-order deliveries converge instead of duplicating.
+  const { subscriptionFromEvent, mirrorSubscription } = await import("@/lib/billing-mirror.server");
+  const mirrored = subscriptionFromEvent(subscription);
+  if (mirrored) {
+    await mirrorSubscription({ ...mirrored, status: status ?? mirrored.status, plan }, env);
+  }
 
   if (ref) {
     const { markIntentPaid } = await import("@/lib/intents.server");
@@ -131,17 +144,23 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
         try {
           switch (event.type) {
             case "transaction.completed":
-              await handleTransactionCompleted(event.data);
+              await handleTransactionCompleted(event.data, env);
               break;
             case "subscription.created":
             case "subscription.updated":
             case "subscription.activated":
             case "subscription.resumed":
-              await handleSubscription(event.data);
+              await handleSubscription(event.data, env);
               break;
             case "subscription.canceled":
-              await handleSubscription(event.data, "canceled");
+              await handleSubscription(event.data, env, "canceled");
               break;
+            case "customer.created":
+            case "customer.updated": {
+              const { mirrorCustomer } = await import("@/lib/billing-mirror.server");
+              await mirrorCustomer(event.data, env);
+              break;
+            }
             case "transaction.payment_failed":
               // A failed payment never publishes; the intent simply stays unpaid.
               console.log("[crawler] payment failed for intent:", intentRefOf(event.data));
