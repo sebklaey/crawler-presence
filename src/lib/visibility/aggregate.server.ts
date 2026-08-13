@@ -199,6 +199,12 @@ const ADAPTER_META: Record<
     notMeasured: "Ob ein Abruf zu einer Zitierung oder Empfehlung geführt hat.",
     connectHint: null,
   },
+  ai_retrieval: {
+    builtIn: true,
+    measured: "Abrufe des veröffentlichten Knowledge Core über die CrawlMe API oder MCP.",
+    notMeasured: "Ob das abrufende AI-System die Information anschließend verwendet hat.",
+    connectHint: null,
+  },
   authorized_ai: {
     builtIn: false,
     measured: "Interaktionen aus ausdrücklich verbundenen API-Projekten.",

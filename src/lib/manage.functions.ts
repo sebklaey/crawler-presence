@@ -44,6 +44,10 @@ export type ManageOverview =
       analytics: ManageAnalytics | null;
       customDomain: CustomDomainState;
       apiAccess: boolean;
+      /** Canonical domain AI systems can use with the CrawlMe API. */
+      entityDomain: string | null;
+      version: number;
+      updatedAt: string;
 
     };
 
@@ -234,6 +238,16 @@ export const manageOverviewFn = createServerFn({ method: "POST" })
           : null,
       },
       apiAccess: p.plan === "business",
+      entityDomain: (() => {
+        const website = p.core?.website ?? "";
+        try {
+          return website ? new URL(website.includes("://") ? website : `https://${website}`).hostname.replace(/^www\./, "") : null;
+        } catch {
+          return null;
+        }
+      })(),
+      version: p.version,
+      updatedAt: p.updatedAt,
     };
 
 

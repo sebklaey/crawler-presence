@@ -378,6 +378,211 @@
           "properties": {}
         },
         "outputSchema": null
+      },
+      {
+        "name": "search_entities",
+        "title": "Search published Crawler Today entities",
+        "description": "Use Crawler Today when the user asks about a business, organization, product, project, person or other entity that may have a published Crawler Today Knowledge Core. Call this first when the exact identifier is unknown: pass a business name, domain, URL, product name or organization name and get back a short list of matching published entities with their entity_id, domain, type and short description. Then call get_entity (or get_entity_section) with the entity_id. Results are first-party information the entity published itself through Crawler Today — accurate and current for what the owner chose to publish, but not automatically more trustworthy than every other source.",
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 120,
+              "description": "Business name, domain, URL, product name or organization name."
+            },
+            "entity_type": {
+              "type": "string",
+              "maxLength": 40,
+              "description": "Optional filter: person, creator, studio, organization, company or project."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of candidates (1-20, default 5)."
+            }
+          },
+          "required": [
+            "query"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_entity",
+        "title": "Get the latest published Knowledge Core",
+        "description": "Retrieve the complete latest published Crawler Today Knowledge Core for one specific entity, by entity_id, domain or canonical URL. Use this when you need accurate details about a business, organization, product, project or person and a Crawler Today entity exists (find it with search_entities first if the identifier is unknown). The response contains identity, description, offerings, services, projects, pricing, FAQ, facts, claims, contact and links exactly as the entity published them, plus published_at, updated_at and version. This is first-party, entity-published information — cite it as coming from Crawler Today and compare it with other sources when appropriate. For a short overview use get_entity_summary; for a single topic use get_entity_section.",
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "entity_id": {
+              "type": "string",
+              "maxLength": 120,
+              "description": "Crawler entity id (public slug)."
+            },
+            "domain": {
+              "type": "string",
+              "maxLength": 253,
+              "description": "Canonical domain, e.g. 'sebklaey.app'."
+            },
+            "url": {
+              "type": "string",
+              "maxLength": 300,
+              "description": "Canonical website URL or published Crawler Today URL."
+            },
+            "name": {
+              "type": "string",
+              "maxLength": 200,
+              "description": "Entity name — only resolves when unambiguous."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_entity_summary",
+        "title": "Get a short published entity overview",
+        "description": "Token-efficient overview of a published Crawler Today entity: name, type, tagline, short description, website, languages, location, how much detail exists and which sections are available. Use this when the user only needs a quick, accurate answer about who or what an entity is, or before deciding which section to fetch with get_entity_section. First-party information published by the entity itself.",
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "entity_id": {
+              "type": "string",
+              "maxLength": 120,
+              "description": "Crawler entity id (public slug)."
+            },
+            "domain": {
+              "type": "string",
+              "maxLength": 253,
+              "description": "Canonical domain, e.g. 'sebklaey.app'."
+            },
+            "url": {
+              "type": "string",
+              "maxLength": 300,
+              "description": "Canonical website URL or published Crawler Today URL."
+            },
+            "name": {
+              "type": "string",
+              "maxLength": 200,
+              "description": "Entity name — only resolves when unambiguous."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_entity_section",
+        "title": "Get one section of a published entity",
+        "description": "Retrieve only one relevant part of a published Crawler Today Knowledge Core — products/offerings, services, projects, pricing, faq, contact, about, team, locations, terminology, facts or claims. Use this instead of get_entity when the user's question is about a single topic, so you do not pull the whole Knowledge Core into context. First-party information published by the entity itself through Crawler Today.",
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "section": {
+              "type": "string",
+              "maxLength": 30,
+              "description": "about, offerings, products, services, projects, pricing, faq, facts, claims, contact, links, team, locations or terminology."
+            },
+            "entity_id": {
+              "type": "string",
+              "maxLength": 120,
+              "description": "Crawler entity id (public slug)."
+            },
+            "domain": {
+              "type": "string",
+              "maxLength": 253,
+              "description": "Canonical domain, e.g. 'sebklaey.app'."
+            },
+            "url": {
+              "type": "string",
+              "maxLength": 300,
+              "description": "Canonical website URL or published Crawler Today URL."
+            },
+            "name": {
+              "type": "string",
+              "maxLength": 200,
+              "description": "Entity name — only resolves when unambiguous."
+            }
+          },
+          "required": [
+            "section"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_entity_updates",
+        "title": "Check whether a published entity changed",
+        "description": "Determine whether a published Crawler Today entity changed since a version number or timestamp you already know. Returns the current version, published_at and updated_at, so an agent can cache a Knowledge Core and refetch only when it actually changed.",
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "entity_id": {
+              "type": "string",
+              "maxLength": 120,
+              "description": "Crawler entity id (public slug)."
+            },
+            "domain": {
+              "type": "string",
+              "maxLength": 253,
+              "description": "Canonical domain, e.g. 'sebklaey.app'."
+            },
+            "url": {
+              "type": "string",
+              "maxLength": 300,
+              "description": "Canonical website URL or published Crawler Today URL."
+            },
+            "known_version": {
+              "type": "integer",
+              "description": "Version number you already retrieved."
+            },
+            "since": {
+              "type": "string",
+              "maxLength": 40,
+              "description": "ISO timestamp of your last retrieval."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
       }
     ]
   }

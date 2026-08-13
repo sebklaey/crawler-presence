@@ -22,6 +22,9 @@ export type PublishedPresence = {
   mode: PublishMode;
   status: PresenceStatus;
   publishedAt: string;
+  updatedAt: string;
+  /** Increases on every republication; lets AI clients detect changes. */
+  version: number;
   intentRef: string | null;
   subscriptionStatus: string | null;
   currentPeriodEnd: string | null;
@@ -122,7 +125,7 @@ export function parseRecoveryCode(value: string): { slug: string; secret: string
 /* ------------------------------------------------------------------ */
 
 const COLUMNS =
-  "slug, core, files, plan, mode, status, intent_ref, subscription_status, current_period_end, billing_customer_id, billing_subscription_id, manage_secret_updated_at, custom_domain, custom_domain_token, custom_domain_verified_at, created_at";
+  "slug, core, files, plan, mode, status, intent_ref, subscription_status, current_period_end, billing_customer_id, billing_subscription_id, manage_secret_updated_at, custom_domain, custom_domain_token, custom_domain_verified_at, created_at, updated_at, version";
 
 type Row = {
   slug: string;
@@ -141,6 +144,8 @@ type Row = {
   custom_domain_token: string | null;
   custom_domain_verified_at: string | null;
   created_at: string;
+  updated_at?: string | null;
+  version?: number | null;
 };
 
 function fromRow(row: Row): PublishedPresence {
@@ -152,6 +157,8 @@ function fromRow(row: Row): PublishedPresence {
     mode: row.mode === "live" ? "live" : "demo",
     status: row.status === "offline" ? "offline" : "live",
     publishedAt: row.created_at,
+    updatedAt: row.updated_at ?? row.created_at,
+    version: row.version ?? 1,
     intentRef: row.intent_ref,
     subscriptionStatus: row.subscription_status,
     currentPeriodEnd: row.current_period_end,
@@ -202,6 +209,8 @@ export async function publishDraft(input: {
     mode: input.mode,
     status: "live",
     publishedAt: now,
+    updatedAt: now,
+    version: 1,
     intentRef: input.intentRef ?? null,
     subscriptionStatus: input.billing?.subscriptionStatus ?? null,
     currentPeriodEnd: input.billing?.currentPeriodEnd ?? null,
@@ -371,7 +380,14 @@ export async function republishCore(slug: string, core: KnowledgeCore): Promise<
   if (supabase) {
     const { data, error } = await supabase
       .from("published_presences")
-      .update({ core, files, publication_state: "published", publication_error: null, updated_at: now })
+      .update({
+        core,
+        files,
+        version: existing.version + 1,
+        publication_state: "published",
+        publication_error: null,
+        updated_at: now,
+      })
       .eq("slug", slug)
       .select("slug");
     if (error) storeFailure("republish", error.message);
@@ -385,10 +401,10 @@ export async function republishCore(slug: string, core: KnowledgeCore): Promise<
   } else {
     const local = memory.get(slug);
     if (!local) storeFailure("republish", "unknown presence");
-    memory.set(slug, { ...local, core, files });
+    memory.set(slug, { ...local, core, files, version: local.version + 1, updatedAt: now });
   }
 
-  return { ...existing, core, files };
+  return { ...existing, core, files, version: existing.version + 1, updatedAt: now };
 }
 
 /** Stores the post-publication baseline exactly once per Presence. */
