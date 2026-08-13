@@ -578,8 +578,7 @@ export function mergeCore(baseInput: LooseCore, update: unknown): LooseCore {
   for (const f of u.faqs) if (!merged.faqs.some((x) => x.question.toLowerCase() === f.question.toLowerCase())) merged.faqs.push(f);
   for (const c of u.cv) if (!merged.cv.some((x) => x.role === c.role && x.organization === c.organization)) merged.cv.push(c);
   for (const l of u.links) if (!merged.links.some((x) => x.url === l.url)) merged.links.push(l);
-  merged.gaps = openGaps(merged).map((g) => g.label);
-  return merged;
+  return repairCore(merged);
 }
 
 /* ------------------------------ Bewertung ------------------------------- */
