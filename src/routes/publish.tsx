@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, ArrowLeft, Check, Copy, ExternalLink, Globe, Loader2, Lock, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
@@ -51,6 +51,7 @@ export const Route = createFileRoute("/publish")({
 
 const PENDING_INTENT_KEY = "crawler:pending-intent";
 const PENDING_PLAN_KEY = "crawler:pending-plan";
+const LAST_SESSION_KEY = "crawler:last-session";
 /** A checkout attempt older than this is stale and must never block the page. */
 const PENDING_INTENT_TTL_MS = 30 * 60 * 1000;
 
@@ -130,6 +131,9 @@ function PublishPage() {
   const { status: paymentsStatus } = usePaymentsStatus();
   const live = usePublishState();
   const [updating, setUpdating] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const coreRef = useRef(core);
+  coreRef.current = core;
 
   /** Already subscribed: push the current content live without a new checkout. */
   async function publishUpdate() {
@@ -168,6 +172,11 @@ function PublishPage() {
         if (result.found) {
           setCore(result.core as KnowledgeCore);
           setRecovered(true);
+          try {
+            localStorage.setItem(LAST_SESSION_KEY, token);
+          } catch {
+            /* ignore */
+          }
           toast.success("Draft recovered from your ChatGPT session.");
         } else {
           toast.error("That draft link has expired. Start a new interview.");
@@ -183,6 +192,54 @@ function PublishPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search.session]);
+
+  /** Pull the newest state of the remembered ChatGPT session. */
+  const syncFromSession = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      let token = search.session ?? null;
+      if (!token) {
+        try {
+          token = localStorage.getItem(LAST_SESSION_KEY);
+        } catch {
+          token = null;
+        }
+      }
+      if (!token) {
+        if (!opts?.silent) toast.error("No ChatGPT session linked in this browser yet.");
+        return;
+      }
+      setSyncing(true);
+      try {
+        const result = await loadDraft({ data: { token } });
+        if (!result.found) {
+          if (!opts?.silent) toast.error("That ChatGPT session has expired.");
+          return;
+        }
+        const remote = result.core as KnowledgeCore;
+        const local = coreRef.current;
+        if (presenceScore(remote) >= presenceScore(local)) {
+          setCore(remote);
+          if (!opts?.silent) toast.success("Synced the latest content from ChatGPT.");
+        } else if (!opts?.silent) {
+          toast.info("Your browser draft is already more complete than the ChatGPT session.");
+        }
+      } catch {
+        if (!opts?.silent) toast.error("Could not sync from ChatGPT.");
+      } finally {
+        setSyncing(false);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [search.session],
+  );
+
+  // Auto-sync once when arriving without an explicit session link.
+  useEffect(() => {
+    if (search.session) return;
+    void syncFromSession({ silent: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   // Restore a plan chosen earlier (URL, or an abandoned checkout attempt).
   useEffect(() => {
@@ -694,7 +751,18 @@ function PublishPage() {
             </section>
           </div>
 
-          <PresenceStatus core={core} columns={1} />
+          <div className="space-y-3">
+            <PresenceStatus core={core} columns={1} />
+            <div className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2">
+              <p className="text-xs text-muted-foreground">
+                Added more details in ChatGPT? Pull the latest state of your interview.
+              </p>
+              <Button variant="outline" size="sm" disabled={syncing} onClick={() => void syncFromSession()}>
+                {syncing ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : null}
+                Sync from ChatGPT
+              </Button>
+            </div>
+          </div>
         </div>
 
         <Dialog open={flowOpen} onOpenChange={setFlowOpen}>
