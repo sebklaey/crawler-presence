@@ -95,9 +95,9 @@ export async function resolvePriceId(plan: PlanId): Promise<string> {
  * webhook secret counts as unconfigured rather than half-live.
  */
 export function paymentsConfigured(target: PaddleEnv): boolean {
-  if (paddleEnvironment() !== target) return false;
-  return Boolean(paddleApiKeyFor(target) && paddleWebhookSecretFor(target));
+  return paymentsConfiguredFor(target);
 }
+
 
 
 
