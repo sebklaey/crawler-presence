@@ -378,6 +378,41 @@
         "outputSchema": null
       },
       {
+        "name": "delete_document",
+        "title": "Delete an imported text document",
+        "description": "Removes a previously imported text document from the Crawler Knowledge Core of an anonymous draft session. Match by exact title (case-insensitive) or by the document slug used in docs/<slug>.md. The document disappears from the public files (docs/<slug>.md and api/documents.json) only after publish_presence is called again.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "session_id": {
+              "type": "string",
+              "minLength": 6,
+              "maxLength": 128,
+              "description": "Opaque session id returned by start_interview."
+            },
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 160,
+              "description": "Title of the document to delete, or its slug as used in docs/<slug>.md."
+            }
+          },
+          "required": [
+            "session_id",
+            "title"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
         "name": "get_checkout_link",
         "title": "Get checkout link",
         "description": "Use this when the user wants to pay for hosting and needs a checkout link. Returns the external Crawler checkout URL for the chosen plan. If no payment credentials are configured, returns a clearly labelled test/demo checkout state instead of a fake success.",
