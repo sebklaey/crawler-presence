@@ -70,46 +70,8 @@ export default defineTool({
 
     const latest = await latestIntentForSession(session.id);
 
-    // Free Beta 0.0.1: while live payments are not enabled, publishing is free.
-    const { betaFree, releaseVersion } = await import("../site");
-    if (betaFree() && !latest?.presenceSlug) {
-      const { publishDraft, recoveryCode } = await import("../presences");
-      const { presence, manageSecret } = await publishDraft({
-        core: session.core,
-        plan: plan || "plus",
-        mode: "demo",
-        sessionToken: session.id,
-      });
-      const url = `${base}/p/${presence.slug}`;
-      const code = recoveryCode(presence.slug, manageSecret);
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: `Published free in Crawler Free Beta ${releaseVersion()} — no payment was taken and no subscription was created. Your Presence is live at ${url} (${url}/llms.txt and the JSON endpoints under ${url}/api/).\n\nRecovery code (shown once, save it now):\n${code}\n\nThis code is the only way to manage this Presence at ${base}/manage. When paid operation (version 0.0.2) starts, hosting becomes a paid plan.`,
-          },
-        ],
-        structuredContent: {
-          published: true,
-          publish_requires_payment: false,
-          free_beta: true,
-          release_version: releaseVersion(),
-          mode: "free_beta",
-          plan: presence.plan,
-          slug: presence.slug,
-          presence_url: url,
-          files: presence.files.map((f) => `${url}/${f.path}`),
-          published_at: presence.publishedAt,
-          presence_score: presenceScore(session.core),
-          recovery_code: code,
-          recovery_code_note:
-            "Capability-based ownership: shown exactly once, never stored raw. Losing it means the Presence cannot be managed.",
-          manage_url: `${base}/manage`,
-          beta_note:
-            "Free Beta 0.0.1: publishing is free until live payments are enabled. Crawler then switches automatically to the paid version 0.0.2.",
-        },
-      };
-    }
+    // Crawler Alpha 0.0.2: the free beta has ended — publishing is always paid.
+
 
     const url = `${base}/publish?session=${encodeURIComponent(session.id)}${plan ? `&plan=${plan}` : ""}`;
     const reason = latest?.presenceSlug
