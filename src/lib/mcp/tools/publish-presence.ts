@@ -8,7 +8,7 @@ export default defineTool({
   name: "publish_presence",
   title: "Publish Presence",
   description:
-    "Use this when the user asks to publish or host their Presence. Publishing is the paid step. Crawler has no accounts, no login and no registration: if the user already paid for this draft on the Crawler website, this publishes it and returns the live URLs plus a one-time management secret. Otherwise it returns publish_requires_payment=true plus a handoff URL that carries the anonymous draft so nothing is retyped. Creating and previewing a Presence is always free.",
+    "Publishes a Presence — and republishes it after every later change. If this draft is already live, calling this again rewrites the public files (llms.txt, llms-full.txt, about.md, offerings.md, faq.md, api/*.json) from the current Knowledge Core, with no new payment and the same recovery code. Otherwise publishing is the paid step: Crawler has no accounts, no login and no registration; if the user already paid for this draft on the Crawler website it goes live and returns a one-time management secret, otherwise it returns publish_requires_payment=true plus a handoff URL carrying the anonymous draft. Creating and previewing a Presence is always free.",
   inputSchema: {
     session_id: z.string().trim().min(6).max(128).describe("Opaque session id returned by start_interview."),
     plan: z.enum(["plus", "pro", "business"]).optional().describe("Optional plan the user already chose."),
