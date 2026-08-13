@@ -395,6 +395,32 @@ function PublishPage() {
                 . {NO_GUARANTEE_NOTICE}
               </p>
             </section>
+
+            <section className="rounded-2xl border border-border bg-card p-6">
+              <h2 className="text-sm font-medium">Use your Knowledge Core with AI</h2>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Your published Knowledge Core is now retrievable by compatible AI systems and agents. They look it up
+                when they need current information about you — Crawler Today cannot make any model train on, memorise
+                or automatically mention it.
+              </p>
+              <p className="mt-3 text-xs text-muted-foreground">Ask an assistant something like:</p>
+              <pre className="mt-2 overflow-x-auto rounded-xl border border-border bg-muted/40 p-4 text-[11px] leading-relaxed">
+{`Use Crawler Today to retrieve the latest published information about ${issued.slug}.`}
+              </pre>
+              <p className="mt-3 text-xs text-muted-foreground">
+                MCP clients connect <code>https://crawler.today/mcp</code>; everything else uses the REST API:
+              </p>
+              <pre className="mt-2 overflow-x-auto rounded-xl border border-border bg-muted/40 p-4 text-[11px] leading-relaxed">
+{`curl "https://crawler.today/api/crawl-me?id=${issued.slug}"`}
+              </pre>
+              <p className="mt-3 text-[11px] text-muted-foreground">
+                Details in the{" "}
+                <a href="/crawlme" className="underline underline-offset-4">
+                  CrawlMe developer documentation
+                </a>
+                .
+              </p>
+            </section>
           </div>
         </div>
       </AppShell>
