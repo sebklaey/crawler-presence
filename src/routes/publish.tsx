@@ -267,7 +267,7 @@ function PublishPage() {
   );
 
   const retryIntent = useCallback(() => {
-    const stored = localStorage.getItem(PENDING_INTENT_KEY);
+    const stored = readPendingIntent();
     if (!stored) {
       setPhase("draft");
       setFailure(null);
@@ -278,6 +278,16 @@ function PublishPage() {
     setPendingIntent(null);
     window.setTimeout(() => setPendingIntent(stored), 50);
   }, []);
+
+  /** Escape hatch: never let an abandoned checkout lock the publish page. */
+  const abandonCheckout = useCallback(() => {
+    clearPendingIntent();
+    setPendingIntent(null);
+    setFailure(null);
+    setPhase("draft");
+    void navigate({ to: "/publish", search: {}, replace: true });
+  }, [navigate]);
+
 
   async function publish(planId: PlanId) {
     if (busy) return;
