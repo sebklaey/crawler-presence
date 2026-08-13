@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 
 const nav = [
   { to: "/", label: "Interview" },
-  { to: "/demo", label: "Demo" },
   { to: "/knowledge", label: "Knowledge Core" },
   { to: "/preview", label: "Preview" },
   { to: "/analytics", label: "Analytics" },
