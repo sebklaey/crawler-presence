@@ -396,17 +396,34 @@ export async function setPresenceStatus(slug: string, status: PresenceStatus): P
 /**
  * Republishes an existing Presence from an updated Knowledge Core.
  *
- * Used by the improvement workflow after the owner approved a change: the
- * public files are regenerated, the version counter increases and the change
- * only becomes public once this write succeeded.
+ * The incoming core is MERGED into the already published core: republishing is
+ * an update, never a reset. A newer draft that only carries part of the
+ * information (e.g. a fresh ChatGPT session) can therefore never delete facts,
+ * FAQs, offerings, documents or narrative that are already live. Pass
+ * `mode: "replace"` only when the caller explicitly wants to overwrite.
  */
-export async function republishCore(slug: string, core: KnowledgeCore): Promise<PublishedPresence> {
+export async function republishCore(
+  slug: string,
+  core: KnowledgeCore,
+  mode: "merge" | "replace" = "merge",
+): Promise<PublishedPresence> {
   const existing = await getPublished(slug);
   if (!existing) storeFailure("republish", "unknown presence");
+
+  if (mode === "merge") {
+    const { mergeCore, normalizeCore } = await import("../interview-rules");
+    const { toKnowledgeCore } = await import("../interview-core.server");
+    try {
+      core = toKnowledgeCore(mergeCore(normalizeCore(existing.core), core) as never);
+    } catch {
+      /* if the merge fails we keep the incoming core rather than losing the update */
+    }
+  }
 
   const { applyCatalogLimit } = await import("../entitlements");
   const visible = applyCatalogLimit(core, existing.plan).core;
   const files = generatedFiles(visible).map((f) => ({ path: f.path, type: f.type, content: f.content }));
+
   const now = new Date().toISOString();
 
   const supabase = await client();
