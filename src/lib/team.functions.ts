@@ -8,7 +8,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
-import type { ManageAnalytics } from "./manage.functions";
+import type { ManageAnalytics } from "./manage-analytics";
 import type { ReportFrequency } from "./reports.server";
 import type { TeamMember, TeamRole } from "./mcp/team.server";
 
@@ -188,7 +188,8 @@ export const teamSignInFn = createServerFn({ method: "POST" })
       const presence = await getPublished(member.slug);
       if (!presence) return { ok: false, reason: "not-found" };
 
-      const { teamAnalyticsFor } = await import("./team-analytics.server");
+      // Team members see the same measured numbers as the owner.
+      const { analyticsFor } = await import("./manage-analytics");
       return {
         ok: true,
         slug: presence.slug,
@@ -198,7 +199,7 @@ export const teamSignInFn = createServerFn({ method: "POST" })
         status: presence.status,
         plan: presence.plan,
         paths: presence.files.map((f) => f.path),
-        analytics: await teamAnalyticsFor(presence.slug, presence.plan),
+        analytics: await analyticsFor(presence.slug, presence.plan),
       };
     } catch (error) {
       if (error instanceof PresenceStoreError) return { ok: false, reason: "unavailable" };

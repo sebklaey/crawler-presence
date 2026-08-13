@@ -496,6 +496,15 @@ export async function recordRetrieval(input: {
   }
 }
 
+/** Best-effort caller address used as the rate-limit bucket key. */
+export function clientIp(request: Request): string {
+  return (
+    request.headers.get("cf-connecting-ip") ??
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    "anonymous"
+  );
+}
+
 /** Coarse, non-identifying client label from the user agent. */
 export function clientLabel(request: Request): string | undefined {
   const ua = request.headers.get("user-agent");
