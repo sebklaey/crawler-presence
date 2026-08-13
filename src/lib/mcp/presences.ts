@@ -613,7 +613,7 @@ export async function getLivePresenceByDomain(host: string): Promise<PublishedPr
     return data ? fromRow(data as Row) : undefined;
   }
   for (const record of memory.values()) {
-    if (record.customDomain === domain && record.customDomainVerifiedAt && record.status === "live") {
+    if (record.customDomain === domain && record.customDomainVerifiedAt && record.status === "live" && record.mode === "live") {
       const { manageSecretHash: _hash, ...rest } = record;
       return rest;
     }
