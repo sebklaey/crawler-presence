@@ -221,14 +221,9 @@ export type PaddleEvent = {
 
 /** Notification-destination secret for one environment. */
 export function paddleWebhookSecretFor(target: PaddleEnv): string | undefined {
-  return (
-    // Names used by the managed Payments connection …
-    env(target === "sandbox" ? "PAYMENTS_SANDBOX_WEBHOOK_SECRET" : "PAYMENTS_LIVE_WEBHOOK_SECRET") ??
-    // … then the project-local names, then the single legacy secret.
-    env(target === "sandbox" ? "PADDLE_SANDBOX_WEBHOOK_SECRET" : "PADDLE_LIVE_WEBHOOK_SECRET") ??
-    env("PADDLE_WEBHOOK_SECRET")
-  );
+  return paymentsWebhookSecret(target);
 }
+
 
 function webhookSecret(target: PaddleEnv): string {
   const secret = paddleWebhookSecretFor(target);
