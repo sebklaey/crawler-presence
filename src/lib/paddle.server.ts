@@ -16,8 +16,15 @@
  * clearly labelled DEMO mode.
  */
 import type { PlanId } from "./billing";
+import {
+  paymentsApiKey,
+  paymentsConfiguredFor,
+  paymentsEnv,
+  paymentsWebhookSecret,
+  type PaymentsEnv,
+} from "./payments-config";
 
-export type PaddleEnv = "sandbox" | "live";
+export type PaddleEnv = PaymentsEnv;
 
 const API_BASE: Record<PaddleEnv, string> = {
   sandbox: "https://sandbox-api.paddle.com",
@@ -28,33 +35,18 @@ const env = (name: string): string | undefined => process.env[name]?.trim() || u
 
 /** API key for one specific environment — never a live key for a test charge. */
 export function paddleApiKeyFor(target: PaddleEnv): string | undefined {
-  const scoped = target === "live" ? env("PADDLE_LIVE_API_KEY") : env("PADDLE_SANDBOX_API_KEY");
-  const legacy = env("PADDLE_API_KEY");
-  if (scoped) return scoped;
-  if (!legacy) return undefined;
-  const legacyIsLive = !legacy.includes("_sdbx_");
-  return legacyIsLive === (target === "live") ? legacy : undefined;
+  return paymentsApiKey(target);
 }
 
-/**
- * Which environment this deployment charges in. The preview/dev build always
- * uses test, so a preview click can never take real money; the production
- * build uses live when a live key exists.
- */
+/** Single source of truth lives in payments-config. */
 export function paddleEnvironment(): PaddleEnv {
-  const isProduction = env("NODE_ENV") === "production";
-  // Preview must never create live transactions: its browser token is test-only.
-  if (!isProduction && paddleApiKeyFor("sandbox")) return "sandbox";
-  const forced = env("PADDLE_ENV");
-  if (forced === "sandbox" || forced === "live") return forced;
-  if (isProduction && paddleApiKeyFor("live")) return "live";
-  if (paddleApiKeyFor("sandbox")) return "sandbox";
-  return paddleApiKeyFor("live") ? "live" : "sandbox";
+  return paymentsEnv();
 }
 
 export function paddleApiKey(): string | undefined {
   return paddleApiKeyFor(paddleEnvironment());
 }
+
 
 
 /** Human-readable price ids, stable across test and live. */
