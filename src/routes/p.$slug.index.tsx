@@ -71,9 +71,9 @@ function PublicPresence() {
 
         {data.mode === "demo" ? (
           <div className="mb-8 rounded-xl border border-dashed border-border bg-secondary/60 px-4 py-3 text-xs text-muted-foreground">
-            <strong className="text-foreground">Free Beta 0.0.1.</strong> Live payments are not enabled yet, so this
-            Presence was published free of charge and no subscription exists. The files below are real and served from
-            this address. Once paid operation (version 0.0.2) starts, hosting becomes a paid plan.
+            <strong className="text-foreground">Beta publication.</strong> This Presence was published during the free
+            beta, so no subscription exists for it. The files below are real and served from this address. Crawler Alpha
+            0.0.2 is paid-only: new publications require an active subscription.
           </div>
         ) : null}
 
