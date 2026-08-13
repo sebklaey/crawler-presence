@@ -168,6 +168,11 @@ function PublishPage() {
         if (result.found) {
           setCore(result.core as KnowledgeCore);
           setRecovered(true);
+          try {
+            localStorage.setItem(LAST_SESSION_KEY, token);
+          } catch {
+            /* ignore */
+          }
           toast.success("Draft recovered from your ChatGPT session.");
         } else {
           toast.error("That draft link has expired. Start a new interview.");
@@ -183,6 +188,54 @@ function PublishPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search.session]);
+
+  /** Pull the newest state of the remembered ChatGPT session. */
+  const syncFromSession = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      let token = search.session ?? null;
+      if (!token) {
+        try {
+          token = localStorage.getItem(LAST_SESSION_KEY);
+        } catch {
+          token = null;
+        }
+      }
+      if (!token) {
+        if (!opts?.silent) toast.error("No ChatGPT session linked in this browser yet.");
+        return;
+      }
+      setSyncing(true);
+      try {
+        const result = await loadDraft({ data: { token } });
+        if (!result.found) {
+          if (!opts?.silent) toast.error("That ChatGPT session has expired.");
+          return;
+        }
+        const remote = result.core as KnowledgeCore;
+        const local = coreRef.current;
+        if (presenceScore(remote) >= presenceScore(local)) {
+          setCore(remote);
+          if (!opts?.silent) toast.success("Synced the latest content from ChatGPT.");
+        } else if (!opts?.silent) {
+          toast.info("Your browser draft is already more complete than the ChatGPT session.");
+        }
+      } catch {
+        if (!opts?.silent) toast.error("Could not sync from ChatGPT.");
+      } finally {
+        setSyncing(false);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [search.session],
+  );
+
+  // Auto-sync once when arriving without an explicit session link.
+  useEffect(() => {
+    if (search.session) return;
+    void syncFromSession({ silent: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   // Restore a plan chosen earlier (URL, or an abandoned checkout attempt).
   useEffect(() => {
