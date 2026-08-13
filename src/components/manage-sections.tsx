@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Globe, Loader2, Trash2 } from "lucide-react";
+import { Check, Copy, Globe, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,36 @@ import {
 } from "@/lib/manage.functions";
 
 type Overview = Extract<ManageOverview, { ok: true }>;
+
+/** Small labelled code block with a one-click copy button. */
+function CopyBlock({ label, value, hint }: { label: string; value: string; hint?: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="mt-4">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{label}</span>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => {
+            void navigator.clipboard.writeText(value);
+            setCopied(true);
+            toast.success("Copied");
+            setTimeout(() => setCopied(false), 1800);
+          }}
+        >
+          {copied ? <Check className="mr-1.5 h-3.5 w-3.5" /> : <Copy className="mr-1.5 h-3.5 w-3.5" />}
+          {copied ? "Copied" : "Copy"}
+        </Button>
+      </div>
+      <pre className="mt-1 overflow-x-auto whitespace-pre-wrap break-words rounded-xl border border-border bg-muted/40 p-4 text-[11px] leading-relaxed">
+        {value}
+      </pre>
+      {hint ? <p className="mt-2 text-[11px] text-muted-foreground">{hint}</p> : null}
+    </div>
+  );
+}
+
 
 const REASONS: Record<string, string> = {
   plan: "Custom domains are part of the Pro and Business plans.",
