@@ -262,7 +262,7 @@ export function TeamAndReportsSection({ code, plan }: { code: string; plan: stri
 
         <p className="mt-3 text-[11px] text-muted-foreground">
           {state.reports.lastSentAt
-            ? `Last report sent ${new Date(state.reports.lastSentAt).toLocaleString()}.`
+            ? `Last report sent ${new Date(state.reports.lastSentAt).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}.`
             : "No report sent yet."}{" "}
           {state.reports.deliveryReady
             ? ""

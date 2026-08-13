@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Globe, Loader2, Trash2 } from "lucide-react";
+import { Check, Copy, Globe, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,36 @@ import {
 } from "@/lib/manage.functions";
 
 type Overview = Extract<ManageOverview, { ok: true }>;
+
+/** Small labelled code block with a one-click copy button. */
+function CopyBlock({ label, value, hint }: { label: string; value: string; hint?: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="mt-4">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{label}</span>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => {
+            void navigator.clipboard.writeText(value);
+            setCopied(true);
+            toast.success("Copied");
+            setTimeout(() => setCopied(false), 1800);
+          }}
+        >
+          {copied ? <Check className="mr-1.5 h-3.5 w-3.5" /> : <Copy className="mr-1.5 h-3.5 w-3.5" />}
+          {copied ? "Copied" : "Copy"}
+        </Button>
+      </div>
+      <pre className="mt-1 overflow-x-auto whitespace-pre-wrap break-words rounded-xl border border-border bg-muted/40 p-4 text-[11px] leading-relaxed">
+        {value}
+      </pre>
+      {hint ? <p className="mt-2 text-[11px] text-muted-foreground">{hint}</p> : null}
+    </div>
+  );
+}
+
 
 const REASONS: Record<string, string> = {
   plan: "Custom domains are part of the Pro and Business plans.",
@@ -134,19 +164,18 @@ export function ApiAccessSection({ data }: { data: Overview }) {
     <div className="rounded-2xl border border-border bg-card p-6">
       <h2 className="text-sm font-medium">API access</h2>
       <p className="mt-2 text-xs text-muted-foreground">
-        Authenticate with your recovery code — there is no separate API key and no account. Rate limit: 120 requests
-        per minute.
+        Authenticate with your recovery code for <code>{data.slug}</code> — there is no separate API key and no
+        account. Rate limit: 120 requests per minute.
       </p>
-      <pre className="mt-4 overflow-x-auto rounded-xl border border-border bg-muted/40 p-4 text-[11px] leading-relaxed">
-{`curl https://crawler.today/api/public/v1/presence \\
-  -H "Authorization: Bearer <your recovery code>"
+      <CopyBlock
+        label="Your private API calls"
+        value={`curl https://crawler.today/api/public/v1/presence \\
+  -H "Authorization: Bearer ${data.slug}~<your recovery secret>"
 
 curl "https://crawler.today/api/public/v1/analytics?days=90" \\
-  -H "Authorization: Bearer <your recovery code>"`}
-      </pre>
-      <p className="mt-3 text-[11px] text-muted-foreground">
-        Treat the recovery code like a secret: anyone holding it controls this Presence. Rotate it above if it leaks.
-      </p>
+  -H "Authorization: Bearer ${data.slug}~<your recovery secret>"`}
+        hint="Replace <your recovery secret> with the part after the ~ in your recovery code. Anyone holding it controls this Presence — rotate it above if it leaks."
+      />
     </div>
   );
 }
@@ -154,14 +183,31 @@ curl "https://crawler.today/api/public/v1/analytics?days=90" \\
 /** Post-publish: how compatible AI systems can retrieve this Knowledge Core. */
 export function AiRetrievalSection({ data }: { data: Overview }) {
   const identifier = data.entityDomain ?? data.slug;
-  const instruction = `Use Crawler Today to retrieve the latest published information about ${identifier}.`;
+  const query = data.entityDomain ? `domain=${data.entityDomain}` : `id=${data.slug}`;
+  const apiUrl = `https://crawler.today/api/crawl-me?${query}`;
+  const cleanUrl = `https://crawler.today/c/${data.slug}`;
+  const publicUrl = `https://crawler.today/p/${data.slug}`;
+  const llmsUrl = `${publicUrl}/llms.txt`;
+
+  const instruction = `Open these public web pages to get current, first-party information about ${data.name} (${identifier}) instead of relying on memory:
+
+1. ${publicUrl}
+2. ${llmsUrl}
+3. ${cleanUrl}
+
+Short summary: ${cleanUrl}/summary
+A single topic (about, offerings, pricing, faq, contact, team, locations, links, facts): ${cleanUrl}/pricing
+
+All of these are normal public pages, free to read, no key, no login. They are first-party information published by ${data.name} through Crawler Today.`;
+
   return (
     <div className="rounded-2xl border border-border bg-card p-6">
       <h2 className="text-sm font-medium">Use your Knowledge Core with AI</h2>
       <p className="mt-2 text-xs text-muted-foreground">
-        Compatible AI systems connected to Crawler Today can now retrieve your latest published Knowledge Core when
-        they need it. Crawler Today cannot make any AI model train on, memorise or automatically mention your
-        information — it provides a reliable place to look it up.
+        Copy the block below and paste it into ChatGPT, Claude, Gemini or your own agent's instructions. It contains
+        your personal CrawlMe endpoints, so the assistant can find and fetch your latest published Knowledge Core.
+        Crawler Today cannot make any AI model train on or memorise your information — it provides a reliable place to
+        look it up.
       </p>
 
       <dl className="mt-4 grid gap-3 text-xs sm:grid-cols-2">
@@ -172,26 +218,38 @@ export function AiRetrievalSection({ data }: { data: Overview }) {
         <div>
           <dt className="text-muted-foreground">Published version</dt>
           <dd className="mt-1">
-            v{data.version} · updated {new Date(data.updatedAt).toLocaleString()}
+            v{data.version} · updated{" "}
+            {new Date(data.updatedAt).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
           </dd>
         </div>
       </dl>
 
-      <p className="mt-4 text-xs text-muted-foreground">Suggested instruction to give an AI assistant:</p>
-      <pre className="mt-2 overflow-x-auto rounded-xl border border-border bg-muted/40 p-4 text-[11px] leading-relaxed">{instruction}</pre>
+      <CopyBlock
+        label="Paste into your AI assistant"
+        value={instruction}
+        hint="Uses plain page URLs without query parameters — assistants like Gemini often refuse URLs that look like a parameterised API."
+      />
+
+      <CopyBlock label="Your CrawlMe URL (no parameters)" value={cleanUrl} />
+
+      <CopyBlock label="Classic API URL (with parameters)" value={apiUrl} />
+
+      <CopyBlock
+        label="Test it from a terminal"
+        value={`curl "${cleanUrl}"`}
+      />
+
 
       <p className="mt-4 text-xs text-muted-foreground">
-        MCP clients (ChatGPT developer mode, Claude, agents) connect the Crawler Today MCP server at{" "}
+        MCP clients (ChatGPT developer mode, Claude, agents) can instead connect the Crawler Today MCP server at{" "}
         <code>https://crawler.today/mcp</code> and use <code>search_entities</code>, <code>get_entity</code>,{" "}
-        <code>get_entity_summary</code>, <code>get_entity_section</code> and <code>get_entity_updates</code>. Clients
-        without MCP support use the public CrawlMe REST API:
+        <code>get_entity_summary</code>, <code>get_entity_section</code> and <code>get_entity_updates</code> with the
+        identifier <code>{identifier}</code>.
       </p>
-      <pre className="mt-2 overflow-x-auto rounded-xl border border-border bg-muted/40 p-4 text-[11px] leading-relaxed">
-{`curl "https://crawler.today/api/crawl-me?${data.entityDomain ? `domain=${data.entityDomain}` : `id=${data.slug}`}"`}
-      </pre>
       <p className="mt-3 text-[11px] text-muted-foreground">
         Read the <a className="underline underline-offset-4" href="/crawlme">CrawlMe developer documentation</a>.
       </p>
+
     </div>
   );
 }

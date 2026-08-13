@@ -16,8 +16,15 @@
  * clearly labelled DEMO mode.
  */
 import type { PlanId } from "./billing";
+import {
+  paymentsApiKey,
+  paymentsConfiguredFor,
+  paymentsEnv,
+  paymentsWebhookSecret,
+  type PaymentsEnv,
+} from "./payments-config";
 
-export type PaddleEnv = "sandbox" | "live";
+export type PaddleEnv = PaymentsEnv;
 
 const API_BASE: Record<PaddleEnv, string> = {
   sandbox: "https://sandbox-api.paddle.com",
@@ -28,31 +35,18 @@ const env = (name: string): string | undefined => process.env[name]?.trim() || u
 
 /** API key for one specific environment — never a live key for a test charge. */
 export function paddleApiKeyFor(target: PaddleEnv): string | undefined {
-  const scoped = target === "live" ? env("PADDLE_LIVE_API_KEY") : env("PADDLE_SANDBOX_API_KEY");
-  const legacy = env("PADDLE_API_KEY");
-  if (scoped) return scoped;
-  if (!legacy) return undefined;
-  const legacyIsLive = !legacy.includes("_sdbx_");
-  return legacyIsLive === (target === "live") ? legacy : undefined;
+  return paymentsApiKey(target);
 }
 
-/**
- * Which environment this deployment charges in. The preview/dev build always
- * uses test, so a preview click can never take real money; the production
- * build uses live when a live key exists.
- */
+/** Single source of truth lives in payments-config. */
 export function paddleEnvironment(): PaddleEnv {
-  const forced = env("PADDLE_ENV");
-  if (forced === "sandbox" || forced === "live") return forced;
-  const isProduction = env("NODE_ENV") === "production";
-  if (isProduction && paddleApiKeyFor("live")) return "live";
-  if (paddleApiKeyFor("sandbox")) return "sandbox";
-  return paddleApiKeyFor("live") ? "live" : "sandbox";
+  return paymentsEnv();
 }
 
 export function paddleApiKey(): string | undefined {
   return paddleApiKeyFor(paddleEnvironment());
 }
+
 
 
 /** Human-readable price ids, stable across test and live. */
@@ -101,9 +95,9 @@ export async function resolvePriceId(plan: PlanId): Promise<string> {
  * webhook secret counts as unconfigured rather than half-live.
  */
 export function paymentsConfigured(target: PaddleEnv): boolean {
-  if (paddleEnvironment() !== target) return false;
-  return Boolean(paddleApiKeyFor(target) && paddleWebhookSecretFor(target));
+  return paymentsConfiguredFor(target);
 }
+
 
 
 
@@ -114,18 +108,38 @@ export function getPaddleErrorMessage(error: unknown): string {
 
 type PaddleResponse<T> = { data?: T; error?: { detail?: string; code?: string } };
 
+const GATEWAY_BASE = "https://connector-gateway.lovable.dev/paddle";
+
+/** Lovable connector keys (`lovc_…`) are not Paddle keys — they route via the gateway. */
+function isConnectorKey(key: string): boolean {
+  return key.startsWith("lovc_");
+}
+
 async function paddleFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const key = paddleApiKey();
   if (!key) throw new Error("PADDLE_API_KEY is not configured");
 
-  const response = await fetch(`${API_BASE[paddleEnvironment()]}${path}`, {
+  const viaGateway = isConnectorKey(key);
+  const lovableKey = env("LOVABLE_API_KEY");
+  if (viaGateway && !lovableKey) throw new Error("LOVABLE_API_KEY is not configured");
+
+  const url = viaGateway
+    ? `${GATEWAY_BASE}${path}`
+    : `${API_BASE[paddleEnvironment()]}${path}`;
+
+  const auth: Record<string, string> = viaGateway
+    ? { Authorization: `Bearer ${lovableKey}`, "X-Connection-Api-Key": key }
+    : { Authorization: `Bearer ${key}` };
+
+  const response = await fetch(url, {
     ...init,
     headers: {
-      Authorization: `Bearer ${key}`,
+      ...auth,
       "Content-Type": "application/json",
       ...(init?.headers ?? {}),
     },
   });
+
 
   const payload = (await response.json().catch(() => ({}))) as PaddleResponse<T>;
   if (!response.ok || payload.error) {
@@ -207,14 +221,9 @@ export type PaddleEvent = {
 
 /** Notification-destination secret for one environment. */
 export function paddleWebhookSecretFor(target: PaddleEnv): string | undefined {
-  return (
-    // Names used by the managed Payments connection …
-    env(target === "sandbox" ? "PAYMENTS_SANDBOX_WEBHOOK_SECRET" : "PAYMENTS_LIVE_WEBHOOK_SECRET") ??
-    // … then the project-local names, then the single legacy secret.
-    env(target === "sandbox" ? "PADDLE_SANDBOX_WEBHOOK_SECRET" : "PADDLE_LIVE_WEBHOOK_SECRET") ??
-    env("PADDLE_WEBHOOK_SECRET")
-  );
+  return paymentsWebhookSecret(target);
 }
+
 
 function webhookSecret(target: PaddleEnv): string {
   const secret = paddleWebhookSecretFor(target);

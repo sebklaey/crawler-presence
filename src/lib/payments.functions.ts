@@ -1,22 +1,29 @@
 import { createServerFn } from "@tanstack/react-start";
 
 export type PaymentsStatus = {
+  /** Checkout can be created AND confirmed right now. */
   configured: boolean;
   environment: "sandbox" | "live";
+  /** Paddle.js token for exactly this environment — never guessed in the browser. */
+  clientToken: string;
   /** Always false since Alpha 0.0.2 — the free beta has ended. */
   betaFree: boolean;
   version: "0.0.2";
 };
 
 /**
- * Whether this deployment can really charge. The browser cannot see server
- * secrets, so the UI asks here instead of guessing from a build-time variable.
- * Crawler Alpha 0.0.2 is paid-only: publishing always requires a subscription.
- * `configured` only says whether checkout can currently be started.
+ * The browser never derives the payment environment itself: the server owns it
+ * (see `payments-config.ts`) and hands down the matching Paddle.js token, so a
+ * sandbox transaction can never be opened with a live token or vice versa.
  */
 export const paymentsStatusFn = createServerFn({ method: "GET" }).handler(async (): Promise<PaymentsStatus> => {
-  const { paddleEnvironment, paymentsConfigured } = await import("./paddle.server");
-  const environment = paddleEnvironment();
-  const configured = paymentsConfigured(environment);
-  return { configured, environment, betaFree: false, version: "0.0.2" };
+  const { paymentsEnv, paymentsReady, paymentsClientToken } = await import("./payments-config");
+  const environment = paymentsEnv();
+  return {
+    configured: paymentsReady(),
+    environment,
+    clientToken: paymentsClientToken(environment),
+    betaFree: false,
+    version: "0.0.2",
+  };
 });

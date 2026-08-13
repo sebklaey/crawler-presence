@@ -1,18 +1,28 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, ArrowLeft, Check, Copy, ExternalLink, Globe, Loader2, Lock, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell, PageHead } from "@/components/app-shell";
-import { PaymentTestModeBanner } from "@/components/payment-test-mode-banner";
+
 import { PresenceStatus } from "@/components/presence-status";
 import { RecoveryCodeCard } from "@/components/recovery-code-card";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { HOSTING_BENEFITS, NO_GUARANTEE_NOTICE, PLANS, planById, recommendPlan, type PlanId } from "@/lib/billing";
 import { trackFunnel, useFunnelOnce } from "@/lib/funnel";
 import { generatedFiles, isCoreEmpty, presenceScore, type KnowledgeCore } from "@/lib/knowledge";
 import { finalizePublishFn, loadDraft, startPublishFn } from "@/lib/presence.functions";
+import { rememberSessionToken, useSessionSync } from "@/hooks/use-session-sync";
 import { usePaymentsStatus } from "@/hooks/use-payments-status";
+import { usePublishState } from "@/hooks/use-publish-state";
+import { manageUpdateCoreFn } from "@/lib/manage.functions";
 import { useCore, usePlan, usePublished } from "@/lib/store";
 import { Empty } from "./knowledge";
 
@@ -42,6 +52,46 @@ export const Route = createFileRoute("/publish")({
 
 const PENDING_INTENT_KEY = "crawler:pending-intent";
 const PENDING_PLAN_KEY = "crawler:pending-plan";
+/** A checkout attempt older than this is stale and must never block the page. */
+const PENDING_INTENT_TTL_MS = 30 * 60 * 1000;
+
+/** Remembers the open checkout with a timestamp, so it can expire on its own. */
+function storePendingIntent(intentRef: string) {
+  try {
+    localStorage.setItem(PENDING_INTENT_KEY, JSON.stringify({ ref: intentRef, at: Date.now() }));
+  } catch {
+    /* ignore */
+  }
+}
+
+function readPendingIntent(): string | null {
+  try {
+    const raw = localStorage.getItem(PENDING_INTENT_KEY);
+    if (!raw) return null;
+    if (raw.startsWith("pi_")) {
+      // Legacy value without a timestamp — drop it rather than block the page.
+      localStorage.removeItem(PENDING_INTENT_KEY);
+      return null;
+    }
+    const parsed = JSON.parse(raw) as { ref?: string; at?: number };
+    if (!parsed.ref || !parsed.at || Date.now() - parsed.at > PENDING_INTENT_TTL_MS) {
+      localStorage.removeItem(PENDING_INTENT_KEY);
+      return null;
+    }
+    return parsed.ref;
+  } catch {
+    localStorage.removeItem(PENDING_INTENT_KEY);
+    return null;
+  }
+}
+
+function clearPendingIntent() {
+  try {
+    localStorage.removeItem(PENDING_INTENT_KEY);
+  } catch {
+    /* ignore */
+  }
+}
 
 type Issued = { slug: string; publishedAt: string; paths: string[]; recoveryCode: string; mode: "live" | "demo" };
 
@@ -52,6 +102,7 @@ type Issued = { slug: string; publishedAt: string; paths: string[]; recoveryCode
 type Phase =
   | "draft"
   | "ready_to_publish"
+  | "checkout_open"
   | "checkout_pending"
   | "payment_confirmed"
   | "publishing"
@@ -59,6 +110,7 @@ type Phase =
   | "payment_failed"
   | "publish_failed"
   | "demo";
+
 
 function PublishPage() {
   const search = Route.useSearch();
@@ -68,6 +120,7 @@ function PublishPage() {
   const [, setStoredPlan] = usePlan();
   const [selected, setSelected] = useState<PlanId | null>(null);
   const [step, setStep] = useState<"plans" | "summary">("plans");
+  const [flowOpen, setFlowOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [recovering, setRecovering] = useState(Boolean(search.session));
   const [recovered, setRecovered] = useState(false);
@@ -76,6 +129,35 @@ function PublishPage() {
   const [failure, setFailure] = useState<string | null>(null);
   const [pendingIntent, setPendingIntent] = useState<string | null>(search.intent ?? null);
   const { status: paymentsStatus } = usePaymentsStatus();
+  const live = usePublishState();
+  const [updating, setUpdating] = useState(false);
+  const { syncing } = useSessionSync();
+  const coreRef = useRef(core);
+  coreRef.current = core;
+
+
+  /** Already subscribed: push the current content live without a new checkout. */
+  async function publishUpdate() {
+    if (updating || !live.code) return;
+    setUpdating(true);
+    try {
+      const result = await manageUpdateCoreFn({ data: { code: live.code, core } });
+      if (!result.ok) {
+        toast.error(
+          result.reason === "empty-core"
+            ? "There is no Knowledge Core content in this browser yet."
+            : "Could not publish the update. Please try again in a moment.",
+        );
+        return;
+      }
+      toast.success("Published. Your public files were regenerated.");
+      live.refresh();
+    } catch {
+      toast.error("Could not publish the update.");
+    } finally {
+      setUpdating(false);
+    }
+  }
 
   useFunnelOnce("publish_clicked");
 
@@ -91,6 +173,7 @@ function PublishPage() {
         if (result.found) {
           setCore(result.core as KnowledgeCore);
           setRecovered(true);
+          rememberSessionToken(token);
           toast.success("Draft recovered from your ChatGPT session.");
         } else {
           toast.error("That draft link has expired. Start a new interview.");
@@ -106,6 +189,10 @@ function PublishPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search.session]);
+
+
+
+
 
   // Restore a plan chosen earlier (URL, or an abandoned checkout attempt).
   useEffect(() => {
@@ -132,7 +219,7 @@ function PublishPage() {
   const finalize = useCallback(
     async (intentRef: string) => {
       const result = await finalizePublishFn({ data: { intentRef, core } });
-      if (result.kind !== "pending") localStorage.removeItem(PENDING_INTENT_KEY);
+      if (result.kind !== "pending") clearPendingIntent();
       if (result.kind === "published") {
         localStorage.removeItem(PENDING_PLAN_KEY);
         trackFunnel("payment_confirmed", { plan: result.plan as PlanId, presenceSlug: result.slug });
@@ -155,6 +242,13 @@ function PublishPage() {
         toast.message("This Presence is already published. Use your recovery code to manage it.");
         return true;
       }
+      if (result.kind === "empty") {
+        setPhase("payment_failed");
+        setFailure(
+          "Your payment is safe, but this browser has no Knowledge Core content, so nothing was published. Open your draft (or /knowledge) in the same browser and try again — nothing was published twice.",
+        );
+        return true;
+      }
       if (result.kind === "expired") {
         setPhase("payment_failed");
         setFailure("That checkout link has expired. Nothing was published and nothing was charged.");
@@ -165,19 +259,21 @@ function PublishPage() {
     [core, setPublished],
   );
 
-  // Paddle's hosted checkout returns to the success URL configured in Paddle,
-  // which may not carry our query string — so the intent is also kept locally.
+  // Returning from checkout: the intent travels in the URL, and as a
+  // short-lived local fallback for hosted redirects that drop the query.
   useEffect(() => {
     if (search.intent) {
       setPendingIntent(search.intent);
+      setPhase("checkout_pending");
       return;
     }
-    const stored = localStorage.getItem(PENDING_INTENT_KEY);
+    const stored = readPendingIntent();
     if (stored) {
       setPendingIntent(stored);
       setPhase("checkout_pending");
     }
   }, [search.intent]);
+
 
   // Return from hosted checkout: poll until the payment webhook has landed.
   useEffect(() => {
@@ -223,7 +319,7 @@ function PublishPage() {
   );
 
   const retryIntent = useCallback(() => {
-    const stored = localStorage.getItem(PENDING_INTENT_KEY);
+    const stored = readPendingIntent();
     if (!stored) {
       setPhase("draft");
       setFailure(null);
@@ -235,11 +331,20 @@ function PublishPage() {
     window.setTimeout(() => setPendingIntent(stored), 50);
   }, []);
 
+  /** Escape hatch: never let an abandoned checkout lock the publish page. */
+  const abandonCheckout = useCallback(() => {
+    clearPendingIntent();
+    setPendingIntent(null);
+    setFailure(null);
+    setPhase("draft");
+    void navigate({ to: "/publish", search: {}, replace: true });
+  }, [navigate]);
+
+
   async function publish(planId: PlanId) {
     if (busy) return;
     setBusy(true);
     setFailure(null);
-    setPhase(payments ? "checkout_pending" : "publishing");
     trackFunnel("checkout_started", { plan: planId, fromStep: "plan_summary", toStep: "checkout" });
     try {
       localStorage.setItem(PENDING_PLAN_KEY, planId);
@@ -251,29 +356,30 @@ function PublishPage() {
           ...(search.session ? { sessionToken: search.session } : {}),
         },
       });
-      if (result.kind === "checkout") {
-        localStorage.setItem(PENDING_INTENT_KEY, result.intentRef);
-        window.location.href = result.url;
+      if (result.kind === "error") {
+        trackFunnel("publish_failed", { plan: planId, errorCategory: "checkout_start" });
+        setPhase("publish_failed");
+        setFailure(result.message);
         return;
       }
-      if (result.kind === "demo") {
-        localStorage.removeItem(PENDING_PLAN_KEY);
-        trackFunnel("publish_completed", { plan: planId, presenceSlug: result.slug });
-        setIssued({
-          slug: result.slug,
-          publishedAt: result.publishedAt,
-          paths: result.paths,
-          recoveryCode: result.recoveryCode,
-          mode: "demo",
+
+      const successUrl = `${window.location.origin}/publish?intent=${encodeURIComponent(result.intentRef)}`;
+      storePendingIntent(result.intentRef);
+      try {
+        // Overlay in this tab: the environment and token come from the server,
+        // so the overlay always matches the transaction that was created.
+        const { openPaddleCheckout } = await import("@/lib/paddle-client");
+        await openPaddleCheckout({
+          environment: result.environment,
+          token: result.clientToken,
+          transactionId: result.transactionId,
+          successUrl,
         });
-        setPublished({ at: result.publishedAt, slug: result.slug });
-        setPhase("demo");
-        toast.success("Published — your files are live.");
-        return;
+        setPhase("checkout_open");
+      } catch {
+        // Hosted fallback if Paddle.js cannot load (blocked script, etc.).
+        window.location.href = result.url;
       }
-      trackFunnel("publish_failed", { plan: planId, errorCategory: "checkout_start" });
-      setPhase("publish_failed");
-      setFailure(result.message);
     } catch (e) {
       trackFunnel("publish_failed", { plan: planId, errorCategory: "network" });
       setPhase("publish_failed");
@@ -282,6 +388,7 @@ function PublishPage() {
       setBusy(false);
     }
   }
+
 
   if (recovering) {
     return (
@@ -305,10 +412,14 @@ function PublishPage() {
             Keep this tab open. Nothing is live until the server confirms the publication. Your recovery code appears
             here once, right afterwards.
           </p>
+          <Button variant="outline" size="sm" className="mt-6" onClick={abandonCheckout}>
+            Cancel and start over
+          </Button>
         </div>
       </AppShell>
     );
   }
+
 
   if (isCoreEmpty(core) && !recovered && !issued) return <Empty />;
 
@@ -319,7 +430,6 @@ function PublishPage() {
     const proPlus = planById(selected ?? "plus").id !== "plus";
     return (
       <AppShell>
-        <PaymentTestModeBanner />
         <div className="mx-auto max-w-3xl px-5 pb-24 pt-14">
           <PageHead
             eyebrow="Published"
@@ -342,7 +452,10 @@ function PublishPage() {
                   Plan: <span className="text-foreground">{planById(selected ?? "plus").name}</span>
                 </div>
                 <div>
-                  Published: <span className="text-foreground">{new Date(issued.publishedAt).toLocaleString()}</span>
+                  Published:{" "}
+                  <span className="text-foreground">
+                    {new Date(issued.publishedAt).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  </span>
                 </div>
                 <div>
                   Status:{" "}
@@ -432,13 +545,78 @@ function PublishPage() {
 
   return (
     <AppShell>
-      <PaymentTestModeBanner />
       <div className="mx-auto max-w-5xl px-5 pb-24 pt-14">
         <PageHead
           eyebrow="Digital SaaS hosting"
           title="Host your Presence online"
           description="Everything up to this point is free. A paid plan provides online software hosting for your AI-readable files and endpoints. It is delivered electronically and contains no physical goods."
         />
+
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-foreground bg-card p-5">
+          <div>
+            <div className="text-sm font-medium">
+              {live.overLimit
+                ? "Your content exceeds your current plan"
+                : live.isLive
+                  ? live.hasChanges
+                    ? "Publish current content"
+                    : "All data are Published and Live."
+                  : "Ready to go online?"}
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {live.overLimit
+                ? `Your ${planById(live.plan).name} plan serves ${live.limit} content records — the rest stays stored but stays offline until you upgrade.`
+                : live.isLive
+                  ? live.hasChanges
+                    ? "Your subscription is active. Publishing the update regenerates all public files immediately — no new checkout."
+                    : "Everything in your Knowledge Core is published and publicly readable."
+                  : `Pick a plan and pay in one short flow. From $${PLANS[0]?.price ?? 5}/month, cancel any time.`}
+            </p>
+          </div>
+          {live.overLimit ? (
+            <Button
+              size="lg"
+              onClick={() => {
+                setStep("plans");
+                setSelected((s) => s ?? recommendation.plan);
+                setFlowOpen(true);
+              }}
+            >
+              Update now
+            </Button>
+          ) : live.isLive ? (
+            live.hasChanges ? (
+              <Button size="lg" disabled={updating} onClick={() => void publishUpdate()}>
+                {updating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Publishing…
+                  </>
+                ) : (
+                  "Publish current content"
+                )}
+              </Button>
+            ) : (
+              <Button size="lg" variant="outline" asChild>
+                <a href={`/p/${live.slug}`}>
+                  <ExternalLink className="mr-2 h-4 w-4" /> Open Presence
+                </a>
+              </Button>
+            )
+          ) : (
+            <Button
+              size="lg"
+              onClick={() => {
+                setStep("plans");
+                setSelected((s) => s ?? recommendation.plan);
+                setFlowOpen(true);
+              }}
+            >
+              Publish now
+            </Button>
+          )}
+        </div>
+
+
 
         {failureState ? (
           <div
@@ -468,220 +646,41 @@ function PublishPage() {
 
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
           <div className="space-y-6">
-            {step === "plans" ? (
-              <>
-                <section className="rounded-2xl border border-border bg-card p-6">
-                  <h2 className="text-sm font-medium">With hosting you get:</h2>
-                  <ul className="mt-4 grid gap-1.5 sm:grid-cols-2">
-                    {HOSTING_BENEFITS.map((b) => (
-                      <li key={b} className="flex gap-2 text-sm text-muted-foreground">
-                        <Check className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                        <span>{b}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="mt-4 rounded-lg border border-dashed border-border bg-secondary/50 px-3 py-2 text-xs text-muted-foreground">
-                    {NO_GUARANTEE_NOTICE}
-                  </p>
-                </section>
+            <section className="rounded-2xl border border-border bg-card p-6">
+              <h2 className="text-sm font-medium">With hosting you get:</h2>
+              <ul className="mt-4 grid gap-1.5 sm:grid-cols-2">
+                {HOSTING_BENEFITS.map((b) => (
+                  <li key={b} className="flex gap-2 text-sm text-muted-foreground">
+                    <Check className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-4 rounded-lg border border-dashed border-border bg-secondary/50 px-3 py-2 text-xs text-muted-foreground">
+                {NO_GUARANTEE_NOTICE}
+              </p>
+            </section>
 
-                <section className="rounded-2xl border border-border bg-card p-6">
-                  <h2 className="text-sm font-medium">Recommended for you</h2>
-                  <p className="mt-2 text-sm">
-                    Based on your current Knowledge Core we recommend{" "}
-                    <strong>{planById(recommendation.plan).name}</strong>. You can pick any other plan.
-                  </p>
-                  <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
-                    {recommendation.reasons.slice(0, 2).map((r) => (
-                      <li key={r}>· {r}</li>
-                    ))}
-                  </ul>
-                </section>
+            <section className="rounded-2xl border border-border bg-card p-6">
+              <h2 className="text-sm font-medium">Recommended for you</h2>
+              <p className="mt-2 text-sm">
+                Based on your current Knowledge Core we recommend{" "}
+                <strong>{planById(recommendation.plan).name}</strong>. You can pick any other plan in the publish flow.
+              </p>
+              <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                {recommendation.reasons.slice(0, 2).map((r) => (
+                  <li key={r}>· {r}</li>
+                ))}
+              </ul>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Compare everything on the{" "}
+                <Link to="/pricing" className="underline underline-offset-4">
+                  pricing page
+                </Link>
+                .
+              </p>
+            </section>
 
-                <section className="rounded-2xl border border-border bg-card p-6">
-                  <h2 className="flex items-center gap-2 text-sm font-medium">
-                    {payments ? <Globe className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
-                    Choose your digital hosting plan
-                  </h2>
-
-                  {!payments ? (
-                    <div className="mt-3 rounded-lg border border-dashed border-border bg-secondary/60 px-3 py-2 text-xs text-muted-foreground">
-                      <strong className="text-foreground">Checkout is temporarily unavailable.</strong> Crawler Alpha
-                      0.0.2 is paid-only: publishing and hosting always require an active subscription. Building and
-                      previewing stay free — please try the checkout again shortly.
-                    </div>
-                  ) : (
-                    <p className="mt-3 text-xs text-muted-foreground">
-                      You are purchasing a digital SaaS subscription for online Presence hosting, billed monthly and
-                      cancellable at any time. Nothing physical is sold or shipped. Checkout receives only an anonymous
-                      reference to this publish request.
-                    </p>
-                  )}
-
-                  <div className="mt-4 grid gap-4 sm:grid-cols-3">
-                    {PLANS.map((p) => {
-                      const isSelected = selected === p.id;
-                      return (
-                        <div
-                          key={p.id}
-                          className={`flex flex-col rounded-2xl border p-5 text-left transition-colors ${
-                            isSelected ? "border-foreground bg-secondary" : "border-border hover:border-foreground/40"
-                          }`}
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <div>
-                              <div className="flex flex-wrap items-center gap-2">
-                                <span className="text-sm font-medium">{p.name}</span>
-                                {p.recommended ? (
-                                  <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] uppercase tracking-wide text-primary-foreground">
-                                    Recommended
-                                  </span>
-                                ) : null}
-                              </div>
-                              <div className="mt-0.5 text-xs text-muted-foreground">{p.subtitle}</div>
-                              <div className="mt-2 flex items-baseline gap-1">
-                                <span className="display text-2xl">${p.price}</span>
-                                <span className="text-xs text-muted-foreground">/month, billed monthly</span>
-                              </div>
-                            </div>
-                            {isSelected ? <Check className="h-4 w-4 shrink-0" /> : null}
-                          </div>
-
-                          <div className="mt-3 flex flex-wrap gap-1">
-                            {p.audience.map((a) => (
-                              <span key={a} className="rounded bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                                {a}
-                              </span>
-                            ))}
-                          </div>
-
-                          <ul className="mt-4 flex-1 space-y-1.5">
-                            {p.benefits.map((f) => (
-                              <li key={f} className="flex gap-2 text-xs text-muted-foreground">
-                                <Check className="mt-0.5 h-3 w-3 shrink-0" />
-                                <span>{f}</span>
-                              </li>
-                            ))}
-                          </ul>
-
-                          <Button
-                            className="mt-5"
-                            variant={isSelected ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => {
-                              setSelected(p.id);
-                              setStoredPlan(p.id);
-                              trackFunnel("plan_selected", { plan: p.id, fromStep: "plans", toStep: "summary" });
-                              setStep("summary");
-                            }}
-                          >
-                            {p.cta}
-                          </Button>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  <p className="mt-3 text-xs text-muted-foreground">
-                    Compare everything on the{" "}
-                    <Link to="/pricing" className="underline underline-offset-4">
-                      pricing page
-                    </Link>
-                    .
-                  </p>
-                </section>
-              </>
-            ) : null}
-
-            {step === "summary" && plan ? (
-              <section className="rounded-2xl border border-border bg-card p-6">
-                <button
-                  onClick={() => setStep("plans")}
-                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-                >
-                  <ArrowLeft className="h-3.5 w-3.5" /> Change plan
-                </button>
-
-                <h2 className="mt-4 text-sm font-medium">Order summary</h2>
-                <dl className="mt-4 divide-y divide-border text-sm">
-                  <div className="flex justify-between py-2">
-                    <dt className="text-muted-foreground">Plan</dt>
-                    <dd>
-                      {plan.name} — {plan.subtitle}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between py-2">
-                    <dt className="text-muted-foreground">Price</dt>
-                    <dd>${plan.price} per month</dd>
-                  </div>
-                  <div className="flex justify-between py-2">
-                    <dt className="text-muted-foreground">Billing</dt>
-                    <dd>Monthly, recurring until you cancel</dd>
-                  </div>
-                  <div className="flex justify-between gap-4 py-2">
-                    <dt className="text-muted-foreground">Presence</dt>
-                    <dd className="text-right">{core.name || "Untitled presence"}</dd>
-                  </div>
-                </dl>
-
-                <h3 className="mt-5 text-xs uppercase tracking-wide text-muted-foreground">Included</h3>
-                <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex gap-2 text-xs text-muted-foreground">
-                      <Check className="mt-0.5 h-3 w-3 shrink-0" />
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="mt-5 rounded-lg border border-dashed border-border bg-secondary/50 px-3 py-2 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1.5 text-foreground">
-                    <ShieldCheck className="h-3.5 w-3.5" /> Before you continue
-                  </div>
-                  <ul className="mt-2 space-y-1">
-                    <li>· No registration and no account — a one-time management code controls the Presence.</li>
-                    <li>· Clear monthly price, cancel any time at /manage with your recovery code.</li>
-                    <li>· Payment is handled externally by the payment provider; Crawler never sees card data.</li>
-                    <li>· {NO_GUARANTEE_NOTICE}</li>
-                    <li>
-                      · Operated by SEBKLAEY ·{" "}
-                      <Link to="/support" className="underline underline-offset-4">
-                        Support
-                      </Link>{" "}
-                      ·{" "}
-                      <Link to="/privacy" className="underline underline-offset-4">
-                        Privacy
-                      </Link>{" "}
-                      ·{" "}
-                      <Link to="/terms" className="underline underline-offset-4">
-                        Terms
-                      </Link>{" "}
-                      ·{" "}
-                      <Link to="/refunds" className="underline underline-offset-4">
-                        Refunds
-                      </Link>
-                    </li>
-                  </ul>
-                </div>
-
-                <Button className="mt-5 w-full sm:w-auto" disabled={busy} onClick={() => void publish(plan.id)}>
-                  {busy ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Opening secure checkout…
-                    </>
-                  ) : payments ? (
-                    `Publish for $${plan.price}/month`
-                  ) : (
-                    `Checkout unavailable — ${plan.name} $${plan.price}/month`
-                  )}
-                </Button>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  {payments
-                    ? "You will be taken to the payment provider. A checkout link is not a payment — your Presence goes live only after the server confirms it."
-                    : "Publishing requires a paid subscription. Nothing is published until a payment is confirmed."}
-                </p>
-              </section>
-            ) : null}
 
             <section className="rounded-2xl border border-border bg-card p-6">
               <h2 className="text-sm font-medium">What goes live</h2>
@@ -705,9 +704,195 @@ function PublishPage() {
             </section>
           </div>
 
-          <PresenceStatus core={core} columns={1} />
+          <div className="space-y-3">
+            <PresenceStatus core={core} columns={1} />
+            <p className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-xs text-muted-foreground">
+              {syncing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+              {syncing ? "Syncing with your ChatGPT interview…" : "Automatically synced with your ChatGPT interview."}
+            </p>
+          </div>
         </div>
+
+        <Dialog open={flowOpen} onOpenChange={setFlowOpen}>
+          <DialogContent className="max-w-lg gap-0 p-0">
+            <DialogHeader className="border-b border-border px-6 py-4 text-left">
+              <DialogTitle className="flex items-center gap-2 text-sm font-medium">
+                {payments ? <Globe className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+                {step === "plans" ? "Choose your digital hosting plan" : "Confirm and pay"}
+              </DialogTitle>
+              <DialogDescription className="text-xs">
+                {step === "plans"
+                  ? "Digital SaaS subscription for online Presence hosting. Nothing physical is sold or shipped."
+                  : "Billed monthly, cancellable any time with your recovery code."}
+              </DialogDescription>
+            </DialogHeader>
+
+            {/* Fixed-height body so the action buttons never move between steps. */}
+            <div className="h-[360px] overflow-y-auto px-6 py-4">
+              {step === "plans" ? (
+                <div className="space-y-2">
+                  {!payments ? (
+                    <div className="mb-3 rounded-lg border border-dashed border-border bg-secondary/60 px-3 py-2 text-xs text-muted-foreground">
+                      <strong className="text-foreground">Checkout is temporarily unavailable.</strong> Publishing and
+                      hosting always require an active subscription — please try again shortly.
+                    </div>
+                  ) : null}
+                  {PLANS.map((p) => {
+                    const isSelected = selected === p.id;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => {
+                          setSelected(p.id);
+                          setStoredPlan(p.id);
+                        }}
+                        className={`flex w-full items-start justify-between gap-3 rounded-xl border p-4 text-left transition-colors ${
+                          isSelected ? "border-foreground bg-secondary" : "border-border hover:border-foreground/40"
+                        }`}
+                      >
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-sm font-medium">{p.name}</span>
+                            {p.recommended ? (
+                              <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] uppercase tracking-wide text-primary-foreground">
+                                Recommended
+                              </span>
+                            ) : null}
+                          </div>
+                          <div className="mt-0.5 text-xs text-muted-foreground">{p.subtitle}</div>
+                          <ul className="mt-2 space-y-1">
+                            {p.benefits.slice(0, 3).map((f) => (
+                              <li key={f} className="flex gap-2 text-xs text-muted-foreground">
+                                <Check className="mt-0.5 h-3 w-3 shrink-0" />
+                                <span>{f}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <div className="display text-xl">${p.price}</div>
+                          <div className="text-[10px] text-muted-foreground">/month</div>
+                          {isSelected ? <Check className="ml-auto mt-2 h-4 w-4" /> : null}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : plan ? (
+                <div>
+                  <dl className="divide-y divide-border text-sm">
+                    <div className="flex justify-between py-2">
+                      <dt className="text-muted-foreground">Plan</dt>
+                      <dd>{plan.name}</dd>
+                    </div>
+                    <div className="flex justify-between py-2">
+                      <dt className="text-muted-foreground">Price</dt>
+                      <dd>${plan.price} per month</dd>
+                    </div>
+                    <div className="flex justify-between py-2">
+                      <dt className="text-muted-foreground">Billing</dt>
+                      <dd>Monthly, recurring until you cancel</dd>
+                    </div>
+                    <div className="flex justify-between gap-4 py-2">
+                      <dt className="text-muted-foreground">Presence</dt>
+                      <dd className="text-right">{core.name || "Untitled presence"}</dd>
+                    </div>
+                  </dl>
+
+                  <h3 className="mt-4 text-xs uppercase tracking-wide text-muted-foreground">Included</h3>
+                  <ul className="mt-2 space-y-1">
+                    {plan.features.map((f) => (
+                      <li key={f} className="flex gap-2 text-xs text-muted-foreground">
+                        <Check className="mt-0.5 h-3 w-3 shrink-0" />
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="mt-4 rounded-lg border border-dashed border-border bg-secondary/50 px-3 py-2 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1.5 text-foreground">
+                      <ShieldCheck className="h-3.5 w-3.5" /> Before you continue
+                    </div>
+                    <ul className="mt-2 space-y-1">
+                      <li>· No registration and no account — a one-time management code controls the Presence.</li>
+                      <li>· Cancel any time at /manage with your recovery code.</li>
+                      <li>· Payment is handled by the payment provider; Crawler never sees card data.</li>
+                      <li>· {NO_GUARANTEE_NOTICE}</li>
+                      <li>
+                        · Operated by SEBKLAEY ·{" "}
+                        <Link to="/support" className="underline underline-offset-4">
+                          Support
+                        </Link>{" "}
+                        ·{" "}
+                        <Link to="/privacy" className="underline underline-offset-4">
+                          Privacy
+                        </Link>{" "}
+                        ·{" "}
+                        <Link to="/terms" className="underline underline-offset-4">
+                          Terms
+                        </Link>{" "}
+                        ·{" "}
+                        <Link to="/refunds" className="underline underline-offset-4">
+                          Refunds
+                        </Link>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
+            {/* Action row — identical position in every step. */}
+            <div className="flex items-center justify-between gap-3 border-t border-border px-6 py-4">
+              {step === "plans" ? (
+                <button
+                  type="button"
+                  onClick={() => setFlowOpen(false)}
+                  className="text-xs text-muted-foreground hover:text-foreground"
+                >
+                  Cancel
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setStep("plans")}
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" /> Change plan
+                </button>
+              )}
+
+              <Button
+                className="min-w-[220px]"
+                disabled={busy || !selected}
+                onClick={() => {
+                  if (!selected) return;
+                  if (step === "plans") {
+                    trackFunnel("plan_selected", { plan: selected, fromStep: "plans", toStep: "summary" });
+                    setStep("summary");
+                    return;
+                  }
+                  void publish(selected);
+                }}
+              >
+                {busy ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Opening secure checkout…
+                  </>
+                ) : step === "plans" ? (
+                  `Continue with ${planById(selected ?? "plus").name} — $${planById(selected ?? "plus").price}/month`
+                ) : payments ? (
+                  `Publish for $${plan?.price ?? 0}/month`
+                ) : (
+                  "Checkout unavailable"
+                )}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
+
     </AppShell>
   );
 }

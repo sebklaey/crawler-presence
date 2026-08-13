@@ -1,0 +1,1 @@
+UPDATE public.published_presences SET status = 'offline', unpublished_at = COALESCE(unpublished_at, now()) WHERE mode <> 'live' AND status = 'live';

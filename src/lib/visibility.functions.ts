@@ -123,3 +123,46 @@ export const visibilityBenchmarkFn = createServerFn({ method: "POST" })
     if (result.error) return { ok: false as const, error: result.error };
     return { ok: true as const, runs: result.runs };
   });
+
+/**
+ * Connect or disconnect an analytics source (capability-based, recovery code only).
+ * Stores nothing but a non-secret configuration value per source.
+ */
+export const visibilityConnectSourceFn = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        code: z.string().trim().min(10).max(200),
+        source: z.enum(["authorized_ai", "public_web", "search_console", "visibility_benchmark", "user_reported"]),
+        connected: z.boolean(),
+        value: z.string().trim().max(500).optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }) => {
+    const { parseRecoveryCode, verifyManageSecret, allowRequest } = await import("./mcp/presences");
+    const parsed = parseRecoveryCode(data.code);
+    if (!parsed) return { ok: false as const, reason: "invalid-code" as const };
+    if (!(await allowRequest(`visibility-connect:${parsed.slug}`, 20)))
+      return { ok: false as const, reason: "rate-limited" as const };
+    const presence = await verifyManageSecret(parsed.slug, parsed.secret);
+    if (!presence) return { ok: false as const, reason: "not-found" as const };
+
+    const { db } = await import("./mcp/db.server");
+    const supabase = await db();
+    if (!supabase) return { ok: false as const, reason: "unavailable" as const };
+
+    const { error } = await supabase.from("analytics_integrations").upsert(
+      {
+        presence_slug: presence.slug,
+        integration_type: data.source,
+        connection_status: data.connected ? "connected" : "not_connected",
+        configuration: data.value ? { value: data.value } : {},
+        last_synced_at: data.connected ? new Date().toISOString() : null,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "presence_slug,integration_type" },
+    );
+    if (error) return { ok: false as const, reason: "unavailable" as const };
+    return { ok: true as const };
+  });

@@ -2,7 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 
 import { paymentsStatusFn, type PaymentsStatus } from "@/lib/payments.functions";
 
-const FALLBACK: PaymentsStatus = { configured: false, environment: "live", betaFree: false, version: "0.0.2" };
+const FALLBACK: PaymentsStatus = {
+  configured: false,
+  environment: "live",
+  clientToken: "",
+  betaFree: false,
+  version: "0.0.2",
+};
+
 
 /** Server-verified payment mode: never claims live checkout without credentials. */
 export function usePaymentsStatus(): { status: PaymentsStatus; loading: boolean } {

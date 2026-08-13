@@ -12,6 +12,7 @@
 import { logBestEffortFailure } from "./best-effort";
 import { db } from "./mcp/db.server";
 import { opaqueToken } from "./mcp/sessions";
+import { paymentsEnv } from "./payments-config";
 
 /**
  * Raised when the intent store is configured but a read or write failed.
@@ -34,18 +35,11 @@ function storeFailure(operation: string, detail: string): never {
 
 export type BillingEnv = "sandbox" | "live";
 
-/**
- * Which environment this deployment bills in. Single source of truth lives in
- * paddle.server, so preview never bills live and production never bills test.
- */
+/** Single source of truth: payments-config decides sandbox vs live. */
 export function billingEnvironment(): BillingEnv {
-  const forced = process.env["PADDLE_ENV"]?.trim();
-  if (forced === "sandbox" || forced === "live") return forced;
-  const isProduction = process.env["NODE_ENV"] === "production";
-  if (isProduction && process.env["PADDLE_LIVE_API_KEY"]?.trim()) return "live";
-  if (process.env["PADDLE_SANDBOX_API_KEY"]?.trim()) return "sandbox";
-  return process.env["PADDLE_LIVE_API_KEY"]?.trim() ? "live" : "sandbox";
+  return paymentsEnv();
 }
+
 
 export type IntentStatus = "pending" | "paid" | "published" | "demo";
 

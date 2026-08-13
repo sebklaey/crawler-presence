@@ -28,10 +28,11 @@ import {
   manageRotateSecretFn,
   manageRestoreCoreFn,
   manageSetStatusFn,
+  manageUpdateCoreFn,
   type ManageOverview,
 } from "@/lib/manage.functions";
 import { useCore, usePlan, usePublished, useRecoveryCode } from "@/lib/store";
-import type { KnowledgeCore } from "@/lib/knowledge";
+import { isCoreEmpty, type KnowledgeCore } from "@/lib/knowledge";
 
 export const Route = createFileRoute("/manage")({
   head: () => ({
@@ -72,7 +73,7 @@ function ManagePage() {
   const [data, setData] = useState<Extract<ManageOverview, { ok: true }> | null>(null);
   const [rotated, setRotated] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<Confirming>(null);
-  const [, setCore] = useCore();
+  const [core, setCore] = useCore();
   const [, setPlan] = usePlan();
   const [, setPublished] = usePublished();
   const [, setStoredCode] = useRecoveryCode();
@@ -85,10 +86,14 @@ function ManagePage() {
     try {
       const restored = await manageRestoreCoreFn({ data: { code: next } });
       if (!restored.ok) return;
-      setCore(restored.core as KnowledgeCore);
+      const remote = restored.core as KnowledgeCore;
+      // Never overwrite a filled local draft with an empty published shell —
+      // that would block "Publish current content".
+      if (!isCoreEmpty(remote) || isCoreEmpty(core)) setCore(remote);
       setPlan(restored.plan as "free" | "plus" | "pro" | "business");
       setPublished({ at: restored.publishedAt, slug: restored.slug });
       setStoredCode(next);
+
     } catch {
       /* the overview already loaded — restoring the workspace is best effort */
     }
@@ -140,6 +145,27 @@ function ManagePage() {
       setCode(result.recoveryCode);
       toast.success("New recovery code issued. The old one no longer works.");
       await open(result.recoveryCode);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const liveIsEmpty = !data?.name;
+
+  async function updateContent() {
+    setBusy(true);
+    try {
+      const result = await manageUpdateCoreFn({ data: { code, core } });
+      if (!result.ok) {
+        toast.error(
+          result.reason === "empty-core"
+            ? "There is no Knowledge Core content in this browser yet."
+            : (REASONS[result.reason ?? ""] ?? "Could not publish the update."),
+        );
+        return;
+      }
+      toast.success("Published. Your public files were regenerated.");
+      await open();
     } finally {
       setBusy(false);
     }
@@ -248,7 +274,9 @@ function ManagePage() {
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground">Published</dt>
-                  <dd>{new Date(data.publishedAt).toLocaleString()}</dd>
+                  <dd>
+                    {new Date(data.publishedAt).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  </dd>
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground">Subscription</dt>
@@ -314,7 +342,7 @@ function ManagePage() {
                       {data.hiddenCatalogEntries} content {data.hiddenCatalogEntries === 1 ? "record is" : "records are"}{" "}
                       hidden.
                     </span>{" "}
-                    Your {data.plan} plan hosts up to {data.catalogLimit.toLocaleString()} AI-readable content records. The rest stay
+                    Your {data.plan} plan hosts up to {data.catalogLimit.toLocaleString("en-US")} AI-readable content records. The rest stay
                     stored and reappear automatically after an upgrade.
                   </p>
                 ) : null}
@@ -344,7 +372,7 @@ function ManagePage() {
                   {data.analytics.metrics.map((metric) => (
                     <div key={metric.label}>
                       <dt className="text-xs text-muted-foreground">{metric.label}</dt>
-                      <dd className="display text-2xl">{metric.value.toLocaleString()}</dd>
+                      <dd className="display text-2xl">{metric.value.toLocaleString("en-US")}</dd>
                       <p className="text-[11px] text-muted-foreground">{metric.hint}</p>
                     </div>
                   ))}
@@ -373,14 +401,37 @@ function ManagePage() {
                 </div>
 
                 <a
-                  href={`/manage/${data.slug}/analytics`}
+                  href="/analytics"
                   className="mt-6 inline-block rounded-full border border-border px-4 py-1.5 text-xs hover:border-foreground/40"
                 >
-                  AI Visibility Analytics öffnen
+                  Open AI Visibility Analytics
                 </a>
               </div>
 
             ) : null}
+
+            <div className="rounded-2xl border border-border bg-card p-6">
+              <h2 className="text-sm font-medium">Published content</h2>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {liveIsEmpty
+                  ? "This Presence is online but has no content yet, so AI systems find an empty shell. Fill in your Knowledge Core under /knowledge, then publish the update here."
+                  : "Your Presence currently serves the Knowledge Core below. Edit it under /knowledge and publish the update here — the public files are regenerated immediately."}
+              </p>
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <Button disabled={busy || isCoreEmpty(core)} onClick={() => void updateContent()}>
+                  {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Publish current content
+                </Button>
+                <a href="/knowledge" className="text-xs underline underline-offset-4">
+                  Edit Knowledge Core
+                </a>
+              </div>
+              {isCoreEmpty(core) ? (
+                <p className="mt-3 text-xs text-muted-foreground">
+                  This browser holds no Knowledge Core content yet — add it under /knowledge first.
+                </p>
+              ) : null}
+            </div>
 
             <AiRetrievalSection data={data} />
             <CustomDomainSection code={code} data={data} refresh={() => open()} />

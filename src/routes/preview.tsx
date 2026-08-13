@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { AppShell, PageHead } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { generatedFiles, isCoreEmpty } from "@/lib/knowledge";
+import { useSessionSync } from "@/hooks/use-session-sync";
 import { useCore } from "@/lib/store";
 import { useFunnelOnce } from "@/lib/funnel";
 import { Empty } from "./knowledge";
@@ -28,6 +29,7 @@ export const Route = createFileRoute("/preview")({
 function PreviewPage() {
   useFunnelOnce("preview_opened");
   const [core] = useCore();
+  useSessionSync();
   const files = generatedFiles(core);
   const [active, setActive] = useState(0);
 

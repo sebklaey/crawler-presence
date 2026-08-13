@@ -286,10 +286,13 @@ export async function getPublished(slug: string): Promise<PublishedPresence | un
   return rest;
 }
 
-/** Only a live presence is served publicly. */
+/**
+ * Only a paid, live presence is served publicly. Since Alpha 0.0.2 publishing
+ * is paid-only, so legacy `demo` records never reach the public web again.
+ */
 export async function getLivePresence(slug: string): Promise<PublishedPresence | undefined> {
   const record = await getPublished(slug);
-  return record && record.status === "live" ? record : undefined;
+  return record && record.status === "live" && record.mode === "live" ? record : undefined;
 }
 
 /* ------------------------------------------------------------------ */
@@ -615,12 +618,13 @@ export async function getLivePresenceByDomain(host: string): Promise<PublishedPr
       .eq("custom_domain", domain)
       .not("custom_domain_verified_at", "is", null)
       .eq("status", "live")
+      .eq("mode", "live")
       .maybeSingle();
     if (error) storeFailure("read", error.message);
     return data ? fromRow(data as Row) : undefined;
   }
   for (const record of memory.values()) {
-    if (record.customDomain === domain && record.customDomainVerifiedAt && record.status === "live") {
+    if (record.customDomain === domain && record.customDomainVerifiedAt && record.status === "live" && record.mode === "live") {
       const { manageSecretHash: _hash, ...rest } = record;
       return rest;
     }
