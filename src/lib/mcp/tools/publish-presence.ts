@@ -22,7 +22,56 @@ export default defineTool({
     const { redeemableIntentForSession, latestIntentForSession, markIntentPublished } = await import(
       "../../intents.server"
     );
+
+    // Already published from this draft? Then this call is an update: push the
+    // current Knowledge Core to the live files instead of asking to pay again.
+    const { getPublished, getPublishedBySessionToken, republishCore } = await import("../presences");
+    const previousIntent = await latestIntentForSession(session.id);
+    const existing =
+      (await getPublishedBySessionToken(session.id)) ??
+      (previousIntent?.presenceSlug ? await getPublished(previousIntent.presenceSlug) : undefined);
+
+    if (existing) {
+      const { isCoreEmpty } = await import("../../knowledge");
+      if (isCoreEmpty(session.core)) {
+        throw new ToolError(
+          "This draft is empty, so nothing was written to the live Presence. Add content with continue_interview first.",
+        );
+      }
+      const updated = await republishCore(existing.slug, session.core);
+      const url = `${base}/p/${updated.slug}`;
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `Updated. The live Presence at ${url} now serves the current Knowledge Core (version ${updated.version}). Files rewritten: ${updated.files
+              .map((f) => `/${f.path}`)
+              .join(", ")}. No new payment was needed and the existing recovery code stays valid.`,
+          },
+        ],
+        structuredContent: {
+          published: true,
+          updated: true,
+          publish_requires_payment: false,
+          mode: updated.mode,
+          status: updated.status,
+          plan: updated.plan,
+          slug: updated.slug,
+          version: updated.version,
+          presence_url: url,
+          files: updated.files.map((f) => `${url}/${f.path}`),
+          updated_at: updated.updatedAt,
+          presence_score: presenceScore(session.core),
+          recovery_code: null,
+          recovery_code_note:
+            "The recovery code issued at first publication still applies; Crawler never re-issues it on updates.",
+          manage_url: `${base}/manage`,
+        },
+      };
+    }
+
     const intent = await redeemableIntentForSession(session.id);
+
 
     if (intent) {
       const { publishDraft, recoveryCode } = await import("../presences");
