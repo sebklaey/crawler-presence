@@ -90,7 +90,7 @@ export const emptyCore = (): KnowledgeCore => ({
 });
 
 export const isCoreEmpty = (c: KnowledgeCore) =>
-  !c.name && !c.summary && c.facts.length === 0 && c.items.length === 0;
+  !c.name && !c.summary && c.facts.length === 0 && c.items.length === 0 && (c.documents ?? []).length === 0;
 
 export const entityLabel: Record<EntityType, string> = {
   person: "Person",
