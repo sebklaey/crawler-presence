@@ -16,9 +16,18 @@ export type SourceType =
   | "public_web"
   | "search_console"
   | "visibility_benchmark"
-  | "user_reported";
+  | "user_reported"
+  | "ai_retrieval";
 
-export type EventType = "mention" | "file_read" | "outbound_click" | "impression" | "click" | "citation";
+export type EventType =
+  | "mention"
+  | "file_read"
+  | "outbound_click"
+  | "impression"
+  | "click"
+  | "citation"
+  | "api_request"
+  | "mcp_retrieval";
 
 export type MetricStatus = "live" | "delayed" | "demo" | "not_connected";
 
@@ -63,6 +72,11 @@ export const SOURCE_LABELS: Record<SourceType, { label: string; definition: stri
     label: "Selbst gemeldet",
     definition: "Freiwillig gemeldete Erwähnungen. Nicht von Crawler verifiziert.",
   },
+  ai_retrieval: {
+    label: "AI-Abruf",
+    definition:
+      "Ein AI-System oder Client hat den veröffentlichten Knowledge Core über die CrawlMe API oder MCP abgerufen. Ein Abruf ist keine Erwähnung.",
+  },
 };
 
 export const EVENT_LABELS: Record<EventType, string> = {
@@ -72,6 +86,8 @@ export const EVENT_LABELS: Record<EventType, string> = {
   impression: "Impression",
   click: "Klick",
   citation: "Zitierung",
+  api_request: "CrawlMe API-Abruf",
+  mcp_retrieval: "MCP-Abruf",
 };
 
 export type Kpi = {

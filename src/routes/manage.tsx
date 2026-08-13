@@ -14,7 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ApiAccessSection, CustomDomainSection } from "@/components/manage-sections";
+import { AiRetrievalSection, ApiAccessSection, CustomDomainSection } from "@/components/manage-sections";
 import { TeamAndReportsSection } from "@/components/team-sections";
 import { RetentionSection } from "@/components/retention-sections";
 
@@ -382,6 +382,7 @@ function ManagePage() {
 
             ) : null}
 
+            <AiRetrievalSection data={data} />
             <CustomDomainSection code={code} data={data} refresh={() => open()} />
             <ApiAccessSection data={data} />
             <RetentionSection code={code} />

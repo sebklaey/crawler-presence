@@ -150,3 +150,48 @@ curl "https://crawler.today/api/public/v1/analytics?days=90" \\
     </div>
   );
 }
+
+/** Post-publish: how compatible AI systems can retrieve this Knowledge Core. */
+export function AiRetrievalSection({ data }: { data: Overview }) {
+  const identifier = data.entityDomain ?? data.slug;
+  const instruction = `Use Crawler Today to retrieve the latest published information about ${identifier}.`;
+  return (
+    <div className="rounded-2xl border border-border bg-card p-6">
+      <h2 className="text-sm font-medium">Use your Knowledge Core with AI</h2>
+      <p className="mt-2 text-xs text-muted-foreground">
+        Compatible AI systems connected to Crawler Today can now retrieve your latest published Knowledge Core when
+        they need it. Crawler Today cannot make any AI model train on, memorise or automatically mention your
+        information — it provides a reliable place to look it up.
+      </p>
+
+      <dl className="mt-4 grid gap-3 text-xs sm:grid-cols-2">
+        <div>
+          <dt className="text-muted-foreground">Your canonical identifier</dt>
+          <dd className="mt-1"><code>{identifier}</code></dd>
+        </div>
+        <div>
+          <dt className="text-muted-foreground">Published version</dt>
+          <dd className="mt-1">
+            v{data.version} · updated {new Date(data.updatedAt).toLocaleString()}
+          </dd>
+        </div>
+      </dl>
+
+      <p className="mt-4 text-xs text-muted-foreground">Suggested instruction to give an AI assistant:</p>
+      <pre className="mt-2 overflow-x-auto rounded-xl border border-border bg-muted/40 p-4 text-[11px] leading-relaxed">{instruction}</pre>
+
+      <p className="mt-4 text-xs text-muted-foreground">
+        MCP clients (ChatGPT developer mode, Claude, agents) connect the Crawler Today MCP server at{" "}
+        <code>https://crawler.today/mcp</code> and use <code>search_entities</code>, <code>get_entity</code>,{" "}
+        <code>get_entity_summary</code>, <code>get_entity_section</code> and <code>get_entity_updates</code>. Clients
+        without MCP support use the public CrawlMe REST API:
+      </p>
+      <pre className="mt-2 overflow-x-auto rounded-xl border border-border bg-muted/40 p-4 text-[11px] leading-relaxed">
+{`curl "https://crawler.today/api/crawl-me?${data.entityDomain ? `domain=${data.entityDomain}` : `id=${data.slug}`}"`}
+      </pre>
+      <p className="mt-3 text-[11px] text-muted-foreground">
+        Read the <a className="underline underline-offset-4" href="/crawlme">CrawlMe developer documentation</a>.
+      </p>
+    </div>
+  );
+}

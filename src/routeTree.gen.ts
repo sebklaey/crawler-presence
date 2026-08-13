@@ -14,6 +14,7 @@ import { Route as SplatRouteImport } from './routes/$'
 import { Route as AboutDotmdRouteImport } from './routes/about[.]md'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as ChatgptRouteImport } from './routes/chatgpt'
+import { Route as CrawlmeRouteImport } from './routes/crawlme'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as FaqDotmdRouteImport } from './routes/faq[.]md'
 import { Route as KnowledgeRouteImport } from './routes/knowledge'
@@ -35,7 +36,9 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotwellKnownChar93OpenaiAppsChallengeRouteImport } from './routes/[.well-known]/openai-apps-challenge'
+import { Route as ApiCrawlMeRouteImport } from './routes/api/crawl-me'
 import { Route as ApiEntityDotjsonRouteImport } from './routes/api/entity[.]json'
+import { Route as ApiSearchRouteImport } from './routes/api/search'
 import { Route as ApiServicesDotjsonRouteImport } from './routes/api/services[.]json'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as ApiPublicMcpHealthRouteImport } from './routes/api/public/mcp-health'
@@ -73,6 +76,11 @@ const AnalyticsRoute = AnalyticsRouteImport.update({
 const ChatgptRoute = ChatgptRouteImport.update({
   id: '/chatgpt',
   path: '/chatgpt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CrawlmeRoute = CrawlmeRouteImport.update({
+  id: '/crawlme',
+  path: '/crawlme',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DemoRoute = DemoRouteImport.update({
@@ -183,9 +191,19 @@ const Char91DotwellKnownChar93OpenaiAppsChallengeRoute =
     path: '/.well-known/openai-apps-challenge',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiCrawlMeRoute = ApiCrawlMeRouteImport.update({
+  id: '/api/crawl-me',
+  path: '/api/crawl-me',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiEntityDotjsonRoute = ApiEntityDotjsonRouteImport.update({
   id: '/api/entity.json',
   path: '/api/entity.json',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSearchRoute = ApiSearchRouteImport.update({
+  id: '/api/search',
+  path: '/api/search',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiServicesDotjsonRoute = ApiServicesDotjsonRouteImport.update({
@@ -263,6 +281,7 @@ export interface FileRoutesByFullPath {
   '/about.md': typeof AboutDotmdRoute
   '/analytics': typeof AnalyticsRoute
   '/chatgpt': typeof ChatgptRoute
+  '/crawlme': typeof CrawlmeRoute
   '/demo': typeof DemoRoute
   '/faq.md': typeof FaqDotmdRoute
   '/knowledge': typeof KnowledgeRoute
@@ -284,7 +303,9 @@ export interface FileRoutesByFullPath {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/.well-known/openai-apps-challenge': typeof Char91DotwellKnownChar93OpenaiAppsChallengeRoute
+  '/api/crawl-me': typeof ApiCrawlMeRoute
   '/api/entity.json': typeof ApiEntityDotjsonRoute
+  '/api/search': typeof ApiSearchRoute
   '/api/services.json': typeof ApiServicesDotjsonRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
@@ -305,6 +326,7 @@ export interface FileRoutesByTo {
   '/about.md': typeof AboutDotmdRoute
   '/analytics': typeof AnalyticsRoute
   '/chatgpt': typeof ChatgptRoute
+  '/crawlme': typeof CrawlmeRoute
   '/demo': typeof DemoRoute
   '/faq.md': typeof FaqDotmdRoute
   '/knowledge': typeof KnowledgeRoute
@@ -326,7 +348,9 @@ export interface FileRoutesByTo {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/.well-known/openai-apps-challenge': typeof Char91DotwellKnownChar93OpenaiAppsChallengeRoute
+  '/api/crawl-me': typeof ApiCrawlMeRoute
   '/api/entity.json': typeof ApiEntityDotjsonRoute
+  '/api/search': typeof ApiSearchRoute
   '/api/services.json': typeof ApiServicesDotjsonRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
@@ -348,6 +372,7 @@ export interface FileRoutesById {
   '/about.md': typeof AboutDotmdRoute
   '/analytics': typeof AnalyticsRoute
   '/chatgpt': typeof ChatgptRoute
+  '/crawlme': typeof CrawlmeRoute
   '/demo': typeof DemoRoute
   '/faq.md': typeof FaqDotmdRoute
   '/knowledge': typeof KnowledgeRoute
@@ -369,7 +394,9 @@ export interface FileRoutesById {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/.well-known/openai-apps-challenge': typeof Char91DotwellKnownChar93OpenaiAppsChallengeRoute
+  '/api/crawl-me': typeof ApiCrawlMeRoute
   '/api/entity.json': typeof ApiEntityDotjsonRoute
+  '/api/search': typeof ApiSearchRoute
   '/api/services.json': typeof ApiServicesDotjsonRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
@@ -392,6 +419,7 @@ export interface FileRouteTypes {
     | '/about.md'
     | '/analytics'
     | '/chatgpt'
+    | '/crawlme'
     | '/demo'
     | '/faq.md'
     | '/knowledge'
@@ -413,7 +441,9 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/.well-known/openai-apps-challenge'
+    | '/api/crawl-me'
     | '/api/entity.json'
+    | '/api/search'
     | '/api/services.json'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
@@ -434,6 +464,7 @@ export interface FileRouteTypes {
     | '/about.md'
     | '/analytics'
     | '/chatgpt'
+    | '/crawlme'
     | '/demo'
     | '/faq.md'
     | '/knowledge'
@@ -455,7 +486,9 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/.well-known/openai-apps-challenge'
+    | '/api/crawl-me'
     | '/api/entity.json'
+    | '/api/search'
     | '/api/services.json'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
@@ -476,6 +509,7 @@ export interface FileRouteTypes {
     | '/about.md'
     | '/analytics'
     | '/chatgpt'
+    | '/crawlme'
     | '/demo'
     | '/faq.md'
     | '/knowledge'
@@ -497,7 +531,9 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/.well-known/openai-apps-challenge'
+    | '/api/crawl-me'
     | '/api/entity.json'
+    | '/api/search'
     | '/api/services.json'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
@@ -519,6 +555,7 @@ export interface RootRouteChildren {
   AboutDotmdRoute: typeof AboutDotmdRoute
   AnalyticsRoute: typeof AnalyticsRoute
   ChatgptRoute: typeof ChatgptRoute
+  CrawlmeRoute: typeof CrawlmeRoute
   DemoRoute: typeof DemoRoute
   FaqDotmdRoute: typeof FaqDotmdRoute
   KnowledgeRoute: typeof KnowledgeRoute
@@ -540,7 +577,9 @@ export interface RootRouteChildren {
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   Char91DotwellKnownChar93OpenaiAppsChallengeRoute: typeof Char91DotwellKnownChar93OpenaiAppsChallengeRoute
+  ApiCrawlMeRoute: typeof ApiCrawlMeRoute
   ApiEntityDotjsonRoute: typeof ApiEntityDotjsonRoute
+  ApiSearchRoute: typeof ApiSearchRoute
   ApiServicesDotjsonRoute: typeof ApiServicesDotjsonRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicMcpHealthRoute: typeof ApiPublicMcpHealthRoute
@@ -591,6 +630,13 @@ declare module '@tanstack/react-router' {
       path: '/chatgpt'
       fullPath: '/chatgpt'
       preLoaderRoute: typeof ChatgptRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/crawlme': {
+      id: '/crawlme'
+      path: '/crawlme'
+      fullPath: '/crawlme'
+      preLoaderRoute: typeof CrawlmeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/demo': {
@@ -740,11 +786,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotwellKnownChar93OpenaiAppsChallengeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/crawl-me': {
+      id: '/api/crawl-me'
+      path: '/api/crawl-me'
+      fullPath: '/api/crawl-me'
+      preLoaderRoute: typeof ApiCrawlMeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/entity.json': {
       id: '/api/entity.json'
       path: '/api/entity.json'
       fullPath: '/api/entity.json'
       preLoaderRoute: typeof ApiEntityDotjsonRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/search': {
+      id: '/api/search'
+      path: '/api/search'
+      fullPath: '/api/search'
+      preLoaderRoute: typeof ApiSearchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/services.json': {
@@ -847,6 +907,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutDotmdRoute: AboutDotmdRoute,
   AnalyticsRoute: AnalyticsRoute,
   ChatgptRoute: ChatgptRoute,
+  CrawlmeRoute: CrawlmeRoute,
   DemoRoute: DemoRoute,
   FaqDotmdRoute: FaqDotmdRoute,
   KnowledgeRoute: KnowledgeRoute,
@@ -870,7 +931,9 @@ const rootRouteChildren: RootRouteChildren = {
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   Char91DotwellKnownChar93OpenaiAppsChallengeRoute:
     Char91DotwellKnownChar93OpenaiAppsChallengeRoute,
+  ApiCrawlMeRoute: ApiCrawlMeRoute,
   ApiEntityDotjsonRoute: ApiEntityDotjsonRoute,
+  ApiSearchRoute: ApiSearchRoute,
   ApiServicesDotjsonRoute: ApiServicesDotjsonRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicMcpHealthRoute: ApiPublicMcpHealthRoute,

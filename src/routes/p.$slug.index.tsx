@@ -112,6 +112,24 @@ function PublicPresence() {
           ))}
         </ul>
 
+        <div className="mt-6 rounded-xl border border-border/70 bg-muted/20 p-4">
+          <h2 className="text-xs font-medium">For AI systems and developers</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Retrieve this Knowledge Core as structured JSON via{" "}
+            <a
+              className="underline underline-offset-4"
+              href={`/api/crawl-me?id=${slug}`}
+            >
+              /api/crawl-me?id={slug}
+            </a>{" "}
+            or through the Crawler Today MCP server at <code>/mcp</code>.{" "}
+            <a className="underline underline-offset-4" href="/crawlme">
+              CrawlMe documentation
+            </a>
+            .
+          </p>
+        </div>
+
         <p className="mt-6 text-xs text-muted-foreground">
           Published {new Date(data.publishedAt).toLocaleString()} · plan {data.plan}
         </p>

@@ -753,6 +753,7 @@ export type Database = {
           subscription_status: string | null
           unpublished_at: string | null
           updated_at: string
+          version: number
         }
         Insert: {
           baseline?: Json | null
@@ -789,6 +790,7 @@ export type Database = {
           subscription_status?: string | null
           unpublished_at?: string | null
           updated_at?: string
+          version?: number
         }
         Update: {
           baseline?: Json | null
@@ -825,6 +827,7 @@ export type Database = {
           subscription_status?: string | null
           unpublished_at?: string | null
           updated_at?: string
+          version?: number
         }
         Relationships: []
       }
