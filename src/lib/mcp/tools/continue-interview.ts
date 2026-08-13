@@ -52,7 +52,7 @@ export default defineTool({
     // Either the assistant's structured extraction, or the deterministic fallback.
     const merged = core_update
       ? mergeCore(normalizeCore(session.core), core_update)
-      : normalizeCore(interviewStep({ core: session.core, message: user_answer }).core);
+      : repairCore(normalizeCore(interviewStep({ core: session.core, message: user_answer }).core));
 
     const gap = nextGap(merged);
     const complete = isComplete(merged);
