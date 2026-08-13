@@ -126,6 +126,31 @@ function PublishPage() {
   const [failure, setFailure] = useState<string | null>(null);
   const [pendingIntent, setPendingIntent] = useState<string | null>(search.intent ?? null);
   const { status: paymentsStatus } = usePaymentsStatus();
+  const live = usePublishState();
+  const [updating, setUpdating] = useState(false);
+
+  /** Already subscribed: push the current content live without a new checkout. */
+  async function publishUpdate() {
+    if (updating || !live.code) return;
+    setUpdating(true);
+    try {
+      const result = await manageUpdateCoreFn({ data: { code: live.code, core } });
+      if (!result.ok) {
+        toast.error(
+          result.reason === "empty-core"
+            ? "There is no Knowledge Core content in this browser yet."
+            : "Could not publish the update. Please try again in a moment.",
+        );
+        return;
+      }
+      toast.success("Published. Your public files were regenerated.");
+      live.refresh();
+    } catch {
+      toast.error("Could not publish the update.");
+    } finally {
+      setUpdating(false);
+    }
+  }
 
   useFunnelOnce("publish_clicked");
 
