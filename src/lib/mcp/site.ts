@@ -1,6 +1,9 @@
 import { paymentsEnv, paymentsReady } from "../payments-config";
+
+type RuntimeGlobals = typeof globalThis & {
   process?: { env?: Record<string, string | undefined> };
 };
+
 
 function env(name: string): string | undefined {
   return (globalThis as RuntimeGlobals).process?.env?.[name]?.trim() || undefined;
