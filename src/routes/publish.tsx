@@ -110,6 +110,7 @@ function PublishPage() {
   const [, setStoredPlan] = usePlan();
   const [selected, setSelected] = useState<PlanId | null>(null);
   const [step, setStep] = useState<"plans" | "summary">("plans");
+  const [flowOpen, setFlowOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [recovering, setRecovering] = useState(Boolean(search.session));
   const [recovered, setRecovered] = useState(false);
