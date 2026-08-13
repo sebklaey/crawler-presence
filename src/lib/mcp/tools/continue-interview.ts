@@ -11,6 +11,7 @@ import {
   nextGap,
   normalizeCore,
   openGaps,
+  repairCore,
 } from "../../interview-rules";
 import { presenceChecks, presenceScore } from "../../knowledge";
 import { getSession, saveSession, SESSION_NOTE } from "../sessions";
