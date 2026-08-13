@@ -584,7 +584,7 @@ function PublishPage() {
                 setFlowOpen(true);
               }}
             >
-              Update now
+              Upgrade now
             </Button>
           ) : live.isLive ? (
             live.hasChanges ? (
