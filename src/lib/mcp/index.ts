@@ -41,6 +41,8 @@ Important: this endpoint is public and unauthenticated (auth type "none"). Crawl
     getAnalytics,
     improvePresence,
     importDocument,
+    deleteDocument,
+
     getCheckoutLink,
     getStatus,
     searchEntities,
