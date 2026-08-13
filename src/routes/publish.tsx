@@ -514,21 +514,66 @@ function PublishPage() {
 
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-foreground bg-card p-5">
           <div>
-            <div className="text-sm font-medium">Ready to go online?</div>
+            <div className="text-sm font-medium">
+              {live.overLimit
+                ? "Your content exceeds your current plan"
+                : live.isLive
+                  ? live.hasChanges
+                    ? "Publish current content"
+                    : "All data are Published and Live."
+                  : "Ready to go online?"}
+            </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              Pick a plan and pay in one short flow. From ${PLANS[0]?.price ?? 5}/month, cancel any time.
+              {live.overLimit
+                ? `Your ${planById(live.plan).name} plan serves ${live.limit} content records — the rest stays stored but stays offline until you upgrade.`
+                : live.isLive
+                  ? live.hasChanges
+                    ? "Your subscription is active. Publishing the update regenerates all public files immediately — no new checkout."
+                    : "Everything in your Knowledge Core is published and publicly readable."
+                  : `Pick a plan and pay in one short flow. From $${PLANS[0]?.price ?? 5}/month, cancel any time.`}
             </p>
           </div>
-          <Button
-            size="lg"
-            onClick={() => {
-              setStep("plans");
-              setSelected((s) => s ?? recommendation.plan);
-              setFlowOpen(true);
-            }}
-          >
-            Publish now
-          </Button>
+          {live.overLimit ? (
+            <Button
+              size="lg"
+              onClick={() => {
+                setStep("plans");
+                setSelected((s) => s ?? recommendation.plan);
+                setFlowOpen(true);
+              }}
+            >
+              Update now
+            </Button>
+          ) : live.isLive ? (
+            live.hasChanges ? (
+              <Button size="lg" disabled={updating} onClick={() => void publishUpdate()}>
+                {updating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Publishing…
+                  </>
+                ) : (
+                  "Publish current content"
+                )}
+              </Button>
+            ) : (
+              <Button size="lg" variant="outline" asChild>
+                <a href={`/p/${live.slug}`}>
+                  <ExternalLink className="mr-2 h-4 w-4" /> Open Presence
+                </a>
+              </Button>
+            )
+          ) : (
+            <Button
+              size="lg"
+              onClick={() => {
+                setStep("plans");
+                setSelected((s) => s ?? recommendation.plan);
+                setFlowOpen(true);
+              }}
+            >
+              Publish now
+            </Button>
+          )}
         </div>
 
 
