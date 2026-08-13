@@ -28,10 +28,11 @@ import {
   manageRotateSecretFn,
   manageRestoreCoreFn,
   manageSetStatusFn,
+  manageUpdateCoreFn,
   type ManageOverview,
 } from "@/lib/manage.functions";
 import { useCore, usePlan, usePublished, useRecoveryCode } from "@/lib/store";
-import type { KnowledgeCore } from "@/lib/knowledge";
+import { isCoreEmpty, type KnowledgeCore } from "@/lib/knowledge";
 
 export const Route = createFileRoute("/manage")({
   head: () => ({
@@ -72,7 +73,7 @@ function ManagePage() {
   const [data, setData] = useState<Extract<ManageOverview, { ok: true }> | null>(null);
   const [rotated, setRotated] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<Confirming>(null);
-  const [, setCore] = useCore();
+  const [core, setCore] = useCore();
   const [, setPlan] = usePlan();
   const [, setPublished] = usePublished();
   const [, setStoredCode] = useRecoveryCode();
@@ -140,6 +141,27 @@ function ManagePage() {
       setCode(result.recoveryCode);
       toast.success("New recovery code issued. The old one no longer works.");
       await open(result.recoveryCode);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const liveIsEmpty = !data?.name;
+
+  async function updateContent() {
+    setBusy(true);
+    try {
+      const result = await manageUpdateCoreFn({ data: { code, core } });
+      if (!result.ok) {
+        toast.error(
+          result.reason === "empty-core"
+            ? "There is no Knowledge Core content in this browser yet."
+            : (REASONS[result.reason ?? ""] ?? "Could not publish the update."),
+        );
+        return;
+      }
+      toast.success("Published. Your public files were regenerated.");
+      await open();
     } finally {
       setBusy(false);
     }
@@ -381,6 +403,29 @@ function ManagePage() {
               </div>
 
             ) : null}
+
+            <div className="rounded-2xl border border-border bg-card p-6">
+              <h2 className="text-sm font-medium">Published content</h2>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {liveIsEmpty
+                  ? "This Presence is online but has no content yet, so AI systems find an empty shell. Fill in your Knowledge Core under /knowledge, then publish the update here."
+                  : "Your Presence currently serves the Knowledge Core below. Edit it under /knowledge and publish the update here — the public files are regenerated immediately."}
+              </p>
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <Button disabled={busy || isCoreEmpty(core)} onClick={() => void updateContent()}>
+                  {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Publish current content
+                </Button>
+                <a href="/knowledge" className="text-xs underline underline-offset-4">
+                  Edit Knowledge Core
+                </a>
+              </div>
+              {isCoreEmpty(core) ? (
+                <p className="mt-3 text-xs text-muted-foreground">
+                  This browser holds no Knowledge Core content yet — add it under /knowledge first.
+                </p>
+              ) : null}
+            </div>
 
             <AiRetrievalSection data={data} />
             <CustomDomainSection code={code} data={data} refresh={() => open()} />

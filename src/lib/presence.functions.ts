@@ -118,6 +118,8 @@ const finalizeSchema = z.object({
 export type FinalizeResult =
   | { kind: "pending" }
   | { kind: "expired" }
+  /** Payment is safe, but there is no content to publish yet. */
+  | { kind: "empty" }
   | { kind: "already"; slug: string }
   | {
       kind: "published";
@@ -144,12 +146,17 @@ export const finalizePublishFn = createServerFn({ method: "POST" })
     if (intent.presenceSlug) return { kind: "already", slug: intent.presenceSlug };
     if (intent.status !== "paid") return { kind: "pending" };
 
+    const { isCoreEmpty } = await import("./knowledge");
     let core = data.core as KnowledgeCore | undefined;
-    if (!core && intent.sessionToken) {
+    // Never publish an empty shell: fall back to the stored draft whenever the
+    // browser workspace lost its content (new tab, cleared storage, redirect).
+    if ((!core || isCoreEmpty(core)) && intent.sessionToken) {
       const { getSession } = await import("./mcp/sessions");
-      core = (await getSession(intent.sessionToken))?.core;
+      const stored = (await getSession(intent.sessionToken))?.core;
+      if (stored && !isCoreEmpty(stored)) core = stored;
     }
     if (!core) return { kind: "expired" };
+    if (isCoreEmpty(core)) return { kind: "empty" };
 
     const { publishDraft, recoveryCode } = await import("./mcp/presences");
     const { presence, manageSecret } = await publishDraft({

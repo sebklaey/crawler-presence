@@ -426,3 +426,31 @@ export const manageRestoreCoreFn = createServerFn({ method: "POST" })
     const p = resolved.presence;
     return { ok: true, slug: p.slug, plan: p.plan, publishedAt: p.publishedAt, core: p.core };
   });
+
+const updateCoreSchema = codeSchema.extend({ core: z.unknown() });
+
+/**
+ * Push the current Knowledge Core into an already published Presence and
+ * regenerate every public file. Capability-based: the recovery code is the
+ * only key. Empty content is rejected so a live Presence can never be turned
+ * into an empty shell.
+ */
+export const manageUpdateCoreFn = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => updateCoreSchema.parse(input))
+  .handler(async ({ data }): Promise<{ ok: boolean; reason?: string; paths?: string[]; version?: number }> => {
+    const resolved = await resolve(data.code);
+    if ("error" in resolved) return { ok: false, reason: resolved.error };
+
+    const { isCoreEmpty } = await import("./knowledge");
+    const core = data.core as import("./knowledge").KnowledgeCore | undefined;
+    if (!core || isCoreEmpty(core)) return { ok: false, reason: "empty-core" };
+
+    const { republishCore, PresenceStoreError } = await import("./mcp/presences");
+    try {
+      const updated = await republishCore(resolved.slug, core);
+      return { ok: true, paths: updated.files.map((f) => f.path), version: updated.version };
+    } catch (error) {
+      if (error instanceof PresenceStoreError) return { ok: false, reason: "unavailable" };
+      throw error;
+    }
+  });
