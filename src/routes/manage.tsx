@@ -274,7 +274,9 @@ function ManagePage() {
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground">Published</dt>
-                  <dd>{new Date(data.publishedAt).toLocaleString()}</dd>
+                  <dd>
+                    {new Date(data.publishedAt).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  </dd>
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground">Subscription</dt>
@@ -340,7 +342,7 @@ function ManagePage() {
                       {data.hiddenCatalogEntries} content {data.hiddenCatalogEntries === 1 ? "record is" : "records are"}{" "}
                       hidden.
                     </span>{" "}
-                    Your {data.plan} plan hosts up to {data.catalogLimit.toLocaleString()} AI-readable content records. The rest stay
+                    Your {data.plan} plan hosts up to {data.catalogLimit.toLocaleString("en-US")} AI-readable content records. The rest stay
                     stored and reappear automatically after an upgrade.
                   </p>
                 ) : null}
@@ -370,7 +372,7 @@ function ManagePage() {
                   {data.analytics.metrics.map((metric) => (
                     <div key={metric.label}>
                       <dt className="text-xs text-muted-foreground">{metric.label}</dt>
-                      <dd className="display text-2xl">{metric.value.toLocaleString()}</dd>
+                      <dd className="display text-2xl">{metric.value.toLocaleString("en-US")}</dd>
                       <p className="text-[11px] text-muted-foreground">{metric.hint}</p>
                     </div>
                   ))}

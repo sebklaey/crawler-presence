@@ -218,7 +218,8 @@ All of these are normal public pages, free to read, no key, no login. They are f
         <div>
           <dt className="text-muted-foreground">Published version</dt>
           <dd className="mt-1">
-            v{data.version} · updated {new Date(data.updatedAt).toLocaleString()}
+            v{data.version} · updated{" "}
+            {new Date(data.updatedAt).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
           </dd>
         </div>
       </dl>

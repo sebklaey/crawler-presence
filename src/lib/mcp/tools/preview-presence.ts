@@ -2,6 +2,7 @@ import { defineTool, ToolError } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 import { generatedFiles, presenceScore } from "../../knowledge";
 import { getSession, SESSION_NOTE } from "../sessions";
+import { siteUrl } from "../site";
 
 export default defineTool({
   name: "preview_presence",
@@ -36,11 +37,13 @@ export default defineTool({
       content: f.content.slice(0, limit),
     }));
 
+    const publishHandoffUrl = `${siteUrl()}/publish?session=${encodeURIComponent(session.id)}`;
+
     return {
       content: [
         {
           type: "text",
-          text: `Generated ${files.length} file previews: ${files.map((f) => f.path).join(", ")}. Presence score ${presenceScore(session.core)}/100.`,
+          text: `Generated ${files.length} file previews: ${files.map((f) => f.path).join(", ")}. Presence score ${presenceScore(session.core)}/100. To publish and get the live link, call publish_presence with this session_id or open ${publishHandoffUrl}.`,
         },
       ],
       structuredContent: {
@@ -50,6 +53,8 @@ export default defineTool({
         narrative_notice:
           "Entries under 'Positioning and story' and any fact with status 'claimed' are narrative/unconfirmed copy, not verified facts.",
         files,
+        publish_handoff_url: publishHandoffUrl,
+        publish_prompt: "The previews are saved, but not yet published. Do you want to publish and show the publish link?",
       },
     };
   },

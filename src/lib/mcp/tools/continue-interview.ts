@@ -14,6 +14,7 @@ import {
 } from "../../interview-rules";
 import { presenceChecks, presenceScore } from "../../knowledge";
 import { getSession, saveSession, SESSION_NOTE } from "../sessions";
+import { siteUrl } from "../site";
 
 export default defineTool({
   name: "continue_interview",
@@ -73,12 +74,17 @@ export default defineTool({
       /* analytics must never break an interview */
     }
 
+    const publishHandoffUrl = `${siteUrl()}/publish?session=${encodeURIComponent(session.id)}`;
+    const publishPrompt = complete
+      ? "The additions are saved, but not yet published. Do you want to publish and show the publish link?"
+      : null;
+
     return {
       content: [
         {
           type: "text",
           text: complete
-            ? "Recorded. The Knowledge Core is complete enough to preview — use preview_presence next."
+            ? `Recorded. The Knowledge Core is complete enough to preview. ${publishPrompt} Use preview_presence to inspect the files, then publish_presence or open ${publishHandoffUrl} to go live.`
             : `Recorded. Biggest open gap: ${gap.label}. Ask the user one domain-specific question that closes it (suggested wording: ${gap.question}).`,
         },
       ],
@@ -101,6 +107,11 @@ export default defineTool({
         missing_information: session.core.gaps,
         next_question: complete ? null : gap.question,
         example_answers: gap.suggestions,
+        publish_handoff_url: complete ? publishHandoffUrl : null,
+        publish_prompt: publishPrompt,
+        publish_instructions: complete
+          ? "When the user confirms they want to publish, call publish_presence with this session_id. If payment is not yet completed, the tool will return a handoff URL to the Crawler website where they can choose a plan and pay, then come back and publish."
+          : null,
       },
     };
   },

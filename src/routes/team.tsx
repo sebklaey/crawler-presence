@@ -150,7 +150,7 @@ function TeamPage() {
                   {session.analytics.metrics.map((metric) => (
                     <div key={metric.label}>
                       <dt className="text-xs text-muted-foreground">{metric.label}</dt>
-                      <dd className="display text-2xl">{metric.value.toLocaleString()}</dd>
+                      <dd className="display text-2xl">{metric.value.toLocaleString("en-US")}</dd>
                     </div>
                   ))}
                 </dl>
