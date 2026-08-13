@@ -233,10 +233,22 @@ function PublishPage() {
     [search.session],
   );
 
-  // Auto-sync once when arriving without an explicit session link.
+  // Keep the page in sync with the ChatGPT interview automatically:
+  // on open, when the tab regains focus, and on a slow interval.
   useEffect(() => {
     if (search.session) return;
     void syncFromSession({ silent: true });
+    const onFocus = () => {
+      if (document.visibilityState === "visible") void syncFromSession({ silent: true });
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+    const timer = window.setInterval(() => void syncFromSession({ silent: true }), 20000);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
+      window.clearInterval(timer);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -753,15 +765,10 @@ function PublishPage() {
 
           <div className="space-y-3">
             <PresenceStatus core={core} columns={1} />
-            <div className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2">
-              <p className="text-xs text-muted-foreground">
-                Added more details in ChatGPT? Pull the latest state of your interview.
-              </p>
-              <Button variant="outline" size="sm" disabled={syncing} onClick={() => void syncFromSession()}>
-                {syncing ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : null}
-                Sync from ChatGPT
-              </Button>
-            </div>
+            <p className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-xs text-muted-foreground">
+              {syncing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+              {syncing ? "Syncing with your ChatGPT interview…" : "Automatically synced with your ChatGPT interview."}
+            </p>
           </div>
         </div>
 
