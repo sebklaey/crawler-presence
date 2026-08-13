@@ -35,7 +35,8 @@ export type PublishedPresence = {
   customDomain: string | null;
   customDomainToken: string | null;
   customDomainVerifiedAt: string | null;
-
+  /** Anonymous MCP draft session that produced this Presence. */
+  sessionToken: string | null;
 };
 
 type MemoryRecord = PublishedPresence & { manageSecretHash: string };
@@ -125,10 +126,11 @@ export function parseRecoveryCode(value: string): { slug: string; secret: string
 /* ------------------------------------------------------------------ */
 
 const COLUMNS =
-  "slug, core, files, plan, mode, status, intent_ref, subscription_status, current_period_end, billing_customer_id, billing_subscription_id, manage_secret_updated_at, custom_domain, custom_domain_token, custom_domain_verified_at, created_at, updated_at, version";
+  "slug, session_token, core, files, plan, mode, status, intent_ref, subscription_status, current_period_end, billing_customer_id, billing_subscription_id, manage_secret_updated_at, custom_domain, custom_domain_token, custom_domain_verified_at, created_at, updated_at, version";
 
 type Row = {
   slug: string;
+  session_token: string | null;
   core: KnowledgeCore;
   files: PublishedPresence["files"] | null;
   plan: string;
@@ -151,6 +153,7 @@ type Row = {
 function fromRow(row: Row): PublishedPresence {
   return {
     slug: row.slug,
+    sessionToken: row.session_token,
     core: row.core,
     files: row.files ?? [],
     plan: row.plan,
@@ -203,6 +206,7 @@ export async function publishDraft(input: {
 
   const presence: PublishedPresence = {
     slug: `${presenceSlug(input.core)}-${randomSuffix()}`,
+    sessionToken: input.sessionToken ?? null,
     core: input.core,
     files,
     plan: input.plan,

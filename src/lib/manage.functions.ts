@@ -48,7 +48,8 @@ export type ManageOverview =
       entityDomain: string | null;
       version: number;
       updatedAt: string;
-
+      /** Anonymous MCP draft session that produced this Presence, if known. */
+      sessionToken: string | null;
     };
 
 
@@ -248,6 +249,7 @@ export const manageOverviewFn = createServerFn({ method: "POST" })
       })(),
       version: p.version,
       updatedAt: p.updatedAt,
+      sessionToken: p.sessionToken ?? null,
     };
 
 
