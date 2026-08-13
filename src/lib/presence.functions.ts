@@ -118,6 +118,8 @@ const finalizeSchema = z.object({
 export type FinalizeResult =
   | { kind: "pending" }
   | { kind: "expired" }
+  /** Payment is safe, but there is no content to publish yet. */
+  | { kind: "empty" }
   | { kind: "already"; slug: string }
   | {
       kind: "published";
