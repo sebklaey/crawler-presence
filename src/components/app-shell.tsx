@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
+import { usePublishState } from "@/hooks/use-publish-state";
 import type { ReactNode } from "react";
 
 const nav = [
@@ -12,6 +13,9 @@ const nav = [
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const { isLive, hasChanges } = usePublishState();
+  // No pending dot once everything that exists locally is already live.
+  const showDot = !isLive || hasChanges;
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-30 border-b border-border/70 bg-background/85 backdrop-blur">
@@ -36,10 +40,12 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span className="hidden lg:inline">Creation &amp; preview are free · no account</span>
             <Button asChild size="sm" className="gap-1.5 rounded-full px-4">
               <Link to="/publish">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary-foreground opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-primary-foreground" />
-                </span>
+                {showDot ? (
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary-foreground opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-primary-foreground" />
+                  </span>
+                ) : null}
                 Publish
               </Link>
             </Button>
