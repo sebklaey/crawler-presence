@@ -268,7 +268,7 @@ function PublishPage() {
         });
         setPublished({ at: result.publishedAt, slug: result.slug });
         setPhase("demo");
-        toast.success("Published free in Free Beta 0.0.1 — your files are live, no charge.");
+        toast.success("Published — your files are live.");
         return;
       }
       trackFunnel("publish_failed", { plan: planId, errorCategory: "checkout_start" });
@@ -322,12 +322,10 @@ function PublishPage() {
         <PaymentTestModeBanner />
         <div className="mx-auto max-w-3xl px-5 pb-24 pt-14">
           <PageHead
-            eyebrow={issued.mode === "demo" ? "Free Beta 0.0.1" : "Published"}
+            eyebrow="Published"
             title="Your Presence is live."
             description={
-              issued.mode === "demo"
-                ? "Published free during Free Beta 0.0.1 — no payment was taken and no subscription was created."
-                : "The server confirmed the publication. Your files are reachable at the URLs below."
+              "The server confirmed the publication. Your files are reachable at the URLs below."
             }
           />
 
@@ -348,7 +346,7 @@ function PublishPage() {
                 </div>
                 <div>
                   Status:{" "}
-                  <span className="text-foreground">{issued.mode === "demo" ? "Live (Free Beta)" : "Live"}</span>
+                  <span className="text-foreground">Live</span>
                 </div>
               </div>
               <ul className="mt-4 grid gap-1 font-mono text-[11px] text-muted-foreground">
@@ -508,10 +506,9 @@ function PublishPage() {
 
                   {!payments ? (
                     <div className="mt-3 rounded-lg border border-dashed border-border bg-secondary/60 px-3 py-2 text-xs text-muted-foreground">
-                      <strong className="text-foreground">Free Beta 0.0.1 — publishing is free.</strong> Live payments
-                      are not enabled yet, so your Presence goes online immediately at no cost and no subscription is
-                      created. Pick the plan whose limits you want during the beta. Once payments go live, Crawler
-                      switches automatically to the paid version 0.0.2 and normal paid operation begins.
+                      <strong className="text-foreground">Checkout is temporarily unavailable.</strong> Crawler Alpha
+                      0.0.2 is paid-only: publishing and hosting always require an active subscription. Building and
+                      previewing stay free — please try the checkout again shortly.
                     </div>
                   ) : (
                     <p className="mt-3 text-xs text-muted-foreground">
@@ -675,13 +672,13 @@ function PublishPage() {
                   ) : payments ? (
                     `Publish for $${plan.price}/month`
                   ) : (
-                    `Publish free in Free Beta 0.0.1 (${plan.name} limits)`
+                    `Checkout unavailable — ${plan.name} $${plan.price}/month`
                   )}
                 </Button>
                 <p className="mt-2 text-xs text-muted-foreground">
                   {payments
                     ? "You will be taken to the payment provider. A checkout link is not a payment — your Presence goes live only after the server confirms it."
-                    : "No payment is taken and no subscription is created during the free beta."}
+                    : "Publishing requires a paid subscription. Nothing is published until a payment is confirmed."}
                 </p>
               </section>
             ) : null}

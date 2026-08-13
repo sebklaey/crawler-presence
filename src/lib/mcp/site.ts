@@ -37,14 +37,13 @@ export function paymentsConfigured(): boolean {
 
 
 /**
- * Free Beta gate. Until real Paddle live payments are configured, publishing is
- * free (Crawler Free Beta 0.0.1). As soon as live credentials exist, the paid
- * normal operation (0.0.2) takes over automatically — no code change needed.
+ * Free Beta is over. Crawler runs in paid operation (Alpha 0.0.2): hosting a
+ * Presence always requires an active paid subscription.
  */
 export function betaFree(): boolean {
-  return !paymentsConfigured();
+  return false;
 }
 
-export function releaseVersion(): "0.0.1" | "0.0.2" {
-  return betaFree() ? "0.0.1" : "0.0.2";
+export function releaseVersion(): "0.0.2" {
+  return "0.0.2";
 }

@@ -15,7 +15,7 @@ export default defineTool({
       content: [
         {
           type: "text",
-          text: `Crawler MCP is healthy. Auth mode: none (public MVP). Session store: ${mode}. Crawler runs no language model of its own: the connected assistant does the interviewing, Crawler stores and structures. Analytics: measured Crawler events only. Checkout: ${paymentsConfigured() ? `live (${paymentsEnvironment()})` : `Free Beta ${releaseVersion()} — publishing is free until live payments are enabled`}.`,
+          text: `Crawler MCP is healthy. Auth mode: none (public MVP). Session store: ${mode}. Crawler runs no language model of its own: the connected assistant does the interviewing, Crawler stores and structures. Analytics: measured Crawler events only. Crawler Alpha ${releaseVersion()}: publishing always requires a paid subscription. Checkout: ${paymentsConfigured() ? `live (${paymentsEnvironment()})` : `temporarily unavailable (${paymentsEnvironment()})`}.`,
         },
       ],
       structuredContent: {
@@ -30,11 +30,11 @@ export default defineTool({
         analytics_mode: "measured",
         analytics_note:
           "Counts only Crawler-observable events (published file reads, API reads, Crawler tool interactions, outbound clicks). Never private assistant conversations, never a guarantee of external citation or ranking.",
-        checkout_mode: paymentsConfigured() ? "live" : "free_beta",
+        checkout_mode: paymentsConfigured() ? "live" : "unavailable",
         release_version: releaseVersion(),
         free_beta: betaFree(),
-        free_beta_note:
-          "Free Beta 0.0.1: publishing is free while live payments are not yet enabled. Once live payment credentials exist, Crawler switches automatically to the paid version 0.0.2 and normal paid operation.",
+        paid_note:
+          "Crawler Alpha 0.0.2: the free beta has ended. Building and previewing stay free, but publishing and hosting always require a paid subscription (Plus $5, Pro $20, Business $80 per month).",
         checkout_environment: paymentsEnvironment(),
         session_store: {
           type: mode,
