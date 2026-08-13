@@ -22,6 +22,7 @@ export const Route = createFileRoute("/api/crawl-me")({
           apiError,
           clientLabel,
           entityEtag,
+          entityHtml,
           entityPayload,
           entitySection,
           entitySummary,
@@ -30,8 +31,10 @@ export const Route = createFileRoute("/api/crawl-me")({
           jsonResponse,
           recordRetrieval,
           resolveEntity,
+          wantsHtml,
         } = await import("@/lib/crawlme.server");
         const { ENTITY_SECTIONS } = await import("@/lib/crawlme");
+
 
         const url = new URL(request.url);
         const q = (name: string) => {
