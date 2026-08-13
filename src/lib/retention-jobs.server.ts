@@ -18,20 +18,35 @@ export type RetentionRunResult = {
   scanned: number;
   changesDetected: number;
   notificationsSent: number;
+  /** Presences whose maintenance threw. A run with failures is not a clean run. */
+  failed: number;
 };
 
 export async function runRetentionMaintenance(): Promise<RetentionRunResult> {
   const supabase = db();
-  if (!supabase) return { presences: 0, scanned: 0, changesDetected: 0, notificationsSent: 0 };
+  if (!supabase)
+    return { presences: 0, scanned: 0, changesDetected: 0, notificationsSent: 0, failed: 0 };
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("published_presences")
     .select("slug, core, plan, mode, status, subscription_status, current_period_end")
     .eq("status", "live")
     .limit(200);
+  // An unreadable list is not an empty list: reporting success here would hide
+  // that no Presence was maintained at all.
+  if (error) {
+    console.error("[crawler] retention run could not load presences", error.message);
+    throw new Error("Could not load the presences due for maintenance.");
+  }
 
   const rows = (data ?? []) as Record<string, any>[];
-  const result: RetentionRunResult = { presences: rows.length, scanned: 0, changesDetected: 0, notificationsSent: 0 };
+  const result: RetentionRunResult = {
+    presences: rows.length,
+    scanned: 0,
+    changesDetected: 0,
+    notificationsSent: 0,
+    failed: 0,
+  };
 
   for (const row of rows) {
     const slug = row["slug"] as string;
@@ -71,12 +86,13 @@ export async function runRetentionMaintenance(): Promise<RetentionRunResult> {
         endpointsHealthy: true,
       });
 
-      await supabase.from("presence_health_scores").insert({
+      const { error: healthError } = await supabase.from("presence_health_scores").insert({
         presence_slug: slug,
         score: health.score,
         state: health.state,
         reasons: health.reasons,
       });
+      if (healthError) throw new Error(`Could not store the health score: ${healthError.message}`);
 
       // One message, one action. Source changes come first because they are
       // the only thing that can make published facts wrong.
@@ -133,6 +149,8 @@ export async function runRetentionMaintenance(): Promise<RetentionRunResult> {
         if (sent.sent) result.notificationsSent += 1;
       }
     } catch (error) {
+      // One broken Presence must not stop the batch, but the run reports it.
+      result.failed += 1;
       console.error("[crawler] retention run failed for", slug, error instanceof Error ? error.message : "unknown");
     }
   }

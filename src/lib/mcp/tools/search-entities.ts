@@ -1,6 +1,8 @@
 import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 
+import { rethrowLookupFailure } from "../lookup-error";
+
 export default defineTool({
   name: "search_entities",
   title: "Search published Crawler Today entities",
@@ -19,7 +21,9 @@ export default defineTool({
   annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   handler: async ({ query, entity_type, limit }) => {
     const { searchEntities } = await import("../../crawlme.server");
-    const results = await searchEntities(query, { entityType: entity_type, limit });
+    const results = await searchEntities(query, { entityType: entity_type, limit }).catch(
+      rethrowLookupFailure,
+    );
     return {
       content: [
         {

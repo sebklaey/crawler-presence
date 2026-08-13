@@ -71,8 +71,9 @@ export default defineTool({
     try {
       const { recordMentionsFromInput } = await import("../presence-analytics");
       await recordMentionsFromInput(user_answer, session.id);
-    } catch {
-      /* analytics must never break an interview */
+    } catch (error) {
+      const { logBestEffortFailure } = await import("../../best-effort");
+      logBestEffortFailure("interview-mention-analytics", error);
     }
 
     const publishHandoffUrl = `${siteUrl()}/publish?session=${encodeURIComponent(session.id)}`;

@@ -36,8 +36,9 @@ export const Route = createFileRoute("/api/public/track/click")({
                 dedupeKey: await dedupeKeyFor(destination.toString()),
               });
             }
-          } catch {
-            /* measurement must never block the redirect */
+          } catch (error) {
+            const { logBestEffortFailure } = await import("@/lib/best-effort");
+            logBestEffortFailure("outbound-click-event", error);
           }
         }
 

@@ -37,8 +37,11 @@ export const Route = createFileRoute("/$")({
         try {
           const { recordEvent } = await import("@/lib/mcp/presence-analytics");
           await recordEvent({ slug: record.slug, eventType: "file_read", source: "crawler", filePath: file.path });
-        } catch {
-          /* measurement must never break public delivery */
+        } catch (error) {
+          // Measurement must never break public delivery, but a blind spot
+          // has to be explainable afterwards.
+          const { logBestEffortFailure } = await import("@/lib/best-effort");
+          logBestEffortFailure("public-file-read-event", error);
         }
 
         return new Response(file.content, {

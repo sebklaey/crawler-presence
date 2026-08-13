@@ -1,6 +1,8 @@
 import { defineTool, ToolError } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 
+import { rethrowLookupFailure } from "../lookup-error";
+
 export default defineTool({
   name: "get_entity_section",
   title: "Get one section of a published entity",
@@ -25,7 +27,9 @@ export default defineTool({
     if (!ENTITY_SECTIONS.includes(wanted as never))
       throw new ToolError(`Unknown section "${section}". Available: ${ENTITY_SECTIONS.join(", ")}`);
     if (!entity_id && !domain && !url && !name) throw new ToolError("Pass entity_id, domain, url or name.");
-    const presence = await resolveEntity({ id: entity_id, domain, url, name });
+    const presence = await resolveEntity({ id: entity_id, domain, url, name }).catch(
+      rethrowLookupFailure,
+    );
     if (!presence) throw new ToolError("No published Crawler Today entity matches this identifier.");
     const payload = entitySection(presence, wanted as never);
     await recordRetrieval({ slug: presence.slug, channel: "mcp", section: wanted });

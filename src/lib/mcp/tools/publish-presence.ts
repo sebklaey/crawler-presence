@@ -4,6 +4,17 @@ import { presenceChecks, presenceScore, presenceSlug } from "../../knowledge";
 import { getSession } from "../sessions";
 import { siteUrl } from "../site";
 
+/**
+ * A store failure must never be reported to the assistant as "not paid yet":
+ * that would push a paying user back into checkout. Fail the tool call instead.
+ */
+function storeUnavailable(error: unknown): never {
+  console.error("[crawler] publish_presence could not read the intent store", error);
+  throw new ToolError(
+    "The Crawler database is temporarily unavailable, so the payment state of this draft could not be checked. Nothing was published and nothing was charged — please try again in a moment.",
+  );
+}
+
 export default defineTool({
   name: "publish_presence",
   title: "Publish Presence",
@@ -26,7 +37,7 @@ export default defineTool({
     // Already published from this draft? Then this call is an update: push the
     // current Knowledge Core to the live files instead of asking to pay again.
     const { getPublished, getPublishedBySessionToken, republishCore } = await import("../presences");
-    const previousIntent = await latestIntentForSession(session.id);
+    const previousIntent = await latestIntentForSession(session.id).catch(storeUnavailable);
     const existing =
       (await getPublishedBySessionToken(session.id)) ??
       (previousIntent?.presenceSlug ? await getPublished(previousIntent.presenceSlug) : undefined);
@@ -70,7 +81,7 @@ export default defineTool({
       };
     }
 
-    const intent = await redeemableIntentForSession(session.id);
+    const intent = await redeemableIntentForSession(session.id).catch(storeUnavailable);
 
 
     if (intent) {
@@ -88,7 +99,16 @@ export default defineTool({
           currentPeriodEnd: intent.currentPeriodEnd,
         },
       });
-      await markIntentPublished(intent.intentRef, presence.slug);
+      try {
+        await markIntentPublished(intent.intentRef, presence.slug);
+      } catch (error) {
+        const { logInconsistentState } = await import("../../best-effort");
+        logInconsistentState(
+          "mark-intent-published",
+          error,
+          `presence ${presence.slug} is live but intent ${intent.intentRef} still looks unredeemed`,
+        );
+      }
       const url = `${base}/p/${presence.slug}`;
       const code = recoveryCode(presence.slug, manageSecret);
 

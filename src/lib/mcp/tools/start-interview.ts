@@ -50,8 +50,9 @@ export default defineTool({
     try {
       const { recordMentionsFromInput } = await import("../presence-analytics");
       await recordMentionsFromInput(message, session.id);
-    } catch {
-      /* analytics must never break an interview */
+    } catch (error) {
+      const { logBestEffortFailure } = await import("../../best-effort");
+      logBestEffortFailure("interview-mention-analytics", error);
     }
 
     const payload = {

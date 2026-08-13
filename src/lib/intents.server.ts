@@ -9,9 +9,29 @@
  * be redeemed exactly once to publish a Presence and issue its management
  * secret.
  */
+import { logBestEffortFailure } from "./best-effort";
 import { db } from "./mcp/db.server";
 import { opaqueToken } from "./mcp/sessions";
 import { paymentsEnv } from "./payments-config";
+
+/**
+ * Raised when the intent store is configured but a read or write failed.
+ * Intents gate payment and publication, so a failed query must never be read
+ * as "no such intent" or as a completed state transition.
+ */
+export class IntentStoreError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "IntentStoreError";
+  }
+}
+
+const UNAVAILABLE = "The Crawler database is temporarily unavailable. Nothing was changed.";
+
+function storeFailure(operation: string, detail: string): never {
+  console.error(`[crawler] publish intent store failure (${operation})`, detail);
+  throw new IntentStoreError(UNAVAILABLE);
+}
 
 export type BillingEnv = "sandbox" | "live";
 
@@ -97,19 +117,29 @@ export async function getIntent(intentRef: string): Promise<PublishIntent | null
   if (!validIntentRef(intentRef)) return null;
   const supabase = db();
   if (!supabase) return null;
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("publish_intents")
     .select(COLUMNS)
     .eq("intent_ref", intentRef)
     .gt("expires_at", new Date().toISOString())
     .maybeSingle();
+  if (error) storeFailure("get", error.message);
   return data ? fromRow(data as Row) : null;
 }
 
+/**
+ * Links the provider checkout to the intent. Bookkeeping only — the intent ref
+ * already travels with the checkout — so a failure is logged, not raised at a
+ * user who is about to be sent to a working payment page.
+ */
 export async function attachCheckout(intentRef: string, checkoutId: string): Promise<void> {
   const supabase = db();
   if (!supabase) return;
-  await supabase.from("publish_intents").update({ billing_checkout_id: checkoutId }).eq("intent_ref", intentRef);
+  const { error } = await supabase
+    .from("publish_intents")
+    .update({ billing_checkout_id: checkoutId })
+    .eq("intent_ref", intentRef);
+  if (error) logBestEffortFailure("attach-checkout", error.message);
 }
 
 /** Called from the verified payment webhook only. */
@@ -124,13 +154,14 @@ export async function markIntentPaid(
 ): Promise<void> {
   const supabase = db();
   if (!supabase) return;
-  const { data } = await supabase
+  const { data, error: readError } = await supabase
     .from("publish_intents")
     .select("status")
     .eq("intent_ref", intentRef)
     .maybeSingle();
+  if (readError) storeFailure("mark-paid-read", readError.message);
   const current = (data as { status?: string } | null)?.status;
-  await supabase
+  const { error } = await supabase
     .from("publish_intents")
     .update({
       // Never downgrade an already redeemed intent.
@@ -141,15 +172,17 @@ export async function markIntentPaid(
       current_period_end: billing.currentPeriodEnd ?? null,
     })
     .eq("intent_ref", intentRef);
+  if (error) storeFailure("mark-paid", error.message);
 }
 
 export async function markIntentPublished(intentRef: string, slug: string): Promise<void> {
   const supabase = db();
   if (!supabase) return;
-  await supabase
+  const { error } = await supabase
     .from("publish_intents")
     .update({ status: "published", presence_slug: slug })
     .eq("intent_ref", intentRef);
+  if (error) storeFailure("mark-published", error.message);
 }
 
 /**
@@ -160,7 +193,7 @@ export async function markIntentPublished(intentRef: string, slug: string): Prom
 export async function redeemableIntentForSession(sessionToken: string): Promise<PublishIntent | null> {
   const supabase = db();
   if (!supabase) return null;
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("publish_intents")
     .select(COLUMNS)
     .eq("session_token", sessionToken)
@@ -170,6 +203,7 @@ export async function redeemableIntentForSession(sessionToken: string): Promise<
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
+  if (error) storeFailure("redeemable-for-session", error.message);
   return data ? fromRow(data as Row) : null;
 }
 
@@ -177,12 +211,13 @@ export async function redeemableIntentForSession(sessionToken: string): Promise<
 export async function latestIntentForSession(sessionToken: string): Promise<PublishIntent | null> {
   const supabase = db();
   if (!supabase) return null;
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("publish_intents")
     .select(COLUMNS)
     .eq("session_token", sessionToken)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
+  if (error) storeFailure("latest-for-session", error.message);
   return data ? fromRow(data as Row) : null;
 }

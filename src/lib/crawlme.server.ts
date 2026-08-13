@@ -11,18 +11,39 @@
  * management secrets, billing data, analytics internals and any private
  * identifier never leave this module.
  */
+import { logBestEffortFailure } from "./best-effort";
 import { CRAWLME_DISCLAIMER, CRAWLME_SOURCE, type EntitySection } from "./crawlme";
 import { entityLabel, type CatalogItem, type KnowledgeCore } from "./knowledge";
 import { getLivePresence, type PublishedPresence } from "./mcp/presences";
 import { normalizeDomain, normalizeName } from "./mcp/presence-analytics";
 import { siteUrl } from "./mcp/site";
 
+export const LOOKUP_UNAVAILABLE =
+  "Crawler Today could not look this up right now. This does not mean the entity is unpublished — please retry in a moment.";
+
+/**
+ * A lookup that could not be answered. Retrieval must never turn a broken
+ * database into "this entity does not exist": a published Presence would look
+ * deleted to every assistant that asks.
+ */
+export class EntityLookupError extends Error {
+  constructor(message = LOOKUP_UNAVAILABLE) {
+    super(message);
+    this.name = "EntityLookupError";
+  }
+}
+
+function lookupFailure(operation: string, detail: string): never {
+  console.error(`[crawler] entity lookup failed (${operation})`, detail);
+  throw new EntityLookupError();
+}
+
 async function client() {
   try {
     const { db } = await import("./mcp/db.server");
     return db();
-  } catch {
-    return null;
+  } catch (error) {
+    lookupFailure("client", error instanceof Error ? error.message : String(error));
   }
 }
 
@@ -81,13 +102,14 @@ export async function resolveEntity(lookup: EntityLookup): Promise<PublishedPres
   }
 
   if (domainCandidates.size) {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("published_presences")
       .select("slug")
       .in("custom_domain", [...domainCandidates])
       .not("custom_domain_verified_at", "is", null)
       .eq("status", "live")
       .limit(1);
+    if (error) lookupFailure("custom-domain", error.message);
     const slug = (data as { slug: string }[] | null)?.[0]?.slug;
     if (slug) {
       const found = await getLivePresence(slug);
@@ -105,7 +127,7 @@ export async function resolveEntity(lookup: EntityLookup): Promise<PublishedPres
     .select("presence_slug, alias_kind")
     .in("alias", [...aliasCandidates])
     .limit(20);
-  if (error) return null;
+  if (error) lookupFailure("alias", error.message);
 
   const rows = (data ?? []) as { presence_slug: string; alias_kind: string }[];
   const order = ["domain", "slug", "name"];
@@ -154,11 +176,14 @@ export async function searchEntities(
 
   const supabase = await client();
   if (supabase) {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("presence_aliases")
       .select("presence_slug")
       .ilike("alias", `%${term.toLowerCase()}%`)
       .limit(limit * 3);
+    // Reporting "no results" from a failed query would look like the entity is
+    // not published at all.
+    if (error) lookupFailure("search-alias", error.message);
     for (const row of (data ?? []) as { presence_slug: string }[]) slugs.add(row.presence_slug);
   }
 
@@ -481,18 +506,21 @@ export async function recordRetrieval(input: {
   section?: string | undefined;
   client?: string | undefined;
 }): Promise<void> {
+  // Analytics must never break a retrieval — but a silent failure would also
+  // make every measurement gap invisible, so it is logged.
   try {
     const supabase = await client();
     if (!supabase) return;
-    await supabase.from("analytics_events").insert({
+    const { error } = await supabase.from("analytics_events").insert({
       presence_slug: input.slug,
       event_type: input.channel === "mcp" ? "mcp_retrieval" : "api_request",
       source_type: "ai_retrieval",
       resource_path: input.section ? `section:${input.section}` : "knowledge_core",
       metadata: input.client ? { client: input.client.slice(0, 80) } : {},
     });
-  } catch {
-    /* analytics must never break a retrieval */
+    if (error) logBestEffortFailure("record-retrieval", error.message);
+  } catch (error) {
+    logBestEffortFailure("record-retrieval", error);
   }
 }
 

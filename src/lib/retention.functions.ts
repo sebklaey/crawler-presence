@@ -106,7 +106,9 @@ export const retentionOverviewFn = createServerFn({ method: "POST" })
         explanation:
           "The score combines activation, freshness of your facts, approved sources, measured Crawler activity and billing state. Every line below shows the points it contributed and why. It reflects what Crawler can measure about your published Presence — not your ranking in any AI assistant.",
       };
-    } catch {
+    } catch (error) {
+      const { logBestEffortFailure } = await import("./best-effort");
+      logBestEffortFailure("retention-overview", error);
       return { ok: false, reason: "unavailable" };
     }
   });
@@ -153,7 +155,9 @@ export const scanSourcesFn = createServerFn({ method: "POST" })
     try {
       const outcomes = await scanPresence(resolved.presence.slug, { force: true });
       return { ok: true, scanned: outcomes.length, changed: outcomes.filter((o) => o.classification !== "no_change").length };
-    } catch {
+    } catch (error) {
+      const { logBestEffortFailure } = await import("./best-effort");
+      logBestEffortFailure("owner-source-scan", error);
       return { ok: false, reason: "unavailable" };
     }
   });

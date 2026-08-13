@@ -6,6 +6,7 @@
  * preferences, and a quiet period so nothing turns into engagement spam.
  * A notification is only sent when there is something real to act on.
  */
+import { logBestEffortFailure, logInconsistentState } from "./best-effort";
 import { db } from "./mcp/db.server";
 import { CRAWLER_SUPPORT_EMAIL, emailConfigured, sendMail } from "./email.server";
 
@@ -65,6 +66,16 @@ function store() {
   return supabase;
 }
 
+/**
+ * Every decision below (recipient, opt-out, quiet period) is a permission
+ * check. Defaulting a failed query to "allowed" would mail the wrong person or
+ * spam an owner who opted out, so a failed check stops the notification.
+ */
+function checkFailure(operation: string, detail: string): never {
+  console.error(`[crawler] notification store failure (${operation})`, detail);
+  throw new Error("Could not check the notification rules for this Presence.");
+}
+
 export type NotifyInput = {
   slug: string | null;
   eventType: NotificationEventType;
@@ -83,14 +94,20 @@ export type NotifyResult = { sent: boolean; skipped?: "duplicate" | "quiet_perio
 async function recipientFor(slug: string | null, explicit?: string | null): Promise<string | null> {
   if (explicit) return explicit;
   if (!slug) return null;
-  const { data } = await store().from("published_presences").select("report_email").eq("slug", slug).maybeSingle();
+  const { data, error } = await store()
+    .from("published_presences")
+    .select("report_email")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (error) checkFailure("recipient", error.message);
   return (data?.["report_email"] as string | null) ?? null;
 }
 
 async function allowedByPreference(slug: string | null, topic: NotificationTopic): Promise<boolean> {
   const column = PREFERENCE_COLUMN[topic];
   if (!column || !slug) return true;
-  const { data } = await store().from("published_presences").select(column).eq("slug", slug).maybeSingle();
+  const { data, error } = await store().from("published_presences").select(column).eq("slug", slug).maybeSingle();
+  if (error) checkFailure("preference", error.message);
   const row = data as Record<string, unknown> | null;
   return row ? row[column] !== false : true;
 }
@@ -105,7 +122,8 @@ async function withinQuietPeriod(slug: string | null, eventType: NotificationEve
     .eq("status", "sent")
     .gte("created_at", since);
   query = slug ? query.eq("presence_slug", slug) : query.is("presence_slug", null);
-  const { count } = await query;
+  const { count, error } = await query;
+  if (error) checkFailure("quiet-period", error.message);
   return (count ?? 0) > 0;
 }
 
@@ -139,10 +157,11 @@ export async function notify(input: NotifyInput): Promise<NotifyResult> {
   }
 
   if (!emailConfigured()) {
-    await store()
+    const { error } = await store()
       .from("notification_events")
       .update({ status: "not_configured", error: "No email provider configured" })
       .eq("dedupe_key", input.dedupeKey);
+    if (error) logBestEffortFailure("notification-not-configured-status", error.message);
     return { sent: false, skipped: "not_configured" };
   }
 
@@ -162,13 +181,21 @@ export async function notify(input: NotifyInput): Promise<NotifyResult> {
     text,
     idempotencyKey: input.dedupeKey,
   });
-  await store()
+  const { error: statusError } = await store()
     .from("notification_events")
     .update({
       status: result.delivered ? "sent" : "failed",
       error: result.delivered === false ? (result.reason ?? "Delivery failed").slice(0, 500) : null,
     })
     .eq("dedupe_key", input.dedupeKey);
+  // The mail already left; failing here would claim it did not.
+  if (statusError) {
+    logInconsistentState(
+      "notification-status",
+      statusError,
+      `notification ${input.dedupeKey} stays "pending" although delivery returned ${result.delivered}`,
+    );
+  }
 
   return { sent: result.delivered };
 }

@@ -14,7 +14,8 @@ export const Route = createFileRoute("/api/search")({
         return new Response(null, { status: 204, headers: CORS_HEADERS });
       },
       GET: async ({ request }) => {
-        const { apiError, jsonResponse, searchEntities } = await import("@/lib/crawlme.server");
+        const { apiError, EntityLookupError, jsonResponse, searchEntities } =
+          await import("@/lib/crawlme.server");
         const { CRAWLME_SOURCE } = await import("@/lib/crawlme");
         const { allowRequest } = await import("@/lib/mcp/presences");
 
@@ -32,7 +33,19 @@ export const Route = createFileRoute("/api/search")({
         const typeParam = url.searchParams.get("type")?.trim().toLowerCase();
         const limit = Number(url.searchParams.get("limit")) || 5;
 
-        const results = await searchEntities(query, { entityType: typeParam || undefined, limit });
+        // An empty result list must mean "nothing published matches", never
+        // "the index could not be read".
+        let results;
+        try {
+          results = await searchEntities(query, { entityType: typeParam || undefined, limit });
+        } catch (error) {
+          if (!(error instanceof EntityLookupError)) throw error;
+          return apiError(
+            503,
+            error.message,
+            "Retry shortly; no conclusion about published entities can be drawn.",
+          );
+        }
 
         return jsonResponse({
           query,

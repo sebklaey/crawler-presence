@@ -39,8 +39,14 @@ const COLUMNS =
 
 function store() {
   const supabase = db();
-  if (!supabase) throw new Error("The Crawler database is temporarily unavailable. Nothing was changed.");
+  if (!supabase)
+    throw new Error("The Crawler database is temporarily unavailable. Nothing was changed.");
   return supabase;
+}
+
+function storeFailure(operation: string, detail: string, message: string): never {
+  console.error(`[crawler] recommendation store failure (${operation})`, detail);
+  throw new Error(message);
 }
 
 const fromRow = (r: Record<string, any>): Recommendation => ({
@@ -68,16 +74,20 @@ export async function listRecommendations(slug: string, states: RecommendationSt
     .in("state", states)
     .order("created_at", { ascending: false })
     .limit(20);
-  if (error) throw new Error("Could not load recommendations.");
+  if (error) storeFailure("list", error.message, "Could not load recommendations.");
   return ((data ?? []) as Record<string, any>[]).map(fromRow);
 }
 
 export async function countAccepted(slug: string): Promise<number> {
-  const { count } = await store()
+  const { count, error } = await store()
     .from("improvement_recommendations")
     .select("id", { count: "exact", head: true })
     .eq("presence_slug", slug)
     .eq("state", "published");
+  // Zero accepted improvements lowers the health score, so a failed count must
+  // not be reported as zero.
+  if (error)
+    storeFailure("count-accepted", error.message, "Could not count accepted improvements.");
   return count ?? 0;
 }
 
@@ -97,7 +107,7 @@ type NewRecommendation = {
 
 /** Upserts by dedupe key, so repeated detection never stacks duplicates. */
 async function upsert(slug: string, rec: NewRecommendation): Promise<void> {
-  await store()
+  const { error } = await store()
     .from("improvement_recommendations")
     .upsert(
       {
@@ -116,6 +126,8 @@ async function upsert(slug: string, rec: NewRecommendation): Promise<void> {
       },
       { onConflict: "presence_slug,dedupe_key", ignoreDuplicates: true },
     );
+  // A detection that is not stored is a recommendation the owner never sees.
+  if (error) storeFailure("upsert", error.message, "Could not store the detected recommendation.");
 }
 
 /**
@@ -232,16 +244,17 @@ export async function setRecommendationState(
     })
     .eq("presence_slug", slug)
     .eq("id", id);
-  if (error) throw new Error("Could not update that recommendation.");
+  if (error) storeFailure("set-state", error.message, "Could not update that recommendation.");
 }
 
 export async function getRecommendation(slug: string, id: string): Promise<Recommendation | null> {
-  const { data } = await store()
+  const { data, error } = await store()
     .from("improvement_recommendations")
     .select(COLUMNS)
     .eq("presence_slug", slug)
     .eq("id", id)
     .maybeSingle();
+  if (error) storeFailure("get", error.message, "Could not load that recommendation.");
   return data ? fromRow(data as Record<string, any>) : null;
 }
 

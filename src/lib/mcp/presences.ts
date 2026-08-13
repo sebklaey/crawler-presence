@@ -69,8 +69,10 @@ async function client() {
   try {
     const { db } = await import("./db.server");
     return db();
-  } catch {
-    return null;
+  } catch (error) {
+    // A failing import means the store is broken, not absent — falling back to
+    // process memory here would hand out ownership from a divergent record.
+    storeFailure("client", error instanceof Error ? error.message : String(error));
   }
 }
 
@@ -242,13 +244,14 @@ export async function publishDraft(input: {
       current_period_end: input.billing?.currentPeriodEnd ?? null,
     });
     if (error) storeFailure("publish", error.message);
-    try {
+    // Both steps below are secondary: publishing already succeeded and must not
+    // be reported as failed, but the reason still has to reach the logs.
+    const { bestEffort } = await import("../best-effort");
+    await bestEffort("publish-alias-sync", async () => {
       const { syncAliases } = await import("./presence-analytics");
       await syncAliases(presence.slug, presence.core);
-    } catch {
-      /* alias sync is best effort; publishing already succeeded */
-    }
-    try {
+    });
+    await bestEffort("publish-baseline", async () => {
       // Baseline of what was true at publication, so later improvement can be
       // measured against a fixed starting point instead of a moving target.
       const { buildBaseline } = await import("../health");
@@ -256,9 +259,7 @@ export async function publishDraft(input: {
         presence.slug,
         buildBaseline({ core: presence.core, conflicts: 0, endpointsChecked: presence.files.length, endpointsHealthy: presence.files.length }),
       );
-    } catch {
-      /* baseline capture is best effort */
-    }
+    });
     return { presence, manageSecret };
   }
 
@@ -367,7 +368,8 @@ export async function rotateManageSecret(slug: string): Promise<string> {
       .eq("slug", slug)
       .select("slug");
     if (error) storeFailure("rotate", error.message);
-    if (!data || data.length !== 1) storeFailure("rotate", `unexpected affected rows: ${data?.length ?? 0}`);
+    if (!data || data.length !== 1)
+      storeFailure("rotate", `unexpected affected rows: ${data?.length ?? 0}`);
     return secret;
   }
   const local = memory.get(slug);
@@ -385,7 +387,8 @@ export async function setPresenceStatus(slug: string, status: PresenceStatus): P
       .eq("slug", slug)
       .select("slug");
     if (error) storeFailure("status", error.message);
-    if (!data || data.length !== 1) storeFailure("status", `unexpected affected rows: ${data?.length ?? 0}`);
+    if (!data || data.length !== 1)
+      storeFailure("status", `unexpected affected rows: ${data?.length ?? 0}`);
     return;
   }
   const local = memory.get(slug);
@@ -424,13 +427,13 @@ export async function republishCore(slug: string, core: KnowledgeCore): Promise<
       .eq("slug", slug)
       .select("slug");
     if (error) storeFailure("republish", error.message);
-    if (!data || data.length !== 1) storeFailure("republish", `unexpected affected rows: ${data?.length ?? 0}`);
-    try {
+    if (!data || data.length !== 1)
+      storeFailure("republish", `unexpected affected rows: ${data?.length ?? 0}`);
+    const { bestEffort } = await import("../best-effort");
+    await bestEffort("republish-alias-sync", async () => {
       const { syncAliases } = await import("./presence-analytics");
       await syncAliases(slug, core);
-    } catch {
-      /* alias sync is best effort */
-    }
+    });
   } else {
     const local = memory.get(slug);
     if (!local) storeFailure("republish", "unknown presence");
@@ -444,11 +447,12 @@ export async function republishCore(slug: string, core: KnowledgeCore): Promise<
 export async function saveBaseline(slug: string, baseline: unknown): Promise<void> {
   const supabase = await client();
   if (!supabase) return;
-  await supabase
+  const { error } = await supabase
     .from("published_presences")
     .update({ baseline, baseline_at: new Date().toISOString() })
     .eq("slug", slug)
     .is("baseline", null);
+  if (error) storeFailure("baseline", error.message);
 }
 
 
@@ -584,7 +588,8 @@ export async function setCustomDomain(slug: string, domain: string): Promise<str
       .eq("slug", slug)
       .select("slug");
     if (error) storeFailure("custom-domain", error.message);
-    if (!data || data.length !== 1) storeFailure("custom-domain", `unexpected affected rows: ${data?.length ?? 0}`);
+    if (!data || data.length !== 1)
+      storeFailure("custom-domain", `unexpected affected rows: ${data?.length ?? 0}`);
     return token;
   }
   const local = memory.get(slug);
@@ -596,11 +601,14 @@ export async function setCustomDomain(slug: string, domain: string): Promise<str
 export async function clearCustomDomain(slug: string): Promise<void> {
   const supabase = await client();
   if (supabase) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("published_presences")
       .update({ custom_domain: null, custom_domain_token: null, custom_domain_verified_at: null })
-      .eq("slug", slug);
+      .eq("slug", slug)
+      .select("slug");
     if (error) storeFailure("custom-domain", error.message);
+    if (!data || data.length !== 1)
+      storeFailure("custom-domain", `unexpected affected rows: ${data?.length ?? 0}`);
     return;
   }
   const local = memory.get(slug);
@@ -612,11 +620,14 @@ export async function markCustomDomainVerified(slug: string): Promise<string> {
   const now = new Date().toISOString();
   const supabase = await client();
   if (supabase) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("published_presences")
       .update({ custom_domain_verified_at: now })
-      .eq("slug", slug);
+      .eq("slug", slug)
+      .select("slug");
     if (error) storeFailure("custom-domain", error.message);
+    if (!data || data.length !== 1)
+      storeFailure("custom-domain", `unexpected affected rows: ${data?.length ?? 0}`);
     return now;
   }
   const local = memory.get(slug);

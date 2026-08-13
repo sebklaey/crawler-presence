@@ -49,7 +49,9 @@ function SupportPage() {
         toast.error(
           result.reason === "invalid-email"
             ? "Please enter a valid email address."
-            : "Too many requests right now — please try again in a minute.",
+            : result.reason === "not-recorded"
+              ? `Your request could not be recorded, so nothing was sent. Please try again or email ${SUPPORT_EMAIL} directly.`
+              : "Too many requests right now — please try again in a minute.",
         );
         return;
       }

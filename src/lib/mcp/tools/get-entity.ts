@@ -1,6 +1,8 @@
 import { defineTool, ToolError } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 
+import { rethrowLookupFailure } from "../lookup-error";
+
 export default defineTool({
   name: "get_entity",
   title: "Get the latest published Knowledge Core",
@@ -17,7 +19,9 @@ export default defineTool({
     const { entityPayload, recordRetrieval, resolveEntity } = await import("../../crawlme.server");
     if (!entity_id && !domain && !url && !name)
       throw new ToolError("Pass entity_id, domain, url or name. Use search_entities to discover the identifier.");
-    const presence = await resolveEntity({ id: entity_id, domain, url, name });
+    const presence = await resolveEntity({ id: entity_id, domain, url, name }).catch(
+      rethrowLookupFailure,
+    );
     if (!presence)
       throw new ToolError("No published Crawler Today entity matches this identifier. Try search_entities first.");
     const payload = entityPayload(presence);

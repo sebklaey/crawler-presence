@@ -3,7 +3,10 @@
  * request is stored in the backend and emailed to the Crawler support inbox.
  */
 import { createServerFn } from "@tanstack/react-start";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
+
+import { logBestEffortFailure } from "./best-effort";
 
 const schema = z.object({
   email: z.string().trim().min(5).max(200),
@@ -23,18 +26,19 @@ export const submitSupportFn = createServerFn({ method: "POST" })
 
     const { findOpenThread, notifyNewTicket } = await import("./support-notify.server");
 
-    let supabase: any = null;
+    let supabase: SupabaseClient | null = null;
     try {
       const { db } = await import("./mcp/db.server");
       supabase = db();
-    } catch {
-      supabase = null;
+    } catch (error) {
+      logBestEffortFailure("support-store-client", error);
     }
 
     // Store first so the ticket id can be quoted in the notification and the
     // request survives even if delivery fails.
     let ticketId: string = crypto.randomUUID();
     let thread: { thread_id: string; subject: string } | null = null;
+    let stored = false;
 
     if (supabase) {
       try {
@@ -54,8 +58,14 @@ export const submitSupportFn = createServerFn({ method: "POST" })
           .single();
         if (error) throw error;
         ticketId = inserted.id as string;
+        stored = true;
         if (!thread) {
-          await supabase.from("support_tickets").update({ thread_id: ticketId }).eq("id", ticketId);
+          const { error: threadError } = await supabase
+            .from("support_tickets")
+            .update({ thread_id: ticketId })
+            .eq("id", ticketId);
+          // Only affects follow-up grouping, not the request itself.
+          if (threadError) logBestEffortFailure("support-thread-link", threadError.message);
         }
       } catch (error) {
         console.error("[crawler] support ticket store failed", error instanceof Error ? error.message : "unknown");
@@ -72,9 +82,9 @@ export const submitSupportFn = createServerFn({ method: "POST" })
       ...(thread ? { threadSubject: thread.subject } : {}),
     });
 
-    if (supabase) {
+    if (supabase && stored) {
       try {
-        await supabase
+        const { error } = await supabase
           .from("support_tickets")
           .update({
             delivered: mail.delivered,
@@ -82,11 +92,16 @@ export const submitSupportFn = createServerFn({ method: "POST" })
             notified_at: new Date().toISOString(),
           })
           .eq("id", ticketId);
-      } catch {
         // Bookkeeping only — the ticket itself is already stored.
+        if (error) logBestEffortFailure("support-delivery-bookkeeping", error.message);
+      } catch (error) {
+        logBestEffortFailure("support-delivery-bookkeeping", error);
       }
     }
 
-    // The request is recorded either way, so the user is never told it vanished.
+    // Only claim success when the request survived somewhere: stored in the
+    // backend, or delivered to the support inbox. Otherwise it is gone and the
+    // sender has to be told instead of seeing a confirmation.
+    if (!stored && !mail.delivered) return { ok: false, delivered: false, reason: "not-recorded" };
     return { ok: true, delivered: mail.delivered };
   });

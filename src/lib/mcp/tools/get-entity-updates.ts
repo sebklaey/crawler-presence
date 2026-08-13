@@ -1,6 +1,8 @@
 import { defineTool, ToolError } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 
+import { rethrowLookupFailure } from "../lookup-error";
+
 export default defineTool({
   name: "get_entity_updates",
   title: "Check whether a published entity changed",
@@ -17,7 +19,9 @@ export default defineTool({
   handler: async ({ entity_id, domain, url, known_version, since }) => {
     const { entityUpdates, resolveEntity } = await import("../../crawlme.server");
     if (!entity_id && !domain && !url) throw new ToolError("Pass entity_id, domain or url.");
-    const presence = await resolveEntity({ id: entity_id, domain, url });
+    const presence = await resolveEntity({ id: entity_id, domain, url }).catch(
+      rethrowLookupFailure,
+    );
     if (!presence) throw new ToolError("No published Crawler Today entity matches this identifier.");
     const payload = entityUpdates(presence, { version: known_version, since });
     return {

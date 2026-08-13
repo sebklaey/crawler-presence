@@ -1,6 +1,8 @@
 import { defineTool, ToolError } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 
+import { rethrowLookupFailure } from "../lookup-error";
+
 export default defineTool({
   name: "get_entity_summary",
   title: "Get a short published entity overview",
@@ -16,7 +18,9 @@ export default defineTool({
   handler: async ({ entity_id, domain, url, name }) => {
     const { entitySummary, recordRetrieval, resolveEntity } = await import("../../crawlme.server");
     if (!entity_id && !domain && !url && !name) throw new ToolError("Pass entity_id, domain, url or name.");
-    const presence = await resolveEntity({ id: entity_id, domain, url, name });
+    const presence = await resolveEntity({ id: entity_id, domain, url, name }).catch(
+      rethrowLookupFailure,
+    );
     if (!presence) throw new ToolError("No published Crawler Today entity matches this identifier.");
     const summary = entitySummary(presence);
     await recordRetrieval({ slug: presence.slug, channel: "mcp", section: "summary" });
