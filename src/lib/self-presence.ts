@@ -110,6 +110,7 @@ export const crawlerCore = (): KnowledgeCore => ({
     { label: "Privacy", url: "https://crawler.today/privacy" },
     { label: "Terms", url: "https://crawler.today/terms" },
   ],
+  documents: [],
   gaps: [],
   updatedAt: now,
 });
