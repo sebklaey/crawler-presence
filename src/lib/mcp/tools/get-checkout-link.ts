@@ -25,7 +25,7 @@ export default defineTool({
           type: "text",
           text: live
             ? `${p.name} — $${p.price}/month. Complete checkout here: ${url}`
-            : `Crawler is in Free Beta ${releaseVersion()}: publishing is currently free, no payment is taken and no subscription is created. ${p.name} will cost $${p.price}/month once the paid version 0.0.2 goes live. Publish here: ${url}`,
+            : `${p.name} — $${p.price}/month. Crawler Alpha ${releaseVersion()} requires a paid subscription to publish, but checkout is temporarily unavailable on this deployment. Try again here shortly: ${url}`,
         },
       ],
       structuredContent: {
@@ -33,13 +33,13 @@ export default defineTool({
         plan_name: p.name,
         price_usd_per_month: p.price,
         checkout_url: url,
-        checkout_mode: live ? "live" : "free_beta",
+        checkout_mode: live ? "live" : "unavailable",
         free_beta: betaFree(),
         release_version: releaseVersion(),
         payment_possible: live,
         note: live
           ? "Checkout is completed on the Crawler website, not inside this conversation. No Crawler account is created: after payment the Presence goes live and a one-time recovery code is issued."
-          : "Free Beta 0.0.1: publishing is free until live payments are enabled. No payment is processed and no subscription is created. When live payment credentials exist, Crawler switches automatically to the paid version 0.0.2.",
+          : "Crawler Alpha 0.0.2: publishing always requires a paid subscription. Checkout is temporarily unavailable on this deployment — nothing can be published for free.",
       },
     };
   },
