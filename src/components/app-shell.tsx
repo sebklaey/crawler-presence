@@ -9,8 +9,7 @@ const nav = [
   { to: "/analytics", label: "Analytics" },
   { to: "/publish", label: "Publish" },
   { to: "/pricing", label: "Pricing" },
-  { to: "/chatgpt", label: "ChatGPT" },
-  { to: "/crawlme", label: "CrawlMe API" },
+  { to: "/manage", label: "Manage" },
   { to: "/manage", label: "Manage" },
 
 ] as const;
