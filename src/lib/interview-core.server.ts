@@ -119,6 +119,7 @@ export function toKnowledgeCore(raw: z.infer<typeof coreSchema>): KnowledgeCore 
     cv: raw.cv.map((e) => clean({ id: rid(), ...e })) as KnowledgeCore["cv"],
     links: raw.links,
     gaps: raw.gaps,
+    documents: (raw.documents ?? []).map((d) => clean({ ...d })) as KnowledgeCore["documents"],
     updatedAt: new Date().toISOString(),
   };
 }
