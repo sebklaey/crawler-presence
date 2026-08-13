@@ -239,7 +239,6 @@ function PublishPage() {
     if (busy) return;
     setBusy(true);
     setFailure(null);
-    setPhase(payments ? "checkout_pending" : "publishing");
     trackFunnel("checkout_started", { plan: planId, fromStep: "plan_summary", toStep: "checkout" });
     try {
       localStorage.setItem(PENDING_PLAN_KEY, planId);
@@ -251,29 +250,30 @@ function PublishPage() {
           ...(search.session ? { sessionToken: search.session } : {}),
         },
       });
-      if (result.kind === "checkout") {
-        localStorage.setItem(PENDING_INTENT_KEY, result.intentRef);
-        window.location.href = result.url;
+      if (result.kind === "error") {
+        trackFunnel("publish_failed", { plan: planId, errorCategory: "checkout_start" });
+        setPhase("publish_failed");
+        setFailure(result.message);
         return;
       }
-      if (result.kind === "demo") {
-        localStorage.removeItem(PENDING_PLAN_KEY);
-        trackFunnel("publish_completed", { plan: planId, presenceSlug: result.slug });
-        setIssued({
-          slug: result.slug,
-          publishedAt: result.publishedAt,
-          paths: result.paths,
-          recoveryCode: result.recoveryCode,
-          mode: "demo",
+
+      const successUrl = `${window.location.origin}/publish?intent=${encodeURIComponent(result.intentRef)}`;
+      storePendingIntent(result.intentRef);
+      try {
+        // Overlay in this tab: the environment and token come from the server,
+        // so the overlay always matches the transaction that was created.
+        const { openPaddleCheckout } = await import("@/lib/paddle-client");
+        await openPaddleCheckout({
+          environment: result.environment,
+          token: result.clientToken,
+          transactionId: result.transactionId,
+          successUrl,
         });
-        setPublished({ at: result.publishedAt, slug: result.slug });
-        setPhase("demo");
-        toast.success("Published — your files are live.");
-        return;
+        setPhase("checkout_open");
+      } catch {
+        // Hosted fallback if Paddle.js cannot load (blocked script, etc.).
+        window.location.href = result.url;
       }
-      trackFunnel("publish_failed", { plan: planId, errorCategory: "checkout_start" });
-      setPhase("publish_failed");
-      setFailure(result.message);
     } catch (e) {
       trackFunnel("publish_failed", { plan: planId, errorCategory: "network" });
       setPhase("publish_failed");
@@ -282,6 +282,7 @@ function PublishPage() {
       setBusy(false);
     }
   }
+
 
   if (recovering) {
     return (
