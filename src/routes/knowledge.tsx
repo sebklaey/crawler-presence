@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { improvePresence } from "@/lib/interview.functions";
 import { entityLabel, isCoreEmpty } from "@/lib/knowledge";
+import { useSessionSync } from "@/hooks/use-session-sync";
 import { useCore, usePlan } from "@/lib/store";
 
 export const Route = createFileRoute("/knowledge")({
@@ -36,6 +37,7 @@ type Improvement = {
 
 function KnowledgePage() {
   const [core, setCore] = useCore();
+  useSessionSync();
   const [plan] = usePlan();
   const [improving, setImproving] = useState(false);
   const [improvement, setImprovement] = useState<Improvement | null>(null);

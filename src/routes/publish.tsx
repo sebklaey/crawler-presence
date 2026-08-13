@@ -19,6 +19,7 @@ import { HOSTING_BENEFITS, NO_GUARANTEE_NOTICE, PLANS, planById, recommendPlan, 
 import { trackFunnel, useFunnelOnce } from "@/lib/funnel";
 import { generatedFiles, isCoreEmpty, presenceScore, type KnowledgeCore } from "@/lib/knowledge";
 import { finalizePublishFn, loadDraft, startPublishFn } from "@/lib/presence.functions";
+import { rememberSessionToken, useSessionSync } from "@/hooks/use-session-sync";
 import { usePaymentsStatus } from "@/hooks/use-payments-status";
 import { usePublishState } from "@/hooks/use-publish-state";
 import { manageUpdateCoreFn } from "@/lib/manage.functions";
@@ -51,7 +52,6 @@ export const Route = createFileRoute("/publish")({
 
 const PENDING_INTENT_KEY = "crawler:pending-intent";
 const PENDING_PLAN_KEY = "crawler:pending-plan";
-const LAST_SESSION_KEY = "crawler:last-session";
 /** A checkout attempt older than this is stale and must never block the page. */
 const PENDING_INTENT_TTL_MS = 30 * 60 * 1000;
 
@@ -173,11 +173,7 @@ function PublishPage() {
         if (result.found) {
           setCore(result.core as KnowledgeCore);
           setRecovered(true);
-          try {
-            localStorage.setItem(LAST_SESSION_KEY, token);
-          } catch {
-            /* ignore */
-          }
+          rememberSessionToken(token);
           toast.success("Draft recovered from your ChatGPT session.");
         } else {
           toast.error("That draft link has expired. Start a new interview.");
