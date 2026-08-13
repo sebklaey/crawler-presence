@@ -505,6 +505,27 @@ function PublishPage() {
           description="Everything up to this point is free. A paid plan provides online software hosting for your AI-readable files and endpoints. It is delivered electronically and contains no physical goods."
         />
 
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-foreground bg-card p-5">
+          <div>
+            <div className="text-sm font-medium">Ready to go online?</div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Pick a plan and pay in one short flow. From ${PLANS[0]?.price ?? 5}/month, cancel any time.
+            </p>
+          </div>
+          <Button
+            size="lg"
+            onClick={() => {
+              setStep("plans");
+              setSelected((s) => s ?? recommendation.plan);
+              setFlowOpen(true);
+            }}
+          >
+            Publish now
+          </Button>
+        </div>
+
+
+
         {failureState ? (
           <div
             role="alert"
