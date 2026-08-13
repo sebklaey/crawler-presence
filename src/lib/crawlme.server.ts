@@ -504,3 +504,112 @@ export function clientLabel(request: Request): string | undefined {
   const hit = known.find((k) => ua.toLowerCase().includes(k.toLowerCase()));
   return hit ?? "other";
 }
+
+/* ------------------------------------------------------------------ */
+/* HTML rendering                                                      */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Some AI fetchers (Gemini in strict mode, many "read this URL" tools) refuse
+ * or discard raw JSON responses. Every CrawlMe URL therefore also answers with
+ * a plain, semantic HTML document when the client asks for HTML — same data,
+ * readable for humans, crawlers and assistants alike.
+ */
+export function wantsHtml(request: Request): boolean {
+  const url = new URL(request.url);
+  const format = url.searchParams.get("format");
+  if (format === "json") return false;
+  if (format === "html") return true;
+  const accept = (request.headers.get("accept") ?? "").toLowerCase();
+  if (accept.includes("application/json")) return false;
+  return accept.includes("text/html") || accept.includes("*/*") === false ? accept.includes("text/html") : false;
+}
+
+const esc = (value: unknown): string =>
+  String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+
+function renderValue(value: unknown): string {
+  if (value === null || value === undefined || value === "") return "";
+  if (Array.isArray(value)) {
+    if (!value.length) return "";
+    return `<ul>${value.map((v) => `<li>${renderValue(v)}</li>`).join("")}</ul>`;
+  }
+  if (typeof value === "object") {
+    const entries = Object.entries(value as Record<string, unknown>).filter(
+      ([, v]) => v !== null && v !== undefined && v !== "" && !(Array.isArray(v) && !v.length),
+    );
+    if (!entries.length) return "";
+    return `<dl>${entries
+      .map(([k, v]) => `<dt>${esc(k.replace(/_/g, " "))}</dt><dd>${renderValue(v)}</dd>`)
+      .join("")}</dl>`;
+  }
+  return esc(value);
+}
+
+const HTML_STYLE =
+  "body{max-width:52rem;margin:0 auto;padding:2.5rem 1.25rem;font:16px/1.6 ui-sans-serif,system-ui,sans-serif;color:#111}" +
+  "h1{font-size:1.9rem;margin:0 0 .25rem}h2{font-size:1.05rem;margin:2rem 0 .5rem;text-transform:uppercase;letter-spacing:.06em}" +
+  "dt{font-weight:600;margin-top:.5rem}dd{margin:0 0 .25rem 1rem}ul{margin:.25rem 0 .25rem 1.1rem;padding:0}" +
+  "a{color:inherit}code,footer{color:#666;font-size:.85rem}hr{border:0;border-top:1px solid #ddd;margin:2rem 0}";
+
+/** Renders any CrawlMe payload (full, summary or single section) as HTML. */
+export function entityHtml(p: PublishedPresence, payload: Record<string, unknown>, variant: string): Response {
+  const name = String(payload["name"] ?? p.slug);
+  const description = String(payload["short_description"] ?? payload["tagline"] ?? p.core.summary ?? "").slice(0, 300);
+  const skip = new Set(["name", "entity_id", "knowledge_core", "attribution", "freshness"]);
+  const sections = Object.entries(payload)
+    .filter(([key, value]) => !skip.has(key) && renderValue(value))
+    .map(([key, value]) => `<section><h2>${esc(key.replace(/_/g, " "))}</h2>${renderValue(value)}</section>`)
+    .join("");
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name,
+    description,
+    url: `${siteUrl()}/c/${p.slug}`,
+    dateModified: p.updatedAt,
+    isPartOf: { "@type": "WebSite", name: CRAWLME_SOURCE, url: siteUrl() },
+  };
+
+  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${esc(name)} — Crawler Today</title>
+<meta name="description" content="${esc(description)}">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="${esc(`${siteUrl()}/c/${p.slug}`)}">
+<link rel="alternate" type="application/json" href="${esc(`${siteUrl()}/c/${p.slug}?format=json`)}">
+<style>${HTML_STYLE}</style>
+<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
+</head><body><main>
+<h1>${esc(name)}</h1>
+${description ? `<p>${esc(description)}</p>` : ""}
+${sections}
+<hr>
+<footer><p>${esc(CRAWLME_DISCLAIMER)}</p>
+<p>Source: ${esc(CRAWLME_SOURCE)} · view: ${esc(variant)} · updated ${esc(p.updatedAt)} · version ${esc(p.version)}</p>
+<p>Machine-readable: <a href="${esc(`${siteUrl()}/c/${p.slug}?format=json`)}">JSON</a></p></footer>
+</main></body></html>`;
+
+  return new Response(html, {
+    headers: {
+      "content-type": "text/html; charset=utf-8",
+      "cache-control": "public, max-age=0, must-revalidate",
+      ...CORS_HEADERS,
+    },
+  });
+}
+
+/** Human/crawler readable error page, used when the client asked for HTML. */
+export function htmlError(status: number, title: string, hint: string): Response {
+  return new Response(
+    `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${esc(title)} — Crawler Today</title>` +
+      `<meta name="robots" content="noindex"><style>${HTML_STYLE}</style></head><body><main>` +
+      `<h1>${esc(title)}</h1><p>${esc(hint)}</p></main></body></html>`,
+    { status, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", ...CORS_HEADERS } },
+  );
+}
