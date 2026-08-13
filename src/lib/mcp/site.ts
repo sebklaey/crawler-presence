@@ -1,4 +1,4 @@
-type RuntimeGlobals = typeof globalThis & {
+import { paymentsEnv, paymentsReady } from "../payments-config";
   process?: { env?: Record<string, string | undefined> };
 };
 
