@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { emptyCore, type KnowledgeCore } from "./knowledge";
 
 const CORE_KEY = "crawler.core.v1";
