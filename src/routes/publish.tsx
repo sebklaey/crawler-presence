@@ -4,7 +4,7 @@ import { AlertTriangle, ArrowLeft, Check, Copy, ExternalLink, Globe, Loader2, Lo
 import { toast } from "sonner";
 
 import { AppShell, PageHead } from "@/components/app-shell";
-import { PaymentTestModeBanner } from "@/components/payment-test-mode-banner";
+
 import { PresenceStatus } from "@/components/presence-status";
 import { RecoveryCodeCard } from "@/components/recovery-code-card";
 import { Button } from "@/components/ui/button";
@@ -385,7 +385,6 @@ function PublishPage() {
     const proPlus = planById(selected ?? "plus").id !== "plus";
     return (
       <AppShell>
-        <PaymentTestModeBanner />
         <div className="mx-auto max-w-3xl px-5 pb-24 pt-14">
           <PageHead
             eyebrow="Published"
@@ -498,7 +497,6 @@ function PublishPage() {
 
   return (
     <AppShell>
-      <PaymentTestModeBanner />
       <div className="mx-auto max-w-5xl px-5 pb-24 pt-14">
         <PageHead
           eyebrow="Digital SaaS hosting"
