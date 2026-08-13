@@ -20,6 +20,8 @@ import { trackFunnel, useFunnelOnce } from "@/lib/funnel";
 import { generatedFiles, isCoreEmpty, presenceScore, type KnowledgeCore } from "@/lib/knowledge";
 import { finalizePublishFn, loadDraft, startPublishFn } from "@/lib/presence.functions";
 import { usePaymentsStatus } from "@/hooks/use-payments-status";
+import { usePublishState } from "@/hooks/use-publish-state";
+import { manageUpdateCoreFn } from "@/lib/manage.functions";
 import { useCore, usePlan, usePublished } from "@/lib/store";
 import { Empty } from "./knowledge";
 
