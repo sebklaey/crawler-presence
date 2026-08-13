@@ -17,6 +17,7 @@
  */
 import type { KnowledgeCore } from "../knowledge";
 import { emptyCore } from "../knowledge";
+import { normalizeCore, repairCore } from "../interview-rules";
 
 export const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 days retention
 
