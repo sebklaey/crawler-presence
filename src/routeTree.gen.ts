@@ -42,6 +42,7 @@ import { Route as ApiSearchRouteImport } from './routes/api/search'
 import { Route as ApiServicesDotjsonRouteImport } from './routes/api/services[.]json'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as ApiPublicMcpHealthRouteImport } from './routes/api/public/mcp-health'
+import { Route as CSlugSplatRouteImport } from './routes/c.$slug.$'
 import { Route as ManageSlugAnalyticsRouteImport } from './routes/manage_.$slug.analytics'
 import { Route as PSlugIndexRouteImport } from './routes/p.$slug.index'
 import { Route as PSlugSplatRouteImport } from './routes/p.$slug.$'
@@ -222,6 +223,11 @@ const ApiPublicMcpHealthRoute = ApiPublicMcpHealthRouteImport.update({
   path: '/api/public/mcp-health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CSlugSplatRoute = CSlugSplatRouteImport.update({
+  id: '/c/$slug/$',
+  path: '/c/$slug/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ManageSlugAnalyticsRoute = ManageSlugAnalyticsRouteImport.update({
   id: '/manage_/$slug/analytics',
   path: '/manage/$slug/analytics',
@@ -309,6 +315,7 @@ export interface FileRoutesByFullPath {
   '/api/services.json': typeof ApiServicesDotjsonRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
+  '/c/$slug/$': typeof CSlugSplatRoute
   '/manage/$slug/analytics': typeof ManageSlugAnalyticsRoute
   '/p/$slug/$': typeof PSlugSplatRoute
   '/p/$slug/analytics': typeof PSlugAnalyticsRoute
@@ -354,6 +361,7 @@ export interface FileRoutesByTo {
   '/api/services.json': typeof ApiServicesDotjsonRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
+  '/c/$slug/$': typeof CSlugSplatRoute
   '/manage/$slug/analytics': typeof ManageSlugAnalyticsRoute
   '/p/$slug/$': typeof PSlugSplatRoute
   '/p/$slug/analytics': typeof PSlugAnalyticsRoute
@@ -400,6 +408,7 @@ export interface FileRoutesById {
   '/api/services.json': typeof ApiServicesDotjsonRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
+  '/c/$slug/$': typeof CSlugSplatRoute
   '/manage_/$slug/analytics': typeof ManageSlugAnalyticsRoute
   '/p/$slug/$': typeof PSlugSplatRoute
   '/p/$slug/analytics': typeof PSlugAnalyticsRoute
@@ -447,6 +456,7 @@ export interface FileRouteTypes {
     | '/api/services.json'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
+    | '/c/$slug/$'
     | '/manage/$slug/analytics'
     | '/p/$slug/$'
     | '/p/$slug/analytics'
@@ -492,6 +502,7 @@ export interface FileRouteTypes {
     | '/api/services.json'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
+    | '/c/$slug/$'
     | '/manage/$slug/analytics'
     | '/p/$slug/$'
     | '/p/$slug/analytics'
@@ -537,6 +548,7 @@ export interface FileRouteTypes {
     | '/api/services.json'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
+    | '/c/$slug/$'
     | '/manage_/$slug/analytics'
     | '/p/$slug/$'
     | '/p/$slug/analytics'
@@ -583,6 +595,7 @@ export interface RootRouteChildren {
   ApiServicesDotjsonRoute: typeof ApiServicesDotjsonRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicMcpHealthRoute: typeof ApiPublicMcpHealthRoute
+  CSlugSplatRoute: typeof CSlugSplatRoute
   ManageSlugAnalyticsRoute: typeof ManageSlugAnalyticsRoute
   PSlugSplatRoute: typeof PSlugSplatRoute
   PSlugAnalyticsRoute: typeof PSlugAnalyticsRoute
@@ -828,6 +841,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicMcpHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/c/$slug/$': {
+      id: '/c/$slug/$'
+      path: '/c/$slug/$'
+      fullPath: '/c/$slug/$'
+      preLoaderRoute: typeof CSlugSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/manage_/$slug/analytics': {
       id: '/manage_/$slug/analytics'
       path: '/manage/$slug/analytics'
@@ -937,6 +957,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiServicesDotjsonRoute: ApiServicesDotjsonRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicMcpHealthRoute: ApiPublicMcpHealthRoute,
+  CSlugSplatRoute: CSlugSplatRoute,
   ManageSlugAnalyticsRoute: ManageSlugAnalyticsRoute,
   PSlugSplatRoute: PSlugSplatRoute,
   PSlugAnalyticsRoute: PSlugAnalyticsRoute,

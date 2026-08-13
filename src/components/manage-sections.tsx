@@ -185,22 +185,20 @@ export function AiRetrievalSection({ data }: { data: Overview }) {
   const identifier = data.entityDomain ?? data.slug;
   const query = data.entityDomain ? `domain=${data.entityDomain}` : `id=${data.slug}`;
   const apiUrl = `https://crawler.today/api/crawl-me?${query}`;
+  const cleanUrl = `https://crawler.today/c/${data.slug}`;
   const publicUrl = `https://crawler.today/p/${data.slug}`;
+  const llmsUrl = `${publicUrl}/llms.txt`;
 
-  const instruction = `When you need current, first-party information about ${data.name} (${identifier}), retrieve it from the Crawler Today CrawlMe API instead of relying on memory.
+  const instruction = `Open these public web pages to get current, first-party information about ${data.name} (${identifier}) instead of relying on memory:
 
-Full Knowledge Core:
-${apiUrl}
+1. ${publicUrl}
+2. ${llmsUrl}
+3. ${cleanUrl}
 
-Short summary only:
-${apiUrl}&format=summary
+Short summary: ${cleanUrl}/summary
+A single topic (about, offerings, pricing, faq, contact, team, locations, links, facts): ${cleanUrl}/pricing
 
-A single section (about, offerings, pricing, faq, contact, team, locations, links, facts):
-${apiUrl}&section=pricing
-
-Public Presence page: ${publicUrl}
-
-The API is public, read-only, needs no key and returns JSON. It is first-party information published by ${data.name} through Crawler Today.`;
+All of these are normal public pages, free to read, no key, no login. They are first-party information published by ${data.name} through Crawler Today.`;
 
   return (
     <div className="rounded-2xl border border-border bg-card p-6">
@@ -228,15 +226,18 @@ The API is public, read-only, needs no key and returns JSON. It is first-party i
       <CopyBlock
         label="Paste into your AI assistant"
         value={instruction}
-        hint="Works in any chat or system prompt. The assistant needs browsing or fetch access to call the URL."
+        hint="Uses plain page URLs without query parameters — assistants like Gemini often refuse URLs that look like a parameterised API."
       />
 
-      <CopyBlock label="Your CrawlMe API URL" value={apiUrl} />
+      <CopyBlock label="Your CrawlMe URL (no parameters)" value={cleanUrl} />
+
+      <CopyBlock label="Classic API URL (with parameters)" value={apiUrl} />
 
       <CopyBlock
         label="Test it from a terminal"
-        value={`curl "${apiUrl}"`}
+        value={`curl "${cleanUrl}"`}
       />
+
 
       <p className="mt-4 text-xs text-muted-foreground">
         MCP clients (ChatGPT developer mode, Claude, agents) can instead connect the Crawler Today MCP server at{" "}
