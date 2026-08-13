@@ -117,7 +117,7 @@ export default defineTool({
       };
     }
 
-    const latest = await latestIntentForSession(session.id);
+    const latest = previousIntent;
 
     // Crawler Alpha 0.0.2: the free beta has ended — publishing is always paid.
 
