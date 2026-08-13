@@ -11,6 +11,7 @@ import {
   nextGap,
   normalizeCore,
   openGaps,
+  repairCore,
 } from "../../interview-rules";
 import { presenceChecks, presenceScore } from "../../knowledge";
 import { getSession, saveSession, SESSION_NOTE } from "../sessions";
@@ -28,7 +29,7 @@ export default defineTool({
       .record(z.string(), z.unknown())
       .optional()
       .describe(
-        "Structured Knowledge Core fragment you extracted from the answer: {entityType,name,tagline,summary,location,website,languages,facts:[{label,value,status:'verified'|'claimed',source}],stories,items:[{kind,name,summary}],faqs,cv,links}. Only include what the user actually stated — never invent values.",
+        "Structured Knowledge Core fragment you extracted from the answer. Use these exact fields: {entityType,name,tagline,summary,location,website,languages,facts:[{label,value,status:'verified'|'claimed',source}],stories:[{label,text,confirmed:true}],items:[{kind:'offering'|'project'|'service',name,summary}],faqs:[{question,answer}],cv,links:[{label,url}]}. CRITICAL: positioning / mission / self-description belongs in stories (one object per statement, confirmed:true when the user stated or approved it) — never as a fact or note. Every FAQ pair belongs in faqs as its own {question,answer} object with a non-empty answer — never as a fact, note or free text; send all pairs in one array. Only include what the user actually stated — never invent values.",
       ),
     assistant_question: z
       .string()
@@ -51,7 +52,7 @@ export default defineTool({
     // Either the assistant's structured extraction, or the deterministic fallback.
     const merged = core_update
       ? mergeCore(normalizeCore(session.core), core_update)
-      : normalizeCore(interviewStep({ core: session.core, message: user_answer }).core);
+      : repairCore(normalizeCore(interviewStep({ core: session.core, message: user_answer }).core));
 
     const gap = nextGap(merged);
     const complete = isComplete(merged);

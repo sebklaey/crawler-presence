@@ -86,6 +86,180 @@ export function normalizeCore(raw: unknown): LooseCore {
   };
 }
 
+/* ------------------- Tolerante Aufnahme von core_update ------------------ */
+
+const POSITION_LABEL =
+  /(positionier|positioning|story|storytelling|narrativ|mission|vision|haltung|selbstbeschreibung|selbstverständnis|about ?me|über ?mich|elevator|value ?proposition|wertversprechen)/i;
+const NOTE_LABEL = /^(notiz|note|hinweis|sonstiges|misc)\b/i;
+const FAQ_LABEL = /^(faq|frage|question)\b/i;
+
+function pick(r: Record<string, unknown>, keys: string[]): unknown {
+  for (const k of keys) if (r[k] !== undefined && r[k] !== null) return r[k];
+  return undefined;
+}
+
+/** Zerlegt "Frage? Antwort" bzw. "Frage\nAntwort" in ein FAQ-Paar. */
+function splitQa(text: string): { question: string; answer: string } | null {
+  const t = text.trim();
+  if (!t) return null;
+  const nl = t.indexOf("\n");
+  if (nl > 0) {
+    const q = t.slice(0, nl).trim();
+    const a = t.slice(nl + 1).trim();
+    if (q && a) return { question: q.endsWith("?") ? q : `${q}?`, answer: a };
+  }
+  const qm = t.indexOf("?");
+  if (qm > 0 && qm < t.length - 1) {
+    const q = t.slice(0, qm + 1).trim();
+    const a = t.slice(qm + 1).trim();
+    if (q && a) return { question: q, answer: a };
+  }
+  return null;
+}
+
+function asFaqs(v: unknown): LooseCore["faqs"] {
+  const out: LooseCore["faqs"] = [];
+  for (const raw of arr<unknown>(v)) {
+    if (typeof raw === "string") {
+      const qa = splitQa(raw);
+      if (qa) out.push(qa);
+      continue;
+    }
+    if (!raw || typeof raw !== "object") continue;
+    const r = raw as Record<string, unknown>;
+    const question = str(pick(r, ["question", "q", "frage", "title", "label", "name"]));
+    const answer = str(pick(r, ["answer", "a", "antwort", "text", "response", "value", "body"]));
+    if (question && answer) out.push({ question: question.slice(0, 300), answer: answer.slice(0, 2000) });
+    else if (question) {
+      const qa = splitQa(question);
+      if (qa) out.push(qa);
+    }
+  }
+  return out;
+}
+
+function asStories(v: unknown, defaultLabel = "Positioning"): LooseCore["stories"] {
+  const out: LooseCore["stories"] = [];
+  for (const raw of arr<unknown>(v)) {
+    if (typeof raw === "string") {
+      if (raw.trim()) out.push({ label: defaultLabel, text: raw.trim(), confirmed: true });
+      continue;
+    }
+    if (!raw || typeof raw !== "object") continue;
+    const r = raw as Record<string, unknown>;
+    const text = str(pick(r, ["text", "story", "content", "value", "body", "description", "summary"]));
+    if (!text) continue;
+    const label = str(pick(r, ["label", "title", "name", "kind"])) || defaultLabel;
+    const confirmed = r["confirmed"];
+    out.push({ label, text, confirmed: confirmed === undefined ? true : Boolean(confirmed) });
+  }
+  return out;
+}
+
+/**
+ * Repariert einen Knowledge Core, in dem Positionierung oder FAQ-Paare als
+ * generische Fakten/Notizen gelandet sind (ältere Merges, freie Modellformate).
+ */
+export function repairCore(core: LooseCore): LooseCore {
+  const facts: LooseFact[] = [];
+  const stories = [...core.stories];
+  const faqs = [...core.faqs.filter((f) => str((f as { answer?: unknown }).answer))];
+
+  const addStory = (label: string, text: string, confirmed: boolean) => {
+    if (!stories.some((s) => s.text.trim() === text.trim())) stories.push({ label, text, confirmed });
+  };
+  const addFaq = (question: string, answer: string) => {
+    if (!faqs.some((f) => f.question.toLowerCase() === question.toLowerCase())) faqs.push({ question, answer });
+  };
+
+  for (const f of core.facts) {
+    const label = f.label.trim();
+    const value = f.value.trim();
+    if (POSITION_LABEL.test(label)) {
+      addStory(label, value, f.status !== "claimed");
+      continue;
+    }
+    if (label.endsWith("?") && value) {
+      addFaq(label, value);
+      continue;
+    }
+    if (FAQ_LABEL.test(label) || NOTE_LABEL.test(label)) {
+      const qa = splitQa(value);
+      if (qa) {
+        addFaq(qa.question, qa.answer);
+        continue;
+      }
+      if (NOTE_LABEL.test(label) && POSITION_LABEL.test(value)) {
+        addStory("Positioning", value, true);
+        continue;
+      }
+    }
+    facts.push(f);
+  }
+
+  const repaired: LooseCore = { ...core, facts, stories, faqs };
+  repaired.gaps = openGaps(repaired).map((g) => g.label);
+  return repaired;
+}
+
+/**
+ * Nimmt ein `core_update` in beliebiger, aber plausibler Form entgegen
+ * (Aliase, Q/A-Kurzformen, Positionierung als String) und bringt es in die
+ * kanonische LooseCore-Struktur.
+ */
+export function coerceCoreUpdate(raw: unknown): LooseCore {
+  if (!raw || typeof raw !== "object") return normalizeCore(raw);
+  const r = raw as Record<string, unknown>;
+
+  const canonical: Record<string, unknown> = {
+    entityType: pick(r, ["entityType", "entity_type", "type"]),
+    name: pick(r, ["name", "entity_name", "title"]),
+    tagline: pick(r, ["tagline", "slogan", "claim", "headline"]),
+    summary: pick(r, ["summary", "description", "about", "bio", "beschreibung"]),
+    location: pick(r, ["location", "city", "standort", "ort"]),
+    website: pick(r, ["website", "url", "homepage", "site"]),
+    languages: pick(r, ["languages", "language", "sprachen"]),
+    facts: pick(r, ["facts", "verified_facts", "fakten"]),
+    items: pick(r, ["items", "offerings", "products", "services", "projects", "angebote"]),
+    cv: pick(r, ["cv", "experience", "resume", "lebenslauf"]),
+    links: pick(r, ["links", "urls", "profiles"]),
+    gaps: pick(r, ["gaps", "missing"]),
+  };
+
+  const faqSource = pick(r, ["faqs", "faq", "questions", "qa", "q_and_a", "fragen"]);
+  const storySource = pick(r, [
+    "stories",
+    "story",
+    "positioning",
+    "positioning_confirmed",
+    "positionierung",
+    "narrative",
+  ]);
+
+  const base = normalizeCore(canonical);
+  const coerced: LooseCore = {
+    ...base,
+    faqs: [...base.faqs.filter((f) => str((f as { answer?: unknown }).answer)), ...asFaqs(faqSource)],
+    stories: [
+      ...base.stories.map((s) => ({ ...s, confirmed: s.confirmed === undefined ? true : Boolean(s.confirmed) })),
+      ...(typeof storySource === "string"
+        ? storySource.trim()
+          ? [{ label: "Positioning", text: storySource.trim(), confirmed: true }]
+          : []
+        : asStories(storySource)),
+    ],
+  };
+
+  // Kontakt-Mail erhalten, wenn das Modell sie separat schickt.
+  const email = str(pick(r, ["email", "contact_email", "contact", "kontakt"]));
+  const mail = email.match(/[\w.+-]+@[\w-]+\.[\w.]+/)?.[0];
+  if (mail && !coerced.links.some((l) => l.url.includes(mail))) {
+    coerced.links.push({ label: "E-Mail", url: `mailto:${mail}` });
+  }
+
+  return repairCore(coerced);
+}
+
 
 /* ------------------------------ Entity-Typ ------------------------------ */
 
@@ -370,8 +544,9 @@ export function applyAnswer(input: LooseCore, answer: string, gap: GapKey): Loos
 }
 
 /** Tiefes, konservatives Zusammenführen eines strukturierten core_update. */
-export function mergeCore(base: LooseCore, update: unknown): LooseCore {
-  const u = normalizeCore(update);
+export function mergeCore(baseInput: LooseCore, update: unknown): LooseCore {
+  const base = repairCore(baseInput);
+  const u = coerceCoreUpdate(update);
   const merged: LooseCore = {
     ...base,
     entityType: u.entityType !== "unknown" ? u.entityType : base.entityType,
@@ -403,8 +578,7 @@ export function mergeCore(base: LooseCore, update: unknown): LooseCore {
   for (const f of u.faqs) if (!merged.faqs.some((x) => x.question.toLowerCase() === f.question.toLowerCase())) merged.faqs.push(f);
   for (const c of u.cv) if (!merged.cv.some((x) => x.role === c.role && x.organization === c.organization)) merged.cv.push(c);
   for (const l of u.links) if (!merged.links.some((x) => x.url === l.url)) merged.links.push(l);
-  merged.gaps = openGaps(merged).map((g) => g.label);
-  return merged;
+  return repairCore(merged);
 }
 
 /* ------------------------------ Bewertung ------------------------------- */

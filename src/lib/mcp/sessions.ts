@@ -17,6 +17,7 @@
  */
 import type { KnowledgeCore } from "../knowledge";
 import { emptyCore } from "../knowledge";
+import { normalizeCore, repairCore } from "../interview-rules";
 
 export const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 days retention
 
@@ -102,12 +103,33 @@ function confidenceFromDb(v: number | null | undefined): number {
   return Math.max(0, Math.min(1, v / 100));
 }
 
+/**
+ * Ältere Entwürfe können Positionierung oder FAQ-Paare als generische Fakten
+ * bzw. Notizen enthalten. Beim Laden werden sie in die richtigen Felder
+ * überführt, damit Presence-Status und Publish korrekt zählen.
+ */
+function repairStoredCore(raw: unknown): KnowledgeCore {
+  const base = (raw as KnowledgeCore) ?? emptyCore();
+  try {
+    const fixed = repairCore(normalizeCore(base));
+    return {
+      ...base,
+      facts: fixed.facts.map((f, i) => ({ id: base.facts?.[i]?.id ?? `f${i}`, ...f })),
+      stories: fixed.stories.map((s, i) => ({ id: base.stories?.[i]?.id ?? `s${i}`, ...s })),
+      faqs: fixed.faqs.map((f, i) => ({ id: base.faqs?.[i]?.id ?? `q${i}`, ...f })),
+      gaps: fixed.gaps,
+    } as KnowledgeCore;
+  } catch {
+    return base;
+  }
+}
+
 function fromRow(row: Row): Session {
   return {
     id: row.token,
     createdAt: Date.parse(row.created_at),
     updatedAt: Date.parse(row.updated_at),
-    core: (row.core as KnowledgeCore) ?? emptyCore(),
+    core: repairStoredCore(row.core),
     transcript: Array.isArray(row.transcript) ? (row.transcript as Transcript) : [],
     confidence: confidenceFromDb(row.confidence),
     complete: Boolean(row.complete),

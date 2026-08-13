@@ -72,7 +72,7 @@
             "core_update": {
               "type": "object",
               "additionalProperties": {},
-              "description": "Structured Knowledge Core fragment you extracted from the answer: {entityType,name,tagline,summary,location,website,languages,facts:[{label,value,status:'verified'|'claimed',source}],stories,items:[{kind,name,summary}],faqs,cv,links}. Only include what the user actually stated — never invent values."
+              "description": "Structured Knowledge Core fragment you extracted from the answer. Use these exact fields: {entityType,name,tagline,summary,location,website,languages,facts:[{label,value,status:'verified'|'claimed',source}],stories:[{label,text,confirmed:true}],items:[{kind:'offering'|'project'|'service',name,summary}],faqs:[{question,answer}],cv,links:[{label,url}]}. CRITICAL: positioning / mission / self-description belongs in stories (one object per statement, confirmed:true when the user stated or approved it) — never as a fact or note. Every FAQ pair belongs in faqs as its own {question,answer} object with a non-empty answer — never as a fact, note or free text; send all pairs in one array. Only include what the user actually stated — never invent values."
             },
             "assistant_question": {
               "type": "string",
@@ -187,7 +187,7 @@
       {
         "name": "publish_presence",
         "title": "Publish Presence",
-        "description": "Use this when the user asks to publish or host their Presence. Publishing is the paid step. Crawler has no accounts, no login and no registration: if the user already paid for this draft on the Crawler website, this publishes it and returns the live URLs plus a one-time management secret. Otherwise it returns publish_requires_payment=true plus a handoff URL that carries the anonymous draft so nothing is retyped. Creating and previewing a Presence is always free.",
+        "description": "Publishes a Presence — and republishes it after every later change. If this draft is already live, calling this again rewrites the public files (llms.txt, llms-full.txt, about.md, offerings.md, faq.md, api/*.json) from the current Knowledge Core, with no new payment and the same recovery code. Otherwise publishing is the paid step: Crawler has no accounts, no login and no registration; if the user already paid for this draft on the Crawler website it goes live and returns a one-time management secret, otherwise it returns publish_requires_payment=true plus a handoff URL carrying the anonymous draft. Creating and previewing a Presence is always free.",
         "annotations": {
           "readOnlyHint": false,
           "destructiveHint": false,
