@@ -298,6 +298,23 @@ export async function getLivePresence(slug: string): Promise<PublishedPresence |
   return record && record.status === "live" && record.mode === "live" ? record : undefined;
 }
 
+/** Slugs of every publicly live Presence — used for sitemap discovery. */
+export async function listLivePresences(limit = 5000): Promise<string[]> {
+  const supabase = await client();
+  if (!supabase) {
+    return [...memory.values()].filter((p) => p.status === "live" && p.mode === "live").map((p) => p.slug);
+  }
+  const { data, error } = await supabase
+    .from("published_presences")
+    .select("slug")
+    .eq("status", "live")
+    .eq("mode", "live")
+    .order("updated_at", { ascending: false })
+    .limit(limit);
+  if (error) return [];
+  return ((data ?? []) as { slug: string }[]).map((r) => r.slug);
+}
+
 /**
  * Finds the Presence that was published from a given anonymous draft session.
  *
