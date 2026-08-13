@@ -533,220 +533,41 @@ function PublishPage() {
 
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
           <div className="space-y-6">
-            {step === "plans" ? (
-              <>
-                <section className="rounded-2xl border border-border bg-card p-6">
-                  <h2 className="text-sm font-medium">With hosting you get:</h2>
-                  <ul className="mt-4 grid gap-1.5 sm:grid-cols-2">
-                    {HOSTING_BENEFITS.map((b) => (
-                      <li key={b} className="flex gap-2 text-sm text-muted-foreground">
-                        <Check className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                        <span>{b}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="mt-4 rounded-lg border border-dashed border-border bg-secondary/50 px-3 py-2 text-xs text-muted-foreground">
-                    {NO_GUARANTEE_NOTICE}
-                  </p>
-                </section>
+            <section className="rounded-2xl border border-border bg-card p-6">
+              <h2 className="text-sm font-medium">With hosting you get:</h2>
+              <ul className="mt-4 grid gap-1.5 sm:grid-cols-2">
+                {HOSTING_BENEFITS.map((b) => (
+                  <li key={b} className="flex gap-2 text-sm text-muted-foreground">
+                    <Check className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-4 rounded-lg border border-dashed border-border bg-secondary/50 px-3 py-2 text-xs text-muted-foreground">
+                {NO_GUARANTEE_NOTICE}
+              </p>
+            </section>
 
-                <section className="rounded-2xl border border-border bg-card p-6">
-                  <h2 className="text-sm font-medium">Recommended for you</h2>
-                  <p className="mt-2 text-sm">
-                    Based on your current Knowledge Core we recommend{" "}
-                    <strong>{planById(recommendation.plan).name}</strong>. You can pick any other plan.
-                  </p>
-                  <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
-                    {recommendation.reasons.slice(0, 2).map((r) => (
-                      <li key={r}>· {r}</li>
-                    ))}
-                  </ul>
-                </section>
+            <section className="rounded-2xl border border-border bg-card p-6">
+              <h2 className="text-sm font-medium">Recommended for you</h2>
+              <p className="mt-2 text-sm">
+                Based on your current Knowledge Core we recommend{" "}
+                <strong>{planById(recommendation.plan).name}</strong>. You can pick any other plan in the publish flow.
+              </p>
+              <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                {recommendation.reasons.slice(0, 2).map((r) => (
+                  <li key={r}>· {r}</li>
+                ))}
+              </ul>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Compare everything on the{" "}
+                <Link to="/pricing" className="underline underline-offset-4">
+                  pricing page
+                </Link>
+                .
+              </p>
+            </section>
 
-                <section className="rounded-2xl border border-border bg-card p-6">
-                  <h2 className="flex items-center gap-2 text-sm font-medium">
-                    {payments ? <Globe className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
-                    Choose your digital hosting plan
-                  </h2>
-
-                  {!payments ? (
-                    <div className="mt-3 rounded-lg border border-dashed border-border bg-secondary/60 px-3 py-2 text-xs text-muted-foreground">
-                      <strong className="text-foreground">Checkout is temporarily unavailable.</strong> Crawler Alpha
-                      0.0.2 is paid-only: publishing and hosting always require an active subscription. Building and
-                      previewing stay free — please try the checkout again shortly.
-                    </div>
-                  ) : (
-                    <p className="mt-3 text-xs text-muted-foreground">
-                      You are purchasing a digital SaaS subscription for online Presence hosting, billed monthly and
-                      cancellable at any time. Nothing physical is sold or shipped. Checkout receives only an anonymous
-                      reference to this publish request.
-                    </p>
-                  )}
-
-                  <div className="mt-4 grid gap-4 sm:grid-cols-3">
-                    {PLANS.map((p) => {
-                      const isSelected = selected === p.id;
-                      return (
-                        <div
-                          key={p.id}
-                          className={`flex flex-col rounded-2xl border p-5 text-left transition-colors ${
-                            isSelected ? "border-foreground bg-secondary" : "border-border hover:border-foreground/40"
-                          }`}
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <div>
-                              <div className="flex flex-wrap items-center gap-2">
-                                <span className="text-sm font-medium">{p.name}</span>
-                                {p.recommended ? (
-                                  <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] uppercase tracking-wide text-primary-foreground">
-                                    Recommended
-                                  </span>
-                                ) : null}
-                              </div>
-                              <div className="mt-0.5 text-xs text-muted-foreground">{p.subtitle}</div>
-                              <div className="mt-2 flex items-baseline gap-1">
-                                <span className="display text-2xl">${p.price}</span>
-                                <span className="text-xs text-muted-foreground">/month, billed monthly</span>
-                              </div>
-                            </div>
-                            {isSelected ? <Check className="h-4 w-4 shrink-0" /> : null}
-                          </div>
-
-                          <div className="mt-3 flex flex-wrap gap-1">
-                            {p.audience.map((a) => (
-                              <span key={a} className="rounded bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                                {a}
-                              </span>
-                            ))}
-                          </div>
-
-                          <ul className="mt-4 flex-1 space-y-1.5">
-                            {p.benefits.map((f) => (
-                              <li key={f} className="flex gap-2 text-xs text-muted-foreground">
-                                <Check className="mt-0.5 h-3 w-3 shrink-0" />
-                                <span>{f}</span>
-                              </li>
-                            ))}
-                          </ul>
-
-                          <Button
-                            className="mt-5"
-                            variant={isSelected ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => {
-                              setSelected(p.id);
-                              setStoredPlan(p.id);
-                              trackFunnel("plan_selected", { plan: p.id, fromStep: "plans", toStep: "summary" });
-                              setStep("summary");
-                            }}
-                          >
-                            {p.cta}
-                          </Button>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  <p className="mt-3 text-xs text-muted-foreground">
-                    Compare everything on the{" "}
-                    <Link to="/pricing" className="underline underline-offset-4">
-                      pricing page
-                    </Link>
-                    .
-                  </p>
-                </section>
-              </>
-            ) : null}
-
-            {step === "summary" && plan ? (
-              <section className="rounded-2xl border border-border bg-card p-6">
-                <button
-                  onClick={() => setStep("plans")}
-                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-                >
-                  <ArrowLeft className="h-3.5 w-3.5" /> Change plan
-                </button>
-
-                <h2 className="mt-4 text-sm font-medium">Order summary</h2>
-                <dl className="mt-4 divide-y divide-border text-sm">
-                  <div className="flex justify-between py-2">
-                    <dt className="text-muted-foreground">Plan</dt>
-                    <dd>
-                      {plan.name} — {plan.subtitle}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between py-2">
-                    <dt className="text-muted-foreground">Price</dt>
-                    <dd>${plan.price} per month</dd>
-                  </div>
-                  <div className="flex justify-between py-2">
-                    <dt className="text-muted-foreground">Billing</dt>
-                    <dd>Monthly, recurring until you cancel</dd>
-                  </div>
-                  <div className="flex justify-between gap-4 py-2">
-                    <dt className="text-muted-foreground">Presence</dt>
-                    <dd className="text-right">{core.name || "Untitled presence"}</dd>
-                  </div>
-                </dl>
-
-                <h3 className="mt-5 text-xs uppercase tracking-wide text-muted-foreground">Included</h3>
-                <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex gap-2 text-xs text-muted-foreground">
-                      <Check className="mt-0.5 h-3 w-3 shrink-0" />
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="mt-5 rounded-lg border border-dashed border-border bg-secondary/50 px-3 py-2 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1.5 text-foreground">
-                    <ShieldCheck className="h-3.5 w-3.5" /> Before you continue
-                  </div>
-                  <ul className="mt-2 space-y-1">
-                    <li>· No registration and no account — a one-time management code controls the Presence.</li>
-                    <li>· Clear monthly price, cancel any time at /manage with your recovery code.</li>
-                    <li>· Payment is handled externally by the payment provider; Crawler never sees card data.</li>
-                    <li>· {NO_GUARANTEE_NOTICE}</li>
-                    <li>
-                      · Operated by SEBKLAEY ·{" "}
-                      <Link to="/support" className="underline underline-offset-4">
-                        Support
-                      </Link>{" "}
-                      ·{" "}
-                      <Link to="/privacy" className="underline underline-offset-4">
-                        Privacy
-                      </Link>{" "}
-                      ·{" "}
-                      <Link to="/terms" className="underline underline-offset-4">
-                        Terms
-                      </Link>{" "}
-                      ·{" "}
-                      <Link to="/refunds" className="underline underline-offset-4">
-                        Refunds
-                      </Link>
-                    </li>
-                  </ul>
-                </div>
-
-                <Button className="mt-5 w-full sm:w-auto" disabled={busy} onClick={() => void publish(plan.id)}>
-                  {busy ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Opening secure checkout…
-                    </>
-                  ) : payments ? (
-                    `Publish for $${plan.price}/month`
-                  ) : (
-                    `Checkout unavailable — ${plan.name} $${plan.price}/month`
-                  )}
-                </Button>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  {payments
-                    ? "You will be taken to the payment provider. A checkout link is not a payment — your Presence goes live only after the server confirms it."
-                    : "Publishing requires a paid subscription. Nothing is published until a payment is confirmed."}
-                </p>
-              </section>
-            ) : null}
 
             <section className="rounded-2xl border border-border bg-card p-6">
               <h2 className="text-sm font-medium">What goes live</h2>
