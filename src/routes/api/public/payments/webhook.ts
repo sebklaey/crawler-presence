@@ -89,6 +89,14 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
         }
         const env: PaddleEnv = rawEnv;
 
+        // Defence in depth: only Paddle's published addresses may deliver here.
+        const { isPaddleRequest, callerIp } = await import("@/lib/paddle-ips.server");
+        if (!(await isPaddleRequest(request))) {
+          console.error("[crawler] payments webhook from non-Paddle IP:", callerIp(request));
+          return new Response("Forbidden", { status: 403 });
+        }
+
+
         let event: Awaited<ReturnType<typeof verifyWebhook>>;
         try {
           event = await verifyWebhook(request, env);
