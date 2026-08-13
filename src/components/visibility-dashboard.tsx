@@ -221,7 +221,7 @@ function AdapterCard({
   onConnect,
 }: {
   adapter: VisibilityDashboard["adapters"][number];
-  onConnect?: (input: { source: SourceType; connected: boolean; value?: string }) => Promise<void> | void;
+  onConnect?: ((input: { source: SourceType; connected: boolean; value?: string }) => Promise<void> | void) | undefined;
 }) {
   const [value, setValue] = useState(a.configValue ?? "");
   const [busy, setBusy] = useState(false);
@@ -231,7 +231,8 @@ function AdapterCard({
     if (!onConnect) return;
     setBusy(true);
     try {
-      await onConnect({ source: a.type, connected: next, value: value.trim() || undefined });
+      const trimmed = value.trim();
+      await onConnect({ source: a.type, connected: next, ...(trimmed ? { value: trimmed } : {}) });
     } finally {
       setBusy(false);
     }
