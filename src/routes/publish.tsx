@@ -751,7 +751,18 @@ function PublishPage() {
             </section>
           </div>
 
-          <PresenceStatus core={core} columns={1} />
+          <div className="space-y-3">
+            <PresenceStatus core={core} columns={1} />
+            <div className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2">
+              <p className="text-xs text-muted-foreground">
+                Added more details in ChatGPT? Pull the latest state of your interview.
+              </p>
+              <Button variant="outline" size="sm" disabled={syncing} onClick={() => void syncFromSession()}>
+                {syncing ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : null}
+                Sync from ChatGPT
+              </Button>
+            </div>
+          </div>
         </div>
 
         <Dialog open={flowOpen} onOpenChange={setFlowOpen}>
