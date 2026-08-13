@@ -382,6 +382,29 @@ function ManagePage() {
 
             ) : null}
 
+            <div className="rounded-2xl border border-border bg-card p-6">
+              <h2 className="text-sm font-medium">Published content</h2>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {liveIsEmpty
+                  ? "This Presence is online but has no content yet, so AI systems find an empty shell. Fill in your Knowledge Core under /knowledge, then publish the update here."
+                  : "Your Presence currently serves the Knowledge Core below. Edit it under /knowledge and publish the update here — the public files are regenerated immediately."}
+              </p>
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <Button disabled={busy || isCoreEmpty(core)} onClick={() => void updateContent()}>
+                  {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Publish current content
+                </Button>
+                <a href="/knowledge" className="text-xs underline underline-offset-4">
+                  Edit Knowledge Core
+                </a>
+              </div>
+              {isCoreEmpty(core) ? (
+                <p className="mt-3 text-xs text-muted-foreground">
+                  This browser holds no Knowledge Core content yet — add it under /knowledge first.
+                </p>
+              ) : null}
+            </div>
+
             <AiRetrievalSection data={data} />
             <CustomDomainSection code={code} data={data} refresh={() => open()} />
             <ApiAccessSection data={data} />
