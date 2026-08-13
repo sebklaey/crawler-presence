@@ -67,7 +67,7 @@ export default defineTool({
 
     const next = { ...core, documents };
     session.core = toKnowledgeCore(next);
-    session.updatedAt = new Date().toISOString();
+    session.updatedAt = Date.now();
     await saveSession(session);
 
     const limits = planLimits();
