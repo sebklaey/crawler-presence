@@ -516,13 +516,12 @@ export function clientLabel(request: Request): string | undefined {
  * readable for humans, crawlers and assistants alike.
  */
 export function wantsHtml(request: Request): boolean {
-  const url = new URL(request.url);
-  const format = url.searchParams.get("format");
+  const format = new URL(request.url).searchParams.get("format");
   if (format === "json") return false;
   if (format === "html") return true;
   const accept = (request.headers.get("accept") ?? "").toLowerCase();
   if (accept.includes("application/json")) return false;
-  return accept.includes("text/html") || accept.includes("*/*") === false ? accept.includes("text/html") : false;
+  return accept.includes("text/html") || accept.includes("application/xhtml+xml");
 }
 
 const esc = (value: unknown): string =>
