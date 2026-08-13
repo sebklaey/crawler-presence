@@ -131,7 +131,7 @@ function PublicPresence() {
         </div>
 
         <p className="mt-6 text-xs text-muted-foreground">
-          Published {new Date(data.publishedAt).toLocaleString()} · plan {data.plan}
+          Published {new Date(data.publishedAt).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })} · plan {data.plan}
         </p>
       </div>
     </AppShell>
