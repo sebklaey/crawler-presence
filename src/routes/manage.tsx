@@ -86,10 +86,14 @@ function ManagePage() {
     try {
       const restored = await manageRestoreCoreFn({ data: { code: next } });
       if (!restored.ok) return;
-      setCore(restored.core as KnowledgeCore);
+      const remote = restored.core as KnowledgeCore;
+      // Never overwrite a filled local draft with an empty published shell —
+      // that would block "Publish current content".
+      if (!isCoreEmpty(remote) || isCoreEmpty(core)) setCore(remote);
       setPlan(restored.plan as "free" | "plus" | "pro" | "business");
       setPublished({ at: restored.publishedAt, slug: restored.slug });
       setStoredCode(next);
+
     } catch {
       /* the overview already loaded — restoring the workspace is best effort */
     }
