@@ -174,7 +174,7 @@ function PublishPage() {
   const finalize = useCallback(
     async (intentRef: string) => {
       const result = await finalizePublishFn({ data: { intentRef, core } });
-      if (result.kind !== "pending") localStorage.removeItem(PENDING_INTENT_KEY);
+      if (result.kind !== "pending") clearPendingIntent();
       if (result.kind === "published") {
         localStorage.removeItem(PENDING_PLAN_KEY);
         trackFunnel("payment_confirmed", { plan: result.plan as PlanId, presenceSlug: result.slug });
@@ -207,19 +207,21 @@ function PublishPage() {
     [core, setPublished],
   );
 
-  // Paddle's hosted checkout returns to the success URL configured in Paddle,
-  // which may not carry our query string — so the intent is also kept locally.
+  // Returning from checkout: the intent travels in the URL, and as a
+  // short-lived local fallback for hosted redirects that drop the query.
   useEffect(() => {
     if (search.intent) {
       setPendingIntent(search.intent);
+      setPhase("checkout_pending");
       return;
     }
-    const stored = localStorage.getItem(PENDING_INTENT_KEY);
+    const stored = readPendingIntent();
     if (stored) {
       setPendingIntent(stored);
       setPhase("checkout_pending");
     }
   }, [search.intent]);
+
 
   // Return from hosted checkout: poll until the payment webhook has landed.
   useEffect(() => {
