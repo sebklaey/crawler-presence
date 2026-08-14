@@ -269,3 +269,78 @@ export function credentialStatus(): Record<SourceType, boolean> {
     ),
   };
 }
+
+/* ------------------------------------------------------------------ */
+/* Per-Presence provider keys for AI visibility tests                  */
+/* ------------------------------------------------------------------ */
+
+/** Providers that can only be tested with a key the user brings themselves. */
+export const OWN_KEY_PROVIDERS = ["anthropic", "perplexity"] as const;
+export type OwnKeyProvider = (typeof OWN_KEY_PROVIDERS)[number];
+
+export const OWN_KEY_INFO: Record<OwnKeyProvider, { label: string; hint: string; url: string; prefix: string }> = {
+  anthropic: {
+    label: "Claude (Anthropic) API key",
+    hint: "Create a key at console.anthropic.com → API keys, then paste it here. Crawler uses it only to run your visibility tests against Claude.",
+    url: "https://console.anthropic.com/settings/keys",
+    prefix: "sk-ant-",
+  },
+  perplexity: {
+    label: "Perplexity API key",
+    hint: "Create a key at perplexity.ai → Settings → API, then paste it here. Crawler uses it only to run your visibility tests against Perplexity.",
+    url: "https://www.perplexity.ai/settings/api",
+    prefix: "pplx-",
+  },
+};
+
+/** Reads the provider keys stored for one Presence. Never leaves the server. */
+export async function presenceProviderKeys(slug: string): Promise<Partial<Record<OwnKeyProvider, string>>> {
+  const sources = await listSources(slug);
+  const config = sources.find((s) => s.source_type === "ai_probes")?.configuration ?? {};
+  const stored = (config["provider_keys"] ?? {}) as Record<string, unknown>;
+  const out: Partial<Record<OwnKeyProvider, string>> = {};
+  for (const provider of OWN_KEY_PROVIDERS) {
+    const value = stored[provider];
+    if (typeof value === "string" && value.trim()) out[provider] = value.trim();
+  }
+  return out;
+}
+
+/** Which providers have a key stored — booleans only, never the secret. */
+export async function providerKeyStatus(slug: string): Promise<Record<OwnKeyProvider, boolean>> {
+  const keys = await presenceProviderKeys(slug);
+  return { anthropic: Boolean(keys.anthropic), perplexity: Boolean(keys.perplexity) };
+}
+
+/** Stores or removes one provider key. An empty value removes the key. */
+export async function saveProviderKey(
+  slug: string,
+  provider: OwnKeyProvider,
+  key: string,
+): Promise<{ ok: boolean; message: string }> {
+  const sources = await listSources(slug);
+  const record = sources.find((s) => s.source_type === "ai_probes");
+  const config = { ...(record?.configuration ?? {}) };
+  const stored = { ...((config["provider_keys"] ?? {}) as Record<string, string>) };
+  const trimmed = key.trim();
+
+  if (!trimmed) {
+    delete stored[provider];
+    config["provider_keys"] = stored;
+    await upsertSource(slug, "ai_probes", { configuration: config });
+    return { ok: true, message: `${OWN_KEY_INFO[provider].label} removed.` };
+  }
+
+  if (trimmed.length < 20 || /\s/.test(trimmed)) {
+    return { ok: false, message: "That does not look like a valid API key." };
+  }
+
+  stored[provider] = trimmed;
+  config["provider_keys"] = stored;
+  await upsertSource(slug, "ai_probes", {
+    configuration: config,
+    status: record?.status === "error" ? "connected" : (record?.status ?? "connected"),
+    last_error: null,
+  });
+  return { ok: true, message: `${OWN_KEY_INFO[provider].label} saved. Run a test to use it.` };
+}
