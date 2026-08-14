@@ -71,6 +71,8 @@ export function AiAnalyticsDashboardView(props: Props) {
   const [evidence, setEvidence] = useState<EvidenceType | "all">("all");
   const [source, setSource] = useState<SourceType | "all">("all");
   const [csvError, setCsvError] = useState<string | null>(null);
+  const [choices, setChoices] = useState<Record<string, { value: string; label: string }[] | null>>({});
+
 
   const citations = useMemo(
     () =>
