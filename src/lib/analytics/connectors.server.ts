@@ -228,10 +228,68 @@ export async function syncGa4(slug: string, days = 90): Promise<SyncResult> {
  * Pulls impressions, clicks, CTR and average position. This is classic Google
  * search visibility and must never be labelled as AI mentions.
  */
+/** Writes Search Console rows as attributed events. Duplicates are skipped. */
+async function writeGscRows(slug: string, rows: { keys: string[]; clicks: number; impressions: number; ctr: number; position: number }[]): Promise<number> {
+  const supabase = await client();
+  if (!supabase) return 0;
+  let written = 0;
+  for (const row of rows) {
+    const [date, query, page, country, device] = row.keys;
+    const { error } = await supabase.from("analytics_events").insert({
+      presence_slug: slug,
+      event_type: "search_impression",
+      source_type: "search_console",
+      evidence_type: "attributed",
+      occurred_at: `${date}T12:00:00Z`,
+      provider: "google",
+      surface: "Google Search",
+      path: page ?? null,
+      region: country ?? null,
+      idempotency_key: `gsc:${slug}:${date}:${query}:${page}`.slice(0, 80),
+      metadata: {
+        query,
+        device,
+        clicks: row.clicks,
+        impressions: row.impressions,
+        ctr: row.ctr,
+        position: row.position,
+      },
+    });
+    if (!error) written += 1;
+  }
+  return written;
+}
+
 export async function syncSearchConsole(slug: string, days = 90): Promise<SyncResult> {
   const sources = await listSources(slug);
   const config = sources.find((s) => s.source_type === "search_console")?.configuration ?? {};
   const siteUrl = String(config["site_url"] ?? env("SEARCH_CONSOLE_SITE_URL") ?? "");
+
+  const from = new Date(Date.now() - days * 86_400_000).toISOString().slice(0, 10);
+  const to = new Date().toISOString().slice(0, 10);
+
+  // One-click path: the workspace Search Console connection already carries
+  // the Google authorisation, so nothing has to be entered by hand.
+  const { gscGatewayAvailable, queryGscAnalytics } = await import("./gsc-gateway.server");
+  if (siteUrl && gscGatewayAvailable()) {
+    const result = await queryGscAnalytics(siteUrl, from, to);
+    if (!result.ok) {
+      await upsertSource(slug, "search_console", { status: "error", last_error: result.error ?? null });
+      await logSync(slug, "search_console", { status: "error", read: 0, written: 0, skipped: 0, error: result.error ?? null, from, to });
+      return { ok: false, written: 0, skipped: 0, message: result.error ?? "Search Console request failed." };
+    }
+    const written = await writeGscRows(slug, result.rows);
+    await upsertSource(slug, "search_console", {
+      status: "connected",
+      last_synced_at: new Date().toISOString(),
+      next_sync_at: new Date(Date.now() + 86_400_000).toISOString(),
+      last_error: null,
+      records_imported: written,
+    });
+    await logSync(slug, "search_console", { status: "success", read: result.rows.length, written, skipped: result.rows.length - written, from, to });
+    return { ok: true, written, skipped: result.rows.length - written, message: `Search Console sync complete: ${written} rows.` };
+  }
+
   const token = await googleAccessToken(GSC_SCOPE);
 
   if (!token || !siteUrl) {
@@ -240,12 +298,11 @@ export async function syncSearchConsole(slug: string, days = 90): Promise<SyncRe
       ok: false,
       written: 0,
       skipped: 0,
-      message: "Search Console is not connected: service account or verified property missing.",
+      message: "Search Console is not connected: choose a verified property to connect it.",
     };
   }
 
-  const from = new Date(Date.now() - days * 86_400_000).toISOString().slice(0, 10);
-  const to = new Date().toISOString().slice(0, 10);
+
 
   try {
     const response = await fetch(
@@ -423,10 +480,14 @@ export function credentialStatus(): Record<SourceType, boolean> {
     crawler_observed: true,
     server_logs: true,
     ga4: Boolean(serviceAccount()),
-    search_console: Boolean(serviceAccount()),
+    search_console: Boolean(serviceAccount() || (env("LOVABLE_API_KEY") && env("GOOGLE_SEARCH_CONSOLE_API_KEY"))),
     bing_csv: true,
     ai_probes: Boolean(
-      env("OPENAI_API_KEY") || env("ANTHROPIC_API_KEY") || env("GEMINI_API_KEY") || env("PERPLEXITY_API_KEY"),
+      env("LOVABLE_API_KEY") ||
+        env("OPENAI_API_KEY") ||
+        env("ANTHROPIC_API_KEY") ||
+        env("GEMINI_API_KEY") ||
+        env("PERPLEXITY_API_KEY"),
     ),
   };
 }

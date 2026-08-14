@@ -13,6 +13,7 @@ import { insightsDashboardFn } from "@/lib/insights.functions";
 import type { AiAnalyticsDashboard, AnalyticsPeriod } from "@/lib/analytics/model";
 import {
   aiAnalyticsDashboardFn,
+  connectAnalyticsSourceFn,
   exportAnalyticsCsvFn,
   importBingCsvFn,
   saveAnalyticsSourceFn,
@@ -243,6 +244,24 @@ function AnalyticsPage() {
                   onSaveSource={(source, value) =>
                     runAction(source, () => saveAnalyticsSourceFn({ data: { code: activeCode, source, value } }))
                   }
+                  onConnect={async (source, choice) => {
+                    setPending(`connect:${source}`);
+                    try {
+                      const result = await connectAnalyticsSourceFn({
+                        data: { code: activeCode, source, ...(choice ? { choice } : {}) },
+                      });
+                      if (result.ok) toast.success(result.message);
+                      else if (!result.choices?.length) toast.error(result.message);
+                      else toast.message(result.message);
+                      if (result.ok) await loadAi(activeCode, aiPeriod);
+                      return { ok: result.ok, ...(result.choices ? { choices: result.choices } : {}) };
+                    } catch {
+                      toast.error("The connection failed. Nothing was changed.");
+                      return { ok: false };
+                    } finally {
+                      setPending(null);
+                    }
+                  }}
                   onImportCsv={(csv) =>
                     runAction("bing_csv", () => importBingCsvFn({ data: { code: activeCode, csv } }))
                   }

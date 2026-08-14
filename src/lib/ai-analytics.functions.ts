@@ -59,6 +59,103 @@ export const aiAnalyticsDashboardFn = createServerFn({ method: "POST" })
 
 export type ActionResult = { ok: boolean; message: string; errors?: string[] };
 
+export type ConnectResult = ActionResult & { choices?: { value: string; label: string }[] };
+
+function presenceWebsite(presence: Presence): string | null {
+  const website = presence.core?.["website"];
+  return typeof website === "string" && website.trim() ? website.trim() : null;
+}
+
+async function runProbesFor(presence: Presence): Promise<ActionResult> {
+  const { runProbes } = await import("./analytics/probes.server");
+  const domains = [presence.slug, "crawler.today"];
+  const website = presenceWebsite(presence);
+  if (website) {
+    try {
+      domains.push(new URL(website.startsWith("http") ? website : `https://${website}`).hostname);
+    } catch {
+      /* ignore malformed website */
+    }
+  }
+  const result = await runProbes({
+    slug: presence.slug,
+    name: presenceName(presence),
+    category: presenceCategory(presence),
+    aliases: [presenceName(presence)],
+    ownDomains: domains,
+  });
+  return { ok: result.succeeded > 0, message: result.message };
+}
+
+/**
+ * One-click connect. Nothing has to be typed: Search Console uses the
+ * workspace Google connection, the visibility tests use Crawler's built-in
+ * test model. Only an ambiguous Search Console account returns a choice.
+ */
+export const connectAnalyticsSourceFn = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        code: codeSchema,
+        source: z.enum(["search_console", "ai_probes"]),
+        choice: z.string().trim().max(300).optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }): Promise<ConnectResult> => {
+    const auth = await authorize(data.code, 20);
+    if (!auth.ok) return { ok: false, message: "Access could not be verified." };
+    const { upsertSource } = await import("./analytics/connectors.server");
+
+    try {
+      if (data.source === "ai_probes") {
+        const { gatewayAvailable } = await import("./analytics/probes.server");
+        if (!gatewayAvailable()) {
+          return { ok: false, message: "The built-in test model is unavailable right now." };
+        }
+        await upsertSource(auth.presence.slug, "ai_probes", {
+          status: "connected",
+          configuration: { mode: "built_in" },
+          last_error: null,
+        });
+        const run = await runProbesFor(auth.presence);
+        return { ok: true, message: `Visibility tests connected. ${run.message}` };
+      }
+
+      const { gscGatewayAvailable, listGscProperties, pickProperty } = await import("./analytics/gsc-gateway.server");
+      if (!gscGatewayAvailable()) {
+        return { ok: false, message: "Search Console is not available for one-click connection." };
+      }
+      const listed = await listGscProperties();
+      if (!listed.ok) return { ok: false, message: listed.error ?? "Search Console could not be reached." };
+      if (!listed.properties.length) {
+        return { ok: false, message: "The connected Google account has no verified Search Console property." };
+      }
+
+      let siteUrl = data.choice && listed.properties.some((p) => p.siteUrl === data.choice) ? data.choice : null;
+      if (!siteUrl) siteUrl = pickProperty(listed.properties, presenceWebsite(auth.presence))?.siteUrl ?? null;
+      if (!siteUrl) {
+        return {
+          ok: false,
+          message: "Choose which Search Console property to connect.",
+          choices: listed.properties.map((p) => ({ value: p.siteUrl, label: p.siteUrl })),
+        };
+      }
+
+      await upsertSource(auth.presence.slug, "search_console", {
+        configuration: { site_url: siteUrl },
+        status: "connected",
+        last_error: null,
+      });
+      const { syncSearchConsole } = await import("./analytics/connectors.server");
+      const result = await syncSearchConsole(auth.presence.slug);
+      return { ok: true, message: `Connected to ${siteUrl}. ${result.message}` };
+    } catch (error) {
+      console.error("[crawler] one-click connect failed", error);
+      return { ok: false, message: "The connection failed. Nothing was changed." };
+    }
+  });
+
 /** Saves a connector configuration (property ID / site URL). Never a secret. */
 export const saveAnalyticsSourceFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>

@@ -113,13 +113,37 @@ const MODELS: Record<Exclude<ProviderId, "crawler" | "other">, string> = {
   microsoft: "gpt-4o-mini",
 };
 
+/** True when Crawler can run tests without the user supplying any key. */
+export function gatewayAvailable(): boolean {
+  return Boolean(env("LOVABLE_API_KEY"));
+}
+
 export function configuredProviders(): ProviderId[] {
   const out: ProviderId[] = [];
   if (env("OPENAI_API_KEY")) out.push("openai");
   if (env("ANTHROPIC_API_KEY")) out.push("anthropic");
-  if (env("GEMINI_API_KEY")) out.push("google");
+  if (env("GEMINI_API_KEY") || gatewayAvailable()) out.push("google");
   if (env("PERPLEXITY_API_KEY")) out.push("perplexity");
   return out;
+}
+
+const GATEWAY_MODEL = "google/gemini-3.6-flash";
+
+/** Built-in test model. No user key, no setup: this is the one-click path. */
+async function askGateway(prompt: string): Promise<ProbeAnswer> {
+  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    signal: AbortSignal.timeout(60_000),
+    headers: {
+      "Lovable-API-Key": env("LOVABLE_API_KEY")!,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({ model: GATEWAY_MODEL, messages: [{ role: "user", content: prompt }] }),
+  });
+  if (!response.ok) throw new Error(`AI gateway [${response.status}]: ${(await response.text()).slice(0, 200)}`);
+  const body = (await response.json()) as { choices?: { message?: { content?: string } }[] };
+  const text = body.choices?.[0]?.message?.content ?? "";
+  return { text, model: GATEWAY_MODEL, urls: extractUrls(text) };
 }
 
 function extractUrls(text: string): string[] {
@@ -145,6 +169,10 @@ async function askProvider(provider: ProviderId, prompt: string): Promise<ProbeA
     const body = (await response.json()) as { content?: { text?: string }[] };
     const text = (body.content ?? []).map((c) => c.text ?? "").join("\n");
     return { text, model, urls: extractUrls(text) };
+  }
+
+  if (provider === "google" && !env("GEMINI_API_KEY") && gatewayAvailable()) {
+    return askGateway(prompt);
   }
 
   if (provider === "google") {
@@ -221,7 +249,7 @@ export async function runProbes(options: {
   const providers = options.providers?.length ? options.providers : configuredProviders();
   if (!supabase) return { attempted: 0, succeeded: 0, failed: 0, message: "Storage unavailable." };
   if (!providers.length) {
-    return { attempted: 0, succeeded: 0, failed: 0, message: "No AI provider API key is configured, so no tests were run." };
+    return { attempted: 0, succeeded: 0, failed: 0, message: "No test model is available right now." };
   }
 
   const definitions = await ensureProbeDefinitions(options.slug, options.name, options.category);
