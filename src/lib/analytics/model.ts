@@ -178,6 +178,8 @@ export type DataSourceRow = {
   configLabel: string | null;
   configValue: string | null;
   canSync: boolean;
+  /** Providers the user can unlock with their own API key. No secrets here. */
+  providerKeys?: { provider: "anthropic" | "perplexity"; label: string; hint: string; url: string; placeholder: string; configured: boolean }[];
 };
 
 export type RateSummary = {

@@ -31,7 +31,7 @@ import {
   type SeriesPoint,
   type SourceType,
 } from "./model";
-import { credentialStatus, listSources } from "./connectors.server";
+import { OWN_KEY_INFO, OWN_KEY_PROVIDERS, credentialStatus, listSources, providerKeyStatus } from "./connectors.server";
 
 type EventRow = {
   occurred_at: string;
@@ -110,7 +110,11 @@ export async function buildAiAnalytics(options: AggregateOptions): Promise<AiAna
   const windowStart = new Date(now - days * 86_400_000);
   const previousStart = new Date(now - days * 2 * 86_400_000);
 
-  const [sources, credentials] = await Promise.all([listSources(options.slug), Promise.resolve(credentialStatus())]);
+  const [sources, credentials, ownKeys] = await Promise.all([
+    listSources(options.slug),
+    Promise.resolve(credentialStatus()),
+    providerKeyStatus(options.slug),
+  ]);
   const sourceByType = new Map(sources.map((s) => [s.source_type, s]));
 
   let events: EventRow[] = [];
@@ -392,7 +396,7 @@ export async function buildAiAnalytics(options: AggregateOptions): Promise<AiAna
     crawler_observed: "Always on: Crawler tool calls, AI referral visits and trackable outbound clicks.",
     server_logs: "Always on: every request for your published Presence files is logged server-side.",
     search_console: "One click: Crawler uses the connected Google account and imports impressions, clicks, CTR and position for your verified property.",
-    ai_probes: "One click: Crawler runs controlled test questions against its built-in test model. Your own provider keys add more models.",
+    ai_probes: "One click: Crawler runs controlled test questions against its built-in test model (OpenAI and Gemini). Add your own Claude or Perplexity key below to test those models too.",
   };
 
   const dataSources: DataSourceRow[] = sourceTypes.map((source) => {
@@ -413,6 +417,18 @@ export async function buildAiAnalytics(options: AggregateOptions): Promise<AiAna
       configValue:
         source === "search_console" ? ((record?.configuration?.["site_url"] as string) ?? null) : null,
       canSync: source === "search_console" || source === "ai_probes",
+      ...(source === "ai_probes"
+        ? {
+            providerKeys: OWN_KEY_PROVIDERS.map((provider) => ({
+              provider,
+              label: OWN_KEY_INFO[provider].label,
+              hint: OWN_KEY_INFO[provider].hint,
+              url: OWN_KEY_INFO[provider].url,
+              placeholder: `${OWN_KEY_INFO[provider].prefix}…`,
+              configured: ownKeys[provider],
+            })),
+          }
+        : {}),
     };
   });
 

@@ -217,6 +217,34 @@ export const syncAnalyticsSourceFn = createServerFn({ method: "POST" })
     }
   });
 
+/**
+ * Stores or removes the user's own provider API key for AI visibility tests.
+ * The key is written to this Presence's connector configuration and is never
+ * returned, logged or echoed back to the browser.
+ */
+export const saveProviderKeyFn = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        code: codeSchema,
+        provider: z.enum(["anthropic", "perplexity"]),
+        key: z.string().trim().max(400),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }): Promise<ActionResult> => {
+    const auth = await authorize(data.code, 10);
+    if (!auth.ok) return { ok: false, message: "Access could not be verified." };
+    try {
+      const { saveProviderKey } = await import("./analytics/connectors.server");
+      return await saveProviderKey(auth.presence.slug, data.provider, data.key);
+    } catch (error) {
+      console.error("[crawler] provider key save failed");
+      void error;
+      return { ok: false, message: "The key could not be saved. Nothing was changed." };
+    }
+  });
+
 /** CSV export of the current dashboard rows. */
 export const exportAnalyticsCsvFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ code: codeSchema, period: periodSchema }).parse(input))
