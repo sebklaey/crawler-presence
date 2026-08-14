@@ -177,26 +177,42 @@ export async function buildInsights(input: {
     state: string;
   }[] = [];
   let published: typeof recommendations = [];
-  try {
-    const improvements = await import("../improvements.server");
-    const sources = await import("../sources.server");
-    const [approvedSources, openChanges] = await Promise.all([
-      sources.listSources(slug).catch(() => []),
-      sources.listOpenChanges(slug, 5).catch(() => []),
-    ]);
-    await improvements
-      .detectRecommendations({
-        slug,
-        core: presence.core,
-        approvedSources: approvedSources.length,
-        openChanges: openChanges.map((c) => ({ id: c.id, summary: c.summary, evidence: c.evidence, url: c.url })),
-      })
-      .catch(() => undefined);
-    recommendations = (await improvements.listRecommendations(slug)) as typeof recommendations;
-    published = (await improvements.listRecommendations(slug, ["published", "approved", "publishing"])) as typeof recommendations;
-  } catch {
-    recommendations = [];
+  const { hasImprovementLoop, planById } = await import("../billing");
+  const { asPlanId } = await import("../entitlements");
+  const planId = asPlanId((presence as { plan?: string }).plan);
+  const improvementLoop = hasImprovementLoop(planId);
+  const improvementLocked = improvementLoop
+    ? null
+    : {
+        plan: planById(planId).name,
+        requiredPlan: "Pro",
+        reason:
+          "Improvement recommendations are generated from your measured data and Knowledge Core analysis. They are part of Pro and Business.",
+      };
+
+  if (improvementLoop) {
+    try {
+      const improvements = await import("../improvements.server");
+      const sources = await import("../sources.server");
+      const [approvedSources, openChanges] = await Promise.all([
+        sources.listSources(slug).catch(() => []),
+        sources.listOpenChanges(slug, 5).catch(() => []),
+      ]);
+      await improvements
+        .detectRecommendations({
+          slug,
+          core: presence.core,
+          approvedSources: approvedSources.length,
+          openChanges: openChanges.map((c) => ({ id: c.id, summary: c.summary, evidence: c.evidence, url: c.url })),
+        })
+        .catch(() => undefined);
+      recommendations = (await improvements.listRecommendations(slug)) as typeof recommendations;
+      published = (await improvements.listRecommendations(slug, ["published", "approved", "publishing"])) as typeof recommendations;
+    } catch {
+      recommendations = [];
+    }
   }
+
 
   const accessesSince = (iso: string | null): number | null => {
     if (!iso) return null;
