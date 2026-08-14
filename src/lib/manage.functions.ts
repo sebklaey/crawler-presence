@@ -277,10 +277,15 @@ export const manageRotateSecretFn = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<{ ok: boolean; recoveryCode?: string; reason?: string }> => {
     const resolved = await resolve(data.code);
     if ("error" in resolved) return { ok: false, reason: resolved.error };
-    const { rotateManageSecret, recoveryCode, PresenceStoreError } = await import("./mcp/presences");
+    const { rotateManageSecret, recoveryCode, clearSessionToken, PresenceStoreError } = await import(
+      "./mcp/presences"
+    );
     try {
       const secret = await rotateManageSecret(resolved.slug);
+      // The old session-token code must stop working once a new code is issued.
+      await clearSessionToken(resolved.slug);
       return { ok: true, recoveryCode: recoveryCode(resolved.slug, secret) };
+
     } catch (error) {
       if (error instanceof PresenceStoreError) return { ok: false, reason: "unavailable" };
       throw error;
