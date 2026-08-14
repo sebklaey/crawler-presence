@@ -42,6 +42,7 @@ import { Route as ApiSearchRouteImport } from './routes/api/search'
 import { Route as ApiServicesDotjsonRouteImport } from './routes/api/services[.]json'
 import { Route as KnowledgeIndexRouteImport } from './routes/knowledge.index'
 import { Route as KnowledgeAssistantRouteImport } from './routes/knowledge.assistant'
+import { Route as KnowledgeDataRouteImport } from './routes/knowledge.data'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as ApiPublicMcpHealthRouteImport } from './routes/api/public/mcp-health'
 import { Route as CSlugSplatRouteImport } from './routes/c.$slug.$'
@@ -224,6 +225,11 @@ const KnowledgeAssistantRoute = KnowledgeAssistantRouteImport.update({
   path: '/assistant',
   getParentRoute: () => KnowledgeRoute,
 } as any)
+const KnowledgeDataRoute = KnowledgeDataRouteImport.update({
+  id: '/data',
+  path: '/data',
+  getParentRoute: () => KnowledgeRoute,
+} as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
     id: '/.mcp/invoke-tool/$tool',
@@ -326,6 +332,7 @@ export interface FileRoutesByFullPath {
   '/api/search': typeof ApiSearchRoute
   '/api/services.json': typeof ApiServicesDotjsonRoute
   '/knowledge/assistant': typeof KnowledgeAssistantRoute
+  '/knowledge/data': typeof KnowledgeDataRoute
   '/knowledge/': typeof KnowledgeIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
@@ -373,6 +380,7 @@ export interface FileRoutesByTo {
   '/api/search': typeof ApiSearchRoute
   '/api/services.json': typeof ApiServicesDotjsonRoute
   '/knowledge/assistant': typeof KnowledgeAssistantRoute
+  '/knowledge/data': typeof KnowledgeDataRoute
   '/knowledge': typeof KnowledgeIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
@@ -422,6 +430,7 @@ export interface FileRoutesById {
   '/api/search': typeof ApiSearchRoute
   '/api/services.json': typeof ApiServicesDotjsonRoute
   '/knowledge/assistant': typeof KnowledgeAssistantRoute
+  '/knowledge/data': typeof KnowledgeDataRoute
   '/knowledge/': typeof KnowledgeIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
@@ -472,6 +481,7 @@ export interface FileRouteTypes {
     | '/api/search'
     | '/api/services.json'
     | '/knowledge/assistant'
+    | '/knowledge/data'
     | '/knowledge/'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
@@ -519,6 +529,7 @@ export interface FileRouteTypes {
     | '/api/search'
     | '/api/services.json'
     | '/knowledge/assistant'
+    | '/knowledge/data'
     | '/knowledge'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
@@ -567,6 +578,7 @@ export interface FileRouteTypes {
     | '/api/search'
     | '/api/services.json'
     | '/knowledge/assistant'
+    | '/knowledge/data'
     | '/knowledge/'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
@@ -863,6 +875,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof KnowledgeAssistantRouteImport
       parentRoute: typeof KnowledgeRoute
     }
+    '/knowledge/data': {
+      id: '/knowledge/data'
+      path: '/data'
+      fullPath: '/knowledge/data'
+      preLoaderRoute: typeof KnowledgeDataRouteImport
+      parentRoute: typeof KnowledgeRoute
+    }
     '/.mcp/invoke-tool/$tool': {
       id: '/.mcp/invoke-tool/$tool'
       path: '/.mcp/invoke-tool/$tool'
@@ -959,11 +978,13 @@ declare module '@tanstack/react-router' {
 
 interface KnowledgeRouteChildren {
   KnowledgeAssistantRoute: typeof KnowledgeAssistantRoute
+  KnowledgeDataRoute: typeof KnowledgeDataRoute
   KnowledgeIndexRoute: typeof KnowledgeIndexRoute
 }
 
 const KnowledgeRouteChildren: KnowledgeRouteChildren = {
   KnowledgeAssistantRoute: KnowledgeAssistantRoute,
+  KnowledgeDataRoute: KnowledgeDataRoute,
   KnowledgeIndexRoute: KnowledgeIndexRoute,
 }
 
