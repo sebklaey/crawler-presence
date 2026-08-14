@@ -28,6 +28,8 @@ export const Route = createFileRoute("/")({
         property: "og:description",
         content: "Build an AI-readable presence through an adaptive interview. Creation and preview are free.",
       },
+      { property: "og:image", content: "https://crawler.today/og-image.png" },
+      { name: "twitter:image", content: "https://crawler.today/og-image.png" },
     ],
     scripts: [
       {
