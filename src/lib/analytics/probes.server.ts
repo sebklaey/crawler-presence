@@ -315,7 +315,7 @@ export async function runProbes(options: {
 
 
   for (const definition of definitions) {
-    for (const provider of providers) {
+    for (const provider of runnable) {
       attempted += 1;
       const idempotencyKey = `${options.slug}:${definition.prompt_id}:${definition.prompt_version}:${provider}:${day}`;
       const base = {
