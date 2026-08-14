@@ -25,6 +25,7 @@ import { Route as McpRouteImport } from './routes/mcp'
 import { Route as OfferingsDotmdRouteImport } from './routes/offerings[.]md'
 import { Route as PreviewRouteImport } from './routes/preview'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as PricingDotmdRouteImport } from './routes/pricing[.]md'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PublishRouteImport } from './routes/publish'
 import { Route as RefundsRouteImport } from './routes/refunds'
@@ -140,6 +141,11 @@ const PreviewRoute = PreviewRouteImport.update({
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingDotmdRoute = PricingDotmdRouteImport.update({
+  id: '/pricing.md',
+  path: '/pricing.md',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -346,6 +352,7 @@ export interface FileRoutesByFullPath {
   '/offerings.md': typeof OfferingsDotmdRoute
   '/preview': typeof PreviewRoute
   '/pricing': typeof PricingRoute
+  '/pricing.md': typeof PricingDotmdRoute
   '/privacy': typeof PrivacyRoute
   '/publish': typeof PublishRoute
   '/refunds': typeof RefundsRoute
@@ -399,6 +406,7 @@ export interface FileRoutesByTo {
   '/offerings.md': typeof OfferingsDotmdRoute
   '/preview': typeof PreviewRoute
   '/pricing': typeof PricingRoute
+  '/pricing.md': typeof PricingDotmdRoute
   '/privacy': typeof PrivacyRoute
   '/publish': typeof PublishRoute
   '/refunds': typeof RefundsRoute
@@ -454,6 +462,7 @@ export interface FileRoutesById {
   '/offerings.md': typeof OfferingsDotmdRoute
   '/preview': typeof PreviewRoute
   '/pricing': typeof PricingRoute
+  '/pricing.md': typeof PricingDotmdRoute
   '/privacy': typeof PrivacyRoute
   '/publish': typeof PublishRoute
   '/refunds': typeof RefundsRoute
@@ -510,6 +519,7 @@ export interface FileRouteTypes {
     | '/offerings.md'
     | '/preview'
     | '/pricing'
+    | '/pricing.md'
     | '/privacy'
     | '/publish'
     | '/refunds'
@@ -563,6 +573,7 @@ export interface FileRouteTypes {
     | '/offerings.md'
     | '/preview'
     | '/pricing'
+    | '/pricing.md'
     | '/privacy'
     | '/publish'
     | '/refunds'
@@ -617,6 +628,7 @@ export interface FileRouteTypes {
     | '/offerings.md'
     | '/preview'
     | '/pricing'
+    | '/pricing.md'
     | '/privacy'
     | '/publish'
     | '/refunds'
@@ -672,6 +684,7 @@ export interface RootRouteChildren {
   OfferingsDotmdRoute: typeof OfferingsDotmdRoute
   PreviewRoute: typeof PreviewRoute
   PricingRoute: typeof PricingRoute
+  PricingDotmdRoute: typeof PricingDotmdRoute
   PrivacyRoute: typeof PrivacyRoute
   PublishRoute: typeof PublishRoute
   RefundsRoute: typeof RefundsRoute
@@ -815,6 +828,13 @@ declare module '@tanstack/react-router' {
       path: '/pricing'
       fullPath: '/pricing'
       preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pricing.md': {
+      id: '/pricing.md'
+      path: '/pricing.md'
+      fullPath: '/pricing.md'
+      preLoaderRoute: typeof PricingDotmdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -1113,6 +1133,7 @@ const rootRouteChildren: RootRouteChildren = {
   OfferingsDotmdRoute: OfferingsDotmdRoute,
   PreviewRoute: PreviewRoute,
   PricingRoute: PricingRoute,
+  PricingDotmdRoute: PricingDotmdRoute,
   PrivacyRoute: PrivacyRoute,
   PublishRoute: PublishRoute,
   RefundsRoute: RefundsRoute,
