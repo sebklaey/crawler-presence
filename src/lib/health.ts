@@ -7,7 +7,8 @@
  * system is queried, nothing is guessed, and a Presence is never marked
  * unhealthy just because no external assistant produced observable activity.
  */
-import { presenceChecks, presenceScore, type KnowledgeCore } from "./knowledge";
+import { presenceChecks, type KnowledgeCore } from "./knowledge";
+import { completenessScore } from "./kc/model";
 
 export type HealthReason = {
   key: string;
@@ -74,7 +75,7 @@ export function buildBaseline(input: {
   const stats = coreFactStats(input.core);
   return {
     capturedAt: new Date().toISOString(),
-    completeness: presenceScore(input.core),
+    completeness: completenessScore(input.core),
     verifiedFacts: stats.verified,
     claimedFacts: stats.claimed,
     verifiedFactRatio: stats.total ? Math.round((stats.verified / stats.total) * 100) : 0,
@@ -116,7 +117,7 @@ export function computeHealth(input: HealthInput): HealthResult {
     reasons.push({ key, label, points: Math.max(0, Math.min(points, max)), max, detail });
 
   // 1. Activation and successful publication — 30
-  const completeness = presenceScore(input.core);
+  const completeness = completenessScore(input.core);
   const activation = input.published && input.status === "live" && input.endpointsHealthy ? 30 : input.published ? 15 : 0;
   add(
     "activation",
