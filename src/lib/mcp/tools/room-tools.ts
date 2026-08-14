@@ -128,4 +128,9 @@ const ALL_ROOM_TOOLS = [
   ...(PROFILE_TOOLS as unknown as RoomTool[]),
 ];
 
-export const roomTools = ALL_ROOM_TOOLS.map(adapt);
+const seen = new Set<string>();
+export const roomTools = ALL_ROOM_TOOLS.filter((tool) => {
+  if (seen.has(tool.name)) return false;
+  seen.add(tool.name);
+  return true;
+}).map(adapt);
