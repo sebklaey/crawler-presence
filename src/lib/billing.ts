@@ -15,6 +15,10 @@ export type Plan = {
   price: number;
   /** Shipped and enforced today. */
   features: string[];
+  /** Explicitly NOT part of this plan — shown so the upgrade path is honest. */
+  notIncluded?: string[];
+  /** One line naming the concrete reason to move up a tier. */
+  upgradeNote?: string;
   /** On the roadmap — never presented as working. */
   planned?: string[];
   /** Maximum number of digital Knowledge Core records hosted by Crawler. */
@@ -22,7 +26,12 @@ export type Plan = {
   /** Maximum number of imported text documents (Infinity = unlimited). */
   documentLimit: number;
   analyticsDays: number;
+  /** Analysis feedback + improvement recommendations (Pro and above). */
+  improvementLoop: boolean;
+  /** Continuous daily monitoring, recurring updates and report emails (Business). */
+  continuousUpdates: boolean;
 };
+
 
 export const PLANS: Plan[] = [
 
