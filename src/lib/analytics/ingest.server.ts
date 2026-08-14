@@ -198,7 +198,7 @@ export async function ingestServerEvent(input: IngestInput): Promise<boolean> {
       surface: referral?.surface ?? input.surface ?? classification.surface,
       path,
       resource_path: path,
-      referrer: referrerHost(input.request),
+      referrer,
       user_agent_family: classification.family,
       verified_bot: verified,
       http_status: input.httpStatus ?? 200,
