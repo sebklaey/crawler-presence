@@ -42,6 +42,7 @@ import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } fr
 import { Route as Char91DotwellKnownChar93OpenaiAppsChallengeRouteImport } from './routes/[.well-known]/openai-apps-challenge'
 import { Route as ApiCrawlMeRouteImport } from './routes/api/crawl-me'
 import { Route as ApiEntityDotjsonRouteImport } from './routes/api/entity[.]json'
+import { Route as ApiOfferingsDotjsonRouteImport } from './routes/api/offerings[.]json'
 import { Route as ApiSearchRouteImport } from './routes/api/search'
 import { Route as ApiServicesDotjsonRouteImport } from './routes/api/services[.]json'
 import { Route as KnowledgeIndexRouteImport } from './routes/knowledge.index'
@@ -233,6 +234,11 @@ const ApiEntityDotjsonRoute = ApiEntityDotjsonRouteImport.update({
   path: '/api/entity.json',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiOfferingsDotjsonRoute = ApiOfferingsDotjsonRouteImport.update({
+  id: '/api/offerings.json',
+  path: '/api/offerings.json',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiSearchRoute = ApiSearchRouteImport.update({
   id: '/api/search',
   path: '/api/search',
@@ -381,6 +387,7 @@ export interface FileRoutesByFullPath {
   '/.well-known/openai-apps-challenge': typeof Char91DotwellKnownChar93OpenaiAppsChallengeRoute
   '/api/crawl-me': typeof ApiCrawlMeRoute
   '/api/entity.json': typeof ApiEntityDotjsonRoute
+  '/api/offerings.json': typeof ApiOfferingsDotjsonRoute
   '/api/search': typeof ApiSearchRoute
   '/api/services.json': typeof ApiServicesDotjsonRoute
   '/knowledge/assistant': typeof KnowledgeAssistantRoute
@@ -437,6 +444,7 @@ export interface FileRoutesByTo {
   '/.well-known/openai-apps-challenge': typeof Char91DotwellKnownChar93OpenaiAppsChallengeRoute
   '/api/crawl-me': typeof ApiCrawlMeRoute
   '/api/entity.json': typeof ApiEntityDotjsonRoute
+  '/api/offerings.json': typeof ApiOfferingsDotjsonRoute
   '/api/search': typeof ApiSearchRoute
   '/api/services.json': typeof ApiServicesDotjsonRoute
   '/knowledge/assistant': typeof KnowledgeAssistantRoute
@@ -495,6 +503,7 @@ export interface FileRoutesById {
   '/.well-known/openai-apps-challenge': typeof Char91DotwellKnownChar93OpenaiAppsChallengeRoute
   '/api/crawl-me': typeof ApiCrawlMeRoute
   '/api/entity.json': typeof ApiEntityDotjsonRoute
+  '/api/offerings.json': typeof ApiOfferingsDotjsonRoute
   '/api/search': typeof ApiSearchRoute
   '/api/services.json': typeof ApiServicesDotjsonRoute
   '/knowledge/assistant': typeof KnowledgeAssistantRoute
@@ -554,6 +563,7 @@ export interface FileRouteTypes {
     | '/.well-known/openai-apps-challenge'
     | '/api/crawl-me'
     | '/api/entity.json'
+    | '/api/offerings.json'
     | '/api/search'
     | '/api/services.json'
     | '/knowledge/assistant'
@@ -610,6 +620,7 @@ export interface FileRouteTypes {
     | '/.well-known/openai-apps-challenge'
     | '/api/crawl-me'
     | '/api/entity.json'
+    | '/api/offerings.json'
     | '/api/search'
     | '/api/services.json'
     | '/knowledge/assistant'
@@ -667,6 +678,7 @@ export interface FileRouteTypes {
     | '/.well-known/openai-apps-challenge'
     | '/api/crawl-me'
     | '/api/entity.json'
+    | '/api/offerings.json'
     | '/api/search'
     | '/api/services.json'
     | '/knowledge/assistant'
@@ -725,6 +737,7 @@ export interface RootRouteChildren {
   Char91DotwellKnownChar93OpenaiAppsChallengeRoute: typeof Char91DotwellKnownChar93OpenaiAppsChallengeRoute
   ApiCrawlMeRoute: typeof ApiCrawlMeRoute
   ApiEntityDotjsonRoute: typeof ApiEntityDotjsonRoute
+  ApiOfferingsDotjsonRoute: typeof ApiOfferingsDotjsonRoute
   ApiSearchRoute: typeof ApiSearchRoute
   ApiServicesDotjsonRoute: typeof ApiServicesDotjsonRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
@@ -975,6 +988,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiEntityDotjsonRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/offerings.json': {
+      id: '/api/offerings.json'
+      path: '/api/offerings.json'
+      fullPath: '/api/offerings.json'
+      preLoaderRoute: typeof ApiOfferingsDotjsonRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/search': {
       id: '/api/search'
       path: '/api/search'
@@ -1192,6 +1212,7 @@ const rootRouteChildren: RootRouteChildren = {
     Char91DotwellKnownChar93OpenaiAppsChallengeRoute,
   ApiCrawlMeRoute: ApiCrawlMeRoute,
   ApiEntityDotjsonRoute: ApiEntityDotjsonRoute,
+  ApiOfferingsDotjsonRoute: ApiOfferingsDotjsonRoute,
   ApiSearchRoute: ApiSearchRoute,
   ApiServicesDotjsonRoute: ApiServicesDotjsonRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
