@@ -95,3 +95,17 @@ export const usePublished = () => useLocal<{ at: string; slug: string } | null>(
 /** Recovery code of the Presence currently opened on /manage (capability, not an account). */
 export const useRecoveryCode = () => useLocal<string>(CODE_KEY, "");
 export const readRecoveryCode = () => read<string>(CODE_KEY, "");
+
+/* ---------------- Knowledge Core editor workspace ---------------- */
+
+const KC_CHAT_KEY = "crawler.kc.chat.v1";
+const KC_PROPOSALS_KEY = "crawler.kc.proposals.v1";
+const KC_VERSIONS_KEY = "crawler.kc.versions.v1";
+
+/** Chat transcript of the ChatGPT-powered Knowledge Core editor. */
+export const useKcChat = () => useLocal<ChatMessage[]>(KC_CHAT_KEY, []);
+/** Proposed changes waiting for the user's decision. */
+export const useProposals = () => useLocal<import("./kc/model").Proposal[]>(KC_PROPOSALS_KEY, []);
+/** Local version history with restore points. */
+export const useVersions = () => useLocal<import("./kc/model").Version[]>(KC_VERSIONS_KEY, []);
+

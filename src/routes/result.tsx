@@ -8,7 +8,7 @@ import { NO_GUARANTEE_NOTICE } from "@/lib/billing";
 import { useFunnelOnce } from "@/lib/funnel";
 import { entityLabel, generatedFiles, isCoreEmpty, presenceChecks, presenceScore } from "@/lib/knowledge";
 import { useCore } from "@/lib/store";
-import { Empty } from "./knowledge";
+import { Empty } from "./knowledge.index";
 
 export const Route = createFileRoute("/result")({
   head: () => ({

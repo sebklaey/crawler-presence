@@ -24,7 +24,7 @@ import { usePaymentsStatus } from "@/hooks/use-payments-status";
 import { usePublishState } from "@/hooks/use-publish-state";
 import { manageUpdateCoreFn } from "@/lib/manage.functions";
 import { useCore, usePlan, usePublished } from "@/lib/store";
-import { Empty } from "./knowledge";
+import { Empty } from "./knowledge.index";
 
 export const Route = createFileRoute("/publish")({
   validateSearch: (s: Record<string, unknown>): { session?: string; plan?: string; intent?: string; canceled?: string } => ({
