@@ -816,6 +816,25 @@ function PublishPage() {
                     ))}
                   </ul>
 
+                  {plan.notIncluded?.length ? (
+                    <>
+                      <h3 className="mt-4 text-xs uppercase tracking-wide text-muted-foreground">Not included</h3>
+                      <ul className="mt-2 space-y-1">
+                        {plan.notIncluded.map((f) => (
+                          <li key={f} className="flex gap-2 text-xs text-muted-foreground/70">
+                            <Minus className="mt-0.5 h-3 w-3 shrink-0" />
+                            <span>{f}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      {plan.upgradeNote ? (
+                        <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground/80">{plan.upgradeNote}</p>
+                      ) : null}
+                    </>
+                  ) : null}
+
+
+
                   <div className="mt-4 rounded-lg border border-dashed border-border bg-secondary/50 px-3 py-2 text-xs text-muted-foreground">
                     <div className="flex items-center gap-1.5 text-foreground">
                       <ShieldCheck className="h-3.5 w-3.5" /> Before you continue
