@@ -17,16 +17,17 @@ import { Link } from "@tanstack/react-router";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Crawler — Tell Crawler what you do" },
+      { title: "Crawler - AI-readable Presence" },
       {
         name: "description",
         content:
-          "Crawler turns what you do into an AI-readable public presence: llms.txt, markdown pages and JSON endpoints, built through an adaptive interview.",
+          "Build an AI-readable public presence through an adaptive interview. One Knowledge Core, stable files, and analytics for how AI systems find you.",
       },
-      { property: "og:title", content: "Crawler — Tell Crawler what you do" },
+      { property: "og:title", content: "Crawler - AI-readable Presence" },
       {
         property: "og:description",
-        content: "Build an AI-readable presence through an adaptive interview. Creation and preview are free.",
+        content:
+          "Build an AI-readable public presence through an adaptive interview. One Knowledge Core, stable files, and analytics for how AI systems find you.",
       },
       { property: "og:image", content: "https://crawler.today/og-image.png" },
       { name: "twitter:image", content: "https://crawler.today/og-image.png" },
@@ -40,7 +41,7 @@ export const Route = createFileRoute("/")({
           name: "Crawler",
           url: "https://crawler.today",
           description:
-            "Crawler turns what you do into an AI-readable public presence: llms.txt, markdown pages and JSON endpoints.",
+            "Build an AI-readable public presence through an adaptive interview. One Knowledge Core, stable files, and analytics for how AI systems find you.",
         }),
       },
     ],

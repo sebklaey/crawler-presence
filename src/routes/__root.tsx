@@ -81,16 +81,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Crawler — AI-readable presence" },
+      { title: "Crawler - AI-readable Presence" },
       {
         name: "description",
         content:
-          "Crawler builds an AI-readable public presence through an adaptive interview: one Knowledge Core, llms.txt, markdown pages and JSON endpoints.",
+          "Build an AI-readable public presence through an adaptive interview. One Knowledge Core, stable files, and analytics for how AI systems find you.",
       },
-      { property: "og:title", content: "Crawler — AI-readable presence" },
+      { property: "og:title", content: "Crawler - AI-readable Presence" },
       {
         property: "og:description",
-        content: "Tell Crawler what you do. Creation and preview are free.",
+        content: "Build an AI-readable public presence through an adaptive interview. One Knowledge Core, stable files, and analytics for how AI systems find you.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
