@@ -6,11 +6,14 @@ import { toast } from "sonner";
 
 import { AppShell, PageHead } from "@/components/app-shell";
 import { PresenceStatus } from "@/components/presence-status";
+import { FinishGuide } from "@/components/kc/finish-guide";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { improvePresence } from "@/lib/interview.functions";
-import { entityLabel, isCoreEmpty } from "@/lib/knowledge";
+import { entityLabel, isCoreEmpty, type KnowledgeCore } from "@/lib/knowledge";
+import { completeness, completenessScore } from "@/lib/kc/model";
 import { useCore, usePlan } from "@/lib/store";
+
 
 export const Route = createFileRoute("/knowledge/")({
   head: () => ({
@@ -34,6 +37,24 @@ type Improvement = {
   suggestions: { title: string; why: string }[];
 };
 
+/** Text-quality hints derived from what Crawler can actually measure in the Core. */
+function buildTextTips(core: KnowledgeCore): string[] {
+  const tips: string[] = [];
+  if (!core.tagline) tips.push("Add a one-line tagline — assistants quote it as the first answer.");
+  if (core.summary.trim().length < 200)
+    tips.push("Expand the summary to at least 200 characters so answers stay specific.");
+  const claimed = core.facts.filter((f) => f.status !== "verified").length;
+  if (claimed) tips.push(`${claimed} fact${claimed === 1 ? "" : "s"} still unconfirmed — confirm or remove them.`);
+  const drafts = core.stories.filter((s) => !s.confirmed).length;
+  if (drafts) tips.push(`${drafts} positioning text${drafts === 1 ? "" : "s"} not confirmed yet.`);
+  const thin = core.items.filter((i) => (i.summary ?? "").trim().length < 80).length;
+  if (thin) tips.push(`${thin} content record${thin === 1 ? "" : "s"} have very short descriptions — add detail.`);
+  if (core.faqs.length < 5) tips.push("Answer more FAQs — recurring questions are the most read content.");
+  if (!core.website && core.links.length === 0) tips.push("Add a website or contact link so answers can point somewhere.");
+  return tips;
+}
+
+
 function KnowledgePage() {
   const [core, setCore] = useCore();
   const [plan] = usePlan();
@@ -46,6 +67,9 @@ function KnowledgePage() {
   const offerings = core.items.filter((i) => i.kind === "offering");
   const projects = core.items.filter((i) => i.kind === "project");
   const services = core.items.filter((i) => i.kind === "service");
+  const openPoints = completeness(core).filter((r) => !r.done);
+  const textTips = buildTextTips(core);
+
 
   async function runImprove() {
     setImproving(true);
@@ -228,7 +252,7 @@ function KnowledgePage() {
           </div>
 
           <div className="space-y-6">
-            <PresenceStatus core={core} compact />
+            <PresenceStatus core={core} compact score={completenessScore(core)} />
 
             <Section title="Improve my Presence" hint={plan === "free" || plan === "plus" ? "Included from Pro." : undefined}>
               {core.gaps.length ? (
@@ -238,21 +262,52 @@ function KnowledgePage() {
                   ))}
                 </ul>
               ) : null}
-              <Button size="sm" variant="outline" onClick={() => void runImprove()} disabled={improving}>
-                {improving ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-1.5 h-3.5 w-3.5" />}
-                Analyse gaps
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button size="sm" variant="outline" onClick={() => void runImprove()} disabled={improving}>
+                  {improving ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-1.5 h-3.5 w-3.5" />}
+                  Analyse gaps
+                </Button>
+                <FinishGuide core={core} />
+              </div>
               {improvement ? (
                 <div className="mt-4 space-y-3 text-sm">
                   <p className="font-medium">{improvement.headline}</p>
                   <div>
-                    <div className="text-xs uppercase tracking-wide text-muted-foreground">Missing</div>
-                    <ul className="mt-1 space-y-1 text-muted-foreground">
-                      {improvement.missing.map((m) => (
-                        <li key={m}>· {m}</li>
-                      ))}
-                    </ul>
+                    <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                      Open Knowledge Core points ({openPoints.length})
+                    </div>
+                    {openPoints.length ? (
+                      <ul className="mt-1 space-y-1 text-muted-foreground">
+                        {openPoints.map((r) => (
+                          <li key={r.section}>
+                            · {r.label} — {r.hint}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="mt-1 text-muted-foreground">All sections are covered — 100% complete.</p>
+                    )}
                   </div>
+                  {improvement.missing.length ? (
+                    <div>
+                      <div className="text-xs uppercase tracking-wide text-muted-foreground">Missing</div>
+                      <ul className="mt-1 space-y-1 text-muted-foreground">
+                        {improvement.missing.map((m) => (
+                          <li key={m}>· {m}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                  {textTips.length ? (
+                    <div>
+                      <div className="text-xs uppercase tracking-wide text-muted-foreground">Text improvements</div>
+                      <ul className="mt-1 space-y-1 text-muted-foreground">
+                        {textTips.map((t) => (
+                          <li key={t}>· {t}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
                   <div>
                     <div className="text-xs uppercase tracking-wide text-muted-foreground">Do next</div>
                     <ul className="mt-1 space-y-1.5">
@@ -267,6 +322,7 @@ function KnowledgePage() {
                 </div>
               ) : null}
             </Section>
+
           </div>
         </div>
       </div>
