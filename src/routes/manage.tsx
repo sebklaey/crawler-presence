@@ -259,6 +259,18 @@ function ManagePage() {
             Lost the code? It cannot be recovered — Crawler stores only a one-way hash of it and has no other way to
             identify you.
           </p>
+          {data ? (
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border/70 pt-4">
+              <p className="text-xs text-muted-foreground">
+                Unlocked in this browser — Knowledge, Preview, Analytics and Publish stay open until you remove the
+                code.
+              </p>
+              <Button type="button" variant="outline" size="sm" onClick={signOut}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Lock again
+              </Button>
+            </div>
+          ) : null}
         </div>
 
         {rotated ? (
