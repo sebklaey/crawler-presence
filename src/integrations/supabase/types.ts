@@ -14,14 +14,91 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_referral_domains: {
+        Row: {
+          active: boolean
+          created_at: string
+          domain: string
+          id: string
+          provider: string
+          surface: string | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          domain: string
+          id?: string
+          provider: string
+          surface?: string | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          domain?: string
+          id?: string
+          provider?: string
+          surface?: string | null
+        }
+        Relationships: []
+      }
+      analytics_connector_syncs: {
+        Row: {
+          created_at: string
+          error: string | null
+          finished_at: string | null
+          id: string
+          presence_slug: string
+          records_read: number
+          records_skipped: number
+          records_written: number
+          source_type: string
+          started_at: string
+          status: string
+          window_end: string | null
+          window_start: string | null
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          presence_slug: string
+          records_read?: number
+          records_skipped?: number
+          records_written?: number
+          source_type: string
+          started_at?: string
+          status?: string
+          window_end?: string | null
+          window_start?: string | null
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          presence_slug?: string
+          records_read?: number
+          records_skipped?: number
+          records_written?: number
+          source_type?: string
+          started_at?: string
+          status?: string
+          window_end?: string | null
+          window_start?: string | null
+        }
+        Relationships: []
+      }
       analytics_daily_rollups: {
         Row: {
           created_at: string
           date: string
           event_count: number
           event_type: string
+          evidence_type: string
           id: string
           presence_slug: string
+          provider: string | null
           source_type: string
           unique_sessions: number
         }
@@ -30,8 +107,10 @@ export type Database = {
           date: string
           event_count?: number
           event_type: string
+          evidence_type?: string
           id?: string
           presence_slug: string
+          provider?: string | null
           source_type: string
           unique_sessions?: number
         }
@@ -40,8 +119,10 @@ export type Database = {
           date?: string
           event_count?: number
           event_type?: string
+          evidence_type?: string
           id?: string
           presence_slug?: string
+          provider?: string | null
           source_type?: string
           unique_sessions?: number
         }
@@ -58,48 +139,111 @@ export type Database = {
       analytics_events: {
         Row: {
           anonymous_session_hash: string | null
+          citation_url: string | null
+          cited: boolean | null
           confidence: number | null
           created_at: string
           entity_match: string | null
           event_type: string
+          evidence_type: string
+          http_status: number | null
           id: string
+          idempotency_key: string | null
+          locale: string | null
+          mentioned: boolean | null
           metadata: Json
+          model: string | null
           occurred_at: string
+          path: string | null
           presence_slug: string
+          prompt_id: string | null
+          prompt_version: string | null
+          provider: string | null
           public_source_url: string | null
+          recommended: boolean | null
+          referrer: string | null
           referrer_category: string | null
+          region: string | null
+          request_id: string | null
           resource_path: string | null
+          response_bytes: number | null
+          source_event_id: string | null
           source_type: string
+          surface: string | null
+          user_agent_family: string | null
+          verified_bot: boolean
         }
         Insert: {
           anonymous_session_hash?: string | null
+          citation_url?: string | null
+          cited?: boolean | null
           confidence?: number | null
           created_at?: string
           entity_match?: string | null
           event_type: string
+          evidence_type?: string
+          http_status?: number | null
           id?: string
+          idempotency_key?: string | null
+          locale?: string | null
+          mentioned?: boolean | null
           metadata?: Json
+          model?: string | null
           occurred_at?: string
+          path?: string | null
           presence_slug: string
+          prompt_id?: string | null
+          prompt_version?: string | null
+          provider?: string | null
           public_source_url?: string | null
+          recommended?: boolean | null
+          referrer?: string | null
           referrer_category?: string | null
+          region?: string | null
+          request_id?: string | null
           resource_path?: string | null
+          response_bytes?: number | null
+          source_event_id?: string | null
           source_type: string
+          surface?: string | null
+          user_agent_family?: string | null
+          verified_bot?: boolean
         }
         Update: {
           anonymous_session_hash?: string | null
+          citation_url?: string | null
+          cited?: boolean | null
           confidence?: number | null
           created_at?: string
           entity_match?: string | null
           event_type?: string
+          evidence_type?: string
+          http_status?: number | null
           id?: string
+          idempotency_key?: string | null
+          locale?: string | null
+          mentioned?: boolean | null
           metadata?: Json
+          model?: string | null
           occurred_at?: string
+          path?: string | null
           presence_slug?: string
+          prompt_id?: string | null
+          prompt_version?: string | null
+          provider?: string | null
           public_source_url?: string | null
+          recommended?: boolean | null
+          referrer?: string | null
           referrer_category?: string | null
+          region?: string | null
+          request_id?: string | null
           resource_path?: string | null
+          response_bytes?: number | null
+          source_event_id?: string | null
           source_type?: string
+          surface?: string | null
+          user_agent_family?: string | null
+          verified_bot?: boolean
         }
         Relationships: [
           {
@@ -145,6 +289,56 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "analytics_integrations_presence_slug_fkey"
+            columns: ["presence_slug"]
+            isOneToOne: false
+            referencedRelation: "published_presences"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      analytics_sources: {
+        Row: {
+          configuration: Json
+          created_at: string
+          id: string
+          last_error: string | null
+          last_synced_at: string | null
+          next_sync_at: string | null
+          presence_slug: string
+          records_imported: number
+          source_type: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          configuration?: Json
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          last_synced_at?: string | null
+          next_sync_at?: string | null
+          presence_slug: string
+          records_imported?: number
+          source_type: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          configuration?: Json
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          last_synced_at?: string | null
+          next_sync_at?: string | null
+          presence_slug?: string
+          records_imported?: number
+          source_type?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_sources_presence_slug_fkey"
             columns: ["presence_slug"]
             isOneToOne: false
             referencedRelation: "published_presences"
@@ -732,6 +926,198 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "published_presences"
             referencedColumns: ["slug"]
+          },
+        ]
+      }
+      probe_citations: {
+        Row: {
+          created_at: string
+          domain: string | null
+          id: string
+          own_domain: boolean
+          presence_slug: string
+          rank: number | null
+          run_id: string
+          title: string | null
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          domain?: string | null
+          id?: string
+          own_domain?: boolean
+          presence_slug: string
+          rank?: number | null
+          run_id: string
+          title?: string | null
+          url: string
+        }
+        Update: {
+          created_at?: string
+          domain?: string | null
+          id?: string
+          own_domain?: boolean
+          presence_slug?: string
+          rank?: number | null
+          run_id?: string
+          title?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "probe_citations_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "probe_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      probe_definitions: {
+        Row: {
+          active: boolean
+          branded: boolean
+          category: string
+          competitor_group: string[]
+          created_at: string
+          id: string
+          locale: string
+          presence_slug: string
+          prompt: string
+          prompt_id: string
+          prompt_version: string
+          recommendation_test: boolean
+          region: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          branded?: boolean
+          category: string
+          competitor_group?: string[]
+          created_at?: string
+          id?: string
+          locale?: string
+          presence_slug: string
+          prompt: string
+          prompt_id: string
+          prompt_version?: string
+          recommendation_test?: boolean
+          region?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          branded?: boolean
+          category?: string
+          competitor_group?: string[]
+          created_at?: string
+          id?: string
+          locale?: string
+          presence_slug?: string
+          prompt?: string
+          prompt_id?: string
+          prompt_version?: string
+          recommendation_test?: boolean
+          region?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "probe_definitions_presence_slug_fkey"
+            columns: ["presence_slug"]
+            isOneToOne: false
+            referencedRelation: "published_presences"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      probe_runs: {
+        Row: {
+          competitors_mentioned: string[]
+          cost_usd: number | null
+          created_at: string
+          definition_id: string | null
+          error: string | null
+          evidence_type: string
+          id: string
+          idempotency_key: string | null
+          latency_ms: number | null
+          locale: string
+          mentioned: boolean | null
+          model: string
+          model_version: string | null
+          own_domain_cited: boolean | null
+          presence_slug: string
+          prompt_id: string
+          prompt_version: string
+          provider: string
+          recommended: boolean | null
+          region: string
+          response_status: string
+          result_summary: string | null
+          retry_of: string | null
+          tested_at: string
+        }
+        Insert: {
+          competitors_mentioned?: string[]
+          cost_usd?: number | null
+          created_at?: string
+          definition_id?: string | null
+          error?: string | null
+          evidence_type?: string
+          id?: string
+          idempotency_key?: string | null
+          latency_ms?: number | null
+          locale?: string
+          mentioned?: boolean | null
+          model: string
+          model_version?: string | null
+          own_domain_cited?: boolean | null
+          presence_slug: string
+          prompt_id: string
+          prompt_version: string
+          provider: string
+          recommended?: boolean | null
+          region?: string
+          response_status: string
+          result_summary?: string | null
+          retry_of?: string | null
+          tested_at?: string
+        }
+        Update: {
+          competitors_mentioned?: string[]
+          cost_usd?: number | null
+          created_at?: string
+          definition_id?: string | null
+          error?: string | null
+          evidence_type?: string
+          id?: string
+          idempotency_key?: string | null
+          latency_ms?: number | null
+          locale?: string
+          mentioned?: boolean | null
+          model?: string
+          model_version?: string | null
+          own_domain_cited?: boolean | null
+          presence_slug?: string
+          prompt_id?: string
+          prompt_version?: string
+          provider?: string
+          recommended?: boolean | null
+          region?: string
+          response_status?: string
+          result_summary?: string | null
+          retry_of?: string | null
+          tested_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "probe_runs_definition_id_fkey"
+            columns: ["definition_id"]
+            isOneToOne: false
+            referencedRelation: "probe_definitions"
+            referencedColumns: ["id"]
           },
         ]
       }
