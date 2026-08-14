@@ -7,7 +7,7 @@
  */
 import { useMemo, useState } from "react";
 import { Line, LineChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { AlertTriangle, Download, Info, Loader2, RefreshCw } from "lucide-react";
+import { AlertTriangle, Download, Info, Loader2, Plug, RefreshCw } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -42,6 +42,10 @@ type Props = {
   onSync: (source: "ga4" | "search_console" | "ai_probes") => Promise<void>;
   onSaveSource: (source: "ga4" | "search_console", value: string) => Promise<void>;
   onImportCsv: (csv: string) => Promise<void>;
+  onConnect: (
+    source: "search_console" | "ai_probes",
+    choice?: string,
+  ) => Promise<{ ok: boolean; choices?: { value: string; label: string }[] }>;
   onExport: () => Promise<void>;
   pending: string | null;
 };
@@ -369,6 +373,46 @@ export function AiAnalyticsDashboardView(props: Props) {
                 ) : null}
               </div>
               <p className="text-xs text-muted-foreground">{row.setupHint}</p>
+              {row.source === "search_console" || row.source === "ai_probes" ? (
+                <div className="space-y-2">
+                  <Button
+                    size="sm"
+                    disabled={props.pending === `connect:${row.source}`}
+                    onClick={async () => {
+                      const result = await props.onConnect(row.source as "search_console" | "ai_probes");
+                      setChoices((current) => ({ ...current, [row.source]: result.choices ?? null }));
+                    }}
+                  >
+                    {props.pending === `connect:${row.source}` ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Plug className="mr-2 h-4 w-4" />
+                    )}
+                    {row.status === "connected" ? "Reconnect" : "Connect with one click"}
+                  </Button>
+                  {choices[row.source]?.length ? (
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <Select
+                        onValueChange={async (value) => {
+                          const result = await props.onConnect(row.source as "search_console" | "ai_probes", value);
+                          if (result.ok) setChoices((current) => ({ ...current, [row.source]: null }));
+                        }}
+                      >
+                        <SelectTrigger className="sm:w-96">
+                          <SelectValue placeholder="Choose a verified property" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(choices[row.source] ?? []).map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
               <p className="text-[11px] text-muted-foreground">
                 Last sync: {formatLocal(row.lastSyncedAt)} · Next: {formatLocal(row.nextSyncAt)} · Imported:{" "}
                 {row.recordsImported ?? "—"}
