@@ -88,11 +88,64 @@ export function usePlanLimits(): Ctx {
 export function PlanLimitProvider({ children }: { children: ReactNode }) {
   const [stored] = usePlan();
   const [, setPlan] = usePlan();
+  const [core] = useCore();
   const navigate = useNavigate();
+  const { status: payments } = usePaymentsStatus();
   const [blocked, setBlocked] = useState<Blocked | null>(null);
+  const [busy, setBusy] = useState(false);
 
   // A free workspace is not published yet; the lowest paid plan sets the bar.
   const localPlan: PlanId = stored === "free" ? "plus" : stored;
+
+  /** Open Paddle overlay for the blocked plan; fallback to /publish if unavailable. */
+  async function buy(target: PlanId) {
+    if (busy) return;
+    setPlan(target);
+    setBlocked(null);
+
+    if (isCoreEmpty(core) || !payments.configured) {
+      void navigate({ to: "/publish", search: { plan: target } });
+      return;
+    }
+
+    setBusy(true);
+    trackFunnel("checkout_started", { plan: target, fromStep: "limit_popup", toStep: "checkout" });
+    try {
+      const result = await startPublishFn({
+        data: { core, plan: target, origin: window.location.origin },
+      });
+      if (result.kind === "error") {
+        void navigate({ to: "/publish", search: { plan: target } });
+        return;
+      }
+      try {
+        localStorage.setItem("crawler:pending-plan", target);
+        localStorage.setItem(
+          "crawler:pending-intent",
+          JSON.stringify({ ref: result.intentRef, at: Date.now() }),
+        );
+      } catch {
+        /* ignore */
+      }
+      const successUrl = `${window.location.origin}/publish?intent=${encodeURIComponent(result.intentRef)}`;
+      try {
+        const { openPaddleCheckout } = await import("@/lib/paddle-client");
+        await openPaddleCheckout({
+          environment: result.environment,
+          token: result.clientToken,
+          transactionId: result.transactionId,
+          successUrl,
+        });
+      } catch {
+        window.location.href = result.url;
+      }
+    } catch {
+      void navigate({ to: "/publish", search: { plan: target } });
+    } finally {
+      setBusy(false);
+    }
+  }
+
 
   const guard = useCallback(
     (input: GuardInput): boolean => {
