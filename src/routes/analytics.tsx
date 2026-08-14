@@ -57,6 +57,10 @@ function AnalyticsPage() {
   const [busy, setBusy] = useState(false);
   const [improving, setImproving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [aiData, setAiData] = useState<AiAnalyticsDashboard | null>(null);
+  const [aiPeriod, setAiPeriod] = useState<AnalyticsPeriod>(30);
+  const [aiBusy, setAiBusy] = useState(false);
+  const [pending, setPending] = useState<string | null>(null);
 
   const load = useCallback(async (activeCode: string, nextPeriod: InsightsPeriod) => {
     if (!activeCode) return;
