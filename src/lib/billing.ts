@@ -149,6 +149,14 @@ export const PLANS: Plan[] = [
 
 export const planById = (id: PlanId) => PLANS.find((p) => p.id === id)!;
 
+/** Analysis feedback and improvement recommendations start with Pro. */
+export const hasImprovementLoop = (id: PlanId) => planById(id).improvementLoop;
+
+/** Daily monitoring, recurring updates and report emails are Business. */
+export const hasContinuousUpdates = (id: PlanId) => planById(id).continuousUpdates;
+
+
+
 /** Benefits every paid plan includes — shown before the plan choice. */
 export const HOSTING_BENEFITS = [
   "A permanently reachable public Presence",
