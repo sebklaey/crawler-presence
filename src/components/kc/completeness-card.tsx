@@ -49,6 +49,26 @@ export function CompletenessCard({
         ))}
       </ul>
 
+      {checks.length > 0 ? (
+        <div className="mt-5 border-t border-border pt-4">
+          <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Publish requirements</div>
+          <ul className={`mt-3 grid gap-2 ${columns === 2 ? "sm:grid-cols-2" : ""}`}>
+            {checks.map((c) => (
+              <li key={c.label} className="flex items-start gap-2 text-sm">
+                {c.done ? (
+                  <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-foreground" />
+                ) : (
+                  <Minus className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                )}
+                <span className={c.done ? "" : "text-muted-foreground"}>{c.label}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+
+
       <div className="mt-6">
         <FinishGuide core={core} />
       </div>
