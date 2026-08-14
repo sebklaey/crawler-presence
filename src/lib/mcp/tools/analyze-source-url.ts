@@ -57,26 +57,42 @@ export default defineTool({
       /* analytics must never break a URL analysis */
     }
 
+    const { assertSafeSourceUrl } = await import("@/lib/sources.server");
     let parsed: URL;
     try {
-      parsed = new URL(url);
-    } catch {
-      return unavailable("invalid URL");
+      parsed = assertSafeSourceUrl(url);
+    } catch (e) {
+      return unavailable(String((e as Error).message ?? "URL not allowed"));
     }
-    if (parsed.protocol !== "https:") return unavailable("only https URLs are fetched");
 
+    // Manual redirect handling so every hop is revalidated against the same
+    // private-network / loopback / link-local protections (DNS rebinding).
     let html: string;
     try {
-      const res = await fetch(parsed.toString(), {
-        redirect: "follow",
-        headers: { "user-agent": "CrawlerPresenceBot/1.0 (+https://crawler.today)", accept: "text/html" },
-        signal: AbortSignal.timeout(12000),
-      });
-      if (!res.ok) return unavailable(`HTTP ${res.status}`);
-      html = (await res.text()).slice(0, 200000);
+      let current = parsed;
+      let body: string | null = null;
+      for (let hop = 0; hop <= 3; hop++) {
+        const res = await fetch(current.toString(), {
+          redirect: "manual",
+          headers: { "user-agent": "CrawlerPresenceBot/1.0 (+https://crawler.today)", accept: "text/html" },
+          signal: AbortSignal.timeout(12000),
+        });
+        if (res.status >= 300 && res.status < 400) {
+          const location = res.headers.get("location");
+          if (!location) return unavailable("redirect without target");
+          current = assertSafeSourceUrl(new URL(location, current).toString());
+          continue;
+        }
+        if (!res.ok) return unavailable(`HTTP ${res.status}`);
+        body = (await res.text()).slice(0, 200000);
+        break;
+      }
+      if (body === null) return unavailable("too many redirects");
+      html = body;
     } catch (e) {
       return unavailable(`fetch failed (${String((e as Error).message ?? e)})`);
     }
+
 
     const text = stripHtml(html).slice(0, 12000);
     if (text.length < 40) return unavailable("page returned no readable text (likely JavaScript-rendered)");
