@@ -284,12 +284,38 @@ export async function runProbes(options: {
 
   const definitions = await ensureProbeDefinitions(options.slug, options.name, options.category);
   const day = new Date().toISOString().slice(0, 10);
+
+  // Shared-key fair use: providers that run on Crawler's own Claude and
+  // Perplexity keys are limited to one test run per Presence and day.
+  // A Presence that brought its own key is never limited.
+  const sharedProviders = (["anthropic", "perplexity"] as const).filter((p) => !keys[p]);
+  let limited: ProviderId[] = [];
+  if (sharedProviders.length) {
+    const { data: alreadyToday } = await supabase
+      .from("probe_runs")
+      .select("provider")
+      .eq("presence_slug", options.slug)
+      .in("provider", sharedProviders as unknown as string[])
+      .gte("tested_at", `${day}T00:00:00Z`);
+    limited = Array.from(new Set((alreadyToday ?? []).map((r) => r.provider as ProviderId)));
+  }
+  const runnable = providers.filter((p) => !limited.includes(p));
+  if (!runnable.length) {
+    return {
+      attempted: 0,
+      succeeded: 0,
+      failed: 0,
+      message: "Daily test limit reached for the shared test keys. Try again tomorrow or add your own API key.",
+    };
+  }
+
   let succeeded = 0;
   let failed = 0;
   let attempted = 0;
 
+
   for (const definition of definitions) {
-    for (const provider of providers) {
+    for (const provider of runnable) {
       attempted += 1;
       const idempotencyKey = `${options.slug}:${definition.prompt_id}:${definition.prompt_version}:${provider}:${day}`;
       const base = {
