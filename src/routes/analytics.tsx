@@ -7,8 +7,17 @@ import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { InsightsDashboardView } from "@/components/insights-dashboard";
+import { AiAnalyticsDashboardView } from "@/components/ai-analytics-dashboard";
 import { MEASUREMENT_NOTICE, type InsightsDashboard, type InsightsPeriod } from "@/lib/insights/model";
 import { insightsDashboardFn } from "@/lib/insights.functions";
+import type { AiAnalyticsDashboard, AnalyticsPeriod } from "@/lib/analytics/model";
+import {
+  aiAnalyticsDashboardFn,
+  exportAnalyticsCsvFn,
+  importBingCsvFn,
+  saveAnalyticsSourceFn,
+  syncAnalyticsSourceFn,
+} from "@/lib/ai-analytics.functions";
 import { decideRecommendationFn } from "@/lib/retention.functions";
 import { useRecoveryCode } from "@/lib/store";
 
