@@ -166,12 +166,18 @@ export async function ingestServerEvent(input: IngestInput): Promise<boolean> {
     const path = (input.path ?? "").slice(0, 300) || null;
     const requestId = headers?.get("cf-ray")?.slice(0, 64) ?? crypto.randomUUID();
 
+    // A human visit arriving from a known AI surface is an attributed AI
+    // referral session — Crawler measures this itself, no GA4 required.
+    const referrer = referrerHost(input.request);
+    const referral = classification.isBot ? null : matchAiReferral(referrer);
+    const eventType = referral ? "ai_referral_session" : input.eventType;
+
     const idempotencyKey = (
       input.idempotencyKey ??
       (await sha256(
         [
           input.presenceSlug,
-          input.eventType,
+          eventType,
           path ?? "",
           sessionHash ?? requestId,
           now.toISOString().slice(0, 16), // one event per client, path and minute
@@ -179,16 +185,17 @@ export async function ingestServerEvent(input: IngestInput): Promise<boolean> {
       ))
     ).slice(0, 80);
 
-    const provider = input.provider ?? (classification.isBot ? classification.provider : "other");
+    const provider =
+      referral?.provider ?? input.provider ?? (classification.isBot ? classification.provider : "other");
 
     const { error } = await supabase.from("analytics_events").insert({
       presence_slug: input.presenceSlug,
-      event_type: input.eventType,
-      source_type: "server_logs",
-      evidence_type: input.evidence ?? "observed",
+      event_type: eventType,
+      source_type: referral ? "crawler_observed" : "server_logs",
+      evidence_type: referral ? "attributed" : (input.evidence ?? "observed"),
       occurred_at: now.toISOString(),
       provider,
-      surface: input.surface ?? classification.surface,
+      surface: referral?.surface ?? input.surface ?? classification.surface,
       path,
       resource_path: path,
       referrer: referrerHost(input.request),
