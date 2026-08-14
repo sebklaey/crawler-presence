@@ -160,13 +160,15 @@ export function applyProposal(core: KnowledgeCore, p: Proposal): KnowledgeCore {
       return withExt(core, { ...ext, organization: { ...ext.organization, [key]: value } });
     }
     case "facts": {
-      const { head, rest } = split(value);
-      const existing = core.facts.find((f) => f.id === p.target);
+      const { head, body } = headBody(p);
+      const label = head || p.label;
+      const existing =
+        core.facts.find((f) => f.id === p.target) ?? core.facts.find((f) => norm(f.label) === norm(label));
       const status = p.status === "verified_fact" || p.status === "provider_statement" ? "verified" : "claimed";
       const fact = {
         id: existing?.id ?? kcId(),
-        label: head || p.label,
-        value: rest || value,
+        label,
+        value: body || value,
         status: status as "verified" | "claimed",
         ...(p.source ? { source: p.source } : {}),
       };
@@ -177,7 +179,9 @@ export function applyProposal(core: KnowledgeCore, p: Proposal): KnowledgeCore {
       );
     }
     case "stories": {
-      const existing = core.stories.find((s) => s.id === p.target);
+      const existing =
+        core.stories.find((s) => s.id === p.target) ??
+        (p.label ? core.stories.find((s) => norm(s.label) === norm(p.label)) : undefined);
       const story = { id: existing?.id ?? kcId(), label: p.label || "Positioning", text: value, confirmed: true };
       return {
         ...core,
@@ -186,9 +190,11 @@ export function applyProposal(core: KnowledgeCore, p: Proposal): KnowledgeCore {
       };
     }
     case "faqs": {
-      const { head, rest } = split(value);
-      const existing = core.faqs.find((f) => f.id === p.target);
-      const faq = { id: existing?.id ?? kcId(), question: head || p.label, answer: rest || value };
+      const { head, body } = headBody(p);
+      const question = (head || p.label).replace(/\s*[:—–-]\s*$/, "");
+      const existing =
+        core.faqs.find((f) => f.id === p.target) ?? core.faqs.find((f) => norm(f.question) === norm(question));
+      const faq = { id: existing?.id ?? kcId(), question, answer: body || value };
       return {
         ...core,
         faqs: existing ? core.faqs.map((f) => (f.id === existing.id ? faq : f)) : [...core.faqs, faq],
@@ -196,17 +202,31 @@ export function applyProposal(core: KnowledgeCore, p: Proposal): KnowledgeCore {
       };
     }
     case "cv": {
-      const existing = core.cv.find((e) => e.id === p.target);
-      const entry = { id: existing?.id ?? kcId(), role: p.label || value.slice(0, 60), note: value };
+      // Accepts "2019–2023 · Role · Organization" as well as free text.
+      const parts = value.split(/\s*[·|]\s*/).map((s) => s.trim()).filter(Boolean);
+      const periodPart = parts.find((s) => /\d{4}/.test(s) && s.length <= 24);
+      const rest = parts.filter((s) => s !== periodPart);
+      const role = (p.label && !GENERIC_LABELS.has(p.label.toLowerCase()) ? p.label : rest[0]) || value.slice(0, 60);
+      const organization = rest[1];
+      const note = rest.slice(2).join(" · ") || (rest.length <= 1 ? value : "");
+      const existing =
+        core.cv.find((e) => e.id === p.target) ?? core.cv.find((e) => norm(e.role) === norm(role));
+      const entry = {
+        id: existing?.id ?? kcId(),
+        role,
+        ...(organization ? { organization } : {}),
+        ...(periodPart ? { period: periodPart } : {}),
+        ...(note ? { note } : {}),
+      };
       return {
         ...core,
-        cv: existing ? core.cv.map((e) => (e.id === existing.id ? { ...e, note: value } : e)) : [...core.cv, entry],
+        cv: existing ? core.cv.map((e) => (e.id === existing.id ? { ...e, ...entry } : e)) : [...core.cv, entry],
         updatedAt: now(),
       };
     }
     case "links": {
       const url = value.match(/https?:\/\/\S+|mailto:\S+/)?.[0] ?? value;
-      const label = p.label || split(value).head || "Link";
+      const label = p.label || headBody(p).head || "Link";
       const links = core.links.some((l) => l.url === url)
         ? core.links.map((l) => (l.url === url ? { label, url } : l))
         : [...core.links, { label, url }];
@@ -216,13 +236,16 @@ export function applyProposal(core: KnowledgeCore, p: Proposal): KnowledgeCore {
     case "projects":
     case "services": {
       const kind = listKinds[p.section]!;
-      const { head, rest } = split(value);
-      const existing = core.items.find((i) => i.id === p.target);
+      const { head, body } = headBody(p);
+      const name = head || p.label;
+      const existing =
+        core.items.find((i) => i.id === p.target) ??
+        core.items.find((i) => i.kind === kind && norm(i.name) === norm(name));
       const item = {
         id: existing?.id ?? kcId(),
         kind,
-        name: head || p.label,
-        summary: rest || value,
+        name,
+        summary: body || value,
         ...(existing?.details ? { details: existing.details } : {}),
         ...(existing?.url ? { url: existing.url } : {}),
       };
@@ -236,13 +259,15 @@ export function applyProposal(core: KnowledgeCore, p: Proposal): KnowledgeCore {
     case "pricing":
     case "news": {
       const list = ext[p.section];
-      const existing = list.find((r) => r.id === p.target);
-      const rec = existing ? { ...existing, ...extRecord(p), id: existing.id } : extRecord(p);
+      const title = headBody(p).head || p.label;
+      const existing = list.find((r) => r.id === p.target) ?? list.find((r) => norm(r.title) === norm(title));
+      const rec = existing ? { ...existing, ...extRecord(p, existing.id) } : extRecord(p);
       return withExt(core, {
         ...ext,
         [p.section]: existing ? list.map((r) => (r.id === existing.id ? rec : r)) : [...list, rec],
       } as CoreExtension);
     }
+
     default:
       return core;
   }
