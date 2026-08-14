@@ -38,6 +38,14 @@ export const Route = createFileRoute("/p/$slug/$")({
         try {
           const { recordEvent } = await import("@/lib/mcp/presence-analytics");
           await recordEvent({ slug: record.slug, eventType: "file_read", source: "crawler", filePath: file.path });
+          const { ingestAsync } = await import("@/lib/analytics/ingest.server");
+          ingestAsync({
+            presenceSlug: record.slug,
+            eventType: "presence_read",
+            request,
+            path: file.path,
+            responseBytes: file.content.length,
+          });
         } catch {
           /* measurement must never break public delivery */
         }

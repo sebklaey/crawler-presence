@@ -7,8 +7,17 @@ import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { InsightsDashboardView } from "@/components/insights-dashboard";
+import { AiAnalyticsDashboardView } from "@/components/ai-analytics-dashboard";
 import { MEASUREMENT_NOTICE, type InsightsDashboard, type InsightsPeriod } from "@/lib/insights/model";
 import { insightsDashboardFn } from "@/lib/insights.functions";
+import type { AiAnalyticsDashboard, AnalyticsPeriod } from "@/lib/analytics/model";
+import {
+  aiAnalyticsDashboardFn,
+  exportAnalyticsCsvFn,
+  importBingCsvFn,
+  saveAnalyticsSourceFn,
+  syncAnalyticsSourceFn,
+} from "@/lib/ai-analytics.functions";
 import { decideRecommendationFn } from "@/lib/retention.functions";
 import { useRecoveryCode } from "@/lib/store";
 
@@ -48,6 +57,10 @@ function AnalyticsPage() {
   const [busy, setBusy] = useState(false);
   const [improving, setImproving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [aiData, setAiData] = useState<AiAnalyticsDashboard | null>(null);
+  const [aiPeriod, setAiPeriod] = useState<AnalyticsPeriod>(30);
+  const [aiBusy, setAiBusy] = useState(false);
+  const [pending, setPending] = useState<string | null>(null);
 
   const load = useCallback(async (activeCode: string, nextPeriod: InsightsPeriod) => {
     if (!activeCode) return;
@@ -69,11 +82,58 @@ function AnalyticsPage() {
     }
   }, []);
 
+  const loadAi = useCallback(async (activeCode: string, nextPeriod: AnalyticsPeriod) => {
+    if (!activeCode) return;
+    setAiBusy(true);
+    try {
+      const result = await aiAnalyticsDashboardFn({ data: { code: activeCode, period: nextPeriod } });
+      if (result.ok) {
+        setAiData(result.dashboard);
+        setAiPeriod(result.dashboard.period);
+      }
+    } catch {
+      /* the insights dashboard above stays usable */
+    } finally {
+      setAiBusy(false);
+    }
+  }, []);
+
   useEffect(() => {
-    if (hydrated && storedCode) void load(storedCode, 30);
-  }, [hydrated, storedCode, load]);
+    if (hydrated && storedCode) {
+      void load(storedCode, 30);
+      void loadAi(storedCode, 30);
+    }
+  }, [hydrated, storedCode, load, loadAi]);
 
   const activeCode = storedCode || code;
+
+  async function runAction(key: string, action: () => Promise<{ ok: boolean; message: string }>) {
+    setPending(key);
+    try {
+      const result = await action();
+      if (result.ok) toast.success(result.message);
+      else toast.error(result.message);
+      await loadAi(activeCode, aiPeriod);
+    } catch {
+      toast.error("The action failed. Nothing was changed.");
+    } finally {
+      setPending(null);
+    }
+  }
+
+  async function onExport() {
+    const result = await exportAnalyticsCsvFn({ data: { code: activeCode, period: aiPeriod } });
+    if (!result.ok) {
+      toast.error("The export could not be created.");
+      return;
+    }
+    const url = URL.createObjectURL(new Blob([result.csv], { type: "text/csv" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `crawler-ai-analytics-${aiPeriod}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
 
   async function onImprove(value: string): Promise<boolean> {
     if (!data?.nextImprovement) return false;
@@ -166,6 +226,30 @@ function AnalyticsPage() {
               improving={improving}
               busy={busy}
             />
+            {aiData ? (
+              <div className="mt-14 border-t pt-12">
+                <AiAnalyticsDashboardView
+                  data={aiData}
+                  period={aiPeriod}
+                  busy={aiBusy}
+                  pending={pending}
+                  onPeriodChange={(next) => {
+                    setAiPeriod(next);
+                    void loadAi(activeCode, next);
+                  }}
+                  onSync={(source) =>
+                    runAction(source, () => syncAnalyticsSourceFn({ data: { code: activeCode, source } }))
+                  }
+                  onSaveSource={(source, value) =>
+                    runAction(source, () => saveAnalyticsSourceFn({ data: { code: activeCode, source, value } }))
+                  }
+                  onImportCsv={(csv) =>
+                    runAction("bing_csv", () => importBingCsvFn({ data: { code: activeCode, csv } }))
+                  }
+                  onExport={onExport}
+                />
+              </div>
+            ) : null}
             <p className="mt-8 text-xs text-muted-foreground">
               <Link to="/manage" className="underline underline-offset-4">
                 Back to Presence management

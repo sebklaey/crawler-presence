@@ -69,6 +69,13 @@ export const Route = createFileRoute("/c/$slug/$")({
             section: variant || "full",
             client: clientLabel(request),
           });
+          const { ingestAsync } = await import("@/lib/analytics/ingest.server");
+          ingestAsync({
+            presenceSlug: presence.slug,
+            eventType: "api_request",
+            request,
+            path: `/c/${presence.slug}/${variant || "full"}`,
+          });
         }
 
         if (html) return entityHtml(presence, body as Record<string, unknown>, variant || "full");
