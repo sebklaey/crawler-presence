@@ -2,9 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
-import pluginDialog from "@/assets/room-mcp-plugin-dialog.png";
+import pluginDialog from "@/assets/crawler-mcp-plugin-dialog.png.asset.json";
 
-const MCP_URL = "https://zinga-room.lovable.app/api/public/mcp";
+const MCP_URL = "https://crawler.today/mcp";
 
 const INSTALL_STEPS = [
   {
@@ -17,7 +17,7 @@ const INSTALL_STEPS = [
   },
   {
     title: "Fill in the details",
-    body: "Name: Room · Description: Talk with people · Connection: Server URL · Authentication: no authentication.",
+    body: "Name: Crawler · Description: AI-readable presence and chat · Connection: Server URL · Authentication: no authentication.",
   },
   {
     title: "Paste the MCP link",
@@ -25,20 +25,20 @@ const INSTALL_STEPS = [
   },
   {
     title: "Start talking",
-    body: "Back in a chat, type “@room AI” — the connector answers directly inside ChatGPT.",
+    body: "Back in a chat, type “@crawler AI” — the connector answers directly inside ChatGPT.",
   },
 ];
 
 export const Route = createFileRoute("/room")({
   head: () => ({
     meta: [
-      { title: "@room — anonymous topic rooms for ChatGPT" },
+      { title: "Small, anonymous rooms for one topic in ChatGPT" },
       {
         name: "description",
         content:
-          "@room connects you anonymously with up to four other people in small topic rooms — right inside ChatGPT.",
+          "@crawler connects you anonymously with up to four other people in small topic rooms — right inside ChatGPT.",
       },
-      { property: "og:title", content: "@room — anonymous topic rooms for ChatGPT" },
+      { property: "og:title", content: "Small, anonymous rooms for one topic in ChatGPT" },
       {
         property: "og:description",
         content:
@@ -85,11 +85,11 @@ const EXTENSIONS = [
 const STEPS = [
   {
     title: "Pick a topic",
-    body: "Type “@room AI” in ChatGPT. @room places you in a room with at most five people.",
+    body: "Type “@crawler AI” in ChatGPT. @crawler places you in a room with at most five people.",
   },
   {
     title: "Write",
-    body: "“@room AI: What are you working on right now?” — your message lands in the room anonymously.",
+    body: "“@crawler AI: What are you working on right now?” — your message lands in the room anonymously.",
   },
   {
     title: "Share a picture",
@@ -97,11 +97,11 @@ const STEPS = [
   },
   {
     title: "Your own room",
-    body: "Say “@rooms my room”. Everyone gets one permanent public room named after them — no login. Others follow it with “@rooms follow @you”.",
+    body: "Say “@crawlers my room”. Everyone gets one permanent public room named after them — no login. Others follow it with “@crawlers follow @you”.",
   },
   {
     title: "Catch up",
-    body: "Just type “@room”. New messages appear when you ask; there are no push notifications.",
+    body: "Just type “@crawler”. New messages appear when you ask; there are no push notifications.",
   },
 ];
 
@@ -141,7 +141,7 @@ function RoomPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="mx-auto flex max-w-5xl items-center justify-between px-6 py-6">
-        <span className="text-lg font-semibold tracking-tight">@room</span>
+        <span className="text-lg font-semibold tracking-tight">@crawler</span>
         <span className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground">
           <span
             className={`h-2 w-2 rounded-full ${
@@ -156,24 +156,24 @@ function RoomPage() {
       <main className="mx-auto max-w-5xl px-6 pb-24">
         <section className="py-14 sm:py-20">
           <h1 className="max-w-3xl text-4xl font-semibold leading-tight tracking-tight sm:text-6xl">
-            Small, anonymous rooms for one topic.
+            Small, anonymous rooms for one topic in ChatGPT.
           </h1>
           <p className="mt-6 max-w-2xl text-lg text-muted-foreground">
-            @room is a ChatGPT plugin: pick a topic, land anonymously in a room with at most five
+            @crawler is a ChatGPT plugin: pick a topic, land anonymously in a room with at most five
             people and talk there — no account, no profile, no history.
           </p>
           <div className="mt-8 rounded-xl border border-border bg-card p-5 font-mono text-sm text-card-foreground">
             <p className="text-muted-foreground">In ChatGPT:</p>
-            <p className="mt-2">@room AI</p>
-            <p>@room AI: What are you working on right now?</p>
-            <p>@room</p>
+            <p className="mt-2">@crawler AI</p>
+            <p>@crawler AI: What are you working on right now?</p>
+            <p>@crawler</p>
           </div>
         </section>
 
         <section id="install" className="border-t border-border py-14">
-          <h2 className="text-2xl font-semibold tracking-tight">Install @room in ChatGPT</h2>
+          <h2 className="text-2xl font-semibold tracking-tight">Install @crawler in ChatGPT</h2>
           <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-            @room is a custom MCP connector. ChatGPT only shows custom connectors when developer
+            @crawler is a custom MCP connector. ChatGPT only shows custom connectors when developer
             mode is enabled — switch it on first, then add the server URL below.
           </p>
 
@@ -194,14 +194,13 @@ function RoomPage() {
 
             <figure className="rounded-xl border border-border bg-card p-3">
               <img
-                src={pluginDialog}
-                alt="ChatGPT dialog for adding a new plugin with the @room MCP server URL"
+                src={pluginDialog.url}
+                alt="ChatGPT plugin dialog for adding the @crawler MCP server with no authentication"
                 loading="lazy"
                 className="w-full rounded-lg"
               />
               <figcaption className="px-2 py-3 text-xs text-muted-foreground">
-                The “New plugin” dialog in ChatGPT — connection set to Server URL, no
-                authentication.
+                The ChatGPT plugin dialog for the @crawler MCP server — connection set to Server URL, no authentication.
               </figcaption>
             </figure>
           </div>
@@ -259,7 +258,7 @@ function RoomPage() {
         <section className="border-t border-border py-14">
           <h2 className="text-2xl font-semibold tracking-tight">Extensions</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            @room is completely free. No subscriptions, no plans, no prices — every extension is
+            @crawler is completely free. No subscriptions, no plans, no prices — every extension is
             unlocked for everyone.
           </p>
 
@@ -278,7 +277,7 @@ function RoomPage() {
           </div>
 
           <p className="mt-6 text-sm text-muted-foreground">
-            Ask ChatGPT “show my @room options” to see what is unlocked. Sponsored rooms are always
+            Ask ChatGPT “show my @crawler options” to see what is unlocked. Sponsored rooms are always
             labelled as advertising, reviewed before publication, and can be hidden at any time.
           </p>
         </section>
@@ -300,7 +299,7 @@ function RoomPage() {
 
       <footer className="border-t border-border">
         <div className="mx-auto max-w-5xl px-6 py-8 text-sm text-muted-foreground">
-          @room {data?.version ? `v${data.version}` : ""} — anonymous topic rooms.
+          @crawler {data?.version ? `v${data.version}` : ""} — anonymous topic rooms.
         </div>
       </footer>
     </div>
