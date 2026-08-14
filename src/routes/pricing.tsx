@@ -7,9 +7,10 @@ import { PaymentTestModeBanner } from "@/components/payment-test-mode-banner";
 import { Button } from "@/components/ui/button";
 import { useCore, usePlan } from "@/lib/store";
 import { usePaymentsStatus } from "@/hooks/use-payments-status";
-import { PLANS, type PlanId } from "@/lib/billing";
+import { PLANS, planById, type PlanId } from "@/lib/billing";
 import { isCoreEmpty } from "@/lib/knowledge";
 import { startPublishFn } from "@/lib/presence.functions";
+import { usePublishState } from "@/hooks/use-publish-state";
 import { trackFunnel, useFunnelOnce } from "@/lib/funnel";
 
 export const Route = createFileRoute("/pricing")({
@@ -37,10 +38,20 @@ function PricingPage() {
   const navigate = useNavigate();
   const [busy, setBusy] = useState<PlanId | null>(null);
   const { status: payments } = usePaymentsStatus();
+  const publishState = usePublishState();
+
+  // If the browser already controls a published Presence, the buttons reflect
+  // the real subscription. Otherwise they fall back to the local workspace plan.
+  const currentPlan: PlanId | null = publishState.isLive
+    ? publishState.plan
+    : plan !== "free"
+      ? plan
+      : null;
 
   /** Opens the Paddle overlay straight from pricing; /publish only redeems it. */
   async function buy(planId: PlanId) {
     if (busy) return;
+    if (publishState.isLive && planId === currentPlan) return;
     setPlan(planId);
     // Nothing to publish yet, or checkout not available: keep the guided flow.
     if (isCoreEmpty(core) || !payments.configured) {
@@ -83,6 +94,17 @@ function PricingPage() {
     } finally {
       setBusy(null);
     }
+  }
+
+  function buttonLabel(p: (typeof PLANS)[number]): string {
+    if (busy === p.id) return "Opening checkout…";
+    // Only use stay/upgrade/downgrade when the browser controls a real subscription.
+    if (publishState.isLive && currentPlan) {
+      if (p.id === currentPlan) return `Stay with ${p.name}`;
+      const currentPrice = planById(currentPlan).price;
+      return p.price > currentPrice ? `Upgrade to ${p.name}` : `Downgrade to ${p.name}`;
+    }
+    return p.id === plan ? `Continue with ${p.name}` : `Choose ${p.name}`;
   }
 
 
@@ -168,17 +190,15 @@ function PricingPage() {
               <Button
                 className="mt-6"
                 variant={p.id === "pro" ? "default" : "outline"}
-                disabled={busy !== null}
+                disabled={busy !== null || (publishState.isLive && currentPlan === p.id)}
                 onClick={() => void buy(p.id)}
               >
                 {busy === p.id ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Opening checkout…
                   </>
-                ) : plan === p.id ? (
-                  `Continue with ${p.name}`
                 ) : (
-                  `Choose ${p.name}`
+                  buttonLabel(p)
                 )}
               </Button>
 
