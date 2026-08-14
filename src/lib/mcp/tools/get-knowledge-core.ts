@@ -30,7 +30,7 @@ export default defineTool({
         presence_score: completenessScore(c),
         confidence: session.confidence,
         interview_complete: session.complete,
-        open_checks: presenceChecks(c).filter((x) => !x.done).map((x) => x.label),
+        open_checks: completeness(c).filter((r) => !r.done).map((r) => `${r.label} — ${r.hint}`),
         knowledge_core: c,
       },
     };

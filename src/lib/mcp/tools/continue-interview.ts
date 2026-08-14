@@ -13,7 +13,6 @@ import {
   openGaps,
   repairCore,
 } from "../../interview-rules";
-import { presenceChecks } from "../../knowledge";
 import { completeness, completenessScore } from "../../kc/model";
 import { getSession, saveSession, SESSION_NOTE } from "../sessions";
 import { siteUrl } from "../site";
@@ -100,7 +99,7 @@ export default defineTool({
         confidence,
         interview_complete: complete,
         presence_score: completenessScore(session.core),
-        open_checks: presenceChecks(session.core).filter((c) => !c.done).map((c) => c.label),
+        open_checks: completeness(session.core).filter((r) => !r.done).map((r) => `${r.label} — ${r.hint}`),
         open_gaps: openGaps(merged).map((g) => ({ key: g.key, label: g.label, suggested_question: g.question })),
         next_gap: complete ? null : { key: gap.key, label: gap.label, suggested_question: gap.question },
         verified_facts: session.core.facts.filter((f) => f.status === "verified").map((f) => ({ label: f.label, value: f.value })),
