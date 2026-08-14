@@ -403,9 +403,10 @@ export async function buildAiAnalytics(options: AggregateOptions): Promise<AiAna
     crawler_observed: "Always on: Crawler tool calls and trackable outbound clicks.",
     server_logs: "Always on: every request for your published Presence files is logged server-side.",
     ga4: "Add the GA4 property ID and grant the Crawler service account read access in Google Analytics.",
-    search_console: "Add your verified Search Console property and grant the Crawler service account read access.",
-    bing_csv: "Export the AI performance report from Bing Webmaster Tools and upload the CSV here.",
-    ai_probes: "Provide at least one AI provider API key to run controlled visibility tests on a schedule.",
+    search_console: "One click: Crawler uses the connected Google account and imports impressions, clicks, CTR and position for your verified property.",
+    bing_csv: "Microsoft publishes no API for this data. Drop the official AI performance CSV from Bing Webmaster Tools here.",
+    ai_probes: "One click: Crawler runs controlled test questions against its built-in test model. Your own provider keys add more models.",
+
   };
 
   const dataSources: DataSourceRow[] = sourceTypes.map((source) => {
