@@ -340,11 +340,24 @@ function DataPage() {
                     onChange={(v) => patch({ faqs: core.faqs.map((x) => (x.id === f.id ? { ...x, answer: v } : x)) })}
                   />
                 </div>
-                <div className="mt-4 text-right">
+                <div className="mt-4 flex justify-end gap-2">
                   <Button size="sm" variant="ghost" onClick={() => archive("faqs", f.id)}>
                     <Archive className="mr-1.5 h-3.5 w-3.5" /> Archive
                   </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => {
+                      if (!window.confirm("Delete this FAQ entry permanently? It will disappear from your Presence after the next publish.")) return;
+                      patch({ faqs: core.faqs.filter((x) => x.id !== f.id) });
+                      toast.success("FAQ entry deleted. Save, then publish to update your live Presence.");
+                    }}
+                  >
+                    <Trash2 className="mr-1.5 h-3.5 w-3.5" /> Delete
+                  </Button>
                 </div>
+
               </div>
             ))
           )}
