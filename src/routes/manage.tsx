@@ -76,7 +76,8 @@ function ManagePage() {
   const [core, setCore] = useCore();
   const [, setPlan] = usePlan();
   const [, setPublished] = usePublished();
-  const [, setStoredCode] = useRecoveryCode();
+  const [storedCode, setStoredCode, codeHydrated] = useRecoveryCode();
+  const autoOpened = useRef(false);
 
   /**
    * Pull the owner's real data into the browser workspace so /knowledge,
