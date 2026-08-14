@@ -219,11 +219,11 @@ function Index() {
                   </p>
                 </div>
                 <Button asChild size="sm">
-                  <Link to="/result">Show my result</Link>
+                  <Link to="/knowledge">Show my result</Link>
                 </Button>
               </div>
             ) : null}
-            <PresenceStatus core={core} />
+            <CompletenessCard core={core} columns={2} showPresenceChecks />
           </div>
         )}
 
