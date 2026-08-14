@@ -6,11 +6,14 @@ import { toast } from "sonner";
 
 import { AppShell, PageHead } from "@/components/app-shell";
 import { PresenceStatus } from "@/components/presence-status";
+import { FinishGuide } from "@/components/kc/finish-guide";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { improvePresence } from "@/lib/interview.functions";
-import { entityLabel, isCoreEmpty } from "@/lib/knowledge";
+import { entityLabel, isCoreEmpty, type KnowledgeCore } from "@/lib/knowledge";
+import { completeness, completenessScore } from "@/lib/kc/model";
 import { useCore, usePlan } from "@/lib/store";
+
 
 export const Route = createFileRoute("/knowledge/")({
   head: () => ({
