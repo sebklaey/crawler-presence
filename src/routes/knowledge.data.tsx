@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Archive, Plus, Save } from "lucide-react";
+import { Archive, Plus, Save, Trash2 } from "lucide-react";
 
 import { toast } from "sonner";
 
@@ -84,8 +84,11 @@ function DataPage() {
     <div className="space-y-6">
       <div className="sticky top-2 z-20 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card/95 px-4 py-3 backdrop-blur">
         <p className="text-xs text-muted-foreground">
-          {dirty ? "Unsaved changes in this draft." : "All changes saved."}
+          {dirty
+            ? "Unsaved changes in this draft."
+            : "All changes saved to your draft — publish to update your live Presence."}
         </p>
+
         <div className="flex items-center gap-2">
           <Button size="sm" variant="ghost" onClick={discard} disabled={!dirty}>
             Discard
@@ -340,11 +343,24 @@ function DataPage() {
                     onChange={(v) => patch({ faqs: core.faqs.map((x) => (x.id === f.id ? { ...x, answer: v } : x)) })}
                   />
                 </div>
-                <div className="mt-4 text-right">
+                <div className="mt-4 flex justify-end gap-2">
                   <Button size="sm" variant="ghost" onClick={() => archive("faqs", f.id)}>
                     <Archive className="mr-1.5 h-3.5 w-3.5" /> Archive
                   </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => {
+                      if (!window.confirm("Delete this FAQ entry permanently? It will disappear from your Presence after the next publish.")) return;
+                      patch({ faqs: core.faqs.filter((x) => x.id !== f.id) });
+                      toast.success("FAQ entry deleted. Save, then publish to update your live Presence.");
+                    }}
+                  >
+                    <Trash2 className="mr-1.5 h-3.5 w-3.5" /> Delete
+                  </Button>
                 </div>
+
               </div>
             ))
           )}

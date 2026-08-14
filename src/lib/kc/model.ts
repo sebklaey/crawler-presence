@@ -221,13 +221,28 @@ export type Version = {
 /* Completeness                                                        */
 /* ------------------------------------------------------------------ */
 
-export type CompletenessRow = { section: SectionKey; label: string; count: number; done: boolean; hint: string };
+export type CompletenessRow = {
+  section: SectionKey;
+  label: string;
+  count: number;
+  done: boolean;
+  hint: string;
+  /** Optional sections only count once they contain something. */
+  optional?: boolean;
+};
 
+/**
+ * Rows that apply to this Presence. Optional sections (projects, services,
+ * audiences, pricing, news, CV) only become part of the score once they hold
+ * content or the entity type makes them relevant — an empty optional section is
+ * not a gap and must never hold the score below 100.
+ */
 export function completeness(core: KnowledgeCore): CompletenessRow[] {
   const ext = getExt(core);
   const items = (kind: string) => core.items.filter((i) => i.kind === kind).length;
   const org = Object.values(ext.organization).filter((v) => (v ?? "").toString().trim()).length;
-  return [
+  const isPerson = core.entityType === "person" || core.entityType === "creator";
+  const rows: CompletenessRow[] = [
     {
       section: "identity",
       label: sectionLabel.identity,
@@ -245,21 +260,25 @@ export function completeness(core: KnowledgeCore): CompletenessRow[] {
     },
     { section: "stories", label: sectionLabel.stories, count: core.stories.length, done: core.stories.some((s) => s.confirmed), hint: "One confirmed positioning statement." },
     { section: "offerings", label: sectionLabel.offerings, count: items("offering"), done: items("offering") > 0, hint: "Describe what you offer." },
-    { section: "projects", label: sectionLabel.projects, count: items("project"), done: items("project") > 0, hint: "Reference projects give context." },
-    { section: "services", label: sectionLabel.services, count: items("service"), done: items("service") > 0, hint: "Services AI systems can name." },
-    { section: "audiences", label: sectionLabel.audiences, count: ext.audiences.length, done: ext.audiences.length > 0, hint: "Who is this for?" },
+    { section: "projects", label: sectionLabel.projects, count: items("project"), done: items("project") > 0, hint: "Reference projects give context.", optional: true },
+    { section: "services", label: sectionLabel.services, count: items("service"), done: items("service") > 0, hint: "Services AI systems can name.", optional: true },
+    { section: "audiences", label: sectionLabel.audiences, count: ext.audiences.length, done: ext.audiences.length > 0, hint: "Who is this for?", optional: true },
     { section: "faqs", label: sectionLabel.faqs, count: core.faqs.length, done: core.faqs.length >= 3, hint: "Three or more answered questions." },
-    { section: "pricing", label: sectionLabel.pricing, count: ext.pricing.length, done: ext.pricing.length > 0, hint: "Pricing statements assistants can quote." },
-    { section: "news", label: sectionLabel.news, count: ext.news.length, done: ext.news.length > 0, hint: "Recent developments keep the Presence fresh." },
-    { section: "cv", label: sectionLabel.cv, count: core.cv.length, done: core.cv.length > 0, hint: "Only relevant for people and creators." },
+    { section: "pricing", label: sectionLabel.pricing, count: ext.pricing.length, done: ext.pricing.length > 0, hint: "Pricing statements assistants can quote.", optional: true },
+    { section: "news", label: sectionLabel.news, count: ext.news.length, done: ext.news.length > 0, hint: "Recent developments keep the Presence fresh.", optional: true },
+    { section: "cv", label: sectionLabel.cv, count: core.cv.length, done: core.cv.length > 0, hint: "Only relevant for people and creators.", optional: !isPerson },
     { section: "links", label: sectionLabel.links, count: core.links.length, done: core.links.length > 0 || Boolean(core.website), hint: "At least one contact or profile link." },
   ];
+  // Drop optional sections that are still empty: they are not gaps.
+  return rows.filter((r) => !r.optional || r.count > 0);
 }
 
 export function completenessScore(core: KnowledgeCore) {
   const rows = completeness(core);
+  if (!rows.length) return 0;
   return Math.round((rows.filter((r) => r.done).length / rows.length) * 100);
 }
+
 
 /** Records whose evidence status makes them look stale or unconfirmed. */
 export function attentionCount(core: KnowledgeCore) {
