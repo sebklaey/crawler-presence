@@ -98,7 +98,7 @@ function PricingPage() {
 
   function buttonLabel(p: (typeof PLANS)[number]): string {
     if (busy === p.id) return "Opening checkout…";
-    if (!currentPlan || currentPlan === "free") {
+    if (!currentPlan) {
       return p.id === plan ? `Continue with ${p.name}` : `Choose ${p.name}`;
     }
     if (p.id === currentPlan) return `Stay with ${p.name}`;
