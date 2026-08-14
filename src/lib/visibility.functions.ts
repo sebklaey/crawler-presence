@@ -25,7 +25,7 @@ export const visibilityDashboardFn = createServerFn({ method: "POST" })
     const { parseRecoveryCode, verifyManageSecret, allowRequest } = await import("./mcp/presences");
     const parsed = parseRecoveryCode(data.code);
     if (!parsed) return { ok: false as const, reason: "invalid-code" as const };
-    if (!(await allowRequest(`visibility:${parsed.slug}`, 40))) return { ok: false as const, reason: "rate-limited" as const };
+    if (!(await allowRequest(`visibility:${parsed.rateKey}`, 40))) return { ok: false as const, reason: "rate-limited" as const };
     try {
       const presence = await verifyManageSecret(parsed.slug, parsed.secret);
       if (!presence) return { ok: false as const, reason: "not-found" as const };
@@ -75,7 +75,7 @@ export const visibilityExportFn = createServerFn({ method: "POST" })
     const { parseRecoveryCode, verifyManageSecret, allowRequest } = await import("./mcp/presences");
     const parsed = parseRecoveryCode(data.code);
     if (!parsed) return { ok: false as const };
-    if (!(await allowRequest(`visibility-export:${parsed.slug}`, 5))) return { ok: false as const };
+    if (!(await allowRequest(`visibility-export:${parsed.rateKey}`, 5))) return { ok: false as const };
     const presence = await verifyManageSecret(parsed.slug, parsed.secret);
     if (!presence) return { ok: false as const };
     const { exportEvents } = await import("./visibility/admin.server");
@@ -89,7 +89,7 @@ export const visibilityPurgeFn = createServerFn({ method: "POST" })
     const { parseRecoveryCode, verifyManageSecret, allowRequest } = await import("./mcp/presences");
     const parsed = parseRecoveryCode(data.code);
     if (!parsed) return { ok: false as const };
-    if (!(await allowRequest(`visibility-purge:${parsed.slug}`, 5))) return { ok: false as const };
+    if (!(await allowRequest(`visibility-purge:${parsed.rateKey}`, 5))) return { ok: false as const };
     const presence = await verifyManageSecret(parsed.slug, parsed.secret);
     if (!presence) return { ok: false as const };
     const { purgeEvents } = await import("./visibility/admin.server");
@@ -104,7 +104,7 @@ export const visibilityBenchmarkFn = createServerFn({ method: "POST" })
     const { parseRecoveryCode, verifyManageSecret, allowRequest } = await import("./mcp/presences");
     const parsed = parseRecoveryCode(data.code);
     if (!parsed) return { ok: false as const, error: "Ungültiger Recovery-Code." };
-    if (!(await allowRequest(`visibility-benchmark:${parsed.slug}`, 2)))
+    if (!(await allowRequest(`visibility-benchmark:${parsed.rateKey}`, 2)))
       return { ok: false as const, error: "Zu viele Benchmark-Läufe. Bitte später erneut versuchen." };
     const presence = await verifyManageSecret(parsed.slug, parsed.secret);
     if (!presence) return { ok: false as const, error: "Presence nicht gefunden." };
@@ -133,7 +133,7 @@ export const visibilityConnectSourceFn = createServerFn({ method: "POST" })
     const { parseRecoveryCode, verifyManageSecret, allowRequest } = await import("./mcp/presences");
     const parsed = parseRecoveryCode(data.code);
     if (!parsed) return { ok: false as const, reason: "invalid-code" as const };
-    if (!(await allowRequest(`visibility-connect:${parsed.slug}`, 20)))
+    if (!(await allowRequest(`visibility-connect:${parsed.rateKey}`, 20)))
       return { ok: false as const, reason: "rate-limited" as const };
     const presence = await verifyManageSecret(parsed.slug, parsed.secret);
     if (!presence) return { ok: false as const, reason: "not-found" as const };

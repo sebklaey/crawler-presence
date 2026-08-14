@@ -66,10 +66,10 @@ async function resolve(code: string) {
   const parsed = parseRecoveryCode(code);
   if (!parsed) return { error: "invalid-code" } as ResolveError;
   try {
-    if (!(await allowRequest(`manage:${parsed.slug}`, 20))) return { error: "rate-limited" } as ResolveError;
+    if (!(await allowRequest(`manage:${parsed.rateKey}`, 20))) return { error: "rate-limited" } as ResolveError;
     const presence = await verifyManageSecret(parsed.slug, parsed.secret);
     if (!presence) return { error: "not-found" } as ResolveError;
-    return { presence, slug: parsed.slug };
+    return { presence, slug: presence.slug };
   } catch (error) {
     if (error instanceof PresenceStoreError) return { error: "unavailable" } as ResolveError;
     throw error;

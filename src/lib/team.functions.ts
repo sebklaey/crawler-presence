@@ -26,10 +26,10 @@ async function resolveOwner(code: string) {
   const parsed = parseRecoveryCode(code);
   if (!parsed) return { error: "invalid-code" as const };
   try {
-    if (!(await allowRequest(`team:${parsed.slug}`, 20))) return { error: "rate-limited" as const };
+    if (!(await allowRequest(`team:${parsed.rateKey}`, 20))) return { error: "rate-limited" as const };
     const presence = await verifyManageSecret(parsed.slug, parsed.secret);
     if (!presence) return { error: "not-found" as const };
-    return { presence, slug: parsed.slug };
+    return { presence, slug: presence.slug };
   } catch (error) {
     if (error instanceof PresenceStoreError) return { error: "unavailable" as const };
     throw error;
@@ -181,7 +181,7 @@ export const teamSignInFn = createServerFn({ method: "POST" })
     const parsed = parseTeamCode(data.code);
     if (!parsed) return { ok: false, reason: "invalid-code" };
     try {
-      if (!(await allowRequest(`teamlogin:${parsed.slug}`, 20))) return { ok: false, reason: "rate-limited" };
+      if (!(await allowRequest(`teamlogin:${parsed.rateKey}`, 20))) return { ok: false, reason: "rate-limited" };
       const member = await verifyTeamCode(data.code);
       if (!member) return { ok: false, reason: "not-found" };
 
