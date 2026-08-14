@@ -4,20 +4,26 @@
  * Every action that can run into a subscription boundary asks `guard(...)`
  * first. When the current plan covers the action it returns true and the
  * action continues. When it does not, the upgrade popup opens with the exact
- * limit that was hit, what the next plan unlocks, and a direct route into the
- * existing subscription flow (`/publish?plan=…`).
+ * limit that was hit, what the next plan unlocks, and a direct Paddle checkout
+ * when payment credentials are configured. Falls back to the guided publish
+ * flow when checkout is unavailable or the user has no Knowledge Core yet.
  *
  * Accountless rule: the plan lives in the local workspace only — no account,
  * no login, no profile.
  */
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowRight, Lock } from "lucide-react";
+import { ArrowRight, Loader2, Lock } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PLANS, planById, type PlanId } from "@/lib/billing";
-import { usePlan } from "@/lib/store";
+import { useCore, usePlan } from "@/lib/store";
+import { usePaymentsStatus } from "@/hooks/use-payments-status";
+import { isCoreEmpty } from "@/lib/knowledge";
+import { startPublishFn } from "@/lib/presence.functions";
+import { trackFunnel } from "@/lib/funnel";
+
 
 export type LimitKey =
   | "content_records"
