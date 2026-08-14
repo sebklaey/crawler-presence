@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { AppShell, PageHead } from "@/components/app-shell";
 
 import { PresenceStatus } from "@/components/presence-status";
+import { CompletenessCard } from "@/components/kc/completeness-card";
 import { RecoveryCodeCard } from "@/components/recovery-code-card";
 import { Button } from "@/components/ui/button";
 import {
@@ -708,6 +709,7 @@ function PublishPage() {
 
           <div className="space-y-3">
             <PresenceStatus core={core} columns={1} />
+            <CompletenessCard core={core} columns={1} />
             <p className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-xs text-muted-foreground">
               {syncing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
               {syncing ? "Syncing with your ChatGPT interview…" : "Automatically synced with your ChatGPT interview."}
