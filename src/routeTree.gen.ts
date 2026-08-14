@@ -23,6 +23,7 @@ import { Route as LlmsFullDottxtRouteImport } from './routes/llms-full[.]txt'
 import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
 import { Route as ManageRouteImport } from './routes/manage'
 import { Route as McpRouteImport } from './routes/mcp'
+import { Route as NewsDotmdRouteImport } from './routes/news[.]md'
 import { Route as OfferingsDotmdRouteImport } from './routes/offerings[.]md'
 import { Route as PreviewRouteImport } from './routes/preview'
 import { Route as PricingRouteImport } from './routes/pricing'
@@ -132,6 +133,11 @@ const ManageRoute = ManageRouteImport.update({
 const McpRoute = McpRouteImport.update({
   id: '/mcp',
   path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NewsDotmdRoute = NewsDotmdRouteImport.update({
+  id: '/news.md',
+  path: '/news.md',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OfferingsDotmdRoute = OfferingsDotmdRouteImport.update({
@@ -356,6 +362,7 @@ export interface FileRoutesByFullPath {
   '/llms.txt': typeof LlmsDottxtRoute
   '/manage': typeof ManageRoute
   '/mcp': typeof McpRoute
+  '/news.md': typeof NewsDotmdRoute
   '/offerings.md': typeof OfferingsDotmdRoute
   '/preview': typeof PreviewRoute
   '/pricing': typeof PricingRoute
@@ -411,6 +418,7 @@ export interface FileRoutesByTo {
   '/llms.txt': typeof LlmsDottxtRoute
   '/manage': typeof ManageRoute
   '/mcp': typeof McpRoute
+  '/news.md': typeof NewsDotmdRoute
   '/offerings.md': typeof OfferingsDotmdRoute
   '/preview': typeof PreviewRoute
   '/pricing': typeof PricingRoute
@@ -468,6 +476,7 @@ export interface FileRoutesById {
   '/llms.txt': typeof LlmsDottxtRoute
   '/manage': typeof ManageRoute
   '/mcp': typeof McpRoute
+  '/news.md': typeof NewsDotmdRoute
   '/offerings.md': typeof OfferingsDotmdRoute
   '/preview': typeof PreviewRoute
   '/pricing': typeof PricingRoute
@@ -526,6 +535,7 @@ export interface FileRouteTypes {
     | '/llms.txt'
     | '/manage'
     | '/mcp'
+    | '/news.md'
     | '/offerings.md'
     | '/preview'
     | '/pricing'
@@ -581,6 +591,7 @@ export interface FileRouteTypes {
     | '/llms.txt'
     | '/manage'
     | '/mcp'
+    | '/news.md'
     | '/offerings.md'
     | '/preview'
     | '/pricing'
@@ -637,6 +648,7 @@ export interface FileRouteTypes {
     | '/llms.txt'
     | '/manage'
     | '/mcp'
+    | '/news.md'
     | '/offerings.md'
     | '/preview'
     | '/pricing'
@@ -694,6 +706,7 @@ export interface RootRouteChildren {
   LlmsDottxtRoute: typeof LlmsDottxtRoute
   ManageRoute: typeof ManageRoute
   McpRoute: typeof McpRoute
+  NewsDotmdRoute: typeof NewsDotmdRoute
   OfferingsDotmdRoute: typeof OfferingsDotmdRoute
   PreviewRoute: typeof PreviewRoute
   PricingRoute: typeof PricingRoute
@@ -827,6 +840,13 @@ declare module '@tanstack/react-router' {
       path: '/mcp'
       fullPath: '/mcp'
       preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/news.md': {
+      id: '/news.md'
+      path: '/news.md'
+      fullPath: '/news.md'
+      preLoaderRoute: typeof NewsDotmdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/offerings.md': {
@@ -1151,6 +1171,7 @@ const rootRouteChildren: RootRouteChildren = {
   LlmsDottxtRoute: LlmsDottxtRoute,
   ManageRoute: ManageRoute,
   McpRoute: McpRoute,
+  NewsDotmdRoute: NewsDotmdRoute,
   OfferingsDotmdRoute: OfferingsDotmdRoute,
   PreviewRoute: PreviewRoute,
   PricingRoute: PricingRoute,
