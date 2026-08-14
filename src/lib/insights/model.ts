@@ -10,34 +10,34 @@
 export type InsightsPeriod = 7 | 30 | 90 | "all";
 
 export const INSIGHTS_PERIODS: { value: InsightsPeriod; label: string }[] = [
-  { value: 7, label: "7 Tage" },
-  { value: 30, label: "30 Tage" },
-  { value: 90, label: "90 Tage" },
-  { value: "all", label: "Gesamter Zeitraum" },
+  { value: 7, label: "7 days" },
+  { value: 30, label: "30 days" },
+  { value: 90, label: "90 days" },
+  { value: "all", label: "All time" },
 ];
 
 export type PresenceState = "online" | "update_pending" | "limited" | "offline";
 
 export const PRESENCE_STATE_LABEL: Record<PresenceState, string> = {
   online: "Online",
-  update_pending: "Aktualisierung ausstehend",
-  limited: "Eingeschränkt erreichbar",
+  update_pending: "Update pending",
+  limited: "Limited availability",
   offline: "Offline",
 };
 
 export const MEASUREMENT_NOTICE =
-  "Diese Daten bilden nur die von Crawler beobachtbaren Aktivitäten ab. Private Konversationen in ChatGPT, Claude, Gemini oder anderen Assistenten werden nicht gemessen.";
+  "This data only reflects activity observable by Crawler. Private conversations in ChatGPT, Claude, Gemini or other assistants are not measured.";
 
 export type InsightsKpi = {
   key: "access" | "reads" | "clicks" | "potential";
   label: string;
-  /** null = nicht messbar / keine Daten (nicht null Zugriffe). */
+  /** null = not measurable / no data (not zero accesses). */
   value: number | null;
   previous: number | null;
   deltaPct: number | null;
   spark: number[];
   tooltip: string;
-  /** Zu wenig Daten für eine belastbare Aussage. */
+  /** Not enough data for a reliable statement. */
   insufficient: boolean;
   unit?: "count" | "open";
 };
@@ -48,7 +48,7 @@ export type CoreUpdateMarker = {
   date: string;
   area: string;
   description: string;
-  /** Gemessene Zugriffe seit dieser Änderung (rein zeitlich, nicht kausal). */
+  /** Measured accesses since this change (temporal only, not causal). */
   measuredSince: number | null;
 };
 
@@ -64,24 +64,24 @@ export type ContentKind =
   | "other";
 
 export const CONTENT_KIND_LABEL: Record<ContentKind, string> = {
-  product: "Produkt",
+  product: "Product",
   service: "Service",
   faq: "FAQ",
   about: "About",
   llms: "llms.txt",
   llms_full: "llms-full.txt",
-  json: "Strukturierte JSON-Datei",
-  document: "Dokument",
-  other: "Sonstiges",
+  json: "Structured JSON file",
+  document: "Document",
+  other: "Other",
 };
 
 export type InfoStatus = "current" | "review" | "stale" | "incomplete";
 
 export const INFO_STATUS_LABEL: Record<InfoStatus, string> = {
-  current: "Aktuell",
-  review: "Überprüfung empfohlen",
-  stale: "Veraltet",
-  incomplete: "Unvollständig",
+  current: "Current",
+  review: "Review recommended",
+  stale: "Outdated",
+  incomplete: "Incomplete",
 };
 
 export type TopContentRow = {
@@ -103,12 +103,12 @@ export type DetectedSource =
   | "unknown";
 
 export const SOURCE_LABEL: Record<DetectedSource, string> = {
-  crawler_tool: "Crawler-Tool",
-  file_fetch: "Öffentlicher Dateiabruf",
+  crawler_tool: "Crawler tool",
+  file_fetch: "Public file fetch",
   api: "API",
-  referral: "Website-Referral",
-  direct: "Direkter Zugriff",
-  unknown: "Unbekannt",
+  referral: "Website referral",
+  direct: "Direct access",
+  unknown: "Unknown",
 };
 
 export type EventRow = {
@@ -129,7 +129,7 @@ export type NextImprovement = {
   currentValue: string | null;
   proposedValue: string | null;
   affectedFiles: string[];
-  /** Kann direkt im Dialog beantwortet und veröffentlicht werden. */
+  /** Can be answered and published directly in the dialog. */
   answerable: boolean;
   question: string;
 };
@@ -145,10 +145,10 @@ export type ImprovementEntry = {
 };
 
 export const IMPROVEMENT_STATE_LABEL: Record<ImprovementEntry["state"], string> = {
-  draft: "Entwurf",
-  confirmed: "Bestätigt",
-  published: "Veröffentlicht",
-  failed: "Fehlgeschlagen",
+  draft: "Draft",
+  confirmed: "Confirmed",
+  published: "Published",
+  failed: "Failed",
 };
 
 export type RetentionSummary = {
@@ -175,9 +175,9 @@ export type InsightsDashboard = {
   nextImprovement: NextImprovement | null;
   improvements: ImprovementEntry[];
   retention: RetentionSummary;
-  /** Noch keine gemessene Aktivität im gewählten Zeitraum. */
+  /** No measured activity in the selected period yet. */
   empty: boolean;
-  /** Beispielansicht statt echter Messung. */
+  /** Example view instead of real measurement. */
   demo: boolean;
   notice: string;
 };
@@ -190,6 +190,6 @@ export function formatDelta(delta: number | null): string | null {
 
 export function periodComparisonLabel(period: InsightsPeriod): string {
   return period === "all"
-    ? "Kein Vergleichszeitraum verfügbar"
-    : `gegenüber den vorherigen ${period} Tagen`;
+    ? "No comparison period available"
+    : `vs. the previous ${period} days`;
 }

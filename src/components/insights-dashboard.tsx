@@ -2,8 +2,8 @@
  * Insights dashboard UI — measured activity and the free improvement loop.
  *
  * Wording rule: Crawler only reports what it measured. Comparisons over time
- * are phrased as "seit der Änderung", never as a cause. Unknown values are
- * shown as "Keine Daten", never as zero.
+ * are phrased as "since the change", never as a cause. Unknown values are
+ * shown as "No data", never as zero.
  */
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
@@ -62,7 +62,7 @@ function Hint({ text }: { text: string }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <button type="button" aria-label="Definition anzeigen" className="text-muted-foreground/70 hover:text-foreground">
+        <button type="button" aria-label="Show definition" className="text-muted-foreground/70 hover:text-foreground">
           <Info className="h-3.5 w-3.5" />
         </button>
       </TooltipTrigger>
@@ -95,21 +95,21 @@ function KpiCard({ kpi, period }: { kpi: InsightsKpi; period: InsightsPeriod }) 
         <Hint text={kpi.tooltip} />
       </div>
       <div className="mt-2 text-3xl font-semibold tabular-nums">
-        {kpi.value === null ? <span className="text-base text-muted-foreground">Keine Daten</span> : kpi.value}
+        {kpi.value === null ? <span className="text-base text-muted-foreground">No data</span> : kpi.value}
       </div>
       <div className="mt-1 text-xs text-muted-foreground">
         {kpi.key === "potential" ? (
-          <span>offene Verbesserungsvorschläge — im Abo enthalten</span>
+          <span>open improvement suggestions — included in your subscription</span>
         ) : delta ? (
           <span className={positive ? "text-emerald-600 dark:text-emerald-400" : undefined}>
             {delta} {periodComparisonLabel(period)}
           </span>
         ) : (
-          <span>Kein Vergleichswert verfügbar</span>
+          <span>No comparison value available</span>
         )}
       </div>
       {kpi.insufficient && kpi.key !== "potential" ? (
-        <p className="mt-2 text-[11px] text-muted-foreground">Noch nicht genügend Daten für eine belastbare Aussage.</p>
+        <p className="mt-2 text-[11px] text-muted-foreground">Not enough data yet for a reliable statement.</p>
       ) : (
         <div className="mt-2 text-muted-foreground/60">
           <Spark values={kpi.spark} />
@@ -137,7 +137,7 @@ function StatusPill({ state, url, lastCheckedAt }: { state: InsightsDashboard["s
           {url.replace(/^https?:\/\//, "")} <ExternalLink className="h-3 w-3" />
         </a>
       ) : null}
-      <p className="mt-1 text-xs text-muted-foreground">Letzte erfolgreiche Prüfung: {fmtDate(lastCheckedAt, true)}</p>
+      <p className="mt-1 text-xs text-muted-foreground">Last successful check: {fmtDate(lastCheckedAt, true)}</p>
     </div>
   );
 }
@@ -172,10 +172,10 @@ export function InsightsDashboardView({
         {/* Header */}
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="max-w-2xl">
-            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Deine AI Presence wird gesehen</h1>
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Your AI Presence is being seen</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              Hier siehst du die von Crawler gemessenen Zugriffe auf deine veröffentlichten Informationen und wie du deine
-              Presence weiter verbessern kannst.
+              Here you can see the accesses to your published information measured by Crawler, and how to improve your
+              Presence further.
             </p>
           </div>
           <StatusPill state={data.state} url={data.publicUrl} lastCheckedAt={data.lastCheckedAt} />
@@ -183,7 +183,7 @@ export function InsightsDashboardView({
 
         {data.demo ? (
           <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 px-4 py-2 text-xs text-amber-700 dark:text-amber-400">
-            Beispielansicht — diese Presence läuft im Demo-Modus. Die Zahlen sind keine echten Messwerte.
+            Example view — this Presence runs in demo mode. These numbers are not real measurements.
           </div>
         ) : null}
 
@@ -212,10 +212,10 @@ export function InsightsDashboardView({
 
         {data.empty ? (
           <div className="rounded-xl border bg-card px-5 py-10 text-center">
-            <h2 className="text-lg font-medium">Deine Presence ist bereit</h2>
+            <h2 className="text-lg font-medium">Your Presence is ready</h2>
             <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-              Noch wurden keine unterstützten Zugriffe gemessen. Crawler prüft deine Presence weiter und zeigt Aktivitäten
-              hier an, sobald sie erfasst werden.
+              No supported accesses have been measured yet. Crawler keeps checking your Presence and will show activity
+              here as soon as it is recorded.
             </p>
           </div>
         ) : (
@@ -224,8 +224,8 @@ export function InsightsDashboardView({
             <section className="rounded-xl border bg-card p-5">
               <div className="mb-4 flex items-center gap-2">
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                <h2 className="text-sm font-medium">Aktivitätsverlauf</h2>
-                <Hint text="Tägliche gemessene Zugriffe und ausgehende Klicks. Markierungen zeigen Aktualisierungen deiner Knowledge Core — zeitlich, nicht ursächlich." />
+                <h2 className="text-sm font-medium">Activity over time</h2>
+                <Hint text="Daily measured accesses and outbound clicks. Markers show Knowledge Core updates — shown in time order, not as a cause." />
               </div>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
@@ -234,12 +234,12 @@ export function InsightsDashboardView({
                     <YAxis tick={{ fontSize: 11 }} allowDecimals={false} width={40} />
                     <RTooltip
                       contentStyle={{ fontSize: 12, borderRadius: 8 }}
-                      formatter={(value: number, key) => [value, key === "access" ? "Gemessene Zugriffe" : "Ausgehende Klicks"]}
+                      formatter={(value: number, key) => [value, key === "access" ? "Measured accesses" : "Outbound clicks"]}
                       labelFormatter={(label: string) => {
                         const update = data.updates.find((u) => u.date === label);
                         return update
                           ? `${label} · ${update.area}: ${update.description}${
-                              update.measuredSince === null ? "" : ` — seit der Änderung ${update.measuredSince} gemessene Zugriffe`
+                              update.measuredSince === null ? "" : ` — ${update.measuredSince} measured accesses since the change`
                             }`
                           : label;
                       }}
@@ -258,21 +258,21 @@ export function InsightsDashboardView({
 
             {/* Top content */}
             <section className="rounded-xl border bg-card p-5">
-              <h2 className="mb-4 text-sm font-medium">Am häufigsten abgerufene Inhalte</h2>
+              <h2 className="mb-4 text-sm font-medium">Most frequently accessed content</h2>
               {data.topContent.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Für diesen Zeitraum wurden keine Inhaltsabrufe gemessen.</p>
+                <p className="text-sm text-muted-foreground">No content fetches were measured for this period.</p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[720px] text-sm">
                     <thead className="text-left text-xs uppercase tracking-wide text-muted-foreground">
                       <tr>
-                        <th className="pb-2">Inhalt</th>
-                        <th className="pb-2">Typ</th>
-                        <th className="pb-2 text-right">Zugriffe</th>
-                        <th className="pb-2 text-right">Veränderung</th>
-                        <th className="pb-2">Letzter Zugriff</th>
+                        <th className="pb-2">Content</th>
+                        <th className="pb-2">Type</th>
+                        <th className="pb-2 text-right">Accesses</th>
+                        <th className="pb-2 text-right">Change</th>
+                        <th className="pb-2">Last access</th>
                         <th className="pb-2">Status</th>
-                        <th className="pb-2 text-right">Aktion</th>
+                        <th className="pb-2 text-right">Action</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -292,7 +292,7 @@ export function InsightsDashboardView({
                           </td>
                           <td className="py-2 text-right">
                             <Link to="/knowledge" className="text-xs underline underline-offset-4">
-                              Inhalt verbessern
+                              Improve content
                             </Link>
                           </td>
                         </tr>
@@ -307,11 +307,11 @@ export function InsightsDashboardView({
             <section className="grid gap-4 lg:grid-cols-2">
               <div className="rounded-xl border bg-card p-5">
                 <div className="mb-3 flex items-center gap-2">
-                  <h2 className="text-sm font-medium">Woher die Aktivität kommt</h2>
-                  <Hint text="Nur technisch erkannte Quellen. Nicht erkennbare Zugriffe werden als „Unbekannt“ ausgewiesen; aus User-Agent- oder Logdaten wird keine Empfehlung abgeleitet." />
+                  <h2 className="text-sm font-medium">Where the activity comes from</h2>
+                  <Hint text="Only technically detected sources. Undetectable accesses are labelled “Unknown”; no recommendation is inferred from user-agent or log data." />
                 </div>
                 {data.sources.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Keine Quellen im gewählten Zeitraum erkannt.</p>
+                  <p className="text-sm text-muted-foreground">No sources detected in the selected period.</p>
                 ) : (
                   <ul className="space-y-2 text-sm">
                     {data.sources.map((s) => (
@@ -325,10 +325,10 @@ export function InsightsDashboardView({
               </div>
 
               <div className="rounded-xl border bg-card p-5">
-                <h2 className="mb-3 text-sm font-medium">Ereignisse</h2>
+                <h2 className="mb-3 text-sm font-medium">Events</h2>
                 <div className="max-h-72 space-y-2 overflow-y-auto text-xs">
                   {data.events.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">Keine Ereignisse gemessen.</p>
+                    <p className="text-sm text-muted-foreground">No events measured.</p>
                   ) : (
                     data.events.map((e, i) => (
                       <div key={`${e.at}-${i}`} className="flex items-start justify-between gap-3 border-b pb-2 last:border-0">
@@ -358,7 +358,7 @@ export function InsightsDashboardView({
         <section className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-5">
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-            <h2 className="text-sm font-medium">Deine nächste Verbesserung</h2>
+            <h2 className="text-sm font-medium">Your next improvement</h2>
           </div>
           {next ? (
             <>
@@ -372,25 +372,25 @@ export function InsightsDashboardView({
                     setDialogOpen(true);
                   }}
                 >
-                  Kostenlos verbessern
+                  Improve for free
                 </Button>
                 <Button variant="outline" onClick={() => setWhyOpen(true)}>
-                  Warum wird das empfohlen?
+                  Why is this recommended?
                 </Button>
               </div>
             </>
           ) : (
             <p className="mt-3 text-sm text-muted-foreground">
-              Aktuell liegt kein konkreter Verbesserungsvorschlag vor. Crawler prüft deine Presence weiter.
+              There is no specific improvement suggestion right now. Crawler keeps reviewing your Presence.
             </p>
           )}
         </section>
 
         {/* Improvement history */}
         <section className="rounded-xl border bg-card p-5">
-          <h2 className="mb-4 text-sm font-medium">Deine Verbesserungen</h2>
+          <h2 className="mb-4 text-sm font-medium">Your improvements</h2>
           {data.improvements.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Noch keine veröffentlichten Verbesserungen.</p>
+            <p className="text-sm text-muted-foreground">No published improvements yet.</p>
           ) : (
             <ol className="space-y-4">
               {data.improvements.map((entry) => (
@@ -399,13 +399,13 @@ export function InsightsDashboardView({
                     {entry.area}
                     <Badge variant="outline">{IMPROVEMENT_STATE_LABEL[entry.state]}</Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground">Veröffentlicht am {fmtDate(entry.date)}</p>
-                  {entry.before ? <p className="mt-1 text-xs text-muted-foreground">Vorher: {entry.before}</p> : null}
-                  {entry.after ? <p className="text-xs text-muted-foreground">Nachher: {entry.after}</p> : null}
+                  <p className="text-xs text-muted-foreground">Published on {fmtDate(entry.date)}</p>
+                  {entry.before ? <p className="mt-1 text-xs text-muted-foreground">Before: {entry.before}</p> : null}
+                  {entry.after ? <p className="text-xs text-muted-foreground">After: {entry.after}</p> : null}
                   <p className="mt-1 text-xs">
                     {entry.measuredSince === null
-                      ? "Seitdem liegen keine Messdaten vor."
-                      : `Seitdem: ${entry.measuredSince} gemessene Zugriffe.`}
+                      ? "No measurement data since then."
+                      : `Since then: ${entry.measuredSince} measured accesses.`}
                   </p>
                 </li>
               ))}
@@ -415,26 +415,26 @@ export function InsightsDashboardView({
 
         {/* Retention */}
         <section className="rounded-xl border bg-card p-5">
-          <h2 className="text-sm font-medium">Crawler arbeitet weiter für deine Presence</h2>
+          <h2 className="text-sm font-medium">Crawler keeps working for your Presence</h2>
           <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-            Solange deine Presence online ist, hält Crawler deine veröffentlichten Informationen verfügbar, misst
-            unterstützte Aktivitäten und zeigt dir kostenlos neue Verbesserungsmöglichkeiten.
+            As long as your Presence is online, Crawler keeps your published information available, measures supported
+            activity and shows you new improvement options for free.
           </p>
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 text-sm">
             <div>
-              <div className="text-xs text-muted-foreground">Tage seit Veröffentlichung</div>
+              <div className="text-xs text-muted-foreground">Days since publication</div>
               <div className="text-lg tabular-nums">{data.retention.daysSincePublish ?? "—"}</div>
             </div>
             <div>
-              <div className="text-xs text-muted-foreground">Veröffentlichte Aktualisierungen</div>
+              <div className="text-xs text-muted-foreground">Published updates</div>
               <div className="text-lg tabular-nums">{data.retention.publishedUpdates ?? "—"}</div>
             </div>
             <div>
-              <div className="text-xs text-muted-foreground">Gemessene Zugriffe gesamt</div>
+              <div className="text-xs text-muted-foreground">Total measured accesses</div>
               <div className="text-lg tabular-nums">{data.retention.totalAccesses ?? "—"}</div>
             </div>
             <div>
-              <div className="text-xs text-muted-foreground">Nächste Aktualitätsprüfung</div>
+              <div className="text-xs text-muted-foreground">Next freshness check</div>
               <div className="text-lg">{fmtDate(data.retention.nextCheckAt)}</div>
             </div>
           </div>
@@ -446,16 +446,16 @@ export function InsightsDashboardView({
         <Dialog open={whyOpen} onOpenChange={setWhyOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Warum wird das empfohlen?</DialogTitle>
+              <DialogTitle>Why is this recommended?</DialogTitle>
               <DialogDescription>{next?.why}</DialogDescription>
             </DialogHeader>
             {next?.evidence ? <p className="text-sm text-muted-foreground">{next.evidence}</p> : null}
             {next?.affectedFiles.length ? (
-              <p className="text-xs text-muted-foreground">Betroffene Dateien: {next.affectedFiles.join(", ")}</p>
+              <p className="text-xs text-muted-foreground">Affected files: {next.affectedFiles.join(", ")}</p>
             ) : null}
             <DialogFooter>
               <Button variant="outline" onClick={() => setWhyOpen(false)}>
-                Schließen
+                Close
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -468,39 +468,39 @@ export function InsightsDashboardView({
               <>
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Aktualisiert
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Updated
                   </DialogTitle>
                   <DialogDescription>
-                    Deine Knowledge Core wurde aktualisiert. Crawler beobachtet nun, wie sich die gemessene Nutzung seit
-                    dieser Änderung entwickelt.
+                    Your Knowledge Core has been updated. Crawler now observes how measured usage develops since this
+                    change.
                   </DialogDescription>
                 </DialogHeader>
-                <p className="text-xs text-muted-foreground">Änderungsdatum: {fmtDate(doneAt, true)}</p>
+                <p className="text-xs text-muted-foreground">Change date: {fmtDate(doneAt, true)}</p>
                 <DialogFooter>
-                  <Button onClick={() => setDialogOpen(false)}>Schließen</Button>
+                  <Button onClick={() => setDialogOpen(false)}>Close</Button>
                 </DialogFooter>
               </>
             ) : step === "preview" ? (
               <>
                 <DialogHeader>
-                  <DialogTitle>Vorschau der Änderung</DialogTitle>
+                  <DialogTitle>Preview of the change</DialogTitle>
                   <DialogDescription>
-                    Die Änderung wird erst nach deiner ausdrücklichen Bestätigung veröffentlicht.
+                    The change is only published after your explicit confirmation.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-3 text-sm">
                   <div>
-                    <div className="text-xs text-muted-foreground">Bisher</div>
-                    <p className="rounded-md border bg-muted/40 p-2 text-xs">{next?.currentValue ?? "— (leer)"}</p>
+                    <div className="text-xs text-muted-foreground">Current</div>
+                    <p className="rounded-md border bg-muted/40 p-2 text-xs">{next?.currentValue ?? "— (empty)"}</p>
                   </div>
                   <div>
-                    <div className="text-xs text-muted-foreground">Neu — Angabe des Anbieters</div>
+                    <div className="text-xs text-muted-foreground">New — provider statement</div>
                     <p className="rounded-md border p-2 text-xs">{answer}</p>
                   </div>
                 </div>
                 <DialogFooter className="sm:justify-between">
                   <Button variant="outline" onClick={() => setStep("question")} disabled={improving}>
-                    Zurück
+                    Back
                   </Button>
                   <Button
                     onClick={async () => {
@@ -512,7 +512,7 @@ export function InsightsDashboardView({
                     }}
                     disabled={improving}
                   >
-                    {improving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Veröffentlichen"}
+                    {improving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Publish"}
                   </Button>
                 </DialogFooter>
               </>
@@ -527,26 +527,26 @@ export function InsightsDashboardView({
                     value={answer}
                     onChange={(e) => setAnswer(e.target.value)}
                     rows={5}
-                    placeholder="Deine Antwort — wird zunächst als Angabe des Anbieters gekennzeichnet."
+                    placeholder="Your answer — will initially be marked as a provider statement."
                   />
                 ) : (
                   <p className="text-sm text-muted-foreground">
-                    Diese Verbesserung wird in deiner Knowledge Core bearbeitet, damit Fakten, Anbieterangaben und fehlende
-                    Informationen getrennt bleiben.
+                    This improvement is edited in your Knowledge Core so that facts, provider statements and missing
+                    information stay separate.
                   </p>
                 )}
                 <DialogFooter className="sm:justify-between">
                   <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                    Abbrechen
+                    Cancel
                   </Button>
                   {next?.answerable ? (
                     <Button onClick={() => setStep("preview")} disabled={answer.trim().length < 10}>
-                      Vorschau ansehen
+                      Preview change
                     </Button>
                   ) : (
                     <Button asChild>
                       <Link to="/knowledge">
-                        Knowledge Core öffnen <ArrowUpRight className="ml-1 h-4 w-4" />
+                        Open Knowledge Core <ArrowUpRight className="ml-1 h-4 w-4" />
                       </Link>
                     </Button>
                   )}
