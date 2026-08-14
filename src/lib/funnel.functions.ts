@@ -26,12 +26,24 @@ export const trackFunnelFn = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-const reportSchema = z.object({ days: z.number().int().min(1).max(180).default(30) });
+const reportSchema = z.object({
+  days: z.number().int().min(1).max(180).default(30),
+  secret: z.string().min(1),
+});
 
-/** Internal conversion report: distinct sessions and drop-off per step. */
+/**
+ * Internal conversion report. Operator-only: the caller must present the same
+ * shared operations secret used by the scheduled jobs endpoint, otherwise the
+ * report is refused.
+ */
 export const funnelReportFn = createServerFn({ method: "GET" })
   .inputValidator((input: unknown) => reportSchema.parse(input))
   .handler(async ({ data }): Promise<FunnelReport> => {
+    const expected = process.env["REPORTS_CRON_SECRET"]?.trim();
+    if (!expected || data.secret.trim() !== expected) {
+      throw new Error("Not authorized.");
+    }
     const { funnelReport } = await import("./funnel.server");
     return funnelReport(data.days);
   });
+
