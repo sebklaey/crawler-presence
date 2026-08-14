@@ -170,10 +170,6 @@ function AnalyticsPage() {
               <Link to="/manage" className="underline underline-offset-4">
                 Back to Presence management
               </Link>
-              {" · "}
-              <Link to="/p/$slug/analytics" params={{ slug: data.slug }} className="underline underline-offset-4">
-                Public summary
-              </Link>
             </p>
           </>
         ) : null}
