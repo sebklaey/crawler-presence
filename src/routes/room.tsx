@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
+import { AppShell, PageHead } from "@/components/app-shell";
 import pluginDialog from "@/assets/crawler-mcp-plugin-dialog.png.asset.json";
 
 const MCP_URL = "https://crawler.today/mcp";
@@ -139,29 +140,25 @@ function RoomPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="mx-auto flex max-w-5xl items-center justify-between px-6 py-6">
-        <span className="text-lg font-semibold tracking-tight">@crawler</span>
-        <span className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground">
-          <span
-            className={`h-2 w-2 rounded-full ${
-              isLoading ? "bg-muted-foreground" : online ? "bg-chart-2" : "bg-destructive"
-            }`}
-            aria-hidden
-          />
-          {isLoading ? "Checking status" : online ? "Service online" : "Service disrupted"}
-        </span>
-      </header>
-
+    <AppShell>
       <main className="mx-auto max-w-5xl px-6 pb-24">
         <section className="py-14 sm:py-20">
-          <h1 className="max-w-3xl text-4xl font-semibold leading-tight tracking-tight sm:text-6xl">
-            Small, anonymous rooms for one topic in ChatGPT.
-          </h1>
-          <p className="mt-6 max-w-2xl text-lg text-muted-foreground">
-            @crawler is a ChatGPT plugin: pick a topic, land anonymously in a room with at most five
-            people and talk there — no account, no profile, no history.
-          </p>
+          <PageHead
+            eyebrow="@crawler"
+            title="Small, anonymous rooms for one topic in ChatGPT."
+            description="@crawler is a ChatGPT plugin: pick a topic, land anonymously in a room with at most five people and talk there — no account, no profile, no history."
+          />
+
+          <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+            <span
+              className={`h-2 w-2 rounded-full ${
+                isLoading ? "bg-muted-foreground" : online ? "bg-chart-2" : "bg-destructive"
+              }`}
+              aria-hidden
+            />
+            {isLoading ? "Checking service status" : online ? "Service online" : "Service disrupted"}
+          </div>
+
           <div className="mt-8 rounded-xl border border-border bg-card p-5 font-mono text-sm text-card-foreground">
             <p className="text-muted-foreground">In ChatGPT:</p>
             <p className="mt-2">@crawler AI</p>
@@ -296,12 +293,6 @@ function RoomPage() {
           </p>
         </section>
       </main>
-
-      <footer className="border-t border-border">
-        <div className="mx-auto max-w-5xl px-6 py-8 text-sm text-muted-foreground">
-          @crawler {data?.version ? `v${data.version}` : ""} — anonymous topic rooms.
-        </div>
-      </footer>
-    </div>
+    </AppShell>
   );
 }
