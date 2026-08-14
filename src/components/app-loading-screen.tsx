@@ -42,18 +42,6 @@ export function AppLoadingScreen() {
         className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-70 select-none"
       />
       <div className="absolute inset-0 bg-gradient-to-b from-[#050505]/40 via-transparent to-[#050505]/90" />
-
-      <div className="relative flex flex-col items-center gap-6 px-6 text-center">
-        <p className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-          Crawler<span className="text-[#b6f13a]">.today</span>
-        </p>
-        <div className="h-px w-40 overflow-hidden bg-white/15">
-          <div className="h-full w-1/3 animate-[splash-slide_1.2s_ease-in-out_infinite] bg-[#b6f13a]" />
-        </div>
-        <p className="text-xs tracking-[0.28em] text-white/50 uppercase">Loading your presence</p>
-      </div>
-
-      <style>{`@keyframes splash-slide{0%{transform:translateX(-100%)}100%{transform:translateX(320%)}}`}</style>
     </div>
   );
 }
