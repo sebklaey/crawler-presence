@@ -228,6 +228,38 @@ export async function syncGa4(slug: string, days = 90): Promise<SyncResult> {
  * Pulls impressions, clicks, CTR and average position. This is classic Google
  * search visibility and must never be labelled as AI mentions.
  */
+/** Writes Search Console rows as attributed events. Duplicates are skipped. */
+async function writeGscRows(slug: string, rows: { keys: string[]; clicks: number; impressions: number; ctr: number; position: number }[]): Promise<number> {
+  const supabase = await client();
+  if (!supabase) return 0;
+  let written = 0;
+  for (const row of rows) {
+    const [date, query, page, country, device] = row.keys;
+    const { error } = await supabase.from("analytics_events").insert({
+      presence_slug: slug,
+      event_type: "search_impression",
+      source_type: "search_console",
+      evidence_type: "attributed",
+      occurred_at: `${date}T12:00:00Z`,
+      provider: "google",
+      surface: "Google Search",
+      path: page ?? null,
+      region: country ?? null,
+      idempotency_key: `gsc:${slug}:${date}:${query}:${page}`.slice(0, 80),
+      metadata: {
+        query,
+        device,
+        clicks: row.clicks,
+        impressions: row.impressions,
+        ctr: row.ctr,
+        position: row.position,
+      },
+    });
+    if (!error) written += 1;
+  }
+  return written;
+}
+
 export async function syncSearchConsole(slug: string, days = 90): Promise<SyncResult> {
   const sources = await listSources(slug);
   const config = sources.find((s) => s.source_type === "search_console")?.configuration ?? {};
@@ -243,7 +275,7 @@ export async function syncSearchConsole(slug: string, days = 90): Promise<SyncRe
     const result = await queryGscAnalytics(siteUrl, from, to);
     if (!result.ok) {
       await upsertSource(slug, "search_console", { status: "error", last_error: result.error ?? null });
-      await logSync(slug, "search_console", { status: "error", read: 0, written: 0, skipped: 0, error: result.error, from, to });
+      await logSync(slug, "search_console", { status: "error", read: 0, written: 0, skipped: 0, error: result.error ?? null, from, to });
       return { ok: false, written: 0, skipped: 0, message: result.error ?? "Search Console request failed." };
     }
     const written = await writeGscRows(slug, result.rows);
