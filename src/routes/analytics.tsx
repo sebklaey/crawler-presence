@@ -226,6 +226,30 @@ function AnalyticsPage() {
               improving={improving}
               busy={busy}
             />
+            {aiData ? (
+              <div className="mt-14 border-t pt-12">
+                <AiAnalyticsDashboardView
+                  data={aiData}
+                  period={aiPeriod}
+                  busy={aiBusy}
+                  pending={pending}
+                  onPeriodChange={(next) => {
+                    setAiPeriod(next);
+                    void loadAi(activeCode, next);
+                  }}
+                  onSync={(source) =>
+                    runAction(source, () => syncAnalyticsSourceFn({ data: { code: activeCode, source } }))
+                  }
+                  onSaveSource={(source, value) =>
+                    runAction(source, () => saveAnalyticsSourceFn({ data: { code: activeCode, source, value } }))
+                  }
+                  onImportCsv={(csv) =>
+                    runAction("bing_csv", () => importBingCsvFn({ data: { code: activeCode, csv } }))
+                  }
+                  onExport={onExport}
+                />
+              </div>
+            ) : null}
             <p className="mt-8 text-xs text-muted-foreground">
               <Link to="/manage" className="underline underline-offset-4">
                 Back to Presence management
