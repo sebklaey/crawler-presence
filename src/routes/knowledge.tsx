@@ -1,6 +1,7 @@
 import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 
 import { AppShell } from "@/components/app-shell";
+import { FinishGuide } from "@/components/kc/finish-guide";
 import { Badge } from "@/components/ui/badge";
 import { useSessionSync } from "@/hooks/use-session-sync";
 import { completenessScore, attentionCount } from "@/lib/kc/model";
@@ -55,6 +56,7 @@ function KnowledgeLayout() {
           </div>
           <div className="flex items-center gap-2 text-xs">
             <Badge variant="outline">{score}% complete</Badge>
+            <FinishGuide core={core} />
             {attention > 0 ? <Badge variant="secondary">{attention} need attention</Badge> : null}
             {pending > 0 ? <Badge>{pending} open proposals</Badge> : null}
           </div>
