@@ -409,7 +409,11 @@ function DataPage() {
             ))
           )}
         </Card>
+        </div>
       </div>
     </div>
+  );
+}
+
   );
 }
