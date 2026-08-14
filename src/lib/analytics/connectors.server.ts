@@ -480,10 +480,14 @@ export function credentialStatus(): Record<SourceType, boolean> {
     crawler_observed: true,
     server_logs: true,
     ga4: Boolean(serviceAccount()),
-    search_console: Boolean(serviceAccount()),
+    search_console: Boolean(serviceAccount() || (env("LOVABLE_API_KEY") && env("GOOGLE_SEARCH_CONSOLE_API_KEY"))),
     bing_csv: true,
     ai_probes: Boolean(
-      env("OPENAI_API_KEY") || env("ANTHROPIC_API_KEY") || env("GEMINI_API_KEY") || env("PERPLEXITY_API_KEY"),
+      env("LOVABLE_API_KEY") ||
+        env("OPENAI_API_KEY") ||
+        env("ANTHROPIC_API_KEY") ||
+        env("GEMINI_API_KEY") ||
+        env("PERPLEXITY_API_KEY"),
     ),
   };
 }
