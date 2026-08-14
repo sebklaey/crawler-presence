@@ -165,11 +165,23 @@ function PricingPage() {
                 </p>
               ) : null}
 
-              <Button asChild className="mt-6" variant={p.id === "pro" ? "default" : "outline"}>
-                <Link to="/publish" search={{ plan: p.id }} onClick={() => setPlan(p.id)}>
-                  {plan === p.id ? `Continue with ${p.name}` : `Choose ${p.name}`}
-                </Link>
+              <Button
+                className="mt-6"
+                variant={p.id === "pro" ? "default" : "outline"}
+                disabled={busy !== null}
+                onClick={() => void buy(p.id)}
+              >
+                {busy === p.id ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Opening checkout…
+                  </>
+                ) : plan === p.id ? (
+                  `Continue with ${p.name}`
+                ) : (
+                  `Choose ${p.name}`
+                )}
               </Button>
+
 
             </div>
           ))}
