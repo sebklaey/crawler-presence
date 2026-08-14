@@ -232,6 +232,32 @@ export async function syncSearchConsole(slug: string, days = 90): Promise<SyncRe
   const sources = await listSources(slug);
   const config = sources.find((s) => s.source_type === "search_console")?.configuration ?? {};
   const siteUrl = String(config["site_url"] ?? env("SEARCH_CONSOLE_SITE_URL") ?? "");
+
+  const from = new Date(Date.now() - days * 86_400_000).toISOString().slice(0, 10);
+  const to = new Date().toISOString().slice(0, 10);
+
+  // One-click path: the workspace Search Console connection already carries
+  // the Google authorisation, so nothing has to be entered by hand.
+  const { gscGatewayAvailable, queryGscAnalytics } = await import("./gsc-gateway.server");
+  if (siteUrl && gscGatewayAvailable()) {
+    const result = await queryGscAnalytics(siteUrl, from, to);
+    if (!result.ok) {
+      await upsertSource(slug, "search_console", { status: "error", last_error: result.error ?? null });
+      await logSync(slug, "search_console", { status: "error", read: 0, written: 0, skipped: 0, error: result.error, from, to });
+      return { ok: false, written: 0, skipped: 0, message: result.error ?? "Search Console request failed." };
+    }
+    const written = await writeGscRows(slug, result.rows);
+    await upsertSource(slug, "search_console", {
+      status: "connected",
+      last_synced_at: new Date().toISOString(),
+      next_sync_at: new Date(Date.now() + 86_400_000).toISOString(),
+      last_error: null,
+      records_imported: written,
+    });
+    await logSync(slug, "search_console", { status: "success", read: result.rows.length, written, skipped: result.rows.length - written, from, to });
+    return { ok: true, written, skipped: result.rows.length - written, message: `Search Console sync complete: ${written} rows.` };
+  }
+
   const token = await googleAccessToken(GSC_SCOPE);
 
   if (!token || !siteUrl) {
@@ -240,12 +266,11 @@ export async function syncSearchConsole(slug: string, days = 90): Promise<SyncRe
       ok: false,
       written: 0,
       skipped: 0,
-      message: "Search Console is not connected: service account or verified property missing.",
+      message: "Search Console is not connected: choose a verified property to connect it.",
     };
   }
 
-  const from = new Date(Date.now() - days * 86_400_000).toISOString().slice(0, 10);
-  const to = new Date().toISOString().slice(0, 10);
+
 
   try {
     const response = await fetch(
