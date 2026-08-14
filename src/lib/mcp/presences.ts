@@ -106,20 +106,37 @@ function constantTimeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
-/** The single string a user copies or downloads: `<slug>~<secret>`. */
-export function recoveryCode(slug: string, secret: string): string {
+/**
+ * Session-token recovery codes.
+ *
+ * A published Presence is bound to the anonymous draft session that created
+ * it. The session token is therefore the single code a user needs: it edits
+ * the draft in ChatGPT AND manages the published Presence on the website.
+ * The legacy `<slug>~crw_…` secret keeps working for older Presences.
+ */
+export const SESSION_CODE_PATTERN = /^sess_[a-f0-9]{16,64}$/;
+
+/** The single string a user copies or downloads. */
+export function recoveryCode(slug: string, secret: string, sessionToken?: string | null): string {
+  if (sessionToken && SESSION_CODE_PATTERN.test(sessionToken)) return sessionToken;
   return `${slug}~${secret}`;
 }
 
-export function parseRecoveryCode(value: string): { slug: string; secret: string } | null {
+export function parseRecoveryCode(
+  value: string,
+): { slug: string; secret: string; rateKey: string } | null {
   const trimmed = value.trim();
+  if (SESSION_CODE_PATTERN.test(trimmed)) {
+    return { slug: "", secret: trimmed, rateKey: `sess-${trimmed.slice(5, 17)}` };
+  }
   const at = trimmed.indexOf("~");
   if (at <= 0) return null;
   const slug = trimmed.slice(0, at);
   const secret = trimmed.slice(at + 1);
   if (!/^[a-z0-9-]{1,120}$/.test(slug) || !MANAGE_SECRET_PATTERN.test(secret)) return null;
-  return { slug, secret };
+  return { slug, secret, rateKey: slug };
 }
+
 
 /* ------------------------------------------------------------------ */
 /* Publishing                                                          */
