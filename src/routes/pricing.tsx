@@ -98,12 +98,13 @@ function PricingPage() {
 
   function buttonLabel(p: (typeof PLANS)[number]): string {
     if (busy === p.id) return "Opening checkout…";
-    if (!currentPlan) {
-      return p.id === plan ? `Continue with ${p.name}` : `Choose ${p.name}`;
+    // Only use stay/upgrade/downgrade when the browser controls a real subscription.
+    if (publishState.isLive && currentPlan) {
+      if (p.id === currentPlan) return `Stay with ${p.name}`;
+      const currentPrice = planById(currentPlan).price;
+      return p.price > currentPrice ? `Upgrade to ${p.name}` : `Downgrade to ${p.name}`;
     }
-    if (p.id === currentPlan) return `Stay with ${p.name}`;
-    const currentPrice = planById(currentPlan).price;
-    return p.price > currentPrice ? `Upgrade to ${p.name}` : `Downgrade to ${p.name}`;
+    return p.id === plan ? `Continue with ${p.name}` : `Choose ${p.name}`;
   }
 
 
