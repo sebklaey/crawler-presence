@@ -221,6 +221,21 @@ export const getPublishedFn = createServerFn({ method: "GET" })
       /* measurement must never break public delivery */
     }
 
+    // Server-side referrer check: a visit coming from ChatGPT, Claude, Gemini,
+    // Perplexity or Copilot is counted as an attributed AI referral session.
+    try {
+      const { getRequest } = await import("@tanstack/react-start/server");
+      const { ingestAsync } = await import("./analytics/ingest.server");
+      ingestAsync({
+        presenceSlug: record.slug,
+        eventType: "presence_read",
+        request: getRequest(),
+        path: `/p/${record.slug}`,
+      });
+    } catch {
+      /* measurement must never break public delivery */
+    }
+
     return {
       found: true as const,
       slug: record.slug,
