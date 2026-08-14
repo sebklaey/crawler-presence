@@ -5,7 +5,7 @@ import { ArrowUp, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/app-shell";
-import { PresenceStatus } from "@/components/presence-status";
+import { CompletenessCard } from "@/components/kc/completeness-card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { interviewTurn } from "@/lib/interview.functions";
@@ -219,11 +219,11 @@ function Index() {
                   </p>
                 </div>
                 <Button asChild size="sm">
-                  <Link to="/result">Show my result</Link>
+                  <Link to="/knowledge">Show my result</Link>
                 </Button>
               </div>
             ) : null}
-            <PresenceStatus core={core} />
+            <CompletenessCard core={core} columns={2} showPresenceChecks />
           </div>
         )}
 
