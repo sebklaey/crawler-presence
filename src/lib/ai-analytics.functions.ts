@@ -162,7 +162,7 @@ export const saveAnalyticsSourceFn = createServerFn({ method: "POST" })
     z
       .object({
         code: codeSchema,
-        source: z.enum(["ga4", "search_console"]),
+        source: z.enum(["search_console"]),
         value: z.string().trim().max(300),
       })
       .parse(input),
@@ -172,7 +172,7 @@ export const saveAnalyticsSourceFn = createServerFn({ method: "POST" })
     if (!auth.ok) return { ok: false, message: "Access could not be verified." };
     const { upsertSource } = await import("./analytics/connectors.server");
     await upsertSource(auth.presence.slug, data.source, {
-      configuration: data.source === "ga4" ? { property_id: data.value } : { site_url: data.value },
+      configuration: { site_url: data.value },
       status: data.value ? "connected" : "not_connected",
       last_error: null,
     });
@@ -182,17 +182,12 @@ export const saveAnalyticsSourceFn = createServerFn({ method: "POST" })
 /** Manually triggers a connector sync or a probe run. */
 export const syncAnalyticsSourceFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
-    z.object({ code: codeSchema, source: z.enum(["ga4", "search_console", "ai_probes"]) }).parse(input),
+    z.object({ code: codeSchema, source: z.enum(["search_console", "ai_probes"]) }).parse(input),
   )
   .handler(async ({ data }): Promise<ActionResult> => {
     const auth = await authorize(data.code, 10);
     if (!auth.ok) return { ok: false, message: "Access could not be verified." };
     try {
-      if (data.source === "ga4") {
-        const { syncGa4 } = await import("./analytics/connectors.server");
-        const result = await syncGa4(auth.presence.slug);
-        return { ok: result.ok, message: result.message };
-      }
       if (data.source === "search_console") {
         const { syncSearchConsole } = await import("./analytics/connectors.server");
         const result = await syncSearchConsole(auth.presence.slug);
@@ -220,19 +215,6 @@ export const syncAnalyticsSourceFn = createServerFn({ method: "POST" })
       console.error("[crawler] analytics sync failed", error);
       return { ok: false, message: "The sync failed. Nothing was changed." };
     }
-  });
-
-/** Imports the Bing Webmaster Tools AI performance CSV. */
-export const importBingCsvFn = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) =>
-    z.object({ code: codeSchema, csv: z.string().min(10).max(2_000_000) }).parse(input),
-  )
-  .handler(async ({ data }): Promise<ActionResult> => {
-    const auth = await authorize(data.code, 10);
-    if (!auth.ok) return { ok: false, message: "Access could not be verified." };
-    const { importBingCsv } = await import("./analytics/connectors.server");
-    const result = await importBingCsv(auth.presence.slug, data.csv);
-    return { ok: result.ok, message: result.message, errors: result.errors };
   });
 
 /** CSV export of the current dashboard rows. */

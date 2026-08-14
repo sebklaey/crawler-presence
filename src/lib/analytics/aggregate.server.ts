@@ -161,14 +161,10 @@ export async function buildAiAnalytics(options: AggregateOptions): Promise<AiAna
   const observedCitations = count(inWindow, isCitation);
   const observedCitationsPrev = count(inPrevious, isCitation);
 
-  const ga4Source = sourceByType.get("ga4");
-  const ga4Connected = ga4Source?.status === "connected";
-  const referralSessions = ga4Connected
-    ? inWindow.filter(isReferral).reduce((sum, row) => sum + sessionsFrom(row), 0)
-    : null;
-  const referralSessionsPrev = ga4Connected
-    ? inPrevious.filter(isReferral).reduce((sum, row) => sum + sessionsFrom(row), 0)
-    : null;
+  // AI referral sessions are measured by Crawler itself: every visit to a
+  // published Presence page whose referrer is a known AI surface.
+  const referralSessions = inWindow.filter(isReferral).reduce((sum, row) => sum + sessionsFrom(row), 0);
+  const referralSessionsPrev = inPrevious.filter(isReferral).reduce((sum, row) => sum + sessionsFrom(row), 0);
 
   const syntheticMentions = runsWindow.filter((r) => r.mentioned).length;
   const syntheticRate = runsWindow.length ? syntheticMentions / runsWindow.length : null;
@@ -199,14 +195,11 @@ export async function buildAiAnalytics(options: AggregateOptions): Promise<AiAna
       deltaPct: deltaPct(observedCitations, observedCitationsPrev),
       unit: "count",
       evidence: "observed",
-      tooltip: `${EVIDENCE_DEFINITION.observed} Citations are counted only when a provider reports the cited URL (currently the Bing AI performance export).`,
+      tooltip: `${EVIDENCE_DEFINITION.observed} A citation is counted only when an AI surface links to your Presence and Crawler sees that click server-side.`,
       periodLabel: windowText,
-      lastUpdatedAt: lastUpdated("bing_csv"),
-      status: statusOf("bing_csv"),
-      statusHint:
-        statusOf("bing_csv") === "not_connected"
-          ? "Import the Bing Webmaster Tools AI performance CSV to see reported citations."
-          : null,
+      lastUpdatedAt: new Date().toISOString(),
+      status: "built_in",
+      statusHint: null,
     },
     {
       key: "ai_referral_sessions",
@@ -218,9 +211,9 @@ export async function buildAiAnalytics(options: AggregateOptions): Promise<AiAna
       evidence: "attributed",
       tooltip: `${EVIDENCE_DEFINITION.attributed} Only sessions whose referrer is a known AI surface are counted.`,
       periodLabel: windowText,
-      lastUpdatedAt: lastUpdated("ga4"),
-      status: statusOf("ga4"),
-      statusHint: ga4Connected ? null : "Connect a GA4 property to attribute website visits coming from AI answers.",
+      lastUpdatedAt: new Date().toISOString(),
+      status: "built_in",
+      statusHint: null,
     },
     {
       key: "presence_reads",
@@ -283,7 +276,7 @@ export async function buildAiAnalytics(options: AggregateOptions): Promise<AiAna
       if (row.verified_bot) point.verified_ai_fetches += 1;
     }
     if (isCitation(row)) point.observed_citations += 1;
-    if (isReferral(row) && ga4Connected) point.ai_referral_sessions += sessionsFrom(row);
+    if (isReferral(row)) point.ai_referral_sessions += sessionsFrom(row);
   }
   for (const run of runsWindow) {
     const point = buckets.get(dayKey(run.tested_at));
@@ -305,9 +298,7 @@ export async function buildAiAnalytics(options: AggregateOptions): Promise<AiAna
       connection: providerRuns.length ? "connected" : "not_connected",
       observedFetches: fetches,
       observedCitations: providerEvents.filter(isCitation).length,
-      referralSessions: ga4Connected
-        ? providerEvents.filter(isReferral).reduce((sum, row) => sum + sessionsFrom(row), 0)
-        : null,
+      referralSessions: providerEvents.filter(isReferral).reduce((sum, row) => sum + sessionsFrom(row), 0),
       syntheticMentionRate: providerRuns.length ? providerRuns.filter((r) => r.mentioned).length / providerRuns.length : null,
       syntheticCitationRate: providerRuns.length
         ? providerRuns.filter((r) => r.own_domain_cited).length / providerRuns.length
@@ -390,23 +381,18 @@ export async function buildAiAnalytics(options: AggregateOptions): Promise<AiAna
   ];
 
   /* ---- data source panel ---- */
-  const sourceTypes: SourceType[] = ["crawler_observed", "server_logs", "ga4", "search_console", "bing_csv", "ai_probes"];
+  const sourceTypes: SourceType[] = ["crawler_observed", "server_logs", "search_console", "ai_probes"];
   const evidenceForSource: Record<SourceType, EvidenceType> = {
     crawler_observed: "observed",
     server_logs: "observed",
-    ga4: "attributed",
     search_console: "attributed",
-    bing_csv: "observed",
     ai_probes: "synthetic",
   };
   const setupHints: Record<SourceType, string> = {
-    crawler_observed: "Always on: Crawler tool calls and trackable outbound clicks.",
+    crawler_observed: "Always on: Crawler tool calls, AI referral visits and trackable outbound clicks.",
     server_logs: "Always on: every request for your published Presence files is logged server-side.",
-    ga4: "Add the GA4 property ID and grant the Crawler service account read access in Google Analytics.",
     search_console: "One click: Crawler uses the connected Google account and imports impressions, clicks, CTR and position for your verified property.",
-    bing_csv: "Microsoft publishes no API for this data. Drop the official AI performance CSV from Bing Webmaster Tools here.",
     ai_probes: "One click: Crawler runs controlled test questions against its built-in test model. Your own provider keys add more models.",
-
   };
 
   const dataSources: DataSourceRow[] = sourceTypes.map((source) => {
@@ -423,15 +409,10 @@ export async function buildAiAnalytics(options: AggregateOptions): Promise<AiAna
       error: record?.last_error ?? null,
       credentialsPresent: credentials[source],
       setupHint: setupHints[source],
-      configLabel: source === "ga4" ? "GA4 property ID" : null,
-
+      configLabel: null,
       configValue:
-        source === "ga4"
-          ? ((record?.configuration?.["property_id"] as string) ?? null)
-          : source === "search_console"
-            ? ((record?.configuration?.["site_url"] as string) ?? null)
-            : null,
-      canSync: source === "ga4" || source === "search_console" || source === "ai_probes",
+        source === "search_console" ? ((record?.configuration?.["site_url"] as string) ?? null) : null,
+      canSync: source === "search_console" || source === "ai_probes",
     };
   });
 

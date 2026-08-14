@@ -15,7 +15,6 @@ import {
   aiAnalyticsDashboardFn,
   connectAnalyticsSourceFn,
   exportAnalyticsCsvFn,
-  importBingCsvFn,
   saveAnalyticsSourceFn,
   syncAnalyticsSourceFn,
 } from "@/lib/ai-analytics.functions";
@@ -262,9 +261,6 @@ function AnalyticsPage() {
                       setPending(null);
                     }
                   }}
-                  onImportCsv={(csv) =>
-                    runAction("bing_csv", () => importBingCsvFn({ data: { code: activeCode, csv } }))
-                  }
                   onExport={onExport}
                 />
               </div>

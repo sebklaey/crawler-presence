@@ -39,9 +39,8 @@ type Props = {
   period: AnalyticsPeriod;
   busy: boolean;
   onPeriodChange: (period: AnalyticsPeriod) => void;
-  onSync: (source: "ga4" | "search_console" | "ai_probes") => Promise<void>;
-  onSaveSource: (source: "ga4" | "search_console", value: string) => Promise<void>;
-  onImportCsv: (csv: string) => Promise<void>;
+  onSync: (source: "search_console" | "ai_probes") => Promise<void>;
+  onSaveSource: (source: "search_console", value: string) => Promise<void>;
   onConnect: (
     source: "search_console" | "ai_probes",
     choice?: string,
@@ -70,7 +69,6 @@ export function AiAnalyticsDashboardView(props: Props) {
   const [provider, setProvider] = useState<ProviderId | "all">("all");
   const [evidence, setEvidence] = useState<EvidenceType | "all">("all");
   const [source, setSource] = useState<SourceType | "all">("all");
-  const [csvError, setCsvError] = useState<string | null>(null);
   const [choices, setChoices] = useState<Record<string, { value: string; label: string }[] | null>>({});
 
 
@@ -218,11 +216,7 @@ export function AiAnalyticsDashboardView(props: Props) {
                     <td className="px-4 py-3 tabular-nums">{row.observedFetches ?? "—"}</td>
                     <td className="px-4 py-3 tabular-nums">{row.observedCitations ?? "—"}</td>
                     <td className="px-4 py-3 tabular-nums">
-                      {row.provider === "crawler" || row.provider === "other"
-                        ? "—"
-                        : row.referralSessions === null
-                          ? "Needs GA4"
-                          : row.referralSessions}
+                      {row.provider === "crawler" || row.provider === "other" ? "—" : (row.referralSessions ?? 0)}
                     </td>
                     <td className="px-4 py-3 tabular-nums">
                       {row.syntheticMentionRate === null
@@ -376,7 +370,7 @@ export function AiAnalyticsDashboardView(props: Props) {
                     size="sm"
                     variant="outline"
                     disabled={props.pending === row.source}
-                    onClick={() => void props.onSync(row.source as "ga4" | "search_console" | "ai_probes")}
+                    onClick={() => void props.onSync(row.source as "search_console" | "ai_probes")}
                   >
                     {props.pending === row.source ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -439,7 +433,7 @@ export function AiAnalyticsDashboardView(props: Props) {
                   onSubmit={(event) => {
                     event.preventDefault();
                     const input = new FormData(event.currentTarget).get("value");
-                    void props.onSaveSource(row.source as "ga4" | "search_console", String(input ?? ""));
+                    void props.onSaveSource(row.source as "search_console", String(input ?? ""));
                   }}
                 >
                   <Input
@@ -452,27 +446,6 @@ export function AiAnalyticsDashboardView(props: Props) {
                     Save
                   </Button>
                 </form>
-              ) : null}
-              {row.source === "bing_csv" ? (
-                <div className="space-y-2">
-                  <Input
-                    type="file"
-                    accept=".csv,text/csv"
-                    aria-label="Bing AI performance CSV"
-                    onChange={async (event) => {
-                      const file = event.target.files?.[0];
-                      if (!file) return;
-                      setCsvError(null);
-                      if (file.size > 2_000_000) {
-                        setCsvError("The file is larger than 2 MB.");
-                        return;
-                      }
-                      await props.onImportCsv(await file.text());
-                      event.target.value = "";
-                    }}
-                  />
-                  {csvError ? <p className="text-[11px] text-destructive">{csvError}</p> : null}
-                </div>
               ) : null}
             </Card>
           ))}
