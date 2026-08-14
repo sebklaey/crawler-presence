@@ -771,6 +771,10 @@ function PublishPage() {
                               </li>
                             ))}
                           </ul>
+                          {p.upgradeNote ? (
+                            <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground/80">{p.upgradeNote}</p>
+                          ) : null}
+
                         </div>
                         <div className="shrink-0 text-right">
                           <div className="display text-xl">${p.price}</div>
