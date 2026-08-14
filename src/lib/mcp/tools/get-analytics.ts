@@ -69,7 +69,7 @@ export default defineTool({
     let authorizedSlug: string | null = null;
     if (recovery_code) {
       const parsed = parseRecoveryCode(recovery_code);
-      const limited = !(await allowRequest(`analytics-code:${parsed?.slug ?? "invalid"}`, 10));
+      const limited = !(await allowRequest(`analytics-code:${parsed?.rateKey ?? "invalid"}`, 10));
       if (limited) {
         return {
           content: [{ type: "text" as const, text: "Rate limited: too many recovery-code attempts." }],
