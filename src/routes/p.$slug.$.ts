@@ -1,6 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { getLivePresence } from "@/lib/mcp/presences";
+import { serveSelfFile } from "@/lib/self-presence";
+
+/** Crawler's own Presence slug — served from code, not from the database. */
+const SELF_SLUG = "crawler";
 
 const contentType = (type: string, path: string) => {
   if (path.endsWith(".json") || type === "json") return "application/json; charset=utf-8";
@@ -12,7 +16,10 @@ const contentType = (type: string, path: string) => {
 export const Route = createFileRoute("/p/$slug/$")({
   server: {
     handlers: {
-      GET: async ({ params }) => {
+      GET: async ({ params, request }) => {
+        const path = (params._splat ?? "").replace(/^\/+/, "");
+        if (params.slug === SELF_SLUG) return serveSelfFile(path, request);
+
         let record;
         try {
           record = await getLivePresence(params.slug);
@@ -21,7 +28,7 @@ export const Route = createFileRoute("/p/$slug/$")({
           return new Response("Presence temporarily unavailable", { status: 503 });
         }
         if (!record) return new Response("Presence not found", { status: 404 });
-        const path = (params._splat ?? "").replace(/^\/+/, "");
+
         const file = record.files.find((f) => f.path === path);
         if (!file) {
           return new Response(`File not found. Available: ${record.files.map((f) => f.path).join(", ")}`, {

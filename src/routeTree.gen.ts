@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as SplatRouteImport } from './routes/$'
 import { Route as AboutDotmdRouteImport } from './routes/about[.]md'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
+import { Route as AudiencesDotmdRouteImport } from './routes/audiences[.]md'
 import { Route as ChatgptRouteImport } from './routes/chatgpt'
 import { Route as CrawlmeRouteImport } from './routes/crawlme'
 import { Route as DemoRouteImport } from './routes/demo'
@@ -22,8 +23,11 @@ import { Route as LlmsFullDottxtRouteImport } from './routes/llms-full[.]txt'
 import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
 import { Route as ManageRouteImport } from './routes/manage'
 import { Route as McpRouteImport } from './routes/mcp'
+import { Route as NewsDotmdRouteImport } from './routes/news[.]md'
+import { Route as OfferingsDotmdRouteImport } from './routes/offerings[.]md'
 import { Route as PreviewRouteImport } from './routes/preview'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as PricingDotmdRouteImport } from './routes/pricing[.]md'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PublishRouteImport } from './routes/publish'
 import { Route as RefundsRouteImport } from './routes/refunds'
@@ -38,6 +42,7 @@ import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } fr
 import { Route as Char91DotwellKnownChar93OpenaiAppsChallengeRouteImport } from './routes/[.well-known]/openai-apps-challenge'
 import { Route as ApiCrawlMeRouteImport } from './routes/api/crawl-me'
 import { Route as ApiEntityDotjsonRouteImport } from './routes/api/entity[.]json'
+import { Route as ApiOfferingsDotjsonRouteImport } from './routes/api/offerings[.]json'
 import { Route as ApiSearchRouteImport } from './routes/api/search'
 import { Route as ApiServicesDotjsonRouteImport } from './routes/api/services[.]json'
 import { Route as KnowledgeIndexRouteImport } from './routes/knowledge.index'
@@ -79,6 +84,11 @@ const AboutDotmdRoute = AboutDotmdRouteImport.update({
 const AnalyticsRoute = AnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AudiencesDotmdRoute = AudiencesDotmdRouteImport.update({
+  id: '/audiences.md',
+  path: '/audiences.md',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChatgptRoute = ChatgptRouteImport.update({
@@ -126,6 +136,16 @@ const McpRoute = McpRouteImport.update({
   path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NewsDotmdRoute = NewsDotmdRouteImport.update({
+  id: '/news.md',
+  path: '/news.md',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OfferingsDotmdRoute = OfferingsDotmdRouteImport.update({
+  id: '/offerings.md',
+  path: '/offerings.md',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PreviewRoute = PreviewRouteImport.update({
   id: '/preview',
   path: '/preview',
@@ -134,6 +154,11 @@ const PreviewRoute = PreviewRouteImport.update({
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingDotmdRoute = PricingDotmdRouteImport.update({
+  id: '/pricing.md',
+  path: '/pricing.md',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -207,6 +232,11 @@ const ApiCrawlMeRoute = ApiCrawlMeRouteImport.update({
 const ApiEntityDotjsonRoute = ApiEntityDotjsonRouteImport.update({
   id: '/api/entity.json',
   path: '/api/entity.json',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiOfferingsDotjsonRoute = ApiOfferingsDotjsonRouteImport.update({
+  id: '/api/offerings.json',
+  path: '/api/offerings.json',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiSearchRoute = ApiSearchRouteImport.update({
@@ -328,6 +358,7 @@ export interface FileRoutesByFullPath {
   '/$': typeof SplatRoute
   '/about.md': typeof AboutDotmdRoute
   '/analytics': typeof AnalyticsRoute
+  '/audiences.md': typeof AudiencesDotmdRoute
   '/chatgpt': typeof ChatgptRoute
   '/crawlme': typeof CrawlmeRoute
   '/demo': typeof DemoRoute
@@ -337,8 +368,11 @@ export interface FileRoutesByFullPath {
   '/llms.txt': typeof LlmsDottxtRoute
   '/manage': typeof ManageRoute
   '/mcp': typeof McpRoute
+  '/news.md': typeof NewsDotmdRoute
+  '/offerings.md': typeof OfferingsDotmdRoute
   '/preview': typeof PreviewRoute
   '/pricing': typeof PricingRoute
+  '/pricing.md': typeof PricingDotmdRoute
   '/privacy': typeof PrivacyRoute
   '/publish': typeof PublishRoute
   '/refunds': typeof RefundsRoute
@@ -353,6 +387,7 @@ export interface FileRoutesByFullPath {
   '/.well-known/openai-apps-challenge': typeof Char91DotwellKnownChar93OpenaiAppsChallengeRoute
   '/api/crawl-me': typeof ApiCrawlMeRoute
   '/api/entity.json': typeof ApiEntityDotjsonRoute
+  '/api/offerings.json': typeof ApiOfferingsDotjsonRoute
   '/api/search': typeof ApiSearchRoute
   '/api/services.json': typeof ApiServicesDotjsonRoute
   '/knowledge/assistant': typeof KnowledgeAssistantRoute
@@ -381,6 +416,7 @@ export interface FileRoutesByTo {
   '/$': typeof SplatRoute
   '/about.md': typeof AboutDotmdRoute
   '/analytics': typeof AnalyticsRoute
+  '/audiences.md': typeof AudiencesDotmdRoute
   '/chatgpt': typeof ChatgptRoute
   '/crawlme': typeof CrawlmeRoute
   '/demo': typeof DemoRoute
@@ -389,8 +425,11 @@ export interface FileRoutesByTo {
   '/llms.txt': typeof LlmsDottxtRoute
   '/manage': typeof ManageRoute
   '/mcp': typeof McpRoute
+  '/news.md': typeof NewsDotmdRoute
+  '/offerings.md': typeof OfferingsDotmdRoute
   '/preview': typeof PreviewRoute
   '/pricing': typeof PricingRoute
+  '/pricing.md': typeof PricingDotmdRoute
   '/privacy': typeof PrivacyRoute
   '/publish': typeof PublishRoute
   '/refunds': typeof RefundsRoute
@@ -405,6 +444,7 @@ export interface FileRoutesByTo {
   '/.well-known/openai-apps-challenge': typeof Char91DotwellKnownChar93OpenaiAppsChallengeRoute
   '/api/crawl-me': typeof ApiCrawlMeRoute
   '/api/entity.json': typeof ApiEntityDotjsonRoute
+  '/api/offerings.json': typeof ApiOfferingsDotjsonRoute
   '/api/search': typeof ApiSearchRoute
   '/api/services.json': typeof ApiServicesDotjsonRoute
   '/knowledge/assistant': typeof KnowledgeAssistantRoute
@@ -434,6 +474,7 @@ export interface FileRoutesById {
   '/$': typeof SplatRoute
   '/about.md': typeof AboutDotmdRoute
   '/analytics': typeof AnalyticsRoute
+  '/audiences.md': typeof AudiencesDotmdRoute
   '/chatgpt': typeof ChatgptRoute
   '/crawlme': typeof CrawlmeRoute
   '/demo': typeof DemoRoute
@@ -443,8 +484,11 @@ export interface FileRoutesById {
   '/llms.txt': typeof LlmsDottxtRoute
   '/manage': typeof ManageRoute
   '/mcp': typeof McpRoute
+  '/news.md': typeof NewsDotmdRoute
+  '/offerings.md': typeof OfferingsDotmdRoute
   '/preview': typeof PreviewRoute
   '/pricing': typeof PricingRoute
+  '/pricing.md': typeof PricingDotmdRoute
   '/privacy': typeof PrivacyRoute
   '/publish': typeof PublishRoute
   '/refunds': typeof RefundsRoute
@@ -459,6 +503,7 @@ export interface FileRoutesById {
   '/.well-known/openai-apps-challenge': typeof Char91DotwellKnownChar93OpenaiAppsChallengeRoute
   '/api/crawl-me': typeof ApiCrawlMeRoute
   '/api/entity.json': typeof ApiEntityDotjsonRoute
+  '/api/offerings.json': typeof ApiOfferingsDotjsonRoute
   '/api/search': typeof ApiSearchRoute
   '/api/services.json': typeof ApiServicesDotjsonRoute
   '/knowledge/assistant': typeof KnowledgeAssistantRoute
@@ -489,6 +534,7 @@ export interface FileRouteTypes {
     | '/$'
     | '/about.md'
     | '/analytics'
+    | '/audiences.md'
     | '/chatgpt'
     | '/crawlme'
     | '/demo'
@@ -498,8 +544,11 @@ export interface FileRouteTypes {
     | '/llms.txt'
     | '/manage'
     | '/mcp'
+    | '/news.md'
+    | '/offerings.md'
     | '/preview'
     | '/pricing'
+    | '/pricing.md'
     | '/privacy'
     | '/publish'
     | '/refunds'
@@ -514,6 +563,7 @@ export interface FileRouteTypes {
     | '/.well-known/openai-apps-challenge'
     | '/api/crawl-me'
     | '/api/entity.json'
+    | '/api/offerings.json'
     | '/api/search'
     | '/api/services.json'
     | '/knowledge/assistant'
@@ -542,6 +592,7 @@ export interface FileRouteTypes {
     | '/$'
     | '/about.md'
     | '/analytics'
+    | '/audiences.md'
     | '/chatgpt'
     | '/crawlme'
     | '/demo'
@@ -550,8 +601,11 @@ export interface FileRouteTypes {
     | '/llms.txt'
     | '/manage'
     | '/mcp'
+    | '/news.md'
+    | '/offerings.md'
     | '/preview'
     | '/pricing'
+    | '/pricing.md'
     | '/privacy'
     | '/publish'
     | '/refunds'
@@ -566,6 +620,7 @@ export interface FileRouteTypes {
     | '/.well-known/openai-apps-challenge'
     | '/api/crawl-me'
     | '/api/entity.json'
+    | '/api/offerings.json'
     | '/api/search'
     | '/api/services.json'
     | '/knowledge/assistant'
@@ -594,6 +649,7 @@ export interface FileRouteTypes {
     | '/$'
     | '/about.md'
     | '/analytics'
+    | '/audiences.md'
     | '/chatgpt'
     | '/crawlme'
     | '/demo'
@@ -603,8 +659,11 @@ export interface FileRouteTypes {
     | '/llms.txt'
     | '/manage'
     | '/mcp'
+    | '/news.md'
+    | '/offerings.md'
     | '/preview'
     | '/pricing'
+    | '/pricing.md'
     | '/privacy'
     | '/publish'
     | '/refunds'
@@ -619,6 +678,7 @@ export interface FileRouteTypes {
     | '/.well-known/openai-apps-challenge'
     | '/api/crawl-me'
     | '/api/entity.json'
+    | '/api/offerings.json'
     | '/api/search'
     | '/api/services.json'
     | '/knowledge/assistant'
@@ -648,6 +708,7 @@ export interface RootRouteChildren {
   SplatRoute: typeof SplatRoute
   AboutDotmdRoute: typeof AboutDotmdRoute
   AnalyticsRoute: typeof AnalyticsRoute
+  AudiencesDotmdRoute: typeof AudiencesDotmdRoute
   ChatgptRoute: typeof ChatgptRoute
   CrawlmeRoute: typeof CrawlmeRoute
   DemoRoute: typeof DemoRoute
@@ -657,8 +718,11 @@ export interface RootRouteChildren {
   LlmsDottxtRoute: typeof LlmsDottxtRoute
   ManageRoute: typeof ManageRoute
   McpRoute: typeof McpRoute
+  NewsDotmdRoute: typeof NewsDotmdRoute
+  OfferingsDotmdRoute: typeof OfferingsDotmdRoute
   PreviewRoute: typeof PreviewRoute
   PricingRoute: typeof PricingRoute
+  PricingDotmdRoute: typeof PricingDotmdRoute
   PrivacyRoute: typeof PrivacyRoute
   PublishRoute: typeof PublishRoute
   RefundsRoute: typeof RefundsRoute
@@ -673,6 +737,7 @@ export interface RootRouteChildren {
   Char91DotwellKnownChar93OpenaiAppsChallengeRoute: typeof Char91DotwellKnownChar93OpenaiAppsChallengeRoute
   ApiCrawlMeRoute: typeof ApiCrawlMeRoute
   ApiEntityDotjsonRoute: typeof ApiEntityDotjsonRoute
+  ApiOfferingsDotjsonRoute: typeof ApiOfferingsDotjsonRoute
   ApiSearchRoute: typeof ApiSearchRoute
   ApiServicesDotjsonRoute: typeof ApiServicesDotjsonRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
@@ -718,6 +783,13 @@ declare module '@tanstack/react-router' {
       path: '/analytics'
       fullPath: '/analytics'
       preLoaderRoute: typeof AnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/audiences.md': {
+      id: '/audiences.md'
+      path: '/audiences.md'
+      fullPath: '/audiences.md'
+      preLoaderRoute: typeof AudiencesDotmdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chatgpt': {
@@ -783,6 +855,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/news.md': {
+      id: '/news.md'
+      path: '/news.md'
+      fullPath: '/news.md'
+      preLoaderRoute: typeof NewsDotmdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/offerings.md': {
+      id: '/offerings.md'
+      path: '/offerings.md'
+      fullPath: '/offerings.md'
+      preLoaderRoute: typeof OfferingsDotmdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/preview': {
       id: '/preview'
       path: '/preview'
@@ -795,6 +881,13 @@ declare module '@tanstack/react-router' {
       path: '/pricing'
       fullPath: '/pricing'
       preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pricing.md': {
+      id: '/pricing.md'
+      path: '/pricing.md'
+      fullPath: '/pricing.md'
+      preLoaderRoute: typeof PricingDotmdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -893,6 +986,13 @@ declare module '@tanstack/react-router' {
       path: '/api/entity.json'
       fullPath: '/api/entity.json'
       preLoaderRoute: typeof ApiEntityDotjsonRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/offerings.json': {
+      id: '/api/offerings.json'
+      path: '/api/offerings.json'
+      fullPath: '/api/offerings.json'
+      preLoaderRoute: typeof ApiOfferingsDotjsonRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/search': {
@@ -1081,6 +1181,7 @@ const rootRouteChildren: RootRouteChildren = {
   SplatRoute: SplatRoute,
   AboutDotmdRoute: AboutDotmdRoute,
   AnalyticsRoute: AnalyticsRoute,
+  AudiencesDotmdRoute: AudiencesDotmdRoute,
   ChatgptRoute: ChatgptRoute,
   CrawlmeRoute: CrawlmeRoute,
   DemoRoute: DemoRoute,
@@ -1090,8 +1191,11 @@ const rootRouteChildren: RootRouteChildren = {
   LlmsDottxtRoute: LlmsDottxtRoute,
   ManageRoute: ManageRoute,
   McpRoute: McpRoute,
+  NewsDotmdRoute: NewsDotmdRoute,
+  OfferingsDotmdRoute: OfferingsDotmdRoute,
   PreviewRoute: PreviewRoute,
   PricingRoute: PricingRoute,
+  PricingDotmdRoute: PricingDotmdRoute,
   PrivacyRoute: PrivacyRoute,
   PublishRoute: PublishRoute,
   RefundsRoute: RefundsRoute,
@@ -1108,6 +1212,7 @@ const rootRouteChildren: RootRouteChildren = {
     Char91DotwellKnownChar93OpenaiAppsChallengeRoute,
   ApiCrawlMeRoute: ApiCrawlMeRoute,
   ApiEntityDotjsonRoute: ApiEntityDotjsonRoute,
+  ApiOfferingsDotjsonRoute: ApiOfferingsDotjsonRoute,
   ApiSearchRoute: ApiSearchRoute,
   ApiServicesDotjsonRoute: ApiServicesDotjsonRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
