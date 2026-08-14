@@ -86,25 +86,57 @@ export function currentValueFor(core: KnowledgeCore, section: SectionKey, target
 
 /** Splits "Label: value" style proposals into title and body. */
 function split(value: string): { head: string; rest: string } {
-  const idx = value.indexOf(":");
   const dash = value.indexOf(" — ");
   if (dash > 0) return { head: value.slice(0, dash).trim(), rest: value.slice(dash + 3).trim() };
-  if (idx > 0 && idx < 60) return { head: value.slice(0, idx).trim(), rest: value.slice(idx + 1).trim() };
-  return { head: value.slice(0, 70).trim(), rest: value.trim() };
+  const idx = value.indexOf(":");
+  // Only treat a colon as a separator when the part before it looks like a short
+  // label (no sentence punctuation) — otherwise the body would get truncated.
+  if (idx > 0 && idx < 60 && !/[.!?]/.test(value.slice(0, idx))) {
+    return { head: value.slice(0, idx).trim(), rest: value.slice(idx + 1).trim() };
+  }
+  return { head: "", rest: value.trim() };
 }
 
-function extRecord(p: Proposal): ExtRecord {
-  const { head, rest } = split(p.proposedValue);
+const GENERIC_LABELS = new Set(Object.values(sectionLabel).map((l) => l.toLowerCase()));
+
+/**
+ * Resolves the title/body pair for a proposal.
+ *
+ * The assistant usually sends the title in `label` and the full text in
+ * `proposedValue`. Splitting the value in that case cuts content off, so the
+ * label wins whenever it carries real information.
+ */
+function headBody(p: Proposal): { head: string; body: string } {
+  const value = p.proposedValue.trim();
+  const label = (p.label ?? "").trim();
+
+  if (label && !GENERIC_LABELS.has(label.toLowerCase())) {
+    if (value.toLowerCase().startsWith(label.toLowerCase())) {
+      const rest = value.slice(label.length).replace(/^\s*[—–:-]\s*/, "").trim();
+      return { head: label, body: rest || value };
+    }
+    return { head: label, body: value };
+  }
+
+  const { head, rest } = split(value);
+  return { head: head || value.split(/\s*[.\n]/)[0]!.slice(0, 70).trim(), body: rest || value };
+}
+
+const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ").replace(/[?!.:;,]+$/, "");
+
+function extRecord(p: Proposal, id = kcId()): ExtRecord {
+  const { head, body } = headBody(p);
   return {
-    id: kcId(),
+    id,
     title: head || p.label,
-    body: rest && rest !== head ? rest : "",
+    body: body && body !== head ? body : "",
     status: p.status,
     visibility: p.visibility,
     ...(p.source ? { source: p.source } : {}),
     updatedAt: now(),
   };
 }
+
 
 export function applyProposal(core: KnowledgeCore, p: Proposal): KnowledgeCore {
   const ext = getExt(core);
