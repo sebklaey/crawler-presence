@@ -1,13 +1,16 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Check, Minus } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Check, Loader2, Minus } from "lucide-react";
+import { useState } from "react";
 
 import { AppShell, PageHead } from "@/components/app-shell";
 import { PaymentTestModeBanner } from "@/components/payment-test-mode-banner";
 import { Button } from "@/components/ui/button";
-import { usePlan } from "@/lib/store";
+import { useCore, usePlan } from "@/lib/store";
 import { usePaymentsStatus } from "@/hooks/use-payments-status";
-import { PLANS } from "@/lib/billing";
-import { useFunnelOnce } from "@/lib/funnel";
+import { PLANS, type PlanId } from "@/lib/billing";
+import { isCoreEmpty } from "@/lib/knowledge";
+import { startPublishFn } from "@/lib/presence.functions";
+import { trackFunnel, useFunnelOnce } from "@/lib/funnel";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
@@ -24,10 +27,64 @@ export const Route = createFileRoute("/pricing")({
   component: PricingPage,
 });
 
+const PENDING_INTENT_KEY = "crawler:pending-intent";
+const PENDING_PLAN_KEY = "crawler:pending-plan";
+
 function PricingPage() {
   useFunnelOnce("pricing_viewed");
   const [plan, setPlan] = usePlan();
+  const [core] = useCore();
+  const navigate = useNavigate();
+  const [busy, setBusy] = useState<PlanId | null>(null);
   const { status: payments } = usePaymentsStatus();
+
+  /** Opens the Paddle overlay straight from pricing; /publish only redeems it. */
+  async function buy(planId: PlanId) {
+    if (busy) return;
+    setPlan(planId);
+    // Nothing to publish yet, or checkout not available: keep the guided flow.
+    if (isCoreEmpty(core) || !payments.configured) {
+      void navigate({ to: "/publish", search: { plan: planId } });
+      return;
+    }
+    setBusy(planId);
+    trackFunnel("checkout_started", { plan: planId, fromStep: "pricing", toStep: "checkout" });
+    try {
+      const result = await startPublishFn({
+        data: { core, plan: planId, origin: window.location.origin },
+      });
+      if (result.kind === "error") {
+        void navigate({ to: "/publish", search: { plan: planId } });
+        return;
+      }
+      try {
+        localStorage.setItem(PENDING_PLAN_KEY, planId);
+        localStorage.setItem(
+          PENDING_INTENT_KEY,
+          JSON.stringify({ ref: result.intentRef, at: Date.now() }),
+        );
+      } catch {
+        /* ignore */
+      }
+      const successUrl = `${window.location.origin}/publish?intent=${encodeURIComponent(result.intentRef)}`;
+      try {
+        const { openPaddleCheckout } = await import("@/lib/paddle-client");
+        await openPaddleCheckout({
+          environment: result.environment,
+          token: result.clientToken,
+          transactionId: result.transactionId,
+          successUrl,
+        });
+      } catch {
+        window.location.href = result.url;
+      }
+    } catch {
+      void navigate({ to: "/publish", search: { plan: planId } });
+    } finally {
+      setBusy(null);
+    }
+  }
+
 
   return (
     <AppShell>
