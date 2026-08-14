@@ -223,7 +223,7 @@ export function AiAnalyticsDashboardView(props: Props) {
                       {row.syntheticMentionRate === null
                         ? row.provider === "anthropic" || row.provider === "perplexity"
                           ? "Add key in Data sources"
-                          : row.provider === "crawler" || row.provider === "other" || row.provider === "microsoft"
+                          : row.provider === "crawler" || row.provider === "other"
                             ? "—"
                             : "No tests yet"
                         : formatRate(row.syntheticMentionRate)}
