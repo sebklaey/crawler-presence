@@ -62,7 +62,6 @@ export const PROVIDER_ORDER: ProviderId[] = [
   "anthropic",
   "google",
   "perplexity",
-  "microsoft",
   "crawler",
 ];
 
