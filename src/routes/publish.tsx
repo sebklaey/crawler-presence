@@ -7,6 +7,7 @@ import { AppShell, PageHead } from "@/components/app-shell";
 
 import { PresenceStatus } from "@/components/presence-status";
 import { CompletenessCard } from "@/components/kc/completeness-card";
+import { completenessScore } from "@/lib/kc/model";
 import { RecoveryCodeCard } from "@/components/recovery-code-card";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,7 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { HOSTING_BENEFITS, NO_GUARANTEE_NOTICE, PLANS, planById, recommendPlan, type PlanId } from "@/lib/billing";
 import { trackFunnel, useFunnelOnce } from "@/lib/funnel";
-import { generatedFiles, isCoreEmpty, presenceScore, type KnowledgeCore } from "@/lib/knowledge";
+import { generatedFiles, isCoreEmpty, type KnowledgeCore } from "@/lib/knowledge";
 import { finalizePublishFn, loadDraft, startPublishFn } from "@/lib/presence.functions";
 import { rememberSessionToken, useSessionSync } from "@/hooks/use-session-sync";
 import { usePaymentsStatus } from "@/hooks/use-payments-status";
@@ -307,7 +308,7 @@ function PublishPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingIntent]);
 
-  const score = presenceScore(core);
+  const score = completenessScore(core);
   const files = useMemo(() => generatedFiles(core), [core]);
   const payments = paymentsStatus.configured;
   const recommendation = useMemo(
@@ -708,7 +709,7 @@ function PublishPage() {
           </div>
 
           <div className="space-y-3">
-            <PresenceStatus core={core} compact hideScore />
+            <PresenceStatus core={core} compact hideScore score={completenessScore(core)} />
             <CompletenessCard core={core} columns={1} showPresenceChecks />
 
             <p className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-xs text-muted-foreground">
