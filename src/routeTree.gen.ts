@@ -40,6 +40,13 @@ import { Route as ApiCrawlMeRouteImport } from './routes/api/crawl-me'
 import { Route as ApiEntityDotjsonRouteImport } from './routes/api/entity[.]json'
 import { Route as ApiSearchRouteImport } from './routes/api/search'
 import { Route as ApiServicesDotjsonRouteImport } from './routes/api/services[.]json'
+import { Route as KnowledgeIndexRouteImport } from './routes/knowledge.index'
+import { Route as KnowledgeAssistantRouteImport } from './routes/knowledge.assistant'
+import { Route as KnowledgeChangesRouteImport } from './routes/knowledge.changes'
+import { Route as KnowledgeDataRouteImport } from './routes/knowledge.data'
+import { Route as KnowledgeHistoryRouteImport } from './routes/knowledge.history'
+import { Route as KnowledgePublishRouteImport } from './routes/knowledge.publish'
+import { Route as KnowledgeSourcesRouteImport } from './routes/knowledge.sources'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as ApiPublicMcpHealthRouteImport } from './routes/api/public/mcp-health'
 import { Route as CSlugSplatRouteImport } from './routes/c.$slug.$'
@@ -212,6 +219,41 @@ const ApiServicesDotjsonRoute = ApiServicesDotjsonRouteImport.update({
   path: '/api/services.json',
   getParentRoute: () => rootRouteImport,
 } as any)
+const KnowledgeIndexRoute = KnowledgeIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => KnowledgeRoute,
+} as any)
+const KnowledgeAssistantRoute = KnowledgeAssistantRouteImport.update({
+  id: '/assistant',
+  path: '/assistant',
+  getParentRoute: () => KnowledgeRoute,
+} as any)
+const KnowledgeChangesRoute = KnowledgeChangesRouteImport.update({
+  id: '/changes',
+  path: '/changes',
+  getParentRoute: () => KnowledgeRoute,
+} as any)
+const KnowledgeDataRoute = KnowledgeDataRouteImport.update({
+  id: '/data',
+  path: '/data',
+  getParentRoute: () => KnowledgeRoute,
+} as any)
+const KnowledgeHistoryRoute = KnowledgeHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => KnowledgeRoute,
+} as any)
+const KnowledgePublishRoute = KnowledgePublishRouteImport.update({
+  id: '/publish',
+  path: '/publish',
+  getParentRoute: () => KnowledgeRoute,
+} as any)
+const KnowledgeSourcesRoute = KnowledgeSourcesRouteImport.update({
+  id: '/sources',
+  path: '/sources',
+  getParentRoute: () => KnowledgeRoute,
+} as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
     id: '/.mcp/invoke-tool/$tool',
@@ -290,7 +332,7 @@ export interface FileRoutesByFullPath {
   '/crawlme': typeof CrawlmeRoute
   '/demo': typeof DemoRoute
   '/faq.md': typeof FaqDotmdRoute
-  '/knowledge': typeof KnowledgeRoute
+  '/knowledge': typeof KnowledgeRouteWithChildren
   '/llms-full.txt': typeof LlmsFullDottxtRoute
   '/llms.txt': typeof LlmsDottxtRoute
   '/manage': typeof ManageRoute
@@ -313,6 +355,13 @@ export interface FileRoutesByFullPath {
   '/api/entity.json': typeof ApiEntityDotjsonRoute
   '/api/search': typeof ApiSearchRoute
   '/api/services.json': typeof ApiServicesDotjsonRoute
+  '/knowledge/assistant': typeof KnowledgeAssistantRoute
+  '/knowledge/changes': typeof KnowledgeChangesRoute
+  '/knowledge/data': typeof KnowledgeDataRoute
+  '/knowledge/history': typeof KnowledgeHistoryRoute
+  '/knowledge/publish': typeof KnowledgePublishRoute
+  '/knowledge/sources': typeof KnowledgeSourcesRoute
+  '/knowledge/': typeof KnowledgeIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
   '/c/$slug/$': typeof CSlugSplatRoute
@@ -336,7 +385,6 @@ export interface FileRoutesByTo {
   '/crawlme': typeof CrawlmeRoute
   '/demo': typeof DemoRoute
   '/faq.md': typeof FaqDotmdRoute
-  '/knowledge': typeof KnowledgeRoute
   '/llms-full.txt': typeof LlmsFullDottxtRoute
   '/llms.txt': typeof LlmsDottxtRoute
   '/manage': typeof ManageRoute
@@ -359,6 +407,13 @@ export interface FileRoutesByTo {
   '/api/entity.json': typeof ApiEntityDotjsonRoute
   '/api/search': typeof ApiSearchRoute
   '/api/services.json': typeof ApiServicesDotjsonRoute
+  '/knowledge/assistant': typeof KnowledgeAssistantRoute
+  '/knowledge/changes': typeof KnowledgeChangesRoute
+  '/knowledge/data': typeof KnowledgeDataRoute
+  '/knowledge/history': typeof KnowledgeHistoryRoute
+  '/knowledge/publish': typeof KnowledgePublishRoute
+  '/knowledge/sources': typeof KnowledgeSourcesRoute
+  '/knowledge': typeof KnowledgeIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
   '/c/$slug/$': typeof CSlugSplatRoute
@@ -383,7 +438,7 @@ export interface FileRoutesById {
   '/crawlme': typeof CrawlmeRoute
   '/demo': typeof DemoRoute
   '/faq.md': typeof FaqDotmdRoute
-  '/knowledge': typeof KnowledgeRoute
+  '/knowledge': typeof KnowledgeRouteWithChildren
   '/llms-full.txt': typeof LlmsFullDottxtRoute
   '/llms.txt': typeof LlmsDottxtRoute
   '/manage': typeof ManageRoute
@@ -406,6 +461,13 @@ export interface FileRoutesById {
   '/api/entity.json': typeof ApiEntityDotjsonRoute
   '/api/search': typeof ApiSearchRoute
   '/api/services.json': typeof ApiServicesDotjsonRoute
+  '/knowledge/assistant': typeof KnowledgeAssistantRoute
+  '/knowledge/changes': typeof KnowledgeChangesRoute
+  '/knowledge/data': typeof KnowledgeDataRoute
+  '/knowledge/history': typeof KnowledgeHistoryRoute
+  '/knowledge/publish': typeof KnowledgePublishRoute
+  '/knowledge/sources': typeof KnowledgeSourcesRoute
+  '/knowledge/': typeof KnowledgeIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
   '/c/$slug/$': typeof CSlugSplatRoute
@@ -454,6 +516,13 @@ export interface FileRouteTypes {
     | '/api/entity.json'
     | '/api/search'
     | '/api/services.json'
+    | '/knowledge/assistant'
+    | '/knowledge/changes'
+    | '/knowledge/data'
+    | '/knowledge/history'
+    | '/knowledge/publish'
+    | '/knowledge/sources'
+    | '/knowledge/'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
     | '/c/$slug/$'
@@ -477,7 +546,6 @@ export interface FileRouteTypes {
     | '/crawlme'
     | '/demo'
     | '/faq.md'
-    | '/knowledge'
     | '/llms-full.txt'
     | '/llms.txt'
     | '/manage'
@@ -500,6 +568,13 @@ export interface FileRouteTypes {
     | '/api/entity.json'
     | '/api/search'
     | '/api/services.json'
+    | '/knowledge/assistant'
+    | '/knowledge/changes'
+    | '/knowledge/data'
+    | '/knowledge/history'
+    | '/knowledge/publish'
+    | '/knowledge/sources'
+    | '/knowledge'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
     | '/c/$slug/$'
@@ -546,6 +621,13 @@ export interface FileRouteTypes {
     | '/api/entity.json'
     | '/api/search'
     | '/api/services.json'
+    | '/knowledge/assistant'
+    | '/knowledge/changes'
+    | '/knowledge/data'
+    | '/knowledge/history'
+    | '/knowledge/publish'
+    | '/knowledge/sources'
+    | '/knowledge/'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
     | '/c/$slug/$'
@@ -570,7 +652,7 @@ export interface RootRouteChildren {
   CrawlmeRoute: typeof CrawlmeRoute
   DemoRoute: typeof DemoRoute
   FaqDotmdRoute: typeof FaqDotmdRoute
-  KnowledgeRoute: typeof KnowledgeRoute
+  KnowledgeRoute: typeof KnowledgeRouteWithChildren
   LlmsFullDottxtRoute: typeof LlmsFullDottxtRoute
   LlmsDottxtRoute: typeof LlmsDottxtRoute
   ManageRoute: typeof ManageRoute
@@ -827,6 +909,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiServicesDotjsonRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/knowledge/': {
+      id: '/knowledge/'
+      path: '/'
+      fullPath: '/knowledge/'
+      preLoaderRoute: typeof KnowledgeIndexRouteImport
+      parentRoute: typeof KnowledgeRoute
+    }
+    '/knowledge/assistant': {
+      id: '/knowledge/assistant'
+      path: '/assistant'
+      fullPath: '/knowledge/assistant'
+      preLoaderRoute: typeof KnowledgeAssistantRouteImport
+      parentRoute: typeof KnowledgeRoute
+    }
+    '/knowledge/changes': {
+      id: '/knowledge/changes'
+      path: '/changes'
+      fullPath: '/knowledge/changes'
+      preLoaderRoute: typeof KnowledgeChangesRouteImport
+      parentRoute: typeof KnowledgeRoute
+    }
+    '/knowledge/data': {
+      id: '/knowledge/data'
+      path: '/data'
+      fullPath: '/knowledge/data'
+      preLoaderRoute: typeof KnowledgeDataRouteImport
+      parentRoute: typeof KnowledgeRoute
+    }
+    '/knowledge/history': {
+      id: '/knowledge/history'
+      path: '/history'
+      fullPath: '/knowledge/history'
+      preLoaderRoute: typeof KnowledgeHistoryRouteImport
+      parentRoute: typeof KnowledgeRoute
+    }
+    '/knowledge/publish': {
+      id: '/knowledge/publish'
+      path: '/publish'
+      fullPath: '/knowledge/publish'
+      preLoaderRoute: typeof KnowledgePublishRouteImport
+      parentRoute: typeof KnowledgeRoute
+    }
+    '/knowledge/sources': {
+      id: '/knowledge/sources'
+      path: '/sources'
+      fullPath: '/knowledge/sources'
+      preLoaderRoute: typeof KnowledgeSourcesRouteImport
+      parentRoute: typeof KnowledgeRoute
+    }
     '/.mcp/invoke-tool/$tool': {
       id: '/.mcp/invoke-tool/$tool'
       path: '/.mcp/invoke-tool/$tool'
@@ -921,6 +1052,30 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface KnowledgeRouteChildren {
+  KnowledgeAssistantRoute: typeof KnowledgeAssistantRoute
+  KnowledgeChangesRoute: typeof KnowledgeChangesRoute
+  KnowledgeDataRoute: typeof KnowledgeDataRoute
+  KnowledgeHistoryRoute: typeof KnowledgeHistoryRoute
+  KnowledgePublishRoute: typeof KnowledgePublishRoute
+  KnowledgeSourcesRoute: typeof KnowledgeSourcesRoute
+  KnowledgeIndexRoute: typeof KnowledgeIndexRoute
+}
+
+const KnowledgeRouteChildren: KnowledgeRouteChildren = {
+  KnowledgeAssistantRoute: KnowledgeAssistantRoute,
+  KnowledgeChangesRoute: KnowledgeChangesRoute,
+  KnowledgeDataRoute: KnowledgeDataRoute,
+  KnowledgeHistoryRoute: KnowledgeHistoryRoute,
+  KnowledgePublishRoute: KnowledgePublishRoute,
+  KnowledgeSourcesRoute: KnowledgeSourcesRoute,
+  KnowledgeIndexRoute: KnowledgeIndexRoute,
+}
+
+const KnowledgeRouteWithChildren = KnowledgeRoute._addFileChildren(
+  KnowledgeRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SplatRoute: SplatRoute,
@@ -930,7 +1085,7 @@ const rootRouteChildren: RootRouteChildren = {
   CrawlmeRoute: CrawlmeRoute,
   DemoRoute: DemoRoute,
   FaqDotmdRoute: FaqDotmdRoute,
-  KnowledgeRoute: KnowledgeRoute,
+  KnowledgeRoute: KnowledgeRouteWithChildren,
   LlmsFullDottxtRoute: LlmsFullDottxtRoute,
   LlmsDottxtRoute: LlmsDottxtRoute,
   ManageRoute: ManageRoute,

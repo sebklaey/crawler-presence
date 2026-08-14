@@ -431,6 +431,10 @@ export async function republishCore(
   const existing = await getPublished(slug);
   if (!existing) storeFailure("republish", "unknown presence");
 
+  // Extended editor sections are carried through untouched — the tolerant
+  // merge below only knows the base Knowledge Core shape.
+  const carriedExt = core.ext ?? existing.core.ext;
+
   if (mode === "merge") {
     const { mergeCore, normalizeCore } = await import("../interview-rules");
     const { toKnowledgeCore } = await import("../interview-core.server");
@@ -440,6 +444,8 @@ export async function republishCore(
       /* if the merge fails we keep the incoming core rather than losing the update */
     }
   }
+  if (carriedExt) core = { ...core, ext: carriedExt };
+
 
   const { applyCatalogLimit } = await import("../entitlements");
   const visible = applyCatalogLimit(core, existing.plan).core;

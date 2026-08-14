@@ -70,6 +70,9 @@ export type KnowledgeCore = {
   /** Text documents uploaded in ChatGPT and imported into the Knowledge Core. */
   documents: DocumentEntry[];
   gaps: string[];
+  /** Extended editor sections (organization, audiences, pricing, news, archive). */
+  ext?: import("./kc/model").CoreExtension;
+
   updatedAt: string;
 };
 
@@ -167,9 +170,14 @@ function filePaths(c: KnowledgeCore): string[] {
   if (has("project")) paths.push("projects.md");
   if (has("service")) paths.push("services.md");
   if (c.faqs.length) paths.push("faq.md");
+  if (pub(extOf(c).audiences).length) paths.push("audiences.md");
+  if (pub(extOf(c).pricing).length) paths.push("pricing.md");
+  if (pub(extOf(c).news).length) paths.push("news.md");
   if (c.cv.length) paths.push("cv.md");
   for (const d of docs(c)) paths.push(`docs/${slug(d.title)}.md`);
   paths.push("api/entity.json");
+  for (const k of ["audiences", "pricing", "news"] as const)
+    if (pub(extOf(c)[k]).length) paths.push(`api/${k}.json`);
   if (docs(c).length) paths.push("api/documents.json");
   for (const k of ["offering", "project", "service"] as CatalogKind[]) if (has(k)) paths.push(`api/${k}s.json`);
   paths.push("llms-full.txt");
@@ -308,6 +316,7 @@ export function entityJson(c: KnowledgeCore) {
       .filter((f) => f.status === "claimed")
       .map((f) => ({ label: f.label, value: f.value })),
     positioning: c.stories.map((s) => ({ label: s.label, text: s.text, confirmed: s.confirmed })),
+    organization: organizationJson(c),
     links: c.links,
     updated_at: c.updatedAt,
     generated_by: "Crawler",
@@ -331,6 +340,74 @@ export function catalogJson(c: KnowledgeCore, kind: CatalogKind) {
   };
 }
 
+
+/* ---------------- Extended editor sections (organization, audiences, pricing, news) --------------- */
+
+type ExtLike = NonNullable<KnowledgeCore["ext"]>;
+
+function extOf(c: KnowledgeCore): ExtLike {
+  const raw = c.ext;
+  return {
+    v: 1,
+    organization: raw?.organization ?? {},
+    audiences: raw?.audiences ?? [],
+    pricing: raw?.pricing ?? [],
+    news: raw?.news ?? [],
+    evidence: raw?.evidence ?? {},
+    archive: raw?.archive ?? [],
+  };
+}
+
+/** Only records the user marked as public ever reach a generated file. */
+function pub(list: ExtLike["audiences"]) {
+  return (list ?? []).filter((r) => r && r.visibility === "public" && r.title);
+}
+
+function recordLines(list: ExtLike["audiences"]) {
+  return pub(list).flatMap((r) => [
+    `## ${r.title}`,
+    "",
+    r.body ?? "",
+    ...(r.fields ?? []).filter((f) => f.key && f.value).map((f) => `**${f.key}:** ${f.value}`),
+    "",
+  ]);
+}
+
+export function buildAudiencesMd(c: KnowledgeCore) {
+  return ["# Audiences", "", ...recordLines(extOf(c).audiences)].join("\n");
+}
+
+export function buildPricingMd(c: KnowledgeCore) {
+  return ["# Pricing", "", ...recordLines(extOf(c).pricing)].join("\n");
+}
+
+export function buildNewsMd(c: KnowledgeCore) {
+  return ["# News and updates", "", ...recordLines(extOf(c).news)].join("\n");
+}
+
+function recordsJson(c: KnowledgeCore, key: "audiences" | "pricing" | "news") {
+  const list = pub(extOf(c)[key]);
+  return {
+    type: key,
+    count: list.length,
+    records: list.map((r) => ({
+      id: slug(r.title),
+      title: r.title,
+      body: r.body ?? null,
+      details: Object.fromEntries((r.fields ?? []).filter((f) => f.key).map((f) => [f.key, f.value])),
+      evidence: r.status,
+      source: r.source ?? null,
+      updated_at: r.updatedAt,
+    })),
+  };
+}
+
+export function organizationJson(c: KnowledgeCore) {
+  const org = extOf(c).organization;
+  const entries = Object.entries(org).filter(([, v]) => (v ?? "").toString().trim());
+  return entries.length ? Object.fromEntries(entries) : null;
+}
+
 /** Only relevant files are generated — a photographer gets no offerings.md. */
 function baseFiles(c: KnowledgeCore): GeneratedFile[] {
   const files: GeneratedFile[] = [];
@@ -343,11 +420,20 @@ function baseFiles(c: KnowledgeCore): GeneratedFile[] {
   if (has("project")) files.push({ path: "projects.md", type: "markdown", content: catalogMd(c, "project", "Projects") });
   if (has("service")) files.push({ path: "services.md", type: "markdown", content: catalogMd(c, "service", "Services") });
   if (c.faqs.length) files.push({ path: "faq.md", type: "markdown", content: buildFaqMd(c) });
+  if (pub(extOf(c).audiences).length)
+    files.push({ path: "audiences.md", type: "markdown", content: buildAudiencesMd(c) });
+  if (pub(extOf(c).pricing).length)
+    files.push({ path: "pricing.md", type: "markdown", content: buildPricingMd(c) });
+  if (pub(extOf(c).news).length) files.push({ path: "news.md", type: "markdown", content: buildNewsMd(c) });
   if (c.cv.length) files.push({ path: "cv.md", type: "markdown", content: buildCvMd(c) });
   for (const d of docs(c))
     files.push({ path: `docs/${slug(d.title)}.md`, type: "markdown", content: documentMd(d) });
 
   files.push({ path: "api/entity.json", type: "json", content: JSON.stringify(entityJson(c), null, 2) });
+  for (const k of ["audiences", "pricing", "news"] as const) {
+    if (pub(extOf(c)[k]).length)
+      files.push({ path: `api/${k}.json`, type: "json", content: JSON.stringify(recordsJson(c, k), null, 2) });
+  }
   if (docs(c).length)
     files.push({ path: "api/documents.json", type: "json", content: JSON.stringify(documentsJson(c), null, 2) });
   for (const kind of ["offering", "project", "service"] as CatalogKind[]) {

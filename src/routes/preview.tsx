@@ -9,7 +9,7 @@ import { generatedFiles, isCoreEmpty } from "@/lib/knowledge";
 import { useSessionSync } from "@/hooks/use-session-sync";
 import { useCore } from "@/lib/store";
 import { useFunnelOnce } from "@/lib/funnel";
-import { Empty } from "./knowledge";
+import { Empty } from "./knowledge.index";
 
 export const Route = createFileRoute("/preview")({
   head: () => ({
