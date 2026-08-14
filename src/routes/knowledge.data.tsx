@@ -415,5 +415,3 @@ function DataPage() {
   );
 }
 
-  );
-}
