@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Archive, Plus, Save } from "lucide-react";
+import { Archive, Plus, Save, Trash2 } from "lucide-react";
 
 import { toast } from "sonner";
 
