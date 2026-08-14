@@ -120,17 +120,23 @@ export function gatewayAvailable(): boolean {
 
 export function configuredProviders(): ProviderId[] {
   const out: ProviderId[] = [];
-  if (env("OPENAI_API_KEY")) out.push("openai");
+  if (env("OPENAI_API_KEY") || gatewayAvailable()) out.push("openai");
   if (env("ANTHROPIC_API_KEY")) out.push("anthropic");
   if (env("GEMINI_API_KEY") || gatewayAvailable()) out.push("google");
   if (env("PERPLEXITY_API_KEY")) out.push("perplexity");
   return out;
 }
 
+/** Models reachable through the built-in gateway, no user key required. */
+const GATEWAY_MODELS: Partial<Record<ProviderId, string>> = {
+  openai: "openai/gpt-5-mini",
+  google: "google/gemini-3.6-flash",
+};
+
 const GATEWAY_MODEL = "google/gemini-3.6-flash";
 
 /** Built-in test model. No user key, no setup: this is the one-click path. */
-async function askGateway(prompt: string): Promise<ProbeAnswer> {
+async function askGateway(prompt: string, model: string = GATEWAY_MODEL): Promise<ProbeAnswer> {
   const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     signal: AbortSignal.timeout(60_000),
@@ -138,13 +144,14 @@ async function askGateway(prompt: string): Promise<ProbeAnswer> {
       "Lovable-API-Key": env("LOVABLE_API_KEY")!,
       "content-type": "application/json",
     },
-    body: JSON.stringify({ model: GATEWAY_MODEL, messages: [{ role: "user", content: prompt }] }),
+    body: JSON.stringify({ model, messages: [{ role: "user", content: prompt }] }),
   });
   if (!response.ok) throw new Error(`AI gateway [${response.status}]: ${(await response.text()).slice(0, 200)}`);
   const body = (await response.json()) as { choices?: { message?: { content?: string } }[] };
   const text = body.choices?.[0]?.message?.content ?? "";
-  return { text, model: GATEWAY_MODEL, urls: extractUrls(text) };
+  return { text, model, urls: extractUrls(text) };
 }
+
 
 function extractUrls(text: string): string[] {
   return [...new Set(text.match(/https?:\/\/[^\s)"'\]]+/g) ?? [])].slice(0, 20);
