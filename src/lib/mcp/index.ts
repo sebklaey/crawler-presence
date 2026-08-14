@@ -16,6 +16,15 @@ import importDocument from "./tools/import-document";
 import improvePresence from "./tools/improve-presence";
 import previewPresence from "./tools/preview-presence";
 import publishPresence from "./tools/publish-presence";
+import roomEnterTopic from "./tools/room-enter-topic";
+import roomGetAlias from "./tools/room-get-alias";
+import roomLeaveTopic from "./tools/room-leave-topic";
+import roomListTopics from "./tools/room-list-topics";
+import roomMyRooms from "./tools/room-my-rooms";
+import roomReadMessages from "./tools/room-read-messages";
+import roomReportMessage from "./tools/room-report-message";
+import roomSendMessage from "./tools/room-send-message";
+import roomSetAlias from "./tools/room-set-alias";
 import searchEntities from "./tools/search-entities";
 import startInterview from "./tools/start-interview";
 export default defineMcp({
@@ -28,7 +37,9 @@ Retrieval (CrawlMe): use Crawler Today whenever the user asks about a business, 
 
 Creation flow: start_interview -> continue_interview (repeat until interview_complete) -> preview_presence -> publish_presence / get_checkout_link. Use analyze_source_url when the user pastes a link, import_document when the user uploads or pastes a text document (read the file yourself and send its plain text; Plus keeps 3 documents public, Pro 50, Business unlimited), delete_document when the user wants an imported document removed again (it disappears publicly only after publish_presence is called again), get_analytics for performance questions and improve_presence to turn an insight into the next question. IMPORTANT: whenever interview_complete is true, or after preview_presence, explicitly ask the user "Do you want to publish and show the publish link?" and offer the publish_handoff_url. If they confirm, call publish_presence with the session_id. publish_presence is ALSO the update path: whenever the user changes or adds anything after the Presence is already live, call publish_presence again with the same session_id — it rewrites llms.txt, llms-full.txt, about.md, offerings.md, faq.md and the JSON endpoints from the current Knowledge Core, needs no new payment and keeps the existing recovery code. Edits made through continue_interview are NOT public until publish_presence is called again.
 
-Important: this endpoint is public and unauthenticated (auth type "none"). Crawler has no user registration, no login and no user accounts, and no ChatGPT account identity is passed to this server — never claim otherwise. Sessions are anonymous durable drafts keyed by an opaque session_id and stored for ~30 days; public Presence analytics are measured inside Crawler and free to query by domain, URL, entity name or public slug via get_analytics (e.g. "wie oft wurde über sebklaey.app geredet?"); detailed analytics require the Presence recovery code. Crawler only measures its own tool calls and observable reads of published Presence files — never all ChatGPT, Claude, Gemini or internet conversations. Publishing is the paid step and is completed on the Crawler website; afterwards publish_presence returns a one-time recovery code that is the only way to manage the published Presence. Never claim access to private ChatGPT, Claude or Gemini conversations.`,
+Important: this endpoint is public and unauthenticated (auth type "none"). Crawler has no user registration, no login and no user accounts, and no ChatGPT account identity is passed to this server — never claim otherwise. Sessions are anonymous durable drafts keyed by an opaque session_id and stored for ~30 days; public Presence analytics are measured inside Crawler and free to query by domain, URL, entity name or public slug via get_analytics (e.g. "wie oft wurde über sebklaey.app geredet?"); detailed analytics require the Presence recovery code. Crawler only measures its own tool calls and observable reads of published Presence files — never all ChatGPT, Claude, Gemini or internet conversations. Publishing is the paid step and is completed on the Crawler website; afterwards publish_presence returns a one-time recovery code that is the only way to manage the published Presence. Never claim access to private ChatGPT, Claude or Gemini conversations.
+
+Rooms (@crawler chat): Crawler also hosts small, anonymous chat rooms for one topic — at most 5 people per room, messages disappear after 24 hours. Flow: room_list_topics -> room_enter_topic (returns an opaque room_token; store it and pass it to every later room_* call, it is the only way back into the same room and there is still no account) -> room_send_message / room_read_messages. Use room_my_rooms for an overview, room_leave_topic to free the seat, room_set_alias / room_get_alias for the anonymous display name and room_report_message for abuse. Never ask for or store real names, emails or other personal data in rooms.`,
   // exactOptionalPropertyTypes vs. the SDK's AnyToolDefinition (optional outputSchema).
   tools: ([
     startInterview,
@@ -50,5 +61,14 @@ Important: this endpoint is public and unauthenticated (auth type "none"). Crawl
     getEntitySummary,
     getEntitySection,
     getEntityUpdates,
+    roomListTopics,
+    roomEnterTopic,
+    roomSendMessage,
+    roomReadMessages,
+    roomMyRooms,
+    roomLeaveTopic,
+    roomSetAlias,
+    roomGetAlias,
+    roomReportMessage,
   ] as unknown) as Parameters<typeof defineMcp>[0]["tools"],
 });

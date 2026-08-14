@@ -669,6 +669,309 @@
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
         "outputSchema": null
+      },
+      {
+        "name": "room_list_topics",
+        "title": "List chat topics",
+        "description": "Use this when the user wants to chat with other people in Crawler Rooms. Returns the available topics (AI, Art, Science, Tech, Music, Gaming, Life) with how many small rooms are active and how many people are online right now.",
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "room_enter_topic",
+        "title": "Enter a room",
+        "description": "Joins the user into a small anonymous chat room (max 5 people) for a topic. Accepts free text like 'AI', 'KI', 'Kunst' or 'tech'. If no room_token is given, a new anonymous token is created and returned — store it and pass it to every later room_* call, it is the only way back into the same room.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "topic": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Topic name or slug, e.g. 'ai', 'Kunst', 'tech'."
+            },
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous token from a previous room_enter_topic call."
+            },
+            "alias": {
+              "type": "string",
+              "description": "Optional display name for this person."
+            }
+          },
+          "required": [
+            "topic"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "room_send_message",
+        "title": "Send a room message",
+        "description": "Sends a message into the user's current room for a topic. Requires the room_token returned by room_enter_topic. Messages are at most 500 characters, may contain at most two links and disappear after 24 hours.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Anonymous token from room_enter_topic."
+            },
+            "topic": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Topic name or slug of the room."
+            },
+            "message": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The message text to post."
+            }
+          },
+          "required": [
+            "room_token",
+            "topic",
+            "message"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "room_read_messages",
+        "title": "Read room messages",
+        "description": "Reads the most recent messages in the user's room for a topic and marks them as read. Requires the room_token from room_enter_topic. Use since_message_id to fetch only new messages.",
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Anonymous token from room_enter_topic."
+            },
+            "topic": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Topic name or slug of the room."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "description": "How many messages to return (default 20)."
+            },
+            "since_message_id": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "Return only messages newer than this id."
+            }
+          },
+          "required": [
+            "room_token",
+            "topic"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "room_my_rooms",
+        "title": "My rooms",
+        "description": "Lists all rooms the anonymous room_token is currently a member of, including display name, people online and unread message count.",
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Anonymous token from room_enter_topic."
+            }
+          },
+          "required": [
+            "room_token"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "room_leave_topic",
+        "title": "Leave a room",
+        "description": "Leaves the user's current room for a topic. The seat is freed for someone else; the person can enter the topic again at any time with the same room_token.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": true,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Anonymous token from room_enter_topic."
+            },
+            "topic": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Topic name or slug of the room to leave."
+            }
+          },
+          "required": [
+            "room_token",
+            "topic"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "room_set_alias",
+        "title": "Set room display name",
+        "description": "Sets the anonymous display name used in every room of this room_token. Names are unique across Crawler Rooms and contain no personal data.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Anonymous token from room_enter_topic."
+            },
+            "alias": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 32,
+              "description": "The display name to use, e.g. 'Blue Fox'."
+            }
+          },
+          "required": [
+            "room_token",
+            "alias"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "room_get_alias",
+        "title": "Get room display name",
+        "description": "Returns the anonymous display name currently used by this room_token in Crawler Rooms.",
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Anonymous token from room_enter_topic."
+            }
+          },
+          "required": [
+            "room_token"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "room_report_message",
+        "title": "Report a message",
+        "description": "Reports a message in the user's room for abuse (spam, harassment, hate, sexual content, violence, personal data, other). Reports are stored without message content and reviewed by the Crawler operator.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Anonymous token from room_enter_topic."
+            },
+            "message_id": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "The message_id shown by room_read_messages."
+            },
+            "reason": {
+              "type": "string",
+              "enum": [
+                "spam",
+                "harassment",
+                "hate",
+                "sexual_content",
+                "violence",
+                "personal_data",
+                "other"
+              ],
+              "description": "Why the message is being reported."
+            }
+          },
+          "required": [
+            "room_token",
+            "message_id",
+            "reason"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
       }
     ]
   }
