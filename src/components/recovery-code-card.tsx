@@ -41,10 +41,12 @@ export function RecoveryCodeCard({ code, slug }: { code: string; slug: string })
         Your recovery code — shown once
       </div>
       <p className="mt-2 text-xs text-muted-foreground">
-        Crawler has no accounts and no password reset. This code <strong className="text-foreground">is</strong> your
-        ownership: it lets you take the Presence offline, rotate the code and manage the subscription. We store only a
-        one-way hash, so it cannot be shown again or recovered — not even by us.
+        Crawler has no accounts and no password reset. This one code <strong className="text-foreground">is</strong>{" "}
+        your ownership: use it at /manage to take the Presence offline, rotate the code and manage the subscription —
+        and use the exact same code as your session ID in ChatGPT to keep editing your Knowledge Core. One code per
+        subscription. Keep it private; anyone holding it controls the Presence.
       </p>
+
 
       <code className="mt-4 block break-all rounded-lg border border-border bg-secondary/60 px-3 py-3 font-mono text-sm">
         {code}
