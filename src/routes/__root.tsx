@@ -168,6 +168,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <AppLoadingScreen />
       <PaymentCheckoutLoader />
       <PlanLimitProvider>
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
