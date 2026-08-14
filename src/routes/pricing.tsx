@@ -38,6 +38,15 @@ function PricingPage() {
   const navigate = useNavigate();
   const [busy, setBusy] = useState<PlanId | null>(null);
   const { status: payments } = usePaymentsStatus();
+  const publishState = usePublishState();
+
+  // If the browser already controls a published Presence, the buttons reflect
+  // the real subscription. Otherwise they fall back to the local workspace plan.
+  const currentPlan: PlanId | null = publishState.isLive
+    ? publishState.plan
+    : plan !== "free"
+      ? plan
+      : null;
 
   /** Opens the Paddle overlay straight from pricing; /publish only redeems it. */
   async function buy(planId: PlanId) {
