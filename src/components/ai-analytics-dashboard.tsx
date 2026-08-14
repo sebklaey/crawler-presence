@@ -218,12 +218,25 @@ export function AiAnalyticsDashboardView(props: Props) {
                     <td className="px-4 py-3 tabular-nums">{row.observedFetches ?? "—"}</td>
                     <td className="px-4 py-3 tabular-nums">{row.observedCitations ?? "—"}</td>
                     <td className="px-4 py-3 tabular-nums">
-                      {row.referralSessions === null ? "Not connected" : row.referralSessions}
+                      {row.provider === "crawler" || row.provider === "other"
+                        ? "—"
+                        : row.referralSessions === null
+                          ? "Needs GA4"
+                          : row.referralSessions}
                     </td>
-                    <td className="px-4 py-3 tabular-nums">{formatRate(row.syntheticMentionRate)}</td>
+                    <td className="px-4 py-3 tabular-nums">
+                      {row.syntheticMentionRate === null
+                        ? row.provider === "anthropic" || row.provider === "perplexity"
+                          ? "Needs own key"
+                          : row.provider === "crawler" || row.provider === "other" || row.provider === "microsoft"
+                            ? "—"
+                            : "No tests yet"
+                        : formatRate(row.syntheticMentionRate)}
+                    </td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">
                       {row.sampleSize ? `n = ${row.sampleSize}` : "No tests"}
                     </td>
+
                   </tr>
                 ))}
               </tbody>
