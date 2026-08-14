@@ -44,6 +44,7 @@ import { Route as KnowledgeIndexRouteImport } from './routes/knowledge.index'
 import { Route as KnowledgeAssistantRouteImport } from './routes/knowledge.assistant'
 import { Route as KnowledgeChangesRouteImport } from './routes/knowledge.changes'
 import { Route as KnowledgeDataRouteImport } from './routes/knowledge.data'
+import { Route as KnowledgeHistoryRouteImport } from './routes/knowledge.history'
 import { Route as KnowledgeSourcesRouteImport } from './routes/knowledge.sources'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as ApiPublicMcpHealthRouteImport } from './routes/api/public/mcp-health'
@@ -237,6 +238,11 @@ const KnowledgeDataRoute = KnowledgeDataRouteImport.update({
   path: '/data',
   getParentRoute: () => KnowledgeRoute,
 } as any)
+const KnowledgeHistoryRoute = KnowledgeHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => KnowledgeRoute,
+} as any)
 const KnowledgeSourcesRoute = KnowledgeSourcesRouteImport.update({
   id: '/sources',
   path: '/sources',
@@ -346,6 +352,7 @@ export interface FileRoutesByFullPath {
   '/knowledge/assistant': typeof KnowledgeAssistantRoute
   '/knowledge/changes': typeof KnowledgeChangesRoute
   '/knowledge/data': typeof KnowledgeDataRoute
+  '/knowledge/history': typeof KnowledgeHistoryRoute
   '/knowledge/sources': typeof KnowledgeSourcesRoute
   '/knowledge/': typeof KnowledgeIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
@@ -396,6 +403,7 @@ export interface FileRoutesByTo {
   '/knowledge/assistant': typeof KnowledgeAssistantRoute
   '/knowledge/changes': typeof KnowledgeChangesRoute
   '/knowledge/data': typeof KnowledgeDataRoute
+  '/knowledge/history': typeof KnowledgeHistoryRoute
   '/knowledge/sources': typeof KnowledgeSourcesRoute
   '/knowledge': typeof KnowledgeIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
@@ -448,6 +456,7 @@ export interface FileRoutesById {
   '/knowledge/assistant': typeof KnowledgeAssistantRoute
   '/knowledge/changes': typeof KnowledgeChangesRoute
   '/knowledge/data': typeof KnowledgeDataRoute
+  '/knowledge/history': typeof KnowledgeHistoryRoute
   '/knowledge/sources': typeof KnowledgeSourcesRoute
   '/knowledge/': typeof KnowledgeIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
@@ -501,6 +510,7 @@ export interface FileRouteTypes {
     | '/knowledge/assistant'
     | '/knowledge/changes'
     | '/knowledge/data'
+    | '/knowledge/history'
     | '/knowledge/sources'
     | '/knowledge/'
     | '/.mcp/invoke-tool/$tool'
@@ -551,6 +561,7 @@ export interface FileRouteTypes {
     | '/knowledge/assistant'
     | '/knowledge/changes'
     | '/knowledge/data'
+    | '/knowledge/history'
     | '/knowledge/sources'
     | '/knowledge'
     | '/.mcp/invoke-tool/$tool'
@@ -602,6 +613,7 @@ export interface FileRouteTypes {
     | '/knowledge/assistant'
     | '/knowledge/changes'
     | '/knowledge/data'
+    | '/knowledge/history'
     | '/knowledge/sources'
     | '/knowledge/'
     | '/.mcp/invoke-tool/$tool'
@@ -913,6 +925,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof KnowledgeDataRouteImport
       parentRoute: typeof KnowledgeRoute
     }
+    '/knowledge/history': {
+      id: '/knowledge/history'
+      path: '/history'
+      fullPath: '/knowledge/history'
+      preLoaderRoute: typeof KnowledgeHistoryRouteImport
+      parentRoute: typeof KnowledgeRoute
+    }
     '/knowledge/sources': {
       id: '/knowledge/sources'
       path: '/sources'
@@ -1018,6 +1037,7 @@ interface KnowledgeRouteChildren {
   KnowledgeAssistantRoute: typeof KnowledgeAssistantRoute
   KnowledgeChangesRoute: typeof KnowledgeChangesRoute
   KnowledgeDataRoute: typeof KnowledgeDataRoute
+  KnowledgeHistoryRoute: typeof KnowledgeHistoryRoute
   KnowledgeSourcesRoute: typeof KnowledgeSourcesRoute
   KnowledgeIndexRoute: typeof KnowledgeIndexRoute
 }
@@ -1026,6 +1046,7 @@ const KnowledgeRouteChildren: KnowledgeRouteChildren = {
   KnowledgeAssistantRoute: KnowledgeAssistantRoute,
   KnowledgeChangesRoute: KnowledgeChangesRoute,
   KnowledgeDataRoute: KnowledgeDataRoute,
+  KnowledgeHistoryRoute: KnowledgeHistoryRoute,
   KnowledgeSourcesRoute: KnowledgeSourcesRoute,
   KnowledgeIndexRoute: KnowledgeIndexRoute,
 }
