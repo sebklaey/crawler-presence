@@ -54,6 +54,7 @@ import { Route as KnowledgePublishRouteImport } from './routes/knowledge.publish
 import { Route as KnowledgeSourcesRouteImport } from './routes/knowledge.sources'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as ApiPublicMcpHealthRouteImport } from './routes/api/public/mcp-health'
+import { Route as ApiPublicRoomHealthRouteImport } from './routes/api/public/room-health'
 import { Route as CSlugSplatRouteImport } from './routes/c.$slug.$'
 import { Route as ManageSlugAnalyticsRouteImport } from './routes/manage_.$slug.analytics'
 import { Route as PSlugIndexRouteImport } from './routes/p.$slug.index'
@@ -295,6 +296,11 @@ const ApiPublicMcpHealthRoute = ApiPublicMcpHealthRouteImport.update({
   path: '/api/public/mcp-health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicRoomHealthRoute = ApiPublicRoomHealthRouteImport.update({
+  id: '/api/public/room-health',
+  path: '/api/public/room-health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CSlugSplatRoute = CSlugSplatRouteImport.update({
   id: '/c/$slug/$',
   path: '/c/$slug/$',
@@ -399,6 +405,7 @@ export interface FileRoutesByFullPath {
   '/knowledge/': typeof KnowledgeIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
+  '/api/public/room-health': typeof ApiPublicRoomHealthRoute
   '/c/$slug/$': typeof CSlugSplatRoute
   '/manage/$slug/analytics': typeof ManageSlugAnalyticsRoute
   '/p/$slug/$': typeof PSlugSplatRoute
@@ -456,6 +463,7 @@ export interface FileRoutesByTo {
   '/knowledge': typeof KnowledgeIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
+  '/api/public/room-health': typeof ApiPublicRoomHealthRoute
   '/c/$slug/$': typeof CSlugSplatRoute
   '/manage/$slug/analytics': typeof ManageSlugAnalyticsRoute
   '/p/$slug/$': typeof PSlugSplatRoute
@@ -515,6 +523,7 @@ export interface FileRoutesById {
   '/knowledge/': typeof KnowledgeIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
+  '/api/public/room-health': typeof ApiPublicRoomHealthRoute
   '/c/$slug/$': typeof CSlugSplatRoute
   '/manage_/$slug/analytics': typeof ManageSlugAnalyticsRoute
   '/p/$slug/$': typeof PSlugSplatRoute
@@ -575,6 +584,7 @@ export interface FileRouteTypes {
     | '/knowledge/'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
+    | '/api/public/room-health'
     | '/c/$slug/$'
     | '/manage/$slug/analytics'
     | '/p/$slug/$'
@@ -632,6 +642,7 @@ export interface FileRouteTypes {
     | '/knowledge'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
+    | '/api/public/room-health'
     | '/c/$slug/$'
     | '/manage/$slug/analytics'
     | '/p/$slug/$'
@@ -690,6 +701,7 @@ export interface FileRouteTypes {
     | '/knowledge/'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
+    | '/api/public/room-health'
     | '/c/$slug/$'
     | '/manage_/$slug/analytics'
     | '/p/$slug/$'
@@ -742,6 +754,7 @@ export interface RootRouteChildren {
   ApiServicesDotjsonRoute: typeof ApiServicesDotjsonRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicMcpHealthRoute: typeof ApiPublicMcpHealthRoute
+  ApiPublicRoomHealthRoute: typeof ApiPublicRoomHealthRoute
   CSlugSplatRoute: typeof CSlugSplatRoute
   ManageSlugAnalyticsRoute: typeof ManageSlugAnalyticsRoute
   PSlugSplatRoute: typeof PSlugSplatRoute
@@ -1072,6 +1085,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicMcpHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/room-health': {
+      id: '/api/public/room-health'
+      path: '/api/public/room-health'
+      fullPath: '/api/public/room-health'
+      preLoaderRoute: typeof ApiPublicRoomHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/c/$slug/$': {
       id: '/c/$slug/$'
       path: '/c/$slug/$'
@@ -1217,6 +1237,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiServicesDotjsonRoute: ApiServicesDotjsonRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicMcpHealthRoute: ApiPublicMcpHealthRoute,
+  ApiPublicRoomHealthRoute: ApiPublicRoomHealthRoute,
   CSlugSplatRoute: CSlugSplatRoute,
   ManageSlugAnalyticsRoute: ManageSlugAnalyticsRoute,
   PSlugSplatRoute: PSlugSplatRoute,
