@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { HOSTING_BENEFITS, NO_GUARANTEE_NOTICE, PLANS, planById, recommendPlan, type PlanId } from "@/lib/billing";
 import { trackFunnel, useFunnelOnce } from "@/lib/funnel";
-import { generatedFiles, isCoreEmpty, presenceScore, type KnowledgeCore } from "@/lib/knowledge";
+import { generatedFiles, isCoreEmpty, type KnowledgeCore } from "@/lib/knowledge";
 import { finalizePublishFn, loadDraft, startPublishFn } from "@/lib/presence.functions";
 import { rememberSessionToken, useSessionSync } from "@/hooks/use-session-sync";
 import { usePaymentsStatus } from "@/hooks/use-payments-status";
@@ -307,7 +307,7 @@ function PublishPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingIntent]);
 
-  const score = presenceScore(core);
+  const score = completenessScore(core);
   const files = useMemo(() => generatedFiles(core), [core]);
   const payments = paymentsStatus.configured;
   const recommendation = useMemo(
