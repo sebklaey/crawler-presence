@@ -448,7 +448,7 @@ export async function recordEvent(
   },
 ) {
   if (!event.roomId) return;
-  await db.from("analytics_events").insert({
+  await db.from("room_analytics_events").insert({
     room_id: event.roomId,
     owner_subject_hash: event.ownerSubjectHash,
     event_type: event.type,
@@ -465,7 +465,7 @@ function bucketOf(iso: string) {
 export async function profileAnalytics(db: Db, profile: ProfileRow, days: 7 | 30 | 90) {
   const since = new Date(Date.now() - days * 86400 * 1000).toISOString();
   const { data, error } = await db
-    .from("analytics_events")
+    .from("room_analytics_events")
     .select("event_type, actor_hash, created_at, metadata")
     .eq("owner_subject_hash", profile.ownerSubjectHash)
     .gte("created_at", since)
