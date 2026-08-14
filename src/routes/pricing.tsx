@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Check } from "lucide-react";
+import { Check, Minus } from "lucide-react";
 
 import { AppShell, PageHead } from "@/components/app-shell";
 import { PaymentTestModeBanner } from "@/components/payment-test-mode-banner";
