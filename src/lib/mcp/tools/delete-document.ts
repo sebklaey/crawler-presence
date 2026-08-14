@@ -2,7 +2,7 @@ import { defineTool, ToolError } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 import { toKnowledgeCore } from "../../interview-core.server";
 import { normalizeCore, repairCore } from "../../interview-rules";
-import { presenceScore } from "../../knowledge";
+import { completenessScore } from "../../kc/model";
 import { allowRequest } from "../presences";
 import { getSession, saveSession } from "../sessions";
 import { siteUrl } from "../site";
@@ -74,7 +74,7 @@ export default defineTool({
         published: false,
         publish_prompt: "Do you want to publish and show the publish link?",
         publish_handoff_url: `${base}/publish?session=${encodeURIComponent(session.id)}`,
-        presence_score: presenceScore(session.core),
+        presence_score: completenessScore(session.core),
       },
     };
   },

@@ -1,6 +1,7 @@
 import { defineTool, ToolError } from "@lovable.dev/mcp-js";
 import { z } from "zod";
-import { generatedFiles, presenceScore } from "../../knowledge";
+import { generatedFiles } from "../../knowledge";
+import { completenessScore } from "../../kc/model";
 import { getSession, SESSION_NOTE } from "../sessions";
 import { siteUrl } from "../site";
 
@@ -43,13 +44,13 @@ export default defineTool({
       content: [
         {
           type: "text",
-          text: `Generated ${files.length} file previews: ${files.map((f) => f.path).join(", ")}. Presence score ${presenceScore(session.core)}/100. To publish and get the live link, call publish_presence with this session_id or open ${publishHandoffUrl}.`,
+          text: `Generated ${files.length} file previews: ${files.map((f) => f.path).join(", ")}. Presence score ${completenessScore(session.core)}/100. To publish and get the live link, call publish_presence with this session_id or open ${publishHandoffUrl}.`,
         },
       ],
       structuredContent: {
         session_id: session.id,
         session_note: SESSION_NOTE,
-        presence_score: presenceScore(session.core),
+        presence_score: completenessScore(session.core),
         narrative_notice:
           "Entries under 'Positioning and story' and any fact with status 'claimed' are narrative/unconfirmed copy, not verified facts.",
         files,

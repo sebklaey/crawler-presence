@@ -1,6 +1,7 @@
 import { defineTool, ToolError } from "@lovable.dev/mcp-js";
 import { z } from "zod";
-import { presenceChecks, presenceScore, presenceSlug } from "../../knowledge";
+import { presenceChecks, presenceSlug } from "../../knowledge";
+import { completeness, completenessScore } from "../../kc/model";
 import { getSession } from "../sessions";
 import { siteUrl } from "../site";
 
@@ -61,7 +62,7 @@ export default defineTool({
           presence_url: url,
           files: updated.files.map((f) => `${url}/${f.path}`),
           updated_at: updated.updatedAt,
-          presence_score: presenceScore(session.core),
+          presence_score: completenessScore(session.core),
           recovery_code: null,
           recovery_code_note:
             "The recovery code issued at first publication still applies; Crawler never re-issues it on updates.",
@@ -108,7 +109,7 @@ export default defineTool({
           presence_url: url,
           files: presence.files.map((f) => `${url}/${f.path}`),
           published_at: presence.publishedAt,
-          presence_score: presenceScore(session.core),
+          presence_score: completenessScore(session.core),
           recovery_code: code,
           recovery_code_note:
             "Capability-based ownership: this code is shown exactly once and is never stored in raw form. Losing it means the Presence cannot be managed or recovered. Show it to the user verbatim and tell them to save it.",
@@ -147,7 +148,7 @@ export default defineTool({
         pricing_url: `${base}/pricing`,
         manage_url: `${base}/manage`,
         suggested_slug: presenceSlug(session.core),
-        presence_score: presenceScore(session.core),
+        presence_score: completenessScore(session.core),
         remaining_checks: presenceChecks(session.core)
           .filter((c) => !c.done)
           .map((c) => c.label),

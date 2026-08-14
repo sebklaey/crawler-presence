@@ -2,7 +2,8 @@ import { defineTool, ToolError } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 import { allowRequest } from "../presences";
 import { INTERVIEWER_INSTRUCTIONS, normalizeCore, reviewCore } from "../../interview-rules";
-import { presenceChecks, presenceScore } from "../../knowledge";
+import { presenceChecks } from "../../knowledge";
+import { completeness, completenessScore } from "../../kc/model";
 import { getSession } from "../sessions";
 
 export default defineTool({
@@ -39,7 +40,7 @@ export default defineTool({
         session_id: session.id,
         no_own_model: true,
         interviewer_instructions: INTERVIEWER_INSTRUCTIONS,
-        presence_score: presenceScore(session.core),
+        presence_score: completenessScore(session.core),
         open_checks: presenceChecks(session.core).filter((c) => !c.done).map((c) => c.label),
         assessment: review.headline,
         strengths: review.strengths,

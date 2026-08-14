@@ -13,7 +13,8 @@ import {
   openGaps,
   repairCore,
 } from "../../interview-rules";
-import { presenceChecks, presenceScore } from "../../knowledge";
+import { presenceChecks } from "../../knowledge";
+import { completeness, completenessScore } from "../../kc/model";
 import { getSession, saveSession, SESSION_NOTE } from "../sessions";
 import { siteUrl } from "../site";
 
@@ -98,7 +99,7 @@ export default defineTool({
         entity_type: session.core.entityType,
         confidence,
         interview_complete: complete,
-        presence_score: presenceScore(session.core),
+        presence_score: completenessScore(session.core),
         open_checks: presenceChecks(session.core).filter((c) => !c.done).map((c) => c.label),
         open_gaps: openGaps(merged).map((g) => ({ key: g.key, label: g.label, suggested_question: g.question })),
         next_gap: complete ? null : { key: gap.key, label: gap.label, suggested_question: gap.question },
