@@ -41,7 +41,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Button
               asChild
               size="sm"
-              className="gap-2 rounded-full bg-cta px-4 text-cta-foreground shadow-sm transition-colors hover:bg-cta/90"
+              className="gap-2 rounded-full bg-cta px-5 py-2 text-sm font-medium text-cta-foreground shadow-sm transition-colors hover:bg-cta/90"
             >
               <Link to="/publish">
                 {showDot ? (
