@@ -189,17 +189,15 @@ function PricingPage() {
               <Button
                 className="mt-6"
                 variant={p.id === "pro" ? "default" : "outline"}
-                disabled={busy !== null}
+                disabled={busy !== null || (publishState.isLive && currentPlan === p.id)}
                 onClick={() => void buy(p.id)}
               >
                 {busy === p.id ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Opening checkout…
                   </>
-                ) : plan === p.id ? (
-                  `Continue with ${p.name}`
                 ) : (
-                  `Choose ${p.name}`
+                  buttonLabel(p)
                 )}
               </Button>
 
