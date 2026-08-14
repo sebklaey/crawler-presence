@@ -49,6 +49,9 @@ function KnowledgePage() {
   const offerings = core.items.filter((i) => i.kind === "offering");
   const projects = core.items.filter((i) => i.kind === "project");
   const services = core.items.filter((i) => i.kind === "service");
+  const openPoints = completeness(core).filter((r) => !r.done);
+  const textTips = buildTextTips(core);
+
 
   async function runImprove() {
     setImproving(true);
