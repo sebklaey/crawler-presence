@@ -425,7 +425,22 @@ export async function rotateManageSecret(slug: string): Promise<string> {
   return secret;
 }
 
+/**
+ * Unbinds the draft session from a Presence, so the session token stops
+ * working as a recovery code. Used when a new management secret is issued.
+ */
+export async function clearSessionToken(slug: string): Promise<void> {
+  const supabase = await client();
+  if (!supabase) return;
+  const { error } = await supabase
+    .from("published_presences")
+    .update({ session_token: null })
+    .eq("slug", slug);
+  if (error) storeFailure("unbind-session", error.message);
+}
+
 export async function setPresenceStatus(slug: string, status: PresenceStatus): Promise<void> {
+
   const supabase = await client();
   if (supabase) {
     const { data, error } = await supabase
