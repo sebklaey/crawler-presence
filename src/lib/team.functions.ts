@@ -181,7 +181,7 @@ export const teamSignInFn = createServerFn({ method: "POST" })
     const parsed = parseTeamCode(data.code);
     if (!parsed) return { ok: false, reason: "invalid-code" };
     try {
-      if (!(await allowRequest(`teamlogin:${parsed.rateKey}`, 20))) return { ok: false, reason: "rate-limited" };
+      if (!(await allowRequest(`teamlogin:${parsed.slug}`, 20))) return { ok: false, reason: "rate-limited" };
       const member = await verifyTeamCode(data.code);
       if (!member) return { ok: false, reason: "not-found" };
 
