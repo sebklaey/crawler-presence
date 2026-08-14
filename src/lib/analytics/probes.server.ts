@@ -118,12 +118,15 @@ export function gatewayAvailable(): boolean {
   return Boolean(env("LOVABLE_API_KEY"));
 }
 
-export function configuredProviders(): ProviderId[] {
+/** Keys a single Presence brought itself, for providers without a gateway. */
+export type PresenceKeys = { anthropic?: string; perplexity?: string };
+
+export function configuredProviders(keys: PresenceKeys = {}): ProviderId[] {
   const out: ProviderId[] = [];
   if (env("OPENAI_API_KEY") || gatewayAvailable()) out.push("openai");
-  if (env("ANTHROPIC_API_KEY")) out.push("anthropic");
+  if (keys.anthropic || env("ANTHROPIC_API_KEY")) out.push("anthropic");
   if (env("GEMINI_API_KEY") || gatewayAvailable()) out.push("google");
-  if (env("PERPLEXITY_API_KEY")) out.push("perplexity");
+  if (keys.perplexity || env("PERPLEXITY_API_KEY")) out.push("perplexity");
   return out;
 }
 
@@ -157,7 +160,7 @@ function extractUrls(text: string): string[] {
   return [...new Set(text.match(/https?:\/\/[^\s)"'\]]+/g) ?? [])].slice(0, 20);
 }
 
-async function askProvider(provider: ProviderId, prompt: string): Promise<ProbeAnswer> {
+async function askProvider(provider: ProviderId, prompt: string, keys: PresenceKeys = {}): Promise<ProbeAnswer> {
   const model = MODELS[provider as keyof typeof MODELS] ?? "gpt-4o-mini";
   const timeout = AbortSignal.timeout(30_000);
 
@@ -169,8 +172,8 @@ async function askProvider(provider: ProviderId, prompt: string): Promise<ProbeA
       : provider === "google"
         ? env("GEMINI_API_KEY")
         : provider === "anthropic"
-          ? env("ANTHROPIC_API_KEY")
-          : env("PERPLEXITY_API_KEY");
+          ? (keys.anthropic ?? env("ANTHROPIC_API_KEY"))
+          : (keys.perplexity ?? env("PERPLEXITY_API_KEY"));
   const gatewayModel = GATEWAY_MODELS[provider];
   if (!ownKey && gatewayModel && gatewayAvailable()) {
     return askGateway(prompt, gatewayModel);
@@ -183,7 +186,7 @@ async function askProvider(provider: ProviderId, prompt: string): Promise<ProbeA
       method: "POST",
       signal: timeout,
       headers: {
-        "x-api-key": env("ANTHROPIC_API_KEY")!,
+        "x-api-key": (keys.anthropic ?? env("ANTHROPIC_API_KEY"))!,
         "anthropic-version": "2023-06-01",
         "content-type": "application/json",
       },
@@ -217,7 +220,7 @@ async function askProvider(provider: ProviderId, prompt: string): Promise<ProbeA
 
   const endpoint =
     provider === "perplexity" ? "https://api.perplexity.ai/chat/completions" : "https://api.openai.com/v1/chat/completions";
-  const key = provider === "perplexity" ? env("PERPLEXITY_API_KEY") : env("OPENAI_API_KEY");
+  const key = provider === "perplexity" ? (keys.perplexity ?? env("PERPLEXITY_API_KEY")) : env("OPENAI_API_KEY");
   const response = await fetch(endpoint, {
     method: "POST",
     signal: timeout,
@@ -268,9 +271,12 @@ export async function runProbes(options: {
   aliases: string[];
   ownDomains: string[];
   providers?: ProviderId[];
+  /** Keys stored for this Presence; unlock Claude and Perplexity tests. */
+  keys?: PresenceKeys;
 }): Promise<ProbeRunSummary> {
   const supabase = await client();
-  const providers = options.providers?.length ? options.providers : configuredProviders();
+  const keys = options.keys ?? (await (await import("./connectors.server")).presenceProviderKeys(options.slug));
+  const providers = options.providers?.length ? options.providers : configuredProviders(keys);
   if (!supabase) return { attempted: 0, succeeded: 0, failed: 0, message: "Storage unavailable." };
   if (!providers.length) {
     return { attempted: 0, succeeded: 0, failed: 0, message: "No test model is available right now." };
@@ -301,7 +307,7 @@ export async function runProbes(options: {
       };
 
       try {
-        const answer = await askProvider(provider, definition.prompt);
+        const answer = await askProvider(provider, definition.prompt, keys);
         const score = scoreAnswer(
           answer.text,
           [options.name, ...options.aliases],
