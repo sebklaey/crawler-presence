@@ -7,9 +7,10 @@ import { PaymentTestModeBanner } from "@/components/payment-test-mode-banner";
 import { Button } from "@/components/ui/button";
 import { useCore, usePlan } from "@/lib/store";
 import { usePaymentsStatus } from "@/hooks/use-payments-status";
-import { PLANS, type PlanId } from "@/lib/billing";
+import { PLANS, planById, type PlanId } from "@/lib/billing";
 import { isCoreEmpty } from "@/lib/knowledge";
 import { startPublishFn } from "@/lib/presence.functions";
+import { usePublishState } from "@/hooks/use-publish-state";
 import { trackFunnel, useFunnelOnce } from "@/lib/funnel";
 
 export const Route = createFileRoute("/pricing")({
