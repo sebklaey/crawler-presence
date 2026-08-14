@@ -423,8 +423,8 @@ export async function buildAiAnalytics(options: AggregateOptions): Promise<AiAna
       error: record?.last_error ?? null,
       credentialsPresent: credentials[source],
       setupHint: setupHints[source],
-      configLabel:
-        source === "ga4" ? "GA4 property ID" : source === "search_console" ? "Search Console property URL" : null,
+      configLabel: source === "ga4" ? "GA4 property ID" : null,
+
       configValue:
         source === "ga4"
           ? ((record?.configuration?.["property_id"] as string) ?? null)
