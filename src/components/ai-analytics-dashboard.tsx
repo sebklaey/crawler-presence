@@ -41,6 +41,7 @@ type Props = {
   onPeriodChange: (period: AnalyticsPeriod) => void;
   onSync: (source: "search_console" | "ai_probes") => Promise<void>;
   onSaveSource: (source: "search_console", value: string) => Promise<void>;
+  onSaveProviderKey: (provider: "anthropic" | "perplexity", key: string) => Promise<void>;
   onConnect: (
     source: "search_console" | "ai_probes",
     choice?: string,
@@ -221,7 +222,7 @@ export function AiAnalyticsDashboardView(props: Props) {
                     <td className="px-4 py-3 tabular-nums">
                       {row.syntheticMentionRate === null
                         ? row.provider === "anthropic" || row.provider === "perplexity"
-                          ? "Needs own key"
+                          ? "Add key in Data sources"
                           : row.provider === "crawler" || row.provider === "other" || row.provider === "microsoft"
                             ? "—"
                             : "No tests yet"
@@ -420,6 +421,52 @@ export function AiAnalyticsDashboardView(props: Props) {
                       </Select>
                     </div>
                   ) : null}
+                </div>
+              ) : null}
+              {row.providerKeys?.length ? (
+                <div className="space-y-3 rounded-md border border-dashed p-3">
+                  <p className="text-xs font-medium">Use your own models (optional)</p>
+                  {row.providerKeys.map((entry) => (
+                    <form
+                      key={entry.provider}
+                      className="space-y-1"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        const form = event.currentTarget;
+                        const value = new FormData(form).get("key");
+                        void props.onSaveProviderKey(entry.provider, String(value ?? "")).then(() => form.reset());
+                      }}
+                    >
+                      <label className="text-xs text-muted-foreground" htmlFor={`key-${entry.provider}`}>
+                        {entry.label} {entry.configured ? "· saved" : "· not set"}
+                      </label>
+                      <p className="text-[11px] text-muted-foreground">
+                        {entry.hint}{" "}
+                        <a
+                          href={entry.url}
+                          target="_blank"
+                          rel="noreferrer noopener"
+                          className="underline underline-offset-4"
+                        >
+                          Get a key
+                        </a>
+                        . Leave the field empty and save to remove a stored key.
+                      </p>
+                      <div className="flex flex-col gap-2 sm:flex-row">
+                        <Input
+                          id={`key-${entry.provider}`}
+                          name="key"
+                          type="password"
+                          autoComplete="off"
+                          placeholder={entry.configured ? "•••••••• (saved) — paste a new key to replace" : entry.placeholder}
+                          aria-label={entry.label}
+                        />
+                        <Button type="submit" size="sm" variant="secondary">
+                          Save key
+                        </Button>
+                      </div>
+                    </form>
+                  ))}
                 </div>
               ) : null}
               <p className="text-[11px] text-muted-foreground">

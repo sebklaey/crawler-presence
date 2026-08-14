@@ -16,6 +16,7 @@ import {
   connectAnalyticsSourceFn,
   exportAnalyticsCsvFn,
   saveAnalyticsSourceFn,
+  saveProviderKeyFn,
   syncAnalyticsSourceFn,
 } from "@/lib/ai-analytics.functions";
 import { decideRecommendationFn } from "@/lib/retention.functions";
@@ -242,6 +243,9 @@ function AnalyticsPage() {
                   }
                   onSaveSource={(source, value) =>
                     runAction(source, () => saveAnalyticsSourceFn({ data: { code: activeCode, source, value } }))
+                  }
+                  onSaveProviderKey={(provider, key) =>
+                    runAction("ai_probes", () => saveProviderKeyFn({ data: { code: activeCode, provider, key } }))
                   }
                   onConnect={async (source, choice) => {
                     setPending(`connect:${source}`);
