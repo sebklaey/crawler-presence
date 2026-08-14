@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { CreditCard, Eye, EyeOff, KeyRound, Loader2, RefreshCw } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { CreditCard, Eye, EyeOff, KeyRound, Loader2, LogOut, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell, PageHead } from "@/components/app-shell";
@@ -76,7 +76,8 @@ function ManagePage() {
   const [core, setCore] = useCore();
   const [, setPlan] = usePlan();
   const [, setPublished] = usePublished();
-  const [, setStoredCode] = useRecoveryCode();
+  const [storedCode, setStoredCode, codeHydrated] = useRecoveryCode();
+  const autoOpened = useRef(false);
 
   /**
    * Pull the owner's real data into the browser workspace so /knowledge,
@@ -99,24 +100,50 @@ function ManagePage() {
     }
   }
 
-  async function open(next = code) {
+  async function open(next = code, opts?: { silent?: boolean }) {
     setBusy(true);
     try {
       const result = await manageOverviewFn({ data: { code: next } });
       if (!result.ok) {
         setData(null);
-        toast.error(REASONS[result.reason] ?? "Could not open that Presence.");
+        // A stored code that no longer works must not keep the session locked open.
+        if (opts?.silent && (result.reason === "invalid-code" || result.reason === "not-found")) {
+          setStoredCode("");
+          return;
+        }
+        if (!opts?.silent) toast.error(REASONS[result.reason] ?? "Could not open that Presence.");
         return;
       }
       setData(result);
       await restoreWorkspace(next);
-      toast.success("Presence data loaded into Knowledge, Preview, Analytics and Publish.");
+      if (!opts?.silent)
+        toast.success("Presence data loaded into Knowledge, Preview, Analytics and Publish.");
     } catch {
-      toast.error("Could not open that Presence.");
+      if (!opts?.silent) toast.error("Could not open that Presence.");
     } finally {
       setBusy(false);
     }
   }
+
+  /** Stay unlocked: reopen the Presence from the remembered recovery code. */
+  useEffect(() => {
+    if (!codeHydrated || autoOpened.current) return;
+    if (!storedCode || storedCode.trim().length < 10) return;
+    autoOpened.current = true;
+    setCode(storedCode);
+    void open(storedCode, { silent: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [codeHydrated, storedCode]);
+
+  function signOut() {
+    setStoredCode("");
+    setData(null);
+    setCode("");
+    setRotated(null);
+    autoOpened.current = true;
+    toast.success("Recovery code removed from this browser.");
+  }
+
 
   async function setStatus(status: "live" | "offline") {
     setBusy(true);
@@ -232,6 +259,18 @@ function ManagePage() {
             Lost the code? It cannot be recovered — Crawler stores only a one-way hash of it and has no other way to
             identify you.
           </p>
+          {data ? (
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border/70 pt-4">
+              <p className="text-xs text-muted-foreground">
+                Unlocked in this browser — Knowledge, Preview, Analytics and Publish stay open until you remove the
+                code.
+              </p>
+              <Button type="button" variant="outline" size="sm" onClick={signOut}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Lock again
+              </Button>
+            </div>
+          ) : null}
         </div>
 
         {rotated ? (
