@@ -40,6 +40,8 @@ export type GuardInput = {
   days?: number;
   /** What the user was doing, shown verbatim in the popup. */
   action?: string;
+  /** Server-known plan of the managed Presence; overrides the local plan. */
+  currentPlan?: PlanId;
 };
 
 type Blocked = {
@@ -84,10 +86,11 @@ export function PlanLimitProvider({ children }: { children: ReactNode }) {
   const [blocked, setBlocked] = useState<Blocked | null>(null);
 
   // A free workspace is not published yet; the lowest paid plan sets the bar.
-  const plan: PlanId = stored === "free" ? "plus" : stored;
+  const localPlan: PlanId = stored === "free" ? "plus" : stored;
 
   const guard = useCallback(
     (input: GuardInput): boolean => {
+      const plan = input.currentPlan && order.includes(input.currentPlan) ? input.currentPlan : localPlan;
       const p = planById(plan);
       const deny = (b: Omit<Blocked, "current" | "required" | "unlocks"> & { required: PlanId }) => {
         setBlocked({ ...b, current: plan, unlocks: unlocksFor(plan, b.required) });
@@ -175,10 +178,10 @@ export function PlanLimitProvider({ children }: { children: ReactNode }) {
           return true;
       }
     },
-    [plan],
+    [localPlan],
   );
 
-  const value = useMemo(() => ({ plan, guard }), [plan, guard]);
+  const value = useMemo(() => ({ plan: localPlan, guard }), [localPlan, guard]);
   const required = blocked ? planById(blocked.required) : null;
 
   return (
