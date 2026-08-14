@@ -37,6 +37,24 @@ type Improvement = {
   suggestions: { title: string; why: string }[];
 };
 
+/** Text-quality hints derived from what Crawler can actually measure in the Core. */
+function buildTextTips(core: KnowledgeCore): string[] {
+  const tips: string[] = [];
+  if (!core.tagline) tips.push("Add a one-line tagline — assistants quote it as the first answer.");
+  if (core.summary.trim().length < 200)
+    tips.push("Expand the summary to at least 200 characters so answers stay specific.");
+  const claimed = core.facts.filter((f) => f.status !== "verified").length;
+  if (claimed) tips.push(`${claimed} fact${claimed === 1 ? "" : "s"} still unconfirmed — confirm or remove them.`);
+  const drafts = core.stories.filter((s) => !s.confirmed).length;
+  if (drafts) tips.push(`${drafts} positioning text${drafts === 1 ? "" : "s"} not confirmed yet.`);
+  const thin = core.items.filter((i) => (i.summary ?? "").trim().length < 80).length;
+  if (thin) tips.push(`${thin} content record${thin === 1 ? "" : "s"} have very short descriptions — add detail.`);
+  if (core.faqs.length < 5) tips.push("Answer more FAQs — recurring questions are the most read content.");
+  if (!core.website && core.links.length === 0) tips.push("Add a website or contact link so answers can point somewhere.");
+  return tips;
+}
+
+
 function KnowledgePage() {
   const [core, setCore] = useCore();
   const [plan] = usePlan();
