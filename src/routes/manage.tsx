@@ -100,24 +100,50 @@ function ManagePage() {
     }
   }
 
-  async function open(next = code) {
+  async function open(next = code, opts?: { silent?: boolean }) {
     setBusy(true);
     try {
       const result = await manageOverviewFn({ data: { code: next } });
       if (!result.ok) {
         setData(null);
-        toast.error(REASONS[result.reason] ?? "Could not open that Presence.");
+        // A stored code that no longer works must not keep the session locked open.
+        if (opts?.silent && (result.reason === "invalid-code" || result.reason === "not-found")) {
+          setStoredCode("");
+          return;
+        }
+        if (!opts?.silent) toast.error(REASONS[result.reason] ?? "Could not open that Presence.");
         return;
       }
       setData(result);
       await restoreWorkspace(next);
-      toast.success("Presence data loaded into Knowledge, Preview, Analytics and Publish.");
+      if (!opts?.silent)
+        toast.success("Presence data loaded into Knowledge, Preview, Analytics and Publish.");
     } catch {
-      toast.error("Could not open that Presence.");
+      if (!opts?.silent) toast.error("Could not open that Presence.");
     } finally {
       setBusy(false);
     }
   }
+
+  /** Stay unlocked: reopen the Presence from the remembered recovery code. */
+  useEffect(() => {
+    if (!codeHydrated || autoOpened.current) return;
+    if (!storedCode || storedCode.trim().length < 10) return;
+    autoOpened.current = true;
+    setCode(storedCode);
+    void open(storedCode, { silent: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [codeHydrated, storedCode]);
+
+  function signOut() {
+    setStoredCode("");
+    setData(null);
+    setCode("");
+    setRotated(null);
+    autoOpened.current = true;
+    toast.success("Recovery code removed from this browser.");
+  }
+
 
   async function setStatus(status: "live" | "offline") {
     setBusy(true);
