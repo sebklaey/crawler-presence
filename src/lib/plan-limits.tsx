@@ -296,15 +296,21 @@ export function PlanLimitProvider({ children }: { children: ReactNode }) {
                   Compare plans
                 </Button>
                 <Button
+                  disabled={busy}
                   onClick={() => {
-                    const target = blocked.required;
-                    setBlocked(null);
-                    setPlan(target);
-                    void navigate({ to: "/publish", search: { plan: target } });
+                    void buy(blocked.required);
                   }}
                 >
-                  Upgrade to {required.name}
+                  {busy ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Loading…
+                    </>
+                  ) : (
+                    <>Upgrade to {required.name}</>
+                  )}
                 </Button>
+
               </DialogFooter>
             </>
           ) : null}
