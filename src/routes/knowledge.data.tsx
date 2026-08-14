@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Archive, Plus } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Archive, Plus, Save } from "lucide-react";
+
 import { toast } from "sonner";
 
 import { Card, Field, RecordSection, SelectField } from "@/components/kc/record-editor";
