@@ -382,6 +382,8 @@ export async function buildInsights(input: {
     events,
     nextImprovement,
     improvements,
+    improvementLocked,
+
     retention: {
       daysSincePublish: daysBetween(presence.publishedAt),
       publishedUpdates: presence.version ?? null,
