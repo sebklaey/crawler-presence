@@ -51,6 +51,7 @@ function PricingPage() {
   /** Opens the Paddle overlay straight from pricing; /publish only redeems it. */
   async function buy(planId: PlanId) {
     if (busy) return;
+    if (publishState.isLive && planId === currentPlan) return;
     setPlan(planId);
     // Nothing to publish yet, or checkout not available: keep the guided flow.
     if (isCoreEmpty(core) || !payments.configured) {
@@ -93,6 +94,16 @@ function PricingPage() {
     } finally {
       setBusy(null);
     }
+  }
+
+  function buttonLabel(p: (typeof PLANS)[number]): string {
+    if (busy === p.id) return "Opening checkout…";
+    if (!currentPlan || currentPlan === "free") {
+      return p.id === plan ? `Continue with ${p.name}` : `Choose ${p.name}`;
+    }
+    if (p.id === currentPlan) return `Stay with ${p.name}`;
+    const currentPrice = planById(currentPlan).price;
+    return p.price > currentPrice ? `Upgrade to ${p.name}` : `Downgrade to ${p.name}`;
   }
 
 
