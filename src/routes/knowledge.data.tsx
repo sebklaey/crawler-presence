@@ -84,8 +84,11 @@ function DataPage() {
     <div className="space-y-6">
       <div className="sticky top-2 z-20 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card/95 px-4 py-3 backdrop-blur">
         <p className="text-xs text-muted-foreground">
-          {dirty ? "Unsaved changes in this draft." : "All changes saved."}
+          {dirty
+            ? "Unsaved changes in this draft."
+            : "All changes saved to your draft — publish to update your live Presence."}
         </p>
+
         <div className="flex items-center gap-2">
           <Button size="sm" variant="ghost" onClick={discard} disabled={!dirty}>
             Discard
