@@ -153,11 +153,17 @@ export async function runDueReports(): Promise<{ checked: number; sent: number; 
   let failed = 0;
   const now = Date.now();
 
+  const { hasContinuousUpdates } = await import("./billing");
+  const { asPlanId } = await import("./entitlements");
+
   for (const row of rows) {
+    // Scheduled report emails are part of the continuous-update tier only.
+    if (!hasContinuousUpdates(asPlanId(row.plan))) continue;
     const frequency = asFrequency(row.report_frequency);
     if (frequency === "off") continue;
     const last = row.report_last_sent_at ? Date.parse(row.report_last_sent_at) : 0;
     if (now - last < DUE_MS[frequency]) continue;
+
 
     const result = await sendReport(row.slug, frequency === "monthly" ? 30 : 7, row.report_email);
     if (result.delivered) sent += 1;
