@@ -38,24 +38,64 @@ const entityLabels: Record<string, string> = {
 };
 
 function DataPage() {
-  const [core, setCore] = useCore();
+  const [saved, commit] = useCore();
+  const [draft, setDraft] = useState<KnowledgeCore>(saved);
+  const [dirty, setDirty] = useState(false);
   const [, setVersions] = useVersions();
   const { guard } = usePlanLimits();
+
+  useEffect(() => {
+    if (!dirty) setDraft(saved);
+  }, [saved, dirty]);
+
+  const core = draft;
+  const setCore = (next: KnowledgeCore) => {
+    setDraft(next);
+    setDirty(true);
+  };
   const ext = getExt(core);
 
   const patch = (part: Partial<KnowledgeCore>) => setCore({ ...core, ...part, updatedAt: new Date().toISOString() });
 
+  function save() {
+    setVersions((v) => [snapshot(saved, "Before saving edits"), ...v].slice(0, 30));
+    commit({ ...draft, updatedAt: new Date().toISOString() });
+    setDirty(false);
+    toast.success("Saved to your Knowledge Core. Publishing stays a separate step.");
+  }
+
+  function discard() {
+    setDraft(saved);
+    setDirty(false);
+    toast.message("Changes discarded.");
+  }
+
   function archive(section: SectionKey, id: string) {
-    setVersions((v) => [snapshot(core, `Before archiving in ${section}`), ...v].slice(0, 30));
     setCore(archiveRecord(core, section, id));
-    toast.success("Moved to the archive. You can restore it under History.");
+    toast.success("Moved to the archive. Save to keep this change.");
   }
 
   const setExtList = (key: "audiences" | "pricing" | "news") => (next: ExtRecord[]) =>
     setCore(withExt(core, { ...ext, [key]: next }));
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="space-y-6">
+      <div className="sticky top-2 z-20 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card/95 px-4 py-3 backdrop-blur">
+        <p className="text-xs text-muted-foreground">
+          {dirty ? "Unsaved changes in this draft." : "All changes saved."}
+        </p>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="ghost" onClick={discard} disabled={!dirty}>
+            Discard
+          </Button>
+          <Button size="sm" onClick={save} disabled={!dirty}>
+            <Save className="mr-1.5 h-3.5 w-3.5" /> Save changes
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+
       <div className="space-y-6">
         <Card title="Identity" hint="The basics every AI system needs first.">
           <div className="grid gap-4 sm:grid-cols-2">
