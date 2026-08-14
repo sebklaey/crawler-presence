@@ -19,6 +19,23 @@ export const loadDraft = createServerFn({ method: "GET" })
     };
   });
 
+/**
+ * Persist website edits back into the anonymous draft session, so the periodic
+ * MCP sync does not overwrite them on the next page load.
+ */
+export const saveDraft = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z.object({ token: z.string().trim().min(6).max(128), core: z.unknown() }).parse(input),
+  )
+  .handler(async ({ data }) => {
+    const { getSession, saveSession } = await import("./mcp/sessions");
+    const session = await getSession(data.token);
+    if (!session) return { saved: false as const };
+    session.core = data.core as KnowledgeCore;
+    await saveSession(session);
+    return { saved: true as const, updated_at: new Date(session.updatedAt).toISOString() };
+  });
+
 /* ------------------------------------------------------------------ */
 /* Publishing — accountless, capability-based                          */
 /* ------------------------------------------------------------------ */
