@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import { Toaster } from "../components/ui/sonner";
 import { PaymentCheckoutLoader } from "../components/payment-checkout-loader";
+import { AppLoadingScreen } from "../components/app-loading-screen";
 import { PlanLimitProvider } from "../lib/plan-limits";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
