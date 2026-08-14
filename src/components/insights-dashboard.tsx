@@ -166,6 +166,14 @@ export function InsightsDashboardView({
 
   const updateDates = useMemo(() => new Set(data.updates.map((u) => u.date)), [data.updates]);
   const next = data.nextImprovement;
+  const { guard } = usePlanLimits();
+  // The dashboard knows the Presence's real plan when a limit is already active.
+  const gatePlan = data.improvementLocked
+    ? (["plus", "pro", "business"].includes(String(data.improvementLocked.plan))
+        ? (data.improvementLocked.plan as "plus" | "pro" | "business")
+        : undefined)
+    : undefined;
+
 
   return (
     <TooltipProvider delayDuration={150}>
