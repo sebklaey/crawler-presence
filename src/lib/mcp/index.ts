@@ -16,15 +16,7 @@ import importDocument from "./tools/import-document";
 import improvePresence from "./tools/improve-presence";
 import previewPresence from "./tools/preview-presence";
 import publishPresence from "./tools/publish-presence";
-import roomEnterTopic from "./tools/room-enter-topic";
-import roomGetAlias from "./tools/room-get-alias";
-import roomLeaveTopic from "./tools/room-leave-topic";
-import roomListTopics from "./tools/room-list-topics";
-import roomMyRooms from "./tools/room-my-rooms";
-import roomReadMessages from "./tools/room-read-messages";
-import roomReportMessage from "./tools/room-report-message";
-import roomSendMessage from "./tools/room-send-message";
-import roomSetAlias from "./tools/room-set-alias";
+import { roomTools } from "./tools/room-tools";
 import searchEntities from "./tools/search-entities";
 import startInterview from "./tools/start-interview";
 export default defineMcp({
@@ -39,7 +31,7 @@ Creation flow: start_interview -> continue_interview (repeat until interview_com
 
 Important: this endpoint is public and unauthenticated (auth type "none"). Crawler has no user registration, no login and no user accounts, and no ChatGPT account identity is passed to this server — never claim otherwise. Sessions are anonymous durable drafts keyed by an opaque session_id and stored for ~30 days; public Presence analytics are measured inside Crawler and free to query by domain, URL, entity name or public slug via get_analytics (e.g. "wie oft wurde über sebklaey.app geredet?"); detailed analytics require the Presence recovery code. Crawler only measures its own tool calls and observable reads of published Presence files — never all ChatGPT, Claude, Gemini or internet conversations. Publishing is the paid step and is completed on the Crawler website; afterwards publish_presence returns a one-time recovery code that is the only way to manage the published Presence. Never claim access to private ChatGPT, Claude or Gemini conversations.
 
-Rooms (@crawler chat): Crawler also hosts small, anonymous chat rooms for one topic — at most 5 people per room, messages disappear after 24 hours. Flow: room_list_topics -> room_enter_topic (returns an opaque room_token; store it and pass it to every later room_* call, it is the only way back into the same room and there is still no account) -> room_send_message / room_read_messages. Use room_my_rooms for an overview, room_leave_topic to free the seat, room_set_alias / room_get_alias for the anonymous display name and room_report_message for abuse. Never ask for or store real names, emails or other personal data in rooms.`,
+Rooms (@crawler chat): Crawler also hosts small, anonymous chat rooms for one topic — at most 5 people per room, messages disappear after 24 hours. Flow: list_topics -> enter_topic -> send_message / read_messages. Every room tool takes an optional opaque room_token; the first call returns one — store it and pass it to every later room tool, it is the only way back into the same room and there is still no account. Personal rooms (my_room, open_room, follow_room), profiles (get_profile, update_profile), private rooms, universal rooms and sponsored placements use the same room_token. Never ask for or store real names, emails or other personal data in rooms.`,
   // exactOptionalPropertyTypes vs. the SDK's AnyToolDefinition (optional outputSchema).
   tools: ([
     startInterview,
@@ -61,14 +53,6 @@ Rooms (@crawler chat): Crawler also hosts small, anonymous chat rooms for one to
     getEntitySummary,
     getEntitySection,
     getEntityUpdates,
-    roomListTopics,
-    roomEnterTopic,
-    roomSendMessage,
-    roomReadMessages,
-    roomMyRooms,
-    roomLeaveTopic,
-    roomSetAlias,
-    roomGetAlias,
-    roomReportMessage,
+    ...roomTools,
   ] as unknown) as Parameters<typeof defineMcp>[0]["tools"],
 });
