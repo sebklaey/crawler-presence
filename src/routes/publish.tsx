@@ -7,6 +7,7 @@ import { AppShell, PageHead } from "@/components/app-shell";
 
 import { PresenceStatus } from "@/components/presence-status";
 import { CompletenessCard } from "@/components/kc/completeness-card";
+import { completenessScore } from "@/lib/kc/model";
 import { RecoveryCodeCard } from "@/components/recovery-code-card";
 import { Button } from "@/components/ui/button";
 import {
@@ -708,7 +709,7 @@ function PublishPage() {
           </div>
 
           <div className="space-y-3">
-            <PresenceStatus core={core} compact hideScore />
+            <PresenceStatus core={core} compact hideScore score={completenessScore(core)} />
             <CompletenessCard core={core} columns={1} showPresenceChecks />
 
             <p className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-xs text-muted-foreground">
