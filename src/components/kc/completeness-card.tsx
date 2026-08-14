@@ -2,13 +2,23 @@ import { Check, Minus } from "lucide-react";
 
 import { FinishGuide } from "@/components/kc/finish-guide";
 import { completeness, completenessScore } from "@/lib/kc/model";
-import type { KnowledgeCore } from "@/lib/knowledge";
+import { presenceChecks, type KnowledgeCore } from "@/lib/knowledge";
 
 /** Knowledge Core completeness, identical to the score shown in /knowledge. */
-export function CompletenessCard({ core, columns = 1 }: { core: KnowledgeCore; columns?: 1 | 2 }) {
+export function CompletenessCard({
+  core,
+  columns = 1,
+  showPresenceChecks = false,
+}: {
+  core: KnowledgeCore;
+  columns?: 1 | 2;
+  showPresenceChecks?: boolean;
+}) {
   const score = completenessScore(core);
   const rows = completeness(core);
   const open = rows.filter((r) => !r.done);
+  const checks = showPresenceChecks ? presenceChecks(core) : [];
+
 
   return (
     <div className="rounded-2xl border border-border bg-card p-6">
