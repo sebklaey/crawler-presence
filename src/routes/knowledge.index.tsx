@@ -231,7 +231,7 @@ function KnowledgePage() {
           </div>
 
           <div className="space-y-6">
-            <PresenceStatus core={core} compact />
+            <PresenceStatus core={core} compact score={completenessScore(core)} />
 
             <Section title="Improve my Presence" hint={plan === "free" || plan === "plus" ? "Included from Pro." : undefined}>
               {core.gaps.length ? (
@@ -241,21 +241,52 @@ function KnowledgePage() {
                   ))}
                 </ul>
               ) : null}
-              <Button size="sm" variant="outline" onClick={() => void runImprove()} disabled={improving}>
-                {improving ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-1.5 h-3.5 w-3.5" />}
-                Analyse gaps
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button size="sm" variant="outline" onClick={() => void runImprove()} disabled={improving}>
+                  {improving ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-1.5 h-3.5 w-3.5" />}
+                  Analyse gaps
+                </Button>
+                <FinishGuide core={core} />
+              </div>
               {improvement ? (
                 <div className="mt-4 space-y-3 text-sm">
                   <p className="font-medium">{improvement.headline}</p>
                   <div>
-                    <div className="text-xs uppercase tracking-wide text-muted-foreground">Missing</div>
-                    <ul className="mt-1 space-y-1 text-muted-foreground">
-                      {improvement.missing.map((m) => (
-                        <li key={m}>· {m}</li>
-                      ))}
-                    </ul>
+                    <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                      Open Knowledge Core points ({openPoints.length})
+                    </div>
+                    {openPoints.length ? (
+                      <ul className="mt-1 space-y-1 text-muted-foreground">
+                        {openPoints.map((r) => (
+                          <li key={r.section}>
+                            · {r.label} — {r.hint}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="mt-1 text-muted-foreground">All sections are covered — 100% complete.</p>
+                    )}
                   </div>
+                  {improvement.missing.length ? (
+                    <div>
+                      <div className="text-xs uppercase tracking-wide text-muted-foreground">Missing</div>
+                      <ul className="mt-1 space-y-1 text-muted-foreground">
+                        {improvement.missing.map((m) => (
+                          <li key={m}>· {m}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                  {textTips.length ? (
+                    <div>
+                      <div className="text-xs uppercase tracking-wide text-muted-foreground">Text improvements</div>
+                      <ul className="mt-1 space-y-1 text-muted-foreground">
+                        {textTips.map((t) => (
+                          <li key={t}>· {t}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
                   <div>
                     <div className="text-xs uppercase tracking-wide text-muted-foreground">Do next</div>
                     <ul className="mt-1 space-y-1.5">
@@ -270,6 +301,7 @@ function KnowledgePage() {
                 </div>
               ) : null}
             </Section>
+
           </div>
         </div>
       </div>
