@@ -77,6 +77,13 @@ export function useSessionSync(options?: { intervalMs?: number }) {
           lastRemote.current = sig;
           return "unchanged";
         }
+        // Never overwrite newer local edits (e.g. saved in /knowledge → Edit data).
+        const localAt = Date.parse(coreRef.current?.updatedAt ?? "") || 0;
+        const remoteAt = Date.parse(result.updated_at ?? "") || 0;
+        if (localAt > remoteAt) {
+          lastRemote.current = sig;
+          return "unchanged";
+        }
         // Remote changed since the last time we adopted it → always take it.
         if (lastRemote.current !== sig) {
           lastRemote.current = sig;

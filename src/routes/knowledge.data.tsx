@@ -24,6 +24,8 @@ import {
 } from "@/lib/kc/model";
 import { usePlanLimits } from "@/lib/plan-limits";
 import { useCore, useVersions } from "@/lib/store";
+import { saveDraft } from "@/lib/presence.functions";
+import { readSessionToken } from "@/hooks/use-session-sync";
 import type { KnowledgeCore } from "@/lib/knowledge";
 
 export const Route = createFileRoute("/knowledge/data")({ component: DataPage });
@@ -60,10 +62,20 @@ function DataPage() {
   const patch = (part: Partial<KnowledgeCore>) => setCore({ ...core, ...part, updatedAt: new Date().toISOString() });
 
   function save() {
+    const next = { ...draft, updatedAt: new Date().toISOString() };
     setVersions((v) => [snapshot(saved, "Before saving edits"), ...v].slice(0, 30));
-    commit({ ...draft, updatedAt: new Date().toISOString() });
+    commit(next);
     setDirty(false);
     toast.success("Saved to your Knowledge Core. Publishing stays a separate step.");
+
+    // Mirror the edit into the remote draft session, otherwise the periodic
+    // ChatGPT/MCP sync would restore the older remote version on reload.
+    const token = readSessionToken();
+    if (token) {
+      void saveDraft({ data: { token, core: next } }).catch(() => {
+        toast.error("Saved locally, but syncing to your ChatGPT draft failed.");
+      });
+    }
   }
 
   function discard() {
