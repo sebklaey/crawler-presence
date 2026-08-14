@@ -708,8 +708,9 @@ function PublishPage() {
           </div>
 
           <div className="space-y-3">
-            <PresenceStatus core={core} columns={1} />
-            <CompletenessCard core={core} columns={1} />
+            <PresenceStatus core={core} compact hideScore />
+            <CompletenessCard core={core} columns={1} showPresenceChecks />
+
             <p className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-xs text-muted-foreground">
               {syncing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
               {syncing ? "Syncing with your ChatGPT interview…" : "Automatically synced with your ChatGPT interview."}

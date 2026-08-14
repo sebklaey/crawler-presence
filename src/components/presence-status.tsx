@@ -8,10 +8,12 @@ export function PresenceStatus({
   core,
   compact = false,
   columns = 2,
+  hideScore = false,
 }: {
   core: KnowledgeCore;
   compact?: boolean;
   columns?: 1 | 2;
+  hideScore?: boolean;
 }) {
   const score = presenceScore(core);
   const checks = presenceChecks(core);
@@ -30,12 +32,15 @@ export function PresenceStatus({
             </a>
           ) : null}
         </div>
-        <div className="display text-4xl tabular-nums">{score}%</div>
+        {!hideScore ? <div className="display text-4xl tabular-nums">{score}%</div> : null}
       </div>
 
-      <div className="mt-4 h-px w-full bg-border">
-        <div className="h-px bg-foreground transition-all duration-700" style={{ width: `${score}%` }} />
-      </div>
+      {!hideScore ? (
+        <div className="mt-4 h-px w-full bg-border">
+          <div className="h-px bg-foreground transition-all duration-700" style={{ width: `${score}%` }} />
+        </div>
+      ) : null}
+
 
       {!compact ? (
         <ul className={`mt-5 grid gap-2 ${columns === 2 ? "sm:grid-cols-2" : ""}`}>
