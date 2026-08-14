@@ -174,6 +174,9 @@ export type InsightsDashboard = {
   events: EventRow[];
   nextImprovement: NextImprovement | null;
   improvements: ImprovementEntry[];
+  /** Set when the plan does not include the improvement loop. */
+  improvementLocked: { plan: string; requiredPlan: string; reason: string } | null;
+
   retention: RetentionSummary;
   /** No measured activity in the selected period yet. */
   empty: boolean;

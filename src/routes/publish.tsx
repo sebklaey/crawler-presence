@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, ArrowLeft, Check, Copy, ExternalLink, Globe, Loader2, Lock, ShieldCheck } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Check, Copy, ExternalLink, Globe, Loader2, Lock, Minus, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell, PageHead } from "@/components/app-shell";
@@ -771,6 +771,10 @@ function PublishPage() {
                               </li>
                             ))}
                           </ul>
+                          {p.upgradeNote ? (
+                            <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground/80">{p.upgradeNote}</p>
+                          ) : null}
+
                         </div>
                         <div className="shrink-0 text-right">
                           <div className="display text-xl">${p.price}</div>
@@ -811,6 +815,25 @@ function PublishPage() {
                       </li>
                     ))}
                   </ul>
+
+                  {plan.notIncluded?.length ? (
+                    <>
+                      <h3 className="mt-4 text-xs uppercase tracking-wide text-muted-foreground">Not included</h3>
+                      <ul className="mt-2 space-y-1">
+                        {plan.notIncluded.map((f) => (
+                          <li key={f} className="flex gap-2 text-xs text-muted-foreground/70">
+                            <Minus className="mt-0.5 h-3 w-3 shrink-0" />
+                            <span>{f}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      {plan.upgradeNote ? (
+                        <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground/80">{plan.upgradeNote}</p>
+                      ) : null}
+                    </>
+                  ) : null}
+
+
 
                   <div className="mt-4 rounded-lg border border-dashed border-border bg-secondary/50 px-3 py-2 text-xs text-muted-foreground">
                     <div className="flex items-center gap-1.5 text-foreground">

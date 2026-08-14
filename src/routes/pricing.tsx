@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Check } from "lucide-react";
+import { Check, Minus } from "lucide-react";
 
 import { AppShell, PageHead } from "@/components/app-shell";
 import { PaymentTestModeBanner } from "@/components/payment-test-mode-banner";
@@ -95,7 +95,19 @@ function PricingPage() {
                     </span>
                   </li>
                 ))}
+                {(p.notIncluded ?? []).map((f) => (
+                  <li key={f} className="flex gap-2">
+                    <Minus className="mt-0.5 h-3.5 w-3.5 shrink-0 opacity-40" />
+                    <span className="text-muted-foreground/60 line-through decoration-muted-foreground/30">{f}</span>
+                  </li>
+                ))}
               </ul>
+              {p.upgradeNote ? (
+                <p className="mt-4 rounded-lg border border-dashed border-border bg-secondary/50 px-3 py-2 text-xs text-muted-foreground">
+                  {p.upgradeNote}
+                </p>
+              ) : null}
+
               <Button asChild className="mt-6" variant={p.id === "pro" ? "default" : "outline"}>
                 <Link to="/publish" search={{ plan: p.id }} onClick={() => setPlan(p.id)}>
                   {plan === p.id ? `Continue with ${p.name}` : `Choose ${p.name}`}
