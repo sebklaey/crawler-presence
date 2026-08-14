@@ -13,6 +13,7 @@ import { insightsDashboardFn } from "@/lib/insights.functions";
 import type { AiAnalyticsDashboard, AnalyticsPeriod } from "@/lib/analytics/model";
 import {
   aiAnalyticsDashboardFn,
+  connectAnalyticsSourceFn,
   exportAnalyticsCsvFn,
   importBingCsvFn,
   saveAnalyticsSourceFn,
