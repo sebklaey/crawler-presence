@@ -20,7 +20,7 @@ export const insightsDashboardFn = createServerFn({ method: "POST" })
     const { parseRecoveryCode, verifyManageSecret, allowRequest } = await import("./mcp/presences");
     const parsed = parseRecoveryCode(data.code);
     if (!parsed) return { ok: false, reason: "invalid-code" };
-    if (!(await allowRequest(`insights:${parsed.slug}`, 60))) return { ok: false, reason: "rate-limited" };
+    if (!(await allowRequest(`insights:${parsed.rateKey}`, 60))) return { ok: false, reason: "rate-limited" };
     try {
       const presence = await verifyManageSecret(parsed.slug, parsed.secret);
       if (!presence) return { ok: false, reason: "not-found" };

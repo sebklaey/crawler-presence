@@ -91,7 +91,7 @@ export default defineTool({
       });
       await markIntentPublished(intent.intentRef, presence.slug);
       const url = `${base}/p/${presence.slug}`;
-      const code = recoveryCode(presence.slug, manageSecret);
+      const code = recoveryCode(presence.slug, manageSecret, presence.sessionToken);
 
       return {
         content: [

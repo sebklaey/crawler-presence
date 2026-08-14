@@ -106,20 +106,37 @@ function constantTimeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
-/** The single string a user copies or downloads: `<slug>~<secret>`. */
-export function recoveryCode(slug: string, secret: string): string {
+/**
+ * Session-token recovery codes.
+ *
+ * A published Presence is bound to the anonymous draft session that created
+ * it. The session token is therefore the single code a user needs: it edits
+ * the draft in ChatGPT AND manages the published Presence on the website.
+ * The legacy `<slug>~crw_…` secret keeps working for older Presences.
+ */
+export const SESSION_CODE_PATTERN = /^sess_[a-f0-9]{16,64}$/;
+
+/** The single string a user copies or downloads. */
+export function recoveryCode(slug: string, secret: string, sessionToken?: string | null): string {
+  if (sessionToken && SESSION_CODE_PATTERN.test(sessionToken)) return sessionToken;
   return `${slug}~${secret}`;
 }
 
-export function parseRecoveryCode(value: string): { slug: string; secret: string } | null {
+export function parseRecoveryCode(
+  value: string,
+): { slug: string; secret: string; rateKey: string } | null {
   const trimmed = value.trim();
+  if (SESSION_CODE_PATTERN.test(trimmed)) {
+    return { slug: "", secret: trimmed, rateKey: `sess-${trimmed.slice(5, 17)}` };
+  }
   const at = trimmed.indexOf("~");
   if (at <= 0) return null;
   const slug = trimmed.slice(0, at);
   const secret = trimmed.slice(at + 1);
   if (!/^[a-z0-9-]{1,120}$/.test(slug) || !MANAGE_SECRET_PATTERN.test(secret)) return null;
-  return { slug, secret };
+  return { slug, secret, rateKey: slug };
 }
+
 
 /* ------------------------------------------------------------------ */
 /* Publishing                                                          */
@@ -349,10 +366,21 @@ export async function getPublishedBySessionToken(token: string): Promise<Publish
 /* Capability checks and management                                    */
 /* ------------------------------------------------------------------ */
 
-/** Verifies the management secret for a slug. Returns null on any mismatch. */
+/**
+ * Verifies a management capability. Accepts either the session token that
+ * created the Presence (the current recovery code) or the legacy management
+ * secret for a slug. Returns null on any mismatch.
+ */
 export async function verifyManageSecret(slug: string, secret: string): Promise<PublishedPresence | null> {
+  if (SESSION_CODE_PATTERN.test(secret)) {
+    const presence = await getPublishedBySessionToken(secret);
+    if (!presence) return null;
+    if (slug && presence.slug !== slug) return null;
+    return presence;
+  }
   if (!/^[a-z0-9-]{1,120}$/.test(slug) || !MANAGE_SECRET_PATTERN.test(secret)) return null;
   const provided = await hashManageSecret(secret);
+
 
   const supabase = await client();
   if (supabase) {
@@ -397,7 +425,22 @@ export async function rotateManageSecret(slug: string): Promise<string> {
   return secret;
 }
 
+/**
+ * Unbinds the draft session from a Presence, so the session token stops
+ * working as a recovery code. Used when a new management secret is issued.
+ */
+export async function clearSessionToken(slug: string): Promise<void> {
+  const supabase = await client();
+  if (!supabase) return;
+  const { error } = await supabase
+    .from("published_presences")
+    .update({ session_token: null })
+    .eq("slug", slug);
+  if (error) storeFailure("unbind-session", error.message);
+}
+
 export async function setPresenceStatus(slug: string, status: PresenceStatus): Promise<void> {
+
   const supabase = await client();
   if (supabase) {
     const { data, error } = await supabase

@@ -19,7 +19,7 @@ async function resolve(code: string) {
   const parsed = parseRecoveryCode(code);
   if (!parsed) return { error: "invalid-code" } as const;
   try {
-    if (!(await allowRequest(`manage:${parsed.slug}`, 20))) return { error: "rate-limited" } as const;
+    if (!(await allowRequest(`manage:${parsed.rateKey}`, 20))) return { error: "rate-limited" } as const;
     const presence = await verifyManageSecret(parsed.slug, parsed.secret);
     if (!presence) return { error: "not-found" } as const;
     return { presence };

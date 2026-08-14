@@ -27,7 +27,7 @@ export async function authenticate(request: Request): Promise<ApiAuth> {
   if (!parsed) return { ok: false, status: 401, error: "Missing or malformed recovery code." };
 
   try {
-    if (!(await allowRequest(`api:${parsed.slug}`, 120)))
+    if (!(await allowRequest(`api:${parsed.rateKey}`, 120)))
       return { ok: false, status: 429, error: "Rate limit exceeded (120 requests per minute)." };
     const presence = await verifyManageSecret(parsed.slug, parsed.secret);
     if (!presence) return { ok: false, status: 401, error: "Invalid recovery code." };

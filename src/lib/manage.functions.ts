@@ -66,10 +66,10 @@ async function resolve(code: string) {
   const parsed = parseRecoveryCode(code);
   if (!parsed) return { error: "invalid-code" } as ResolveError;
   try {
-    if (!(await allowRequest(`manage:${parsed.slug}`, 20))) return { error: "rate-limited" } as ResolveError;
+    if (!(await allowRequest(`manage:${parsed.rateKey}`, 20))) return { error: "rate-limited" } as ResolveError;
     const presence = await verifyManageSecret(parsed.slug, parsed.secret);
     if (!presence) return { error: "not-found" } as ResolveError;
-    return { presence, slug: parsed.slug };
+    return { presence, slug: presence.slug };
   } catch (error) {
     if (error instanceof PresenceStoreError) return { error: "unavailable" } as ResolveError;
     throw error;
@@ -277,10 +277,15 @@ export const manageRotateSecretFn = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<{ ok: boolean; recoveryCode?: string; reason?: string }> => {
     const resolved = await resolve(data.code);
     if ("error" in resolved) return { ok: false, reason: resolved.error };
-    const { rotateManageSecret, recoveryCode, PresenceStoreError } = await import("./mcp/presences");
+    const { rotateManageSecret, recoveryCode, clearSessionToken, PresenceStoreError } = await import(
+      "./mcp/presences"
+    );
     try {
       const secret = await rotateManageSecret(resolved.slug);
+      // The old session-token code must stop working once a new code is issued.
+      await clearSessionToken(resolved.slug);
       return { ok: true, recoveryCode: recoveryCode(resolved.slug, secret) };
+
     } catch (error) {
       if (error instanceof PresenceStoreError) return { ok: false, reason: "unavailable" };
       throw error;
