@@ -129,14 +129,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         }),
       },
       {
-        src: "https://www.googletagmanager.com/gtag/js?id=G-3SM2STRBCN",
+        src: "https://www.googletagmanager.com/gtag/js?id=AW-18389436874",
         async: true,
       },
       {
         children: `window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
-gtag('config', 'G-3SM2STRBCN');`,
+gtag('config', 'G-3SM2STRBCN');
+gtag('config', 'AW-18389436874');`,
       },
     ],
 
