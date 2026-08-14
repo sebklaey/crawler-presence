@@ -20,7 +20,7 @@ export const EVIDENCE_DEFINITION: Record<EvidenceType, string> = {
   observed:
     "Events Crawler saw itself: requests for your published Presence files, CrawlMe API calls, Crawler tool calls and trackable outbound clicks.",
   attributed:
-    "Website traffic attributed by a connected analytics property (GA4, Search Console). Only visits after a click can be attributed — a mention without a click is invisible here.",
+    "Traffic Crawler can attribute to an AI surface through the referrer of the visit, plus data from a connected Search Console property. Only visits after a click can be attributed — a mention without a click is invisible here.",
   synthetic:
     "Controlled API test questions sent to selected AI models on a fixed schedule. A sample, never a measurement of real users.",
   not_measurable:
@@ -33,9 +33,8 @@ export const TRANSPARENCY_NOTICE =
 export const WHAT_THIS_SHOWS = [
   "Server-side requests for your published Presence files (llms.txt, llms-full.txt, Markdown, JSON) including the detected client and whether it was a verified AI bot.",
   "CrawlMe API and MCP retrievals of your Knowledge Core.",
-  "Sessions on your website that a connected GA4 property attributes to a known AI referral domain.",
+  "Visits to your published Presence whose referrer is a known AI surface — measured by Crawler itself, no external analytics account needed.",
   "Classic Google search visibility (impressions, clicks, CTR, position) from a connected Search Console property.",
-  "Reported AI citations imported from Bing Webmaster Tools.",
   "Results of controlled, versioned test prompts sent to selected AI APIs.",
 ];
 
@@ -67,14 +66,12 @@ export const PROVIDER_ORDER: ProviderId[] = [
   "crawler",
 ];
 
-export type SourceType = "crawler_observed" | "server_logs" | "ga4" | "search_console" | "bing_csv" | "ai_probes";
+export type SourceType = "crawler_observed" | "server_logs" | "search_console" | "ai_probes";
 
 export const SOURCE_LABEL: Record<SourceType, string> = {
   crawler_observed: "Crawler events",
   server_logs: "Presence server logs",
-  ga4: "Google Analytics 4",
   search_console: "Google Search Console",
-  bing_csv: "Bing AI performance (CSV)",
   ai_probes: "AI visibility tests",
 };
 

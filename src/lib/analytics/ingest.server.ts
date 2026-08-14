@@ -118,6 +118,36 @@ function referrerHost(request: Request | undefined): string | null {
 }
 
 /**
+ * Known AI surfaces. A visit whose referrer matches one of these is an
+ * attributed AI referral session — measured by Crawler itself, so no external
+ * analytics account is ever required.
+ */
+const AI_REFERRAL_DOMAINS: { domain: string; provider: ProviderId; surface: string }[] = [
+  { domain: "chatgpt.com", provider: "openai", surface: "ChatGPT" },
+  { domain: "chat.openai.com", provider: "openai", surface: "ChatGPT" },
+  { domain: "openai.com", provider: "openai", surface: "OpenAI" },
+  { domain: "claude.ai", provider: "anthropic", surface: "Claude" },
+  { domain: "anthropic.com", provider: "anthropic", surface: "Claude" },
+  { domain: "gemini.google.com", provider: "google", surface: "Gemini" },
+  { domain: "bard.google.com", provider: "google", surface: "Gemini" },
+  { domain: "aistudio.google.com", provider: "google", surface: "Google AI Studio" },
+  { domain: "perplexity.ai", provider: "perplexity", surface: "Perplexity" },
+  { domain: "copilot.microsoft.com", provider: "microsoft", surface: "Copilot" },
+  { domain: "bing.com", provider: "microsoft", surface: "Bing / Copilot" },
+  { domain: "you.com", provider: "other", surface: "You.com" },
+  { domain: "poe.com", provider: "other", surface: "Poe" },
+  { domain: "grok.com", provider: "other", surface: "Grok" },
+  { domain: "x.ai", provider: "other", surface: "Grok" },
+];
+
+/** Matches a referrer host against the known AI surfaces (incl. subdomains). */
+export function matchAiReferral(host: string | null): { provider: ProviderId; surface: string } | null {
+  if (!host) return null;
+  const match = AI_REFERRAL_DOMAINS.find((entry) => host === entry.domain || host.endsWith(`.${entry.domain}`));
+  return match ? { provider: match.provider, surface: match.surface } : null;
+}
+
+/**
  * Records one server-observed event. Never throws and never blocks the
  * response the caller is producing.
  */
@@ -136,12 +166,18 @@ export async function ingestServerEvent(input: IngestInput): Promise<boolean> {
     const path = (input.path ?? "").slice(0, 300) || null;
     const requestId = headers?.get("cf-ray")?.slice(0, 64) ?? crypto.randomUUID();
 
+    // A human visit arriving from a known AI surface is an attributed AI
+    // referral session — Crawler measures this itself, no GA4 required.
+    const referrer = referrerHost(input.request);
+    const referral = classification.isBot ? null : matchAiReferral(referrer);
+    const eventType = referral ? "ai_referral_session" : input.eventType;
+
     const idempotencyKey = (
       input.idempotencyKey ??
       (await sha256(
         [
           input.presenceSlug,
-          input.eventType,
+          eventType,
           path ?? "",
           sessionHash ?? requestId,
           now.toISOString().slice(0, 16), // one event per client, path and minute
@@ -149,19 +185,20 @@ export async function ingestServerEvent(input: IngestInput): Promise<boolean> {
       ))
     ).slice(0, 80);
 
-    const provider = input.provider ?? (classification.isBot ? classification.provider : "other");
+    const provider =
+      referral?.provider ?? input.provider ?? (classification.isBot ? classification.provider : "other");
 
     const { error } = await supabase.from("analytics_events").insert({
       presence_slug: input.presenceSlug,
-      event_type: input.eventType,
-      source_type: "server_logs",
-      evidence_type: input.evidence ?? "observed",
+      event_type: eventType,
+      source_type: referral ? "crawler_observed" : "server_logs",
+      evidence_type: referral ? "attributed" : (input.evidence ?? "observed"),
       occurred_at: now.toISOString(),
       provider,
-      surface: input.surface ?? classification.surface,
+      surface: referral?.surface ?? input.surface ?? classification.surface,
       path,
       resource_path: path,
-      referrer: referrerHost(input.request),
+      referrer,
       user_agent_family: classification.family,
       verified_bot: verified,
       http_status: input.httpStatus ?? 200,
