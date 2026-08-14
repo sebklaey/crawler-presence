@@ -56,7 +56,7 @@ export const Route = createFileRoute("/manage")({
 });
 
 const REASONS: Record<string, string> = {
-  "invalid-code": "That does not look like a Crawler recovery code. It has the form slug~crw_…",
+  "invalid-code": "That does not look like a Crawler recovery code. It is your session ID (sess_…) or a legacy slug~crw_… code.",
   "not-found": "No Presence matches this recovery code.",
   "rate-limited": "Too many attempts. Wait a minute and try again.",
   "no-subscription": "This Presence has no subscription — it was published in demo mode.",
@@ -228,7 +228,7 @@ function ManagePage() {
             Recovery code
           </label>
           <p className="mt-1 text-xs text-muted-foreground">
-            You received it once, right after publishing. Format: <code className="font-mono">slug~crw_…</code>
+            You received it once, right after publishing. It is the same code as your ChatGPT session ID: <code className="font-mono">sess_…</code>
           </p>
           <div className="mt-3 flex gap-2">
             <Input
@@ -238,7 +238,7 @@ function ManagePage() {
               spellCheck={false}
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              placeholder="my-presence-1a2b3c~crw_… (64 hex characters)"
+              placeholder="sess_… (your session ID) or legacy slug~crw_…"
               className="font-mono"
             />
             <Button
