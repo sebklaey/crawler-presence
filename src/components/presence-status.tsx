@@ -9,16 +9,19 @@ export function PresenceStatus({
   compact = false,
   columns = 2,
   hideScore = false,
+  score: scoreOverride,
 }: {
   core: KnowledgeCore;
   compact?: boolean;
   columns?: 1 | 2;
   hideScore?: boolean;
+  score?: number;
 }) {
-  const score = presenceScore(core);
+  const score = scoreOverride ?? presenceScore(core);
   const checks = presenceChecks(core);
   const [published] = usePublished();
   const isLive = Boolean(published?.slug);
+
 
   return (
     <div className="rounded-2xl border border-border bg-card p-6">
