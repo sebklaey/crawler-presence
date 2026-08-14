@@ -366,10 +366,21 @@ export async function getPublishedBySessionToken(token: string): Promise<Publish
 /* Capability checks and management                                    */
 /* ------------------------------------------------------------------ */
 
-/** Verifies the management secret for a slug. Returns null on any mismatch. */
+/**
+ * Verifies a management capability. Accepts either the session token that
+ * created the Presence (the current recovery code) or the legacy management
+ * secret for a slug. Returns null on any mismatch.
+ */
 export async function verifyManageSecret(slug: string, secret: string): Promise<PublishedPresence | null> {
+  if (SESSION_CODE_PATTERN.test(secret)) {
+    const presence = await getPublishedBySessionToken(secret);
+    if (!presence) return null;
+    if (slug && presence.slug !== slug) return null;
+    return presence;
+  }
   if (!/^[a-z0-9-]{1,120}$/.test(slug) || !MANAGE_SECRET_PATTERN.test(secret)) return null;
   const provided = await hashManageSecret(secret);
+
 
   const supabase = await client();
   if (supabase) {
