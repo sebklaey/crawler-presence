@@ -3,27 +3,28 @@ import { useCallback, useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { AppShell, PageHead } from "@/components/app-shell";
+import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ScopeNotice, VisibilityDashboardView } from "@/components/visibility-dashboard";
-import { SCOPE_NOTICE, type EventType, type Period, type SourceType, type VisibilityDashboard } from "@/lib/visibility/model";
-import { visibilityConnectSourceFn, visibilityDashboardFn, visibilityExportFn } from "@/lib/visibility.functions";
+import { InsightsDashboardView } from "@/components/insights-dashboard";
+import { MEASUREMENT_NOTICE, type InsightsDashboard, type InsightsPeriod } from "@/lib/insights/model";
+import { insightsDashboardFn } from "@/lib/insights.functions";
+import { decideRecommendationFn } from "@/lib/retention.functions";
 import { useRecoveryCode } from "@/lib/store";
 
 export const Route = createFileRoute("/analytics")({
   head: () => ({
     meta: [
-      { title: "AI Visibility Analytics — Crawler" },
+      { title: "AI Presence Analytics — Crawler" },
       {
         name: "description",
         content:
-          "Observed mentions, Presence file reads, connected sources and controlled AI benchmarks — every metric with source, period and measurement limits.",
+          "Gemessene Zugriffe auf deine veröffentlichten Informationen, beliebteste Inhalte, erkannte Quellen und kostenlose Verbesserungen deiner Knowledge Core.",
       },
-      { property: "og:title", content: "AI Visibility Analytics — Crawler" },
+      { property: "og:title", content: "AI Presence Analytics — Crawler" },
       {
         property: "og:description",
-        content: "Transparent, measurable visibility analytics for a published Crawler Presence.",
+        content: "Von Crawler gemessene Aktivität deiner AI Presence — transparent, nachvollziehbar und ohne Rankingversprechen.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -33,165 +34,102 @@ export const Route = createFileRoute("/analytics")({
 });
 
 const REASONS: Record<string, string> = {
-  "invalid-code": "That does not look like a Crawler recovery code (format: slug~crw_…).",
-  "not-found": "No Presence access for this code.",
-  "rate-limited": "Too many requests. Please wait a moment.",
-  unavailable: "Analytics are temporarily unavailable. Nothing was changed.",
+  "invalid-code": "Das sieht nicht nach einem Crawler-Recovery-Code aus (Format: slug~crw_…).",
+  "not-found": "Für diesen Code besteht kein Presence-Zugriff.",
+  "rate-limited": "Zu viele Anfragen. Bitte einen Moment warten.",
+  unavailable: "Analytics sind vorübergehend nicht verfügbar. Es wurde nichts geändert.",
 };
-
-function slugFromCode(code: string) {
-  const idx = code.indexOf("~");
-  return idx > 0 ? code.slice(0, idx) : "";
-}
 
 function AnalyticsPage() {
   const [storedCode, setStoredCode, hydrated] = useRecoveryCode();
   const [code, setCode] = useState("");
-  const [data, setData] = useState<VisibilityDashboard | null>(null);
-  const [name, setName] = useState<string>("Your Presence");
-  const [maxDays, setMaxDays] = useState(7);
+  const [data, setData] = useState<InsightsDashboard | null>(null);
+  const [period, setPeriod] = useState<InsightsPeriod>(30);
   const [busy, setBusy] = useState(false);
+  const [improving, setImproving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState<{ period: Period; source: SourceType | "all"; eventType: EventType | "all" }>({
-    period: 30,
-    source: "all",
-    eventType: "all",
-  });
 
-  const slug = slugFromCode(storedCode || code);
-
-  const load = useCallback(
-    async (activeCode: string, next = filters) => {
-      if (!activeCode) return;
-      setBusy(true);
-      setError(null);
-      try {
-        const result = await visibilityDashboardFn({
-          data: {
-            code: activeCode,
-            period: next.period,
-            source: next.source === "all" ? undefined : next.source,
-            eventType: next.eventType === "all" ? undefined : next.eventType,
-          },
-        });
-        if (!result.ok) {
-          setData(null);
-          setError(REASONS[result.reason] ?? "Analytics could not be loaded.");
-          return;
-        }
-        setData(result.dashboard as VisibilityDashboard);
-        setName(result.name);
-        setMaxDays(result.maxDays);
-      } catch {
-        setError("Analytics could not be loaded.");
-      } finally {
-        setBusy(false);
+  const load = useCallback(async (activeCode: string, nextPeriod: InsightsPeriod) => {
+    if (!activeCode) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await insightsDashboardFn({ data: { code: activeCode, period: nextPeriod } });
+      if (!result.ok) {
+        setData(null);
+        setError(REASONS[result.reason] ?? "Analytics konnten nicht geladen werden.");
+        return;
       }
-    },
-    [filters],
-  );
+      setData(result.dashboard);
+      setPeriod(result.dashboard.period);
+    } catch {
+      setError("Analytics konnten nicht geladen werden.");
+    } finally {
+      setBusy(false);
+    }
+  }, []);
 
   useEffect(() => {
-    if (hydrated && storedCode) void load(storedCode);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hydrated, storedCode]);
+    if (hydrated && storedCode) void load(storedCode, 30);
+  }, [hydrated, storedCode, load]);
 
-  function onFilterChange(next: Partial<typeof filters>) {
-    const merged = { ...filters, ...next };
-    setFilters(merged);
-    void load(storedCode || code, merged);
-  }
+  const activeCode = storedCode || code;
 
-  async function onExport() {
-    const activeCode = storedCode || code;
+  async function onImprove(value: string): Promise<boolean> {
+    if (!data?.nextImprovement) return false;
+    setImproving(true);
     try {
-      const result = await visibilityExportFn({ data: { code: activeCode } });
-      if (!result.ok) {
-        toast.error("Export failed.");
-        return;
-      }
-      const blob = new Blob([JSON.stringify(result.export, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `crawler-analytics-${slug || "presence"}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch {
-      toast.error("Export failed.");
-    }
-  }
-
-  async function onConnect(input: { source: string; connected: boolean; value?: string }) {
-    const activeCode = storedCode || code;
-    try {
-      const result = await visibilityConnectSourceFn({
-        data: {
-          code: activeCode,
-          source: input.source as "authorized_ai" | "public_web" | "search_console" | "visibility_benchmark" | "user_reported",
-          connected: input.connected,
-          ...(input.value ? { value: input.value } : {}),
-        },
+      const result = await decideRecommendationFn({
+        data: { code: activeCode, id: data.nextImprovement.id, decision: "approve", value },
       });
       if (!result.ok) {
-        toast.error(REASONS[result.reason] ?? "Could not update this source.");
-        return;
+        toast.error("message" in result ? result.message : (REASONS[result.reason] ?? "Die Änderung konnte nicht veröffentlicht werden."));
+        return false;
       }
-      toast.success(input.connected ? "Source connected." : "Source disconnected.");
-      await load(activeCode);
+      await load(activeCode, period);
+      return true;
     } catch {
-      toast.error("Could not update this source.");
+      toast.error("Die Änderung konnte nicht veröffentlicht werden.");
+      return false;
+    } finally {
+      setImproving(false);
     }
   }
 
   return (
     <AppShell>
       <div className="mx-auto max-w-6xl px-5 pb-24 pt-14">
-        <PageHead
-          eyebrow="AI Visibility Analytics"
-          title={name}
-          description="Observed mentions, file reads, connected sources and controlled benchmarks — every number with its source, period and definition."
-        />
-
-        <p className="mb-6 text-xs text-muted-foreground">
-          <Link to="/manage" className="underline underline-offset-4">
-            Back to Presence management
-          </Link>
-          {slug ? (
-            <>
-              {" "}
-              · public summary view:{" "}
-              <Link to="/p/$slug/analytics" params={{ slug }} className="underline underline-offset-4">
-                /p/{slug}/analytics
-              </Link>
-            </>
-          ) : null}
-        </p>
-
         {!storedCode && !data ? (
           <div className="space-y-4">
-            <ScopeNotice text={SCOPE_NOTICE} />
+            <h1 className="text-2xl font-semibold tracking-tight">Deine AI Presence wird gesehen</h1>
+            <p className="text-sm text-muted-foreground">{MEASUREMENT_NOTICE}</p>
             <form
               className="flex flex-col gap-2 sm:flex-row"
               onSubmit={(e) => {
                 e.preventDefault();
                 setStoredCode(code);
-                void load(code);
+                void load(code, period);
               }}
             >
               <Input
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 placeholder="slug~crw_…"
-                aria-label="Recovery code"
+                aria-label="Recovery-Code"
                 autoComplete="off"
               />
               <Button type="submit" disabled={busy || code.length < 10}>
-                {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Open analytics"}
+                {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Analytics öffnen"}
               </Button>
             </form>
             <p className="text-xs text-muted-foreground">
-              The recovery code is only sent to the server for verification — never written into the URL, never logged.
+              Der Recovery-Code wird nur zur Prüfung an den Server gesendet — nie in die URL geschrieben, nie geloggt.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Noch nicht veröffentlicht?{" "}
+              <Link to="/publish" className="underline underline-offset-4">
+                Presence prüfen und veröffentlichen
+              </Link>
             </p>
             {error ? <p className="text-xs text-destructive">{error}</p> : null}
           </div>
@@ -199,23 +137,45 @@ function AnalyticsPage() {
 
         {busy && !data ? (
           <div className="flex items-center gap-2 py-16 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" /> Loading analytics…
+            <Loader2 className="h-4 w-4 animate-spin" /> Analytics werden geladen…
           </div>
         ) : null}
 
         {error && data === null && storedCode ? (
-          <div className="rounded-xl border border-destructive/40 px-4 py-6 text-sm text-destructive">{error}</div>
+          <div className="space-y-4">
+            <div className="rounded-xl border border-destructive/40 px-4 py-6 text-sm text-destructive">{error}</div>
+            <div className="rounded-xl border bg-card px-5 py-8 text-center">
+              <h2 className="text-lg font-medium">Veröffentliche deine Presence, um Analytics zu starten</h2>
+              <Button asChild className="mt-4">
+                <Link to="/publish">Presence prüfen und veröffentlichen</Link>
+              </Button>
+            </div>
+          </div>
         ) : null}
 
         {data ? (
-          <VisibilityDashboardView
-            data={data}
-            filters={filters}
-            maxDays={maxDays}
-            onFilterChange={onFilterChange}
-            onExport={onExport}
-            onConnect={onConnect}
-          />
+          <>
+            <InsightsDashboardView
+              data={data}
+              period={period}
+              onPeriodChange={(next) => {
+                setPeriod(next);
+                void load(activeCode, next);
+              }}
+              onImprove={onImprove}
+              improving={improving}
+              busy={busy}
+            />
+            <p className="mt-8 text-xs text-muted-foreground">
+              <Link to="/manage" className="underline underline-offset-4">
+                Zurück zur Presence-Verwaltung
+              </Link>
+              {" · "}
+              <Link to="/p/$slug/analytics" params={{ slug: data.slug }} className="underline underline-offset-4">
+                Öffentliche Zusammenfassung
+              </Link>
+            </p>
+          </>
         ) : null}
       </div>
     </AppShell>

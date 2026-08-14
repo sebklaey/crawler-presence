@@ -30,7 +30,7 @@ import {
   periodLabel,
 } from "./model";
 
-type Row = {
+export type Row = {
   occurred_at: string;
   source_type: SourceType;
   event_type: EventType;
@@ -57,7 +57,7 @@ function windowStart(period: Period, offset = 0): string | null {
 }
 
 /** Loads unified rows for [now - period*(offset+1), now - period*offset). */
-async function loadRows(slug: string, period: Period, offset = 0): Promise<Row[]> {
+export async function loadRows(slug: string, period: Period, offset = 0): Promise<Row[]> {
   const supabase = await db();
   if (!supabase) return [];
   if (period === "all" && offset > 0) return [];
