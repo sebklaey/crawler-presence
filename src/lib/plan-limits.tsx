@@ -4,20 +4,26 @@
  * Every action that can run into a subscription boundary asks `guard(...)`
  * first. When the current plan covers the action it returns true and the
  * action continues. When it does not, the upgrade popup opens with the exact
- * limit that was hit, what the next plan unlocks, and a direct route into the
- * existing subscription flow (`/publish?plan=…`).
+ * limit that was hit, what the next plan unlocks, and a direct Paddle checkout
+ * when payment credentials are configured. Falls back to the guided publish
+ * flow when checkout is unavailable or the user has no Knowledge Core yet.
  *
  * Accountless rule: the plan lives in the local workspace only — no account,
  * no login, no profile.
  */
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowRight, Lock } from "lucide-react";
+import { ArrowRight, Loader2, Lock } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PLANS, planById, type PlanId } from "@/lib/billing";
-import { usePlan } from "@/lib/store";
+import { useCore, usePlan } from "@/lib/store";
+import { usePaymentsStatus } from "@/hooks/use-payments-status";
+import { isCoreEmpty } from "@/lib/knowledge";
+import { startPublishFn } from "@/lib/presence.functions";
+import { trackFunnel } from "@/lib/funnel";
+
 
 export type LimitKey =
   | "content_records"
@@ -82,11 +88,64 @@ export function usePlanLimits(): Ctx {
 export function PlanLimitProvider({ children }: { children: ReactNode }) {
   const [stored] = usePlan();
   const [, setPlan] = usePlan();
+  const [core] = useCore();
   const navigate = useNavigate();
+  const { status: payments } = usePaymentsStatus();
   const [blocked, setBlocked] = useState<Blocked | null>(null);
+  const [busy, setBusy] = useState(false);
 
   // A free workspace is not published yet; the lowest paid plan sets the bar.
   const localPlan: PlanId = stored === "free" ? "plus" : stored;
+
+  /** Open Paddle overlay for the blocked plan; fallback to /publish if unavailable. */
+  async function buy(target: PlanId) {
+    if (busy) return;
+    setPlan(target);
+    setBlocked(null);
+
+    if (isCoreEmpty(core) || !payments.configured) {
+      void navigate({ to: "/publish", search: { plan: target } });
+      return;
+    }
+
+    setBusy(true);
+    trackFunnel("checkout_started", { plan: target, fromStep: "limit_popup", toStep: "checkout" });
+    try {
+      const result = await startPublishFn({
+        data: { core, plan: target, origin: window.location.origin },
+      });
+      if (result.kind === "error") {
+        void navigate({ to: "/publish", search: { plan: target } });
+        return;
+      }
+      try {
+        localStorage.setItem("crawler:pending-plan", target);
+        localStorage.setItem(
+          "crawler:pending-intent",
+          JSON.stringify({ ref: result.intentRef, at: Date.now() }),
+        );
+      } catch {
+        /* ignore */
+      }
+      const successUrl = `${window.location.origin}/publish?intent=${encodeURIComponent(result.intentRef)}`;
+      try {
+        const { openPaddleCheckout } = await import("@/lib/paddle-client");
+        await openPaddleCheckout({
+          environment: result.environment,
+          token: result.clientToken,
+          transactionId: result.transactionId,
+          successUrl,
+        });
+      } catch {
+        window.location.href = result.url;
+      }
+    } catch {
+      void navigate({ to: "/publish", search: { plan: target } });
+    } finally {
+      setBusy(false);
+    }
+  }
+
 
   const guard = useCallback(
     (input: GuardInput): boolean => {
@@ -237,15 +296,21 @@ export function PlanLimitProvider({ children }: { children: ReactNode }) {
                   Compare plans
                 </Button>
                 <Button
+                  disabled={busy}
                   onClick={() => {
-                    const target = blocked.required;
-                    setBlocked(null);
-                    setPlan(target);
-                    void navigate({ to: "/publish", search: { plan: target } });
+                    void buy(blocked.required);
                   }}
                 >
-                  Upgrade to {required.name}
+                  {busy ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Loading…
+                    </>
+                  ) : (
+                    <>Upgrade to {required.name}</>
+                  )}
                 </Button>
+
               </DialogFooter>
             </>
           ) : null}
