@@ -355,36 +355,55 @@ export function InsightsDashboardView({
         )}
 
         {/* Improvement loop */}
-        <section className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-5">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-            <h2 className="text-sm font-medium">Your next improvement</h2>
-          </div>
-          {next ? (
-            <>
-              <p className="mt-3 text-sm">{next.issue}</p>
-              {next.evidence ? <p className="mt-1 text-xs text-muted-foreground">{next.evidence}</p> : null}
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Button
-                  onClick={() => {
-                    setAnswer(next.proposedValue ?? next.currentValue ?? "");
-                    setStep("question");
-                    setDialogOpen(true);
-                  }}
-                >
-                  Improve for free
-                </Button>
-                <Button variant="outline" onClick={() => setWhyOpen(true)}>
-                  Why is this recommended?
-                </Button>
-              </div>
-            </>
-          ) : (
-            <p className="mt-3 text-sm text-muted-foreground">
-              There is no specific improvement suggestion right now. Crawler keeps reviewing your Presence.
+        {data.improvementLocked ? (
+          <section className="rounded-xl border border-border bg-card p-5">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-muted-foreground" />
+              <h2 className="text-sm font-medium">Improvement recommendations</h2>
+            </div>
+            <p className="mt-3 text-sm text-muted-foreground">{data.improvementLocked.reason}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Your current plan is {data.improvementLocked.plan}. {data.improvementLocked.requiredPlan} analyses your
+              measured data, points out information gaps and gives you concrete improvements — plus a 90-day window and
+              far more content records.
             </p>
-          )}
-        </section>
+            <Button asChild className="mt-4" variant="outline">
+              <a href="/pricing">Upgrade to {data.improvementLocked.requiredPlan}</a>
+            </Button>
+          </section>
+        ) : (
+          <section className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-5">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              <h2 className="text-sm font-medium">Your next improvement</h2>
+            </div>
+            {next ? (
+              <>
+                <p className="mt-3 text-sm">{next.issue}</p>
+                {next.evidence ? <p className="mt-1 text-xs text-muted-foreground">{next.evidence}</p> : null}
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Button
+                    onClick={() => {
+                      setAnswer(next.proposedValue ?? next.currentValue ?? "");
+                      setStep("question");
+                      setDialogOpen(true);
+                    }}
+                  >
+                    Improve for free
+                  </Button>
+                  <Button variant="outline" onClick={() => setWhyOpen(true)}>
+                    Why is this recommended?
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <p className="mt-3 text-sm text-muted-foreground">
+                There is no specific improvement suggestion right now. Crawler keeps reviewing your Presence.
+              </p>
+            )}
+          </section>
+        )}
+
 
         {/* Improvement history */}
         <section className="rounded-xl border bg-card p-5">
