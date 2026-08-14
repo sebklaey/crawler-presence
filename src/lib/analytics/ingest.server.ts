@@ -118,6 +118,36 @@ function referrerHost(request: Request | undefined): string | null {
 }
 
 /**
+ * Known AI surfaces. A visit whose referrer matches one of these is an
+ * attributed AI referral session — measured by Crawler itself, so no external
+ * analytics account is ever required.
+ */
+const AI_REFERRAL_DOMAINS: { domain: string; provider: ProviderId; surface: string }[] = [
+  { domain: "chatgpt.com", provider: "openai", surface: "ChatGPT" },
+  { domain: "chat.openai.com", provider: "openai", surface: "ChatGPT" },
+  { domain: "openai.com", provider: "openai", surface: "OpenAI" },
+  { domain: "claude.ai", provider: "anthropic", surface: "Claude" },
+  { domain: "anthropic.com", provider: "anthropic", surface: "Claude" },
+  { domain: "gemini.google.com", provider: "google", surface: "Gemini" },
+  { domain: "bard.google.com", provider: "google", surface: "Gemini" },
+  { domain: "aistudio.google.com", provider: "google", surface: "Google AI Studio" },
+  { domain: "perplexity.ai", provider: "perplexity", surface: "Perplexity" },
+  { domain: "copilot.microsoft.com", provider: "microsoft", surface: "Copilot" },
+  { domain: "bing.com", provider: "microsoft", surface: "Bing / Copilot" },
+  { domain: "you.com", provider: "other", surface: "You.com" },
+  { domain: "poe.com", provider: "other", surface: "Poe" },
+  { domain: "grok.com", provider: "other", surface: "Grok" },
+  { domain: "x.ai", provider: "other", surface: "Grok" },
+];
+
+/** Matches a referrer host against the known AI surfaces (incl. subdomains). */
+export function matchAiReferral(host: string | null): { provider: ProviderId; surface: string } | null {
+  if (!host) return null;
+  const match = AI_REFERRAL_DOMAINS.find((entry) => host === entry.domain || host.endsWith(`.${entry.domain}`));
+  return match ? { provider: match.provider, surface: match.surface } : null;
+}
+
+/**
  * Records one server-observed event. Never throws and never blocks the
  * response the caller is producing.
  */
