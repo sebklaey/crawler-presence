@@ -199,7 +199,7 @@ export const finalizePublishFn = createServerFn({ method: "POST" })
       publishedAt: presence.publishedAt,
       paths: presence.files.map((f) => f.path),
       manageSecret,
-      recoveryCode: recoveryCode(presence.slug, manageSecret),
+      recoveryCode: recoveryCode(presence.slug, manageSecret, presence.sessionToken),
     };
   });
 
