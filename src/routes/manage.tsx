@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { CreditCard, Eye, EyeOff, KeyRound, Loader2, RefreshCw } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { CreditCard, Eye, EyeOff, KeyRound, Loader2, LogOut, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell, PageHead } from "@/components/app-shell";
