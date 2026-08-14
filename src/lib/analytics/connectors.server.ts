@@ -121,8 +121,12 @@ export async function syncGa4(slug: string, days = 90): Promise<SyncResult> {
       status: "not_connected",
       last_error: null,
     });
-    return { ok: false, written: 0, skipped: 0, message: "GA4 is not connected: service account or property ID missing." };
+    const missing = !propertyId
+      ? "No GA4 property ID was saved. Enter the numeric property ID (e.g. 493812345)."
+      : "The property ID is saved, but Google access is missing: a Google service account key must be added to Crawler and the service account e-mail must be granted 'Viewer' access to this GA4 property.";
+    return { ok: false, written: 0, skipped: 0, message: `GA4 is not connected. ${missing}` };
   }
+
 
   const from = new Date(Date.now() - days * 86_400_000).toISOString().slice(0, 10);
   const to = new Date().toISOString().slice(0, 10);
