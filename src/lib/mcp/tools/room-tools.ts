@@ -110,6 +110,7 @@ function adapt(tool: RoomTool) {
           structuredContent: { ...result, room_token: token },
         };
       } catch (error) {
+        console.error("[room-tool]", tool.name, error);
         const roomError = toRoomError(error);
         return {
           isError: true,
