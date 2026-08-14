@@ -161,6 +161,23 @@ async function askProvider(provider: ProviderId, prompt: string): Promise<ProbeA
   const model = MODELS[provider as keyof typeof MODELS] ?? "gpt-4o-mini";
   const timeout = AbortSignal.timeout(30_000);
 
+  // One-click path: no user key for this provider, but the built-in gateway
+  // can reach an equivalent model.
+  const ownKey =
+    provider === "openai"
+      ? env("OPENAI_API_KEY")
+      : provider === "google"
+        ? env("GEMINI_API_KEY")
+        : provider === "anthropic"
+          ? env("ANTHROPIC_API_KEY")
+          : env("PERPLEXITY_API_KEY");
+  const gatewayModel = GATEWAY_MODELS[provider];
+  if (!ownKey && gatewayModel && gatewayAvailable()) {
+    return askGateway(prompt, gatewayModel);
+  }
+
+
+
   if (provider === "anthropic") {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
