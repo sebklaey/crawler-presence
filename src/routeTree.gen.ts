@@ -22,6 +22,7 @@ import { Route as LlmsFullDottxtRouteImport } from './routes/llms-full[.]txt'
 import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
 import { Route as ManageRouteImport } from './routes/manage'
 import { Route as McpRouteImport } from './routes/mcp'
+import { Route as OfferingsDotmdRouteImport } from './routes/offerings[.]md'
 import { Route as PreviewRouteImport } from './routes/preview'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -124,6 +125,11 @@ const ManageRoute = ManageRouteImport.update({
 const McpRoute = McpRouteImport.update({
   id: '/mcp',
   path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OfferingsDotmdRoute = OfferingsDotmdRouteImport.update({
+  id: '/offerings.md',
+  path: '/offerings.md',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PreviewRoute = PreviewRouteImport.update({
@@ -337,6 +343,7 @@ export interface FileRoutesByFullPath {
   '/llms.txt': typeof LlmsDottxtRoute
   '/manage': typeof ManageRoute
   '/mcp': typeof McpRoute
+  '/offerings.md': typeof OfferingsDotmdRoute
   '/preview': typeof PreviewRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -389,6 +396,7 @@ export interface FileRoutesByTo {
   '/llms.txt': typeof LlmsDottxtRoute
   '/manage': typeof ManageRoute
   '/mcp': typeof McpRoute
+  '/offerings.md': typeof OfferingsDotmdRoute
   '/preview': typeof PreviewRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -443,6 +451,7 @@ export interface FileRoutesById {
   '/llms.txt': typeof LlmsDottxtRoute
   '/manage': typeof ManageRoute
   '/mcp': typeof McpRoute
+  '/offerings.md': typeof OfferingsDotmdRoute
   '/preview': typeof PreviewRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -498,6 +507,7 @@ export interface FileRouteTypes {
     | '/llms.txt'
     | '/manage'
     | '/mcp'
+    | '/offerings.md'
     | '/preview'
     | '/pricing'
     | '/privacy'
@@ -550,6 +560,7 @@ export interface FileRouteTypes {
     | '/llms.txt'
     | '/manage'
     | '/mcp'
+    | '/offerings.md'
     | '/preview'
     | '/pricing'
     | '/privacy'
@@ -603,6 +614,7 @@ export interface FileRouteTypes {
     | '/llms.txt'
     | '/manage'
     | '/mcp'
+    | '/offerings.md'
     | '/preview'
     | '/pricing'
     | '/privacy'
@@ -657,6 +669,7 @@ export interface RootRouteChildren {
   LlmsDottxtRoute: typeof LlmsDottxtRoute
   ManageRoute: typeof ManageRoute
   McpRoute: typeof McpRoute
+  OfferingsDotmdRoute: typeof OfferingsDotmdRoute
   PreviewRoute: typeof PreviewRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -781,6 +794,13 @@ declare module '@tanstack/react-router' {
       path: '/mcp'
       fullPath: '/mcp'
       preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/offerings.md': {
+      id: '/offerings.md'
+      path: '/offerings.md'
+      fullPath: '/offerings.md'
+      preLoaderRoute: typeof OfferingsDotmdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/preview': {
@@ -1090,6 +1110,7 @@ const rootRouteChildren: RootRouteChildren = {
   LlmsDottxtRoute: LlmsDottxtRoute,
   ManageRoute: ManageRoute,
   McpRoute: McpRoute,
+  OfferingsDotmdRoute: OfferingsDotmdRoute,
   PreviewRoute: PreviewRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
