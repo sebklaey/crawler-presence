@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as SplatRouteImport } from './routes/$'
 import { Route as AboutDotmdRouteImport } from './routes/about[.]md'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
+import { Route as AudiencesDotmdRouteImport } from './routes/audiences[.]md'
 import { Route as ChatgptRouteImport } from './routes/chatgpt'
 import { Route as CrawlmeRouteImport } from './routes/crawlme'
 import { Route as DemoRouteImport } from './routes/demo'
@@ -81,6 +82,11 @@ const AboutDotmdRoute = AboutDotmdRouteImport.update({
 const AnalyticsRoute = AnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AudiencesDotmdRoute = AudiencesDotmdRouteImport.update({
+  id: '/audiences.md',
+  path: '/audiences.md',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChatgptRoute = ChatgptRouteImport.update({
@@ -340,6 +346,7 @@ export interface FileRoutesByFullPath {
   '/$': typeof SplatRoute
   '/about.md': typeof AboutDotmdRoute
   '/analytics': typeof AnalyticsRoute
+  '/audiences.md': typeof AudiencesDotmdRoute
   '/chatgpt': typeof ChatgptRoute
   '/crawlme': typeof CrawlmeRoute
   '/demo': typeof DemoRoute
@@ -395,6 +402,7 @@ export interface FileRoutesByTo {
   '/$': typeof SplatRoute
   '/about.md': typeof AboutDotmdRoute
   '/analytics': typeof AnalyticsRoute
+  '/audiences.md': typeof AudiencesDotmdRoute
   '/chatgpt': typeof ChatgptRoute
   '/crawlme': typeof CrawlmeRoute
   '/demo': typeof DemoRoute
@@ -450,6 +458,7 @@ export interface FileRoutesById {
   '/$': typeof SplatRoute
   '/about.md': typeof AboutDotmdRoute
   '/analytics': typeof AnalyticsRoute
+  '/audiences.md': typeof AudiencesDotmdRoute
   '/chatgpt': typeof ChatgptRoute
   '/crawlme': typeof CrawlmeRoute
   '/demo': typeof DemoRoute
@@ -507,6 +516,7 @@ export interface FileRouteTypes {
     | '/$'
     | '/about.md'
     | '/analytics'
+    | '/audiences.md'
     | '/chatgpt'
     | '/crawlme'
     | '/demo'
@@ -562,6 +572,7 @@ export interface FileRouteTypes {
     | '/$'
     | '/about.md'
     | '/analytics'
+    | '/audiences.md'
     | '/chatgpt'
     | '/crawlme'
     | '/demo'
@@ -616,6 +627,7 @@ export interface FileRouteTypes {
     | '/$'
     | '/about.md'
     | '/analytics'
+    | '/audiences.md'
     | '/chatgpt'
     | '/crawlme'
     | '/demo'
@@ -672,6 +684,7 @@ export interface RootRouteChildren {
   SplatRoute: typeof SplatRoute
   AboutDotmdRoute: typeof AboutDotmdRoute
   AnalyticsRoute: typeof AnalyticsRoute
+  AudiencesDotmdRoute: typeof AudiencesDotmdRoute
   ChatgptRoute: typeof ChatgptRoute
   CrawlmeRoute: typeof CrawlmeRoute
   DemoRoute: typeof DemoRoute
@@ -744,6 +757,13 @@ declare module '@tanstack/react-router' {
       path: '/analytics'
       fullPath: '/analytics'
       preLoaderRoute: typeof AnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/audiences.md': {
+      id: '/audiences.md'
+      path: '/audiences.md'
+      fullPath: '/audiences.md'
+      preLoaderRoute: typeof AudiencesDotmdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chatgpt': {
@@ -1121,6 +1141,7 @@ const rootRouteChildren: RootRouteChildren = {
   SplatRoute: SplatRoute,
   AboutDotmdRoute: AboutDotmdRoute,
   AnalyticsRoute: AnalyticsRoute,
+  AudiencesDotmdRoute: AudiencesDotmdRoute,
   ChatgptRoute: ChatgptRoute,
   CrawlmeRoute: CrawlmeRoute,
   DemoRoute: DemoRoute,
