@@ -3,7 +3,7 @@ import { z } from "zod";
 import { PLANS } from "../../billing";
 import { toKnowledgeCore } from "../../interview-core.server";
 import { normalizeCore, repairCore } from "../../interview-rules";
-import { presenceScore } from "../../knowledge";
+import { completenessScore } from "../../kc/model";
 import { allowRequest } from "../presences";
 import { getSession, saveSession } from "../sessions";
 import { siteUrl } from "../site";
@@ -94,7 +94,7 @@ export default defineTool({
         plan_document_limits: limits,
         limit_note:
           "Documents beyond the plan limit stay stored in the Knowledge Core but are not rendered into the public files until the plan is upgraded.",
-        presence_score: presenceScore(session.core),
+        presence_score: completenessScore(session.core),
         storage_note:
           "Crawler stores plain text only — never the original binary file. Do not send confidential material you do not want published.",
       },

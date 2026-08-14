@@ -2,7 +2,7 @@ import { defineTool, ToolError } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 import { allowRequest } from "../presences";
 import { runInterviewTurn, toKnowledgeCore } from "../../interview-core.server";
-import { presenceScore } from "../../knowledge";
+import { completenessScore } from "../../kc/model";
 import { createSession, saveSession, SESSION_NOTE } from "../sessions";
 
 export default defineTool({
@@ -59,7 +59,7 @@ export default defineTool({
       session_note: SESSION_NOTE,
       entity_type: session.core.entityType,
       confidence: turn.confidence,
-      presence_score: presenceScore(session.core),
+      presence_score: completenessScore(session.core),
       knowledge_core_summary: {
         name: session.core.name,
         tagline: session.core.tagline,

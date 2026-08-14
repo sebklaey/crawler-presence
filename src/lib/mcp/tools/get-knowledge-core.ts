@@ -1,6 +1,7 @@
 import { defineTool, ToolError } from "@lovable.dev/mcp-js";
 import { z } from "zod";
-import { entityLabel, presenceChecks, presenceScore } from "../../knowledge";
+import { entityLabel } from "../../knowledge";
+import { completeness, completenessScore } from "../../kc/model";
 import { getSession, SESSION_NOTE } from "../sessions";
 
 export default defineTool({
@@ -20,16 +21,16 @@ export default defineTool({
       content: [
         {
           type: "text",
-          text: `${c.name || "Untitled presence"} — ${entityLabel[c.entityType]}. Presence score ${presenceScore(c)}/100, ${c.facts.filter((f) => f.status === "verified").length} verified facts.`,
+          text: `${c.name || "Untitled presence"} — ${entityLabel[c.entityType]}. Presence score ${completenessScore(c)}/100, ${c.facts.filter((f) => f.status === "verified").length} verified facts.`,
         },
       ],
       structuredContent: {
         session_id: session.id,
         session_note: SESSION_NOTE,
-        presence_score: presenceScore(c),
+        presence_score: completenessScore(c),
         confidence: session.confidence,
         interview_complete: session.complete,
-        open_checks: presenceChecks(c).filter((x) => !x.done).map((x) => x.label),
+        open_checks: completeness(c).filter((r) => !r.done).map((r) => `${r.label} — ${r.hint}`),
         knowledge_core: c,
       },
     };
