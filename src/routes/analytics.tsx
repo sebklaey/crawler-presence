@@ -78,11 +78,58 @@ function AnalyticsPage() {
     }
   }, []);
 
+  const loadAi = useCallback(async (activeCode: string, nextPeriod: AnalyticsPeriod) => {
+    if (!activeCode) return;
+    setAiBusy(true);
+    try {
+      const result = await aiAnalyticsDashboardFn({ data: { code: activeCode, period: nextPeriod } });
+      if (result.ok) {
+        setAiData(result.dashboard);
+        setAiPeriod(result.dashboard.period);
+      }
+    } catch {
+      /* the insights dashboard above stays usable */
+    } finally {
+      setAiBusy(false);
+    }
+  }, []);
+
   useEffect(() => {
-    if (hydrated && storedCode) void load(storedCode, 30);
-  }, [hydrated, storedCode, load]);
+    if (hydrated && storedCode) {
+      void load(storedCode, 30);
+      void loadAi(storedCode, 30);
+    }
+  }, [hydrated, storedCode, load, loadAi]);
 
   const activeCode = storedCode || code;
+
+  async function runAction(key: string, action: () => Promise<{ ok: boolean; message: string }>) {
+    setPending(key);
+    try {
+      const result = await action();
+      if (result.ok) toast.success(result.message);
+      else toast.error(result.message);
+      await loadAi(activeCode, aiPeriod);
+    } catch {
+      toast.error("The action failed. Nothing was changed.");
+    } finally {
+      setPending(null);
+    }
+  }
+
+  async function onExport() {
+    const result = await exportAnalyticsCsvFn({ data: { code: activeCode, period: aiPeriod } });
+    if (!result.ok) {
+      toast.error("The export could not be created.");
+      return;
+    }
+    const url = URL.createObjectURL(new Blob([result.csv], { type: "text/csv" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `crawler-ai-analytics-${aiPeriod}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
 
   async function onImprove(value: string): Promise<boolean> {
     if (!data?.nextImprovement) return false;
