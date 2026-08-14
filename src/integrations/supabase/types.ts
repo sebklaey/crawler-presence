@@ -490,6 +490,78 @@ export type Database = {
         }
         Relationships: []
       }
+      image_messages: {
+        Row: {
+          alt_text: string | null
+          approved_at: string | null
+          checksum: string | null
+          created_at: string
+          expires_at: string
+          file_size: number
+          height: number | null
+          id: number
+          mime_type: string
+          moderation_reason: string | null
+          moderation_status: string
+          room_id: string
+          sender_membership_id: string
+          storage_path: string
+          uploaded: boolean
+          width: number | null
+        }
+        Insert: {
+          alt_text?: string | null
+          approved_at?: string | null
+          checksum?: string | null
+          created_at?: string
+          expires_at?: string
+          file_size?: number
+          height?: number | null
+          id?: number
+          mime_type: string
+          moderation_reason?: string | null
+          moderation_status?: string
+          room_id: string
+          sender_membership_id: string
+          storage_path: string
+          uploaded?: boolean
+          width?: number | null
+        }
+        Update: {
+          alt_text?: string | null
+          approved_at?: string | null
+          checksum?: string | null
+          created_at?: string
+          expires_at?: string
+          file_size?: number
+          height?: number | null
+          id?: number
+          mime_type?: string
+          moderation_reason?: string | null
+          moderation_status?: string
+          room_id?: string
+          sender_membership_id?: string
+          storage_path?: string
+          uploaded?: boolean
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "image_messages_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "image_messages_sender_membership_id_fkey"
+            columns: ["sender_membership_id"]
+            isOneToOne: false
+            referencedRelation: "memberships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       improvement_recommendations: {
         Row: {
           affected_files: string[]
@@ -636,6 +708,151 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      memberships: {
+        Row: {
+          alias: string
+          id: string
+          joined_at: string
+          last_read_image_id: number | null
+          last_read_message_id: number | null
+          last_seen_at: string
+          left_at: string | null
+          room_id: string
+          subject_hash: string
+          topic_id: string
+        }
+        Insert: {
+          alias: string
+          id?: string
+          joined_at?: string
+          last_read_image_id?: number | null
+          last_read_message_id?: number | null
+          last_seen_at?: string
+          left_at?: string | null
+          room_id: string
+          subject_hash: string
+          topic_id: string
+        }
+        Update: {
+          alias?: string
+          id?: string
+          joined_at?: string
+          last_read_image_id?: number | null
+          last_read_message_id?: number | null
+          last_seen_at?: string
+          left_at?: string | null
+          room_id?: string
+          subject_hash?: string
+          topic_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memberships_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "memberships_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_reports: {
+        Row: {
+          created_at: string
+          id: string
+          image_message_id: number | null
+          message_id: number | null
+          reason: string
+          reporter_membership_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_message_id?: number | null
+          message_id?: number | null
+          reason: string
+          reporter_membership_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_message_id?: number | null
+          message_id?: number | null
+          reason?: string
+          reporter_membership_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_reports_image_message_id_fkey"
+            columns: ["image_message_id"]
+            isOneToOne: false
+            referencedRelation: "image_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_reports_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_reports_reporter_membership_id_fkey"
+            columns: ["reporter_membership_id"]
+            isOneToOne: false
+            referencedRelation: "memberships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          body: string
+          created_at: string
+          expires_at: string
+          id: number
+          membership_id: string
+          room_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          expires_at?: string
+          id?: never
+          membership_id: string
+          room_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          expires_at?: string
+          id?: never
+          membership_id?: string
+          room_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_membership_id_fkey"
+            columns: ["membership_id"]
+            isOneToOne: false
+            referencedRelation: "memberships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notification_events: {
         Row: {
@@ -1295,160 +1512,7 @@ export type Database = {
         }
         Relationships: []
       }
-      room_identities: {
-        Row: {
-          custom_alias: string | null
-          first_seen_at: string
-          last_seen_at: string
-          subject_hash: string
-        }
-        Insert: {
-          custom_alias?: string | null
-          first_seen_at?: string
-          last_seen_at?: string
-          subject_hash: string
-        }
-        Update: {
-          custom_alias?: string | null
-          first_seen_at?: string
-          last_seen_at?: string
-          subject_hash?: string
-        }
-        Relationships: []
-      }
-      room_memberships: {
-        Row: {
-          alias: string
-          id: string
-          joined_at: string
-          last_read_message_id: number | null
-          last_seen_at: string
-          left_at: string | null
-          room_id: string
-          subject_hash: string
-          topic_id: string
-        }
-        Insert: {
-          alias: string
-          id?: string
-          joined_at?: string
-          last_read_message_id?: number | null
-          last_seen_at?: string
-          left_at?: string | null
-          room_id: string
-          subject_hash: string
-          topic_id: string
-        }
-        Update: {
-          alias?: string
-          id?: string
-          joined_at?: string
-          last_read_message_id?: number | null
-          last_seen_at?: string
-          left_at?: string | null
-          room_id?: string
-          subject_hash?: string
-          topic_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "room_memberships_room_id_fkey"
-            columns: ["room_id"]
-            isOneToOne: false
-            referencedRelation: "room_rooms"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "room_memberships_topic_id_fkey"
-            columns: ["topic_id"]
-            isOneToOne: false
-            referencedRelation: "room_topics"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      room_message_reports: {
-        Row: {
-          created_at: string
-          id: string
-          message_id: number
-          reason: string
-          reporter_membership_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          message_id: number
-          reason: string
-          reporter_membership_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          message_id?: number
-          reason?: string
-          reporter_membership_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "room_message_reports_message_id_fkey"
-            columns: ["message_id"]
-            isOneToOne: false
-            referencedRelation: "room_messages"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "room_message_reports_reporter_membership_id_fkey"
-            columns: ["reporter_membership_id"]
-            isOneToOne: false
-            referencedRelation: "room_memberships"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      room_messages: {
-        Row: {
-          body: string
-          created_at: string
-          expires_at: string
-          id: number
-          membership_id: string
-          room_id: string
-        }
-        Insert: {
-          body: string
-          created_at?: string
-          expires_at?: string
-          id?: never
-          membership_id: string
-          room_id: string
-        }
-        Update: {
-          body?: string
-          created_at?: string
-          expires_at?: string
-          id?: never
-          membership_id?: string
-          room_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "room_messages_membership_id_fkey"
-            columns: ["membership_id"]
-            isOneToOne: false
-            referencedRelation: "room_memberships"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "room_messages_room_id_fkey"
-            columns: ["room_id"]
-            isOneToOne: false
-            referencedRelation: "room_rooms"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      room_rate_events: {
+      rate_events: {
         Row: {
           action: string
           created_at: string
@@ -1469,7 +1533,7 @@ export type Database = {
         }
         Relationships: []
       }
-      room_rooms: {
+      rooms: {
         Row: {
           capacity: number
           created_at: string
@@ -1496,69 +1560,13 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "room_rooms_topic_id_fkey"
+            foreignKeyName: "rooms_topic_id_fkey"
             columns: ["topic_id"]
             isOneToOne: false
-            referencedRelation: "room_topics"
+            referencedRelation: "topics"
             referencedColumns: ["id"]
           },
         ]
-      }
-      room_topic_aliases: {
-        Row: {
-          created_at: string
-          id: string
-          normalized_alias: string
-          topic_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          normalized_alias: string
-          topic_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          normalized_alias?: string
-          topic_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "room_topic_aliases_topic_id_fkey"
-            columns: ["topic_id"]
-            isOneToOne: false
-            referencedRelation: "room_topics"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      room_topics: {
-        Row: {
-          created_at: string
-          description: string | null
-          display_name: string
-          enabled: boolean
-          id: string
-          slug: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          display_name: string
-          enabled?: boolean
-          id?: string
-          slug: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          display_name?: string
-          enabled?: boolean
-          id?: string
-          slug?: string
-        }
-        Relationships: []
       }
       source_changes: {
         Row: {
@@ -1699,6 +1707,62 @@ export type Database = {
         }
         Relationships: []
       }
+      topic_aliases: {
+        Row: {
+          created_at: string
+          id: string
+          normalized_alias: string
+          topic_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          normalized_alias: string
+          topic_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          normalized_alias?: string
+          topic_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "topic_aliases_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      topics: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_name: string
+          enabled: boolean
+          id: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_name: string
+          enabled?: boolean
+          id?: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_name?: string
+          enabled?: boolean
+          id?: string
+          slug?: string
+        }
+        Relationships: []
+      }
       visibility_benchmarks: {
         Row: {
           created_at: string
@@ -1763,10 +1827,29 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      room_cleanup_expired: { Args: never; Returns: Json }
-      room_join_topic: {
+      cleanup_expired: { Args: never; Returns: Json }
+      enforce_all_retention: {
+        Args: never
+        Returns: {
+          storage_path: string
+        }[]
+      }
+      enforce_image_retention: {
+        Args: { p_room_id: string }
+        Returns: {
+          storage_path: string
+        }[]
+      }
+      enforce_text_retention: { Args: { p_room_id: string }; Returns: number }
+      join_topic_room: {
         Args: { p_alias: string; p_subject_hash: string; p_topic_slug: string }
         Returns: Json
+      }
+      purge_dead_images: {
+        Args: never
+        Returns: {
+          storage_path: string
+        }[]
       }
     }
     Enums: {
