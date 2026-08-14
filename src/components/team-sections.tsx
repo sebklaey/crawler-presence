@@ -4,6 +4,7 @@ import { Copy, Loader2, Mail, Send, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { usePlanLimits } from "@/lib/plan-limits";
 import { Input } from "@/components/ui/input";
 import {
   teamInviteFn,
@@ -30,6 +31,7 @@ const REASONS: Record<string, string> = {
  * recipients are plain email addresses, never Crawler users.
  */
 export function TeamAndReportsSection({ code, plan }: { code: string; plan: string }) {
+  const { guard } = usePlanLimits();
   const [state, setState] = useState<TeamState | null>(null);
   const [busy, setBusy] = useState(false);
   const [label, setLabel] = useState("");
@@ -146,9 +148,23 @@ export function TeamAndReportsSection({ code, plan }: { code: string; plan: stri
         </p>
 
         {!state.allowedOnPlan ? (
-          <p className="mt-4 rounded-lg border border-dashed border-border bg-secondary/60 px-3 py-2 text-xs text-muted-foreground">
-            Your {plan} plan does not include team access. Upgrade to Business to share this Presence.
-          </p>
+          <div className="mt-4 rounded-lg border border-dashed border-border bg-secondary/60 px-3 py-2 text-xs text-muted-foreground">
+            <p>Your {plan} plan does not include team access. Upgrade to Business to share this Presence.</p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-2"
+              onClick={() =>
+                guard({
+                  limit: "team_access",
+                  currentPlan: plan as "plus" | "pro" | "business",
+                  action: "Sharing this Presence with your team",
+                })
+              }
+            >
+              Unlock team access
+            </Button>
+          </div>
         ) : (
           <>
             <div className="mt-4 flex flex-wrap gap-2">

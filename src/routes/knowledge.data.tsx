@@ -20,6 +20,7 @@ import {
   type SectionKey,
   type Visibility,
 } from "@/lib/kc/model";
+import { usePlanLimits } from "@/lib/plan-limits";
 import { useCore, useVersions } from "@/lib/store";
 import type { KnowledgeCore } from "@/lib/knowledge";
 
@@ -39,6 +40,7 @@ const entityLabels: Record<string, string> = {
 function DataPage() {
   const [core, setCore] = useCore();
   const [, setVersions] = useVersions();
+  const { guard } = usePlanLimits();
   const ext = getExt(core);
 
   const patch = (part: Partial<KnowledgeCore>) => setCore({ ...core, ...part, updatedAt: new Date().toISOString() });
@@ -195,9 +197,10 @@ function DataPage() {
             <Button
               size="sm"
               variant="outline"
-              onClick={() =>
-                patch({ items: [...core.items, { id: kcId(), kind: "offering", name: "", summary: "" }] })
-              }
+              onClick={() => {
+                if (!guard({ limit: "content_records", count: core.items.length + 1, action: "Adding a content record" })) return;
+                patch({ items: [...core.items, { id: kcId(), kind: "offering", name: "", summary: "" }] });
+              }}
             >
               <Plus className="mr-1.5 h-3.5 w-3.5" /> Add
             </Button>

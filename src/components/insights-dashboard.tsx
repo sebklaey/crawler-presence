@@ -22,6 +22,7 @@ import { Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip as RToolti
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { usePlanLimits } from "@/lib/plan-limits";
 import {
   Dialog,
   DialogContent,
@@ -165,6 +166,14 @@ export function InsightsDashboardView({
 
   const updateDates = useMemo(() => new Set(data.updates.map((u) => u.date)), [data.updates]);
   const next = data.nextImprovement;
+  const { guard } = usePlanLimits();
+  // The dashboard knows the Presence's real plan when a limit is already active.
+  const gatePlan = data.improvementLocked
+    ? (["plus", "pro", "business"].includes(String(data.improvementLocked.plan))
+        ? (data.improvementLocked.plan as "plus" | "pro" | "business")
+        : undefined)
+    : undefined;
+
 
   return (
     <TooltipProvider delayDuration={150}>
@@ -194,7 +203,19 @@ export function InsightsDashboardView({
               key={String(p.value)}
               size="sm"
               variant={period === p.value ? "default" : "outline"}
-              onClick={() => onPeriodChange(p.value)}
+              onClick={() => {
+                const days = p.value === "all" ? 3650 : p.value;
+                if (
+                  !guard({
+                    limit: "analytics_window",
+                    days,
+                    ...(gatePlan ? { currentPlan: gatePlan } : {}),
+                    action: `Opening the ${p.label.toLowerCase()} view`,
+                  })
+                )
+                  return;
+                onPeriodChange(p.value);
+              }}
               disabled={busy}
             >
               {p.label}
@@ -367,8 +388,18 @@ export function InsightsDashboardView({
               measured data, points out information gaps and gives you concrete improvements — plus a 90-day window and
               far more content records.
             </p>
-            <Button asChild className="mt-4" variant="outline">
-              <a href="/pricing">Upgrade to {data.improvementLocked.requiredPlan}</a>
+            <Button
+              className="mt-4"
+              variant="outline"
+              onClick={() =>
+                guard({
+                  limit: "improvement_loop",
+                  ...(gatePlan ? { currentPlan: gatePlan } : {}),
+                  action: "Opening improvement recommendations",
+                })
+              }
+            >
+              Upgrade to {data.improvementLocked.requiredPlan}
             </Button>
           </section>
         ) : (

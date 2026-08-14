@@ -3,6 +3,7 @@ import { Check, Copy, Globe, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { usePlanLimits } from "@/lib/plan-limits";
 import { Input } from "@/components/ui/input";
 import {
   manageRemoveDomainFn,
@@ -62,6 +63,7 @@ export function CustomDomainSection({
   refresh: () => Promise<void>;
 }) {
   const state = data.customDomain;
+  const { guard } = usePlanLimits();
   const [domain, setDomain] = useState(state.domain ?? "");
   const [busy, setBusy] = useState(false);
 
@@ -101,10 +103,25 @@ export function CustomDomainSection({
       </div>
 
       {!state.allowedOnPlan ? (
-        <p className="mt-3 text-sm text-muted-foreground">
-          Custom domains are included in Pro and Business. On your {data.plan} plan the Presence is served from{" "}
-          <span className="font-mono text-xs">/p/{data.slug}</span>.
-        </p>
+        <div className="mt-3 space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Custom domains are included in Pro and Business. On your {data.plan} plan the Presence is served from{" "}
+            <span className="font-mono text-xs">/p/{data.slug}</span>.
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              guard({
+                limit: "custom_domain",
+                currentPlan: data.plan as "plus" | "pro" | "business",
+                action: "Connecting a custom domain",
+              })
+            }
+          >
+            Unlock custom domain
+          </Button>
+        </div>
       ) : (
         <>
           <p className="mt-2 text-xs text-muted-foreground">
