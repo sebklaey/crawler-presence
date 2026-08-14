@@ -42,6 +42,7 @@ import { Route as ApiSearchRouteImport } from './routes/api/search'
 import { Route as ApiServicesDotjsonRouteImport } from './routes/api/services[.]json'
 import { Route as KnowledgeIndexRouteImport } from './routes/knowledge.index'
 import { Route as KnowledgeAssistantRouteImport } from './routes/knowledge.assistant'
+import { Route as KnowledgeChangesRouteImport } from './routes/knowledge.changes'
 import { Route as KnowledgeDataRouteImport } from './routes/knowledge.data'
 import { Route as KnowledgeSourcesRouteImport } from './routes/knowledge.sources'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
@@ -226,6 +227,11 @@ const KnowledgeAssistantRoute = KnowledgeAssistantRouteImport.update({
   path: '/assistant',
   getParentRoute: () => KnowledgeRoute,
 } as any)
+const KnowledgeChangesRoute = KnowledgeChangesRouteImport.update({
+  id: '/changes',
+  path: '/changes',
+  getParentRoute: () => KnowledgeRoute,
+} as any)
 const KnowledgeDataRoute = KnowledgeDataRouteImport.update({
   id: '/data',
   path: '/data',
@@ -338,6 +344,7 @@ export interface FileRoutesByFullPath {
   '/api/search': typeof ApiSearchRoute
   '/api/services.json': typeof ApiServicesDotjsonRoute
   '/knowledge/assistant': typeof KnowledgeAssistantRoute
+  '/knowledge/changes': typeof KnowledgeChangesRoute
   '/knowledge/data': typeof KnowledgeDataRoute
   '/knowledge/sources': typeof KnowledgeSourcesRoute
   '/knowledge/': typeof KnowledgeIndexRoute
@@ -387,6 +394,7 @@ export interface FileRoutesByTo {
   '/api/search': typeof ApiSearchRoute
   '/api/services.json': typeof ApiServicesDotjsonRoute
   '/knowledge/assistant': typeof KnowledgeAssistantRoute
+  '/knowledge/changes': typeof KnowledgeChangesRoute
   '/knowledge/data': typeof KnowledgeDataRoute
   '/knowledge/sources': typeof KnowledgeSourcesRoute
   '/knowledge': typeof KnowledgeIndexRoute
@@ -438,6 +446,7 @@ export interface FileRoutesById {
   '/api/search': typeof ApiSearchRoute
   '/api/services.json': typeof ApiServicesDotjsonRoute
   '/knowledge/assistant': typeof KnowledgeAssistantRoute
+  '/knowledge/changes': typeof KnowledgeChangesRoute
   '/knowledge/data': typeof KnowledgeDataRoute
   '/knowledge/sources': typeof KnowledgeSourcesRoute
   '/knowledge/': typeof KnowledgeIndexRoute
@@ -490,6 +499,7 @@ export interface FileRouteTypes {
     | '/api/search'
     | '/api/services.json'
     | '/knowledge/assistant'
+    | '/knowledge/changes'
     | '/knowledge/data'
     | '/knowledge/sources'
     | '/knowledge/'
@@ -539,6 +549,7 @@ export interface FileRouteTypes {
     | '/api/search'
     | '/api/services.json'
     | '/knowledge/assistant'
+    | '/knowledge/changes'
     | '/knowledge/data'
     | '/knowledge/sources'
     | '/knowledge'
@@ -589,6 +600,7 @@ export interface FileRouteTypes {
     | '/api/search'
     | '/api/services.json'
     | '/knowledge/assistant'
+    | '/knowledge/changes'
     | '/knowledge/data'
     | '/knowledge/sources'
     | '/knowledge/'
@@ -887,6 +899,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof KnowledgeAssistantRouteImport
       parentRoute: typeof KnowledgeRoute
     }
+    '/knowledge/changes': {
+      id: '/knowledge/changes'
+      path: '/changes'
+      fullPath: '/knowledge/changes'
+      preLoaderRoute: typeof KnowledgeChangesRouteImport
+      parentRoute: typeof KnowledgeRoute
+    }
     '/knowledge/data': {
       id: '/knowledge/data'
       path: '/data'
@@ -997,6 +1016,7 @@ declare module '@tanstack/react-router' {
 
 interface KnowledgeRouteChildren {
   KnowledgeAssistantRoute: typeof KnowledgeAssistantRoute
+  KnowledgeChangesRoute: typeof KnowledgeChangesRoute
   KnowledgeDataRoute: typeof KnowledgeDataRoute
   KnowledgeSourcesRoute: typeof KnowledgeSourcesRoute
   KnowledgeIndexRoute: typeof KnowledgeIndexRoute
@@ -1004,6 +1024,7 @@ interface KnowledgeRouteChildren {
 
 const KnowledgeRouteChildren: KnowledgeRouteChildren = {
   KnowledgeAssistantRoute: KnowledgeAssistantRoute,
+  KnowledgeChangesRoute: KnowledgeChangesRoute,
   KnowledgeDataRoute: KnowledgeDataRoute,
   KnowledgeSourcesRoute: KnowledgeSourcesRoute,
   KnowledgeIndexRoute: KnowledgeIndexRoute,
