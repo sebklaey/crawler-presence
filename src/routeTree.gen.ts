@@ -32,6 +32,7 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PublishRouteImport } from './routes/publish'
 import { Route as RefundsRouteImport } from './routes/refunds'
 import { Route as ResultRouteImport } from './routes/result'
+import { Route as RoomRouteImport } from './routes/room'
 import { Route as ServicesDotmdRouteImport } from './routes/services[.]md'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SupportRouteImport } from './routes/support'
@@ -54,6 +55,7 @@ import { Route as KnowledgePublishRouteImport } from './routes/knowledge.publish
 import { Route as KnowledgeSourcesRouteImport } from './routes/knowledge.sources'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as ApiPublicMcpHealthRouteImport } from './routes/api/public/mcp-health'
+import { Route as ApiPublicRoomHealthRouteImport } from './routes/api/public/room-health'
 import { Route as CSlugSplatRouteImport } from './routes/c.$slug.$'
 import { Route as ManageSlugAnalyticsRouteImport } from './routes/manage_.$slug.analytics'
 import { Route as PSlugIndexRouteImport } from './routes/p.$slug.index'
@@ -181,6 +183,11 @@ const ResultRoute = ResultRouteImport.update({
   path: '/result',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RoomRoute = RoomRouteImport.update({
+  id: '/room',
+  path: '/room',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ServicesDotmdRoute = ServicesDotmdRouteImport.update({
   id: '/services.md',
   path: '/services.md',
@@ -295,6 +302,11 @@ const ApiPublicMcpHealthRoute = ApiPublicMcpHealthRouteImport.update({
   path: '/api/public/mcp-health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicRoomHealthRoute = ApiPublicRoomHealthRouteImport.update({
+  id: '/api/public/room-health',
+  path: '/api/public/room-health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CSlugSplatRoute = CSlugSplatRouteImport.update({
   id: '/c/$slug/$',
   path: '/c/$slug/$',
@@ -377,6 +389,7 @@ export interface FileRoutesByFullPath {
   '/publish': typeof PublishRoute
   '/refunds': typeof RefundsRoute
   '/result': typeof ResultRoute
+  '/room': typeof RoomRoute
   '/services.md': typeof ServicesDotmdRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/support': typeof SupportRoute
@@ -399,6 +412,7 @@ export interface FileRoutesByFullPath {
   '/knowledge/': typeof KnowledgeIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
+  '/api/public/room-health': typeof ApiPublicRoomHealthRoute
   '/c/$slug/$': typeof CSlugSplatRoute
   '/manage/$slug/analytics': typeof ManageSlugAnalyticsRoute
   '/p/$slug/$': typeof PSlugSplatRoute
@@ -434,6 +448,7 @@ export interface FileRoutesByTo {
   '/publish': typeof PublishRoute
   '/refunds': typeof RefundsRoute
   '/result': typeof ResultRoute
+  '/room': typeof RoomRoute
   '/services.md': typeof ServicesDotmdRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/support': typeof SupportRoute
@@ -456,6 +471,7 @@ export interface FileRoutesByTo {
   '/knowledge': typeof KnowledgeIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
+  '/api/public/room-health': typeof ApiPublicRoomHealthRoute
   '/c/$slug/$': typeof CSlugSplatRoute
   '/manage/$slug/analytics': typeof ManageSlugAnalyticsRoute
   '/p/$slug/$': typeof PSlugSplatRoute
@@ -493,6 +509,7 @@ export interface FileRoutesById {
   '/publish': typeof PublishRoute
   '/refunds': typeof RefundsRoute
   '/result': typeof ResultRoute
+  '/room': typeof RoomRoute
   '/services.md': typeof ServicesDotmdRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/support': typeof SupportRoute
@@ -515,6 +532,7 @@ export interface FileRoutesById {
   '/knowledge/': typeof KnowledgeIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
+  '/api/public/room-health': typeof ApiPublicRoomHealthRoute
   '/c/$slug/$': typeof CSlugSplatRoute
   '/manage_/$slug/analytics': typeof ManageSlugAnalyticsRoute
   '/p/$slug/$': typeof PSlugSplatRoute
@@ -553,6 +571,7 @@ export interface FileRouteTypes {
     | '/publish'
     | '/refunds'
     | '/result'
+    | '/room'
     | '/services.md'
     | '/sitemap.xml'
     | '/support'
@@ -575,6 +594,7 @@ export interface FileRouteTypes {
     | '/knowledge/'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
+    | '/api/public/room-health'
     | '/c/$slug/$'
     | '/manage/$slug/analytics'
     | '/p/$slug/$'
@@ -610,6 +630,7 @@ export interface FileRouteTypes {
     | '/publish'
     | '/refunds'
     | '/result'
+    | '/room'
     | '/services.md'
     | '/sitemap.xml'
     | '/support'
@@ -632,6 +653,7 @@ export interface FileRouteTypes {
     | '/knowledge'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
+    | '/api/public/room-health'
     | '/c/$slug/$'
     | '/manage/$slug/analytics'
     | '/p/$slug/$'
@@ -668,6 +690,7 @@ export interface FileRouteTypes {
     | '/publish'
     | '/refunds'
     | '/result'
+    | '/room'
     | '/services.md'
     | '/sitemap.xml'
     | '/support'
@@ -690,6 +713,7 @@ export interface FileRouteTypes {
     | '/knowledge/'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
+    | '/api/public/room-health'
     | '/c/$slug/$'
     | '/manage_/$slug/analytics'
     | '/p/$slug/$'
@@ -727,6 +751,7 @@ export interface RootRouteChildren {
   PublishRoute: typeof PublishRoute
   RefundsRoute: typeof RefundsRoute
   ResultRoute: typeof ResultRoute
+  RoomRoute: typeof RoomRoute
   ServicesDotmdRoute: typeof ServicesDotmdRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SupportRoute: typeof SupportRoute
@@ -742,6 +767,7 @@ export interface RootRouteChildren {
   ApiServicesDotjsonRoute: typeof ApiServicesDotjsonRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicMcpHealthRoute: typeof ApiPublicMcpHealthRoute
+  ApiPublicRoomHealthRoute: typeof ApiPublicRoomHealthRoute
   CSlugSplatRoute: typeof CSlugSplatRoute
   ManageSlugAnalyticsRoute: typeof ManageSlugAnalyticsRoute
   PSlugSplatRoute: typeof PSlugSplatRoute
@@ -918,6 +944,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResultRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/room': {
+      id: '/room'
+      path: '/room'
+      fullPath: '/room'
+      preLoaderRoute: typeof RoomRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/services.md': {
       id: '/services.md'
       path: '/services.md'
@@ -1072,6 +1105,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicMcpHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/room-health': {
+      id: '/api/public/room-health'
+      path: '/api/public/room-health'
+      fullPath: '/api/public/room-health'
+      preLoaderRoute: typeof ApiPublicRoomHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/c/$slug/$': {
       id: '/c/$slug/$'
       path: '/c/$slug/$'
@@ -1200,6 +1240,7 @@ const rootRouteChildren: RootRouteChildren = {
   PublishRoute: PublishRoute,
   RefundsRoute: RefundsRoute,
   ResultRoute: ResultRoute,
+  RoomRoute: RoomRoute,
   ServicesDotmdRoute: ServicesDotmdRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SupportRoute: SupportRoute,
@@ -1217,6 +1258,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiServicesDotjsonRoute: ApiServicesDotjsonRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicMcpHealthRoute: ApiPublicMcpHealthRoute,
+  ApiPublicRoomHealthRoute: ApiPublicRoomHealthRoute,
   CSlugSplatRoute: CSlugSplatRoute,
   ManageSlugAnalyticsRoute: ManageSlugAnalyticsRoute,
   PSlugSplatRoute: PSlugSplatRoute,
