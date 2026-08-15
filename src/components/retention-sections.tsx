@@ -33,7 +33,7 @@ const STATE_LABEL: Record<string, string> = {
   dormant: "Dormant",
 };
 
-export function RetentionSection({ code }: { code: string }) {
+export function RetentionSection() {
   const [data, setData] = useState<Loaded | null>(null);
   const [busy, setBusy] = useState(false);
   const [url, setUrl] = useState("");
@@ -43,7 +43,7 @@ export function RetentionSection({ code }: { code: string }) {
   async function load() {
     setBusy(true);
     try {
-      const result = await retentionOverviewFn({ data: { code } });
+      const result = await retentionOverviewFn();
       if (!result.ok) {
         toast.error("Could not load the health check right now.");
         return;
@@ -130,7 +130,7 @@ export function RetentionSection({ code }: { code: string }) {
                 size="sm"
                 variant="ghost"
                 disabled={busy}
-                onClick={() => void run(() => removeSourceFn({ data: { code, id: source.id } }))}
+                onClick={() => void run(() => removeSourceFn({ data: { id: source.id } }))}
               >
                 Remove
               </Button>
@@ -151,7 +151,7 @@ export function RetentionSection({ code }: { code: string }) {
             disabled={busy || url.trim().length < 4}
             onClick={() =>
               void run(async () => {
-                const result = await addSourceFn({ data: { code, url: url.trim() } });
+                const result = await addSourceFn({ data: { url: url.trim() } });
                 if (!result.ok) toast.error("message" in result ? result.message : "That URL could not be added.");
                 else setUrl("");
               })
@@ -164,7 +164,7 @@ export function RetentionSection({ code }: { code: string }) {
             disabled={busy || data.sources.length === 0}
             onClick={() =>
               void run(async () => {
-                const result = await scanSourcesFn({ data: { code } });
+                const result = await scanSourcesFn();
                 if (result.ok) toast.success(`Scanned ${result.scanned} source(s), ${result.changed} changed.`);
               })
             }
@@ -192,7 +192,7 @@ export function RetentionSection({ code }: { code: string }) {
                     size="sm"
                     variant="outline"
                     disabled={busy}
-                    onClick={() => void run(() => resolveChangeFn({ data: { code, id: change.id, status: "reviewed" } }))}
+                    onClick={() => void run(() => resolveChangeFn({ data: { id: change.id, status: "reviewed" } }))}
                   >
                     Mark reviewed
                   </Button>
@@ -200,7 +200,7 @@ export function RetentionSection({ code }: { code: string }) {
                     size="sm"
                     variant="ghost"
                     disabled={busy}
-                    onClick={() => void run(() => resolveChangeFn({ data: { code, id: change.id, status: "dismissed" } }))}
+                    onClick={() => void run(() => resolveChangeFn({ data: { id: change.id, status: "dismissed" } }))}
                   >
                     Dismiss
                   </Button>
@@ -245,7 +245,7 @@ export function RetentionSection({ code }: { code: string }) {
                         onClick={() =>
                           void run(async () => {
                             const result = await decideRecommendationFn({
-                              data: { code, id: rec.id, decision: "approve", value: draft.trim() },
+                              data: { id: rec.id, decision: "approve", value: draft.trim() },
                             });
                             if (!result.ok) toast.error("message" in result ? result.message : "Publishing failed.");
                             else {
@@ -282,7 +282,7 @@ export function RetentionSection({ code }: { code: string }) {
                       size="sm"
                       variant="ghost"
                       disabled={busy}
-                      onClick={() => void run(() => decideRecommendationFn({ data: { code, id: rec.id, decision: "postpone" } }))}
+                      onClick={() => void run(() => decideRecommendationFn({ data: { id: rec.id, decision: "postpone" } }))}
                     >
                       Later
                     </Button>
@@ -290,7 +290,7 @@ export function RetentionSection({ code }: { code: string }) {
                       size="sm"
                       variant="ghost"
                       disabled={busy}
-                      onClick={() => void run(() => decideRecommendationFn({ data: { code, id: rec.id, decision: "reject" } }))}
+                      onClick={() => void run(() => decideRecommendationFn({ data: { id: rec.id, decision: "reject" } }))}
                     >
                       Not relevant
                     </Button>

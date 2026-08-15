@@ -30,7 +30,7 @@ const REASONS: Record<string, string> = {
  * accountless: team members hold their own one-time code, and report
  * recipients are plain email addresses, never Crawler users.
  */
-export function TeamAndReportsSection({ code, plan }: { code: string; plan: string }) {
+export function TeamAndReportsSection({ plan }: { plan: string }) {
   const { guard } = usePlanLimits();
   const [state, setState] = useState<TeamState | null>(null);
   const [busy, setBusy] = useState(false);
@@ -50,7 +50,7 @@ export function TeamAndReportsSection({ code, plan }: { code: string; plan: stri
   useEffect(() => {
     let active = true;
     void (async () => {
-      const result = await load({ data: { code } });
+      const result = await load();
       if (!active) return;
       if (result.ok) {
         setState(result);
@@ -61,12 +61,12 @@ export function TeamAndReportsSection({ code, plan }: { code: string; plan: stri
     return () => {
       active = false;
     };
-  }, [code, load]);
+  }, [load]);
 
   if (!state) return null;
 
   async function refresh() {
-    const result = await load({ data: { code } });
+    const result = await load();
     if (result.ok) setState(result);
   }
 
@@ -74,7 +74,7 @@ export function TeamAndReportsSection({ code, plan }: { code: string; plan: stri
     if (!label.trim()) return;
     setBusy(true);
     try {
-      const result = await invite({ data: { code, label: label.trim(), role } });
+      const result = await invite({ data: { label: label.trim(), role } });
       if (!result.ok) {
         toast.error(REASONS[result.reason] ?? "Could not create that team code.");
         return;
@@ -90,7 +90,7 @@ export function TeamAndReportsSection({ code, plan }: { code: string; plan: stri
   async function removeMember(member: TeamMember) {
     setBusy(true);
     try {
-      const result = await revoke({ data: { code, memberId: member.id } });
+      const result = await revoke({ data: { memberId: member.id } });
       if (!result.ok) {
         toast.error(REASONS[result.reason] ?? "Could not revoke that code.");
         return;
@@ -105,7 +105,7 @@ export function TeamAndReportsSection({ code, plan }: { code: string; plan: stri
   async function saveReportSettings() {
     setBusy(true);
     try {
-      const result = await saveReports({ data: { code, email, frequency } });
+      const result = await saveReports({ data: { email, frequency } });
       if (!result.ok) {
         toast.error(REASONS[result.reason] ?? "Could not save the report settings.");
         return;
@@ -120,7 +120,7 @@ export function TeamAndReportsSection({ code, plan }: { code: string; plan: stri
   async function sendReportNow() {
     setBusy(true);
     try {
-      const result = await sendNow({ data: { code } });
+      const result = await sendNow();
       if (result.ok) toast.success("Report sent.");
       else toast.error(REASONS[result.reason ?? ""] ?? "The report could not be emailed yet.");
     } finally {

@@ -1,9 +1,8 @@
 /**
  * Server-Funktionen für AI Visibility Analytics.
  *
- * Zugriff ist rein capability-basiert: nur der gültige Management-Code der
- * jeweiligen Presence öffnet die detaillierten Analytics. Der Code wird nie
- * gespeichert, nie geloggt und nie in eine URL geschrieben.
+ * Zugriff kommt ausschließlich aus der verifizierten HttpOnly-Management-
+ * Session (Cookie). Weder Code noch Slug aus dem Request sind Autorität.
  */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
@@ -14,7 +13,6 @@ export const visibilityDashboardFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
     z
       .object({
-        code: z.string().trim().min(10).max(200),
         period: periodSchema,
         source: z.string().trim().max(40).optional(),
         eventType: z.string().trim().max(40).optional(),
@@ -22,13 +20,11 @@ export const visibilityDashboardFn = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data }) => {
-    const { parseRecoveryCode, verifyManageSecret, allowRequest } = await import("./mcp/presences");
-    const parsed = parseRecoveryCode(data.code);
-    if (!parsed) return { ok: false as const, reason: "invalid-code" as const };
-    if (!(await allowRequest(`visibility:${parsed.rateKey}`, 40))) return { ok: false as const, reason: "rate-limited" as const };
+    const { requireManagedPresence } = await import("./manage-presence.server");
+    const auth = await requireManagedPresence({ write: false, rate: { name: "visibility", limit: 40 } });
+    if ("error" in auth) return { ok: false as const, reason: auth.error };
+    const presence = auth.presence;
     try {
-      const presence = await verifyManageSecret(parsed.slug, parsed.secret);
-      if (!presence) return { ok: false as const, reason: "not-found" as const };
       const { buildDashboard } = await import("./visibility/aggregate.server");
       const { planById } = await import("./billing");
       const { asPlanId } = await import("./entitlements");
@@ -70,28 +66,22 @@ export const publicVisibilityFn = createServerFn({ method: "GET" })
 
 /** Vollständiger Export der eigenen Analytics-Ereignisse (Datenportabilität). */
 export const visibilityExportFn = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => z.object({ code: z.string().trim().min(10).max(200) }).parse(input))
-  .handler(async ({ data }) => {
-    const { parseRecoveryCode, verifyManageSecret, allowRequest } = await import("./mcp/presences");
-    const parsed = parseRecoveryCode(data.code);
-    if (!parsed) return { ok: false as const };
-    if (!(await allowRequest(`visibility-export:${parsed.rateKey}`, 5))) return { ok: false as const };
-    const presence = await verifyManageSecret(parsed.slug, parsed.secret);
-    if (!presence) return { ok: false as const };
+  .handler(async () => {
+    const { requireManagedPresence } = await import("./manage-presence.server");
+    const auth = await requireManagedPresence({ write: true, rate: { name: "visibility-export", limit: 5 } });
+    if ("error" in auth) return { ok: false as const };
+    const presence = auth.presence;
     const { exportEvents } = await import("./visibility/admin.server");
     return { ok: true as const, export: await exportEvents(presence.slug) };
   });
 
 /** Löscht alle Analytics-Ereignisse dieser Presence. */
 export const visibilityPurgeFn = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => z.object({ code: z.string().trim().min(10).max(200) }).parse(input))
-  .handler(async ({ data }) => {
-    const { parseRecoveryCode, verifyManageSecret, allowRequest } = await import("./mcp/presences");
-    const parsed = parseRecoveryCode(data.code);
-    if (!parsed) return { ok: false as const };
-    if (!(await allowRequest(`visibility-purge:${parsed.rateKey}`, 5))) return { ok: false as const };
-    const presence = await verifyManageSecret(parsed.slug, parsed.secret);
-    if (!presence) return { ok: false as const };
+  .handler(async () => {
+    const { requireManagedPresence } = await import("./manage-presence.server");
+    const auth = await requireManagedPresence({ write: true, rate: { name: "visibility-purge", limit: 5 } });
+    if ("error" in auth) return { ok: false as const };
+    const presence = auth.presence;
     const { purgeEvents } = await import("./visibility/admin.server");
     await purgeEvents(presence.slug);
     return { ok: true as const };

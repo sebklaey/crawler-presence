@@ -1,7 +1,7 @@
 /**
  * Retention surface: health score, source monitoring and the improvement
- * workflow. Accountless — the recovery code is the only capability, exactly
- * like the rest of /manage. Nothing here changes a published Presence without
+ * workflow. Accountless — authority is the verified HttpOnly management
+ * session cookie, exactly like the rest of /manage. Nothing here changes a published Presence without
  * an explicit owner approval.
  */
 import { createServerFn } from "@tanstack/react-start";
@@ -10,23 +10,15 @@ import type { HealthReason, HealthState } from "./health";
 import type { Recommendation } from "./improvements.server";
 import type { PresenceSource, SourceChange } from "./sources.server";
 
-const codeSchema = z.object({ code: z.string().trim().min(10).max(200) });
+type Failure = {
+  ok: false;
+  reason: "unauthenticated" | "csrf" | "not-found" | "rate-limited" | "unavailable";
+};
 
-type Failure = { ok: false; reason: "invalid-code" | "not-found" | "rate-limited" | "unavailable" };
-
-async function resolve(code: string) {
-  const { parseRecoveryCode, verifyManageSecret, allowRequest, PresenceStoreError } = await import("./mcp/presences");
-  const parsed = parseRecoveryCode(code);
-  if (!parsed) return { error: "invalid-code" } as const;
-  try {
-    if (!(await allowRequest(`manage:${parsed.rateKey}`, 20))) return { error: "rate-limited" } as const;
-    const presence = await verifyManageSecret(parsed.slug, parsed.secret);
-    if (!presence) return { error: "not-found" } as const;
-    return { presence };
-  } catch (error) {
-    if (error instanceof PresenceStoreError) return { error: "unavailable" } as const;
-    throw error;
-  }
+/** Cookie authority; `write` additionally requires the bound CSRF header. */
+async function resolve(write: boolean) {
+  const { requireManagedPresence } = await import("./manage-presence.server");
+  return requireManagedPresence({ write, rate: { name: "manage", limit: 20 } });
 }
 
 export type RetentionOverview =
@@ -47,9 +39,8 @@ export type RetentionOverview =
 const SOURCE_LIMIT: Record<string, number> = { plus: 1, pro: 5, business: 25 };
 
 export const retentionOverviewFn = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => codeSchema.parse(input))
-  .handler(async ({ data }): Promise<RetentionOverview> => {
-    const resolved = await resolve(data.code);
+  .handler(async (): Promise<RetentionOverview> => {
+    const resolved = await resolve(false);
     if ("error" in resolved) return { ok: false, reason: resolved.error };
     const p = resolved.presence;
 
@@ -113,10 +104,10 @@ export const retentionOverviewFn = createServerFn({ method: "POST" })
 
 export const addSourceFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
-    codeSchema.extend({ url: z.string().trim().min(4).max(400), label: z.string().trim().max(120).optional() }).parse(input),
+    z.object({ url: z.string().trim().min(4).max(400), label: z.string().trim().max(120).optional() }).parse(input),
   )
   .handler(async ({ data }): Promise<{ ok: true; source: PresenceSource } | Failure | { ok: false; reason: "rejected"; message: string }> => {
-    const resolved = await resolve(data.code);
+    const resolved = await resolve(true);
     if ("error" in resolved) return { ok: false, reason: resolved.error };
     const p = resolved.presence;
     const { addSource, listSources } = await import("./sources.server");
@@ -134,9 +125,9 @@ export const addSourceFn = createServerFn({ method: "POST" })
   });
 
 export const removeSourceFn = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => codeSchema.extend({ id: z.string().uuid() }).parse(input))
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data }): Promise<{ ok: true } | Failure> => {
-    const resolved = await resolve(data.code);
+    const resolved = await resolve(true);
     if ("error" in resolved) return { ok: false, reason: resolved.error };
     const { removeSource } = await import("./sources.server");
     await removeSource(resolved.presence.slug, data.id);
@@ -145,9 +136,8 @@ export const removeSourceFn = createServerFn({ method: "POST" })
 
 /** Owner-triggered scan; the scheduled job does the same work on a plan cadence. */
 export const scanSourcesFn = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => codeSchema.parse(input))
-  .handler(async ({ data }): Promise<{ ok: true; scanned: number; changed: number } | Failure> => {
-    const resolved = await resolve(data.code);
+  .handler(async (): Promise<{ ok: true; scanned: number; changed: number } | Failure> => {
+    const resolved = await resolve(true);
     if ("error" in resolved) return { ok: false, reason: resolved.error };
     const { scanPresence } = await import("./sources.server");
     try {
@@ -160,10 +150,10 @@ export const scanSourcesFn = createServerFn({ method: "POST" })
 
 export const resolveChangeFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
-    codeSchema.extend({ id: z.string().uuid(), status: z.enum(["reviewed", "dismissed"]) }).parse(input),
+    z.object({ id: z.string().uuid(), status: z.enum(["reviewed", "dismissed"]) }).parse(input),
   )
   .handler(async ({ data }): Promise<{ ok: true } | Failure> => {
-    const resolved = await resolve(data.code);
+    const resolved = await resolve(true);
     if ("error" in resolved) return { ok: false, reason: resolved.error };
     const { resolveChange } = await import("./sources.server");
     await resolveChange(resolved.presence.slug, data.id, data.status);
@@ -177,8 +167,8 @@ export const resolveChangeFn = createServerFn({ method: "POST" })
  */
 export const decideRecommendationFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
-    codeSchema
-      .extend({
+    z
+      .object({
         id: z.string().uuid(),
         decision: z.enum(["approve", "reject", "postpone"]),
         value: z.string().trim().max(4000).optional(),
@@ -187,7 +177,7 @@ export const decideRecommendationFn = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data }): Promise<{ ok: true; published: boolean } | Failure | { ok: false; reason: "rejected"; message: string }> => {
-    const resolved = await resolve(data.code);
+    const resolved = await resolve(true);
     if ("error" in resolved) return { ok: false, reason: resolved.error };
     const p = resolved.presence;
     const { getRecommendation, setRecommendationState, applyToCore } = await import("./improvements.server");
@@ -225,8 +215,8 @@ export type NotificationPreferences = { sourceChanges: boolean; billing: boolean
 
 export const notificationPreferencesFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
-    codeSchema
-      .extend({
+    z
+      .object({
         sourceChanges: z.boolean().optional(),
         billing: z.boolean().optional(),
         reports: z.boolean().optional(),
@@ -234,7 +224,7 @@ export const notificationPreferencesFn = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data }): Promise<{ ok: true; preferences: NotificationPreferences } | Failure> => {
-    const resolved = await resolve(data.code);
+    const resolved = await resolve(true);
     if ("error" in resolved) return { ok: false, reason: resolved.error };
     const { db } = await import("./mcp/db.server");
     const supabase = db();

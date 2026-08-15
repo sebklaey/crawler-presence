@@ -1,6 +1,6 @@
 /**
- * Server functions for the Insights dashboard. Capability-based: the recovery
- * code is the only key, it is never logged and never written into a URL.
+ * Server functions for the Insights dashboard. Authority is the verified
+ * HttpOnly management cookie — never a recovery code from the request body.
  */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
@@ -9,21 +9,19 @@ import type { InsightsDashboard } from "./insights/model";
 const periodSchema = z.union([z.literal(7), z.literal(30), z.literal(90), z.literal("all")]).default(30);
 
 export type InsightsResult =
-  | { ok: false; reason: "invalid-code" | "not-found" | "rate-limited" | "unavailable" }
+  | { ok: false; reason: "unauthenticated" | "csrf" | "not-found" | "rate-limited" | "unavailable" }
   | { ok: true; dashboard: InsightsDashboard };
 
 export const insightsDashboardFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
-    z.object({ code: z.string().trim().min(10).max(200), period: periodSchema }).parse(input),
+    z.object({ period: periodSchema }).parse(input),
   )
   .handler(async ({ data }): Promise<InsightsResult> => {
-    const { parseRecoveryCode, verifyManageSecret, allowRequest } = await import("./mcp/presences");
-    const parsed = parseRecoveryCode(data.code);
-    if (!parsed) return { ok: false, reason: "invalid-code" };
-    if (!(await allowRequest(`insights:${parsed.rateKey}`, 60))) return { ok: false, reason: "rate-limited" };
+    const { requireManagedPresence } = await import("./manage-presence.server");
+    const auth = await requireManagedPresence({ write: false, rate: { name: "insights", limit: 60 } });
+    if ("error" in auth) return { ok: false, reason: auth.error };
+    const presence = auth.presence;
     try {
-      const presence = await verifyManageSecret(parsed.slug, parsed.secret);
-      if (!presence) return { ok: false, reason: "not-found" };
 
       const { planById } = await import("./billing");
       const { asPlanId } = await import("./entitlements");

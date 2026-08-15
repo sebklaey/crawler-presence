@@ -140,10 +140,10 @@ function PublishPage() {
 
   /** Already subscribed: push the current content live without a new checkout. */
   async function publishUpdate() {
-    if (updating || !live.code) return;
+    if (updating || !live.manageable) return;
     setUpdating(true);
     try {
-      const result = await manageUpdateCoreFn({ data: { code: live.code, core } });
+      const result = await manageUpdateCoreFn({ data: { core } });
       if (!result.ok) {
         toast.error(
           result.reason === "empty-core"
