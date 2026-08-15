@@ -44,9 +44,11 @@ export function newCorrelationId(): string {
  */
 const evaluate = (status: unknown, periodEnd: unknown) =>
   evaluateSubscription({
-    // A record that is already marked paid/published but carries no provider
-    // status yet (webhook still in flight) counts as active — it was verified.
-    status: status === null || status === undefined || status === "" ? "active" : status,
+    // A record with no verified provider status grants NOTHING. Being marked
+    // paid/published by a checkout response or a publish intent is not proof:
+    // only a verified webhook (or reconciliation against the provider) writes a
+    // status. Missing therefore resolves to "unknown" → degraded, never active.
+    status,
     currentPeriodEnd: periodEnd,
   });
 

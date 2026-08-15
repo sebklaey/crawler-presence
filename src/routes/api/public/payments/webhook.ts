@@ -141,6 +141,7 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
           console.error("[crawler] payment event without id:", event.type);
           return new Response("Webhook error", { status: 400 });
         }
+        const correlationId = `whk_${crypto.randomUUID().replace(/-/g, "").slice(0, 16)}`;
         const claim = await claimPaymentEvent({
           eventId,
           eventType: event.type,
@@ -148,13 +149,24 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
           intentRef: intentRefOf(event.data),
           subscriptionId: str(event.data["subscription_id"]) ?? str(event.data["id"]),
           occurredAt: event.occurredAt,
+          correlationId,
         });
         if (!claim.durable) {
           // Backend unavailable: fail loudly so Paddle retries instead of the
           // event being silently dropped.
           return new Response("Storage unavailable", { status: 503 });
         }
-        if (!claim.claimed) return Response.json({ received: true, duplicate: true });
+        if (!claim.claimed) {
+          // processed / in_progress / exhausted are all deliberate, successful
+          // no-ops: retrying them would duplicate work or never succeed.
+          return Response.json({
+            received: true,
+            duplicate: true,
+            outcome: claim.outcome,
+            attempts: claim.attempts,
+            correlation_id: correlationId,
+          });
+        }
 
         try {
           switch (event.type) {
@@ -183,11 +195,13 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
             default:
               console.log("[crawler] unhandled payment event:", event.type);
           }
-          await finishPaymentEvent(eventId);
-          return Response.json({ received: true });
+          await finishPaymentEvent(eventId, undefined, correlationId);
+          return Response.json({ received: true, correlation_id: correlationId });
         } catch (e) {
-          console.error("[crawler] payments webhook error:", e);
-          await finishPaymentEvent(eventId, e);
+          console.error("[crawler] payments webhook error:", correlationId, e);
+          // Only a sanitized code is persisted; the event stays retryable until
+          // the bounded attempt budget is spent.
+          await finishPaymentEvent(eventId, e, correlationId);
           return new Response("Webhook error", { status: 500 });
         }
       },
