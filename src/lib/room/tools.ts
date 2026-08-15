@@ -30,6 +30,7 @@ import {
   updateImageRow,
   type ImageRow,
 } from "./imagestore";
+import { roomImages, serializeImages } from "./imagefeed";
 import { issueToken, subjectFingerprint, verifyToken } from "./tokens";
 import { enforceRateLimit, WINDOWS } from "./ratelimit";
 import {
@@ -425,48 +426,6 @@ function fileExtension(mime: string): string {
   if (mime === "image/webp") return "webp";
   return "jpg";
 }
-
-async function serializeImages(
-  db: Db,
-  rows: ImageRow[],
-  membership: MembershipContext,
-) {
-  const aliases = await aliasesFor(db, rows.map((row) => row.sender_membership_id));
-  const ttl = imageConfig().signedUrlTtlSeconds;
-  return Promise.all(
-    rows.map(async (row) => ({
-      id: await encodeImageId(row.id),
-      alias: aliases[row.sender_membership_id] ?? "Unbekannt",
-      created_at: new Date(row.created_at).toISOString(),
-      alt_text: row.alt_text ?? "",
-      width: row.width ?? 0,
-      height: row.height ?? 0,
-      status: row.moderation_status,
-      is_self: row.sender_membership_id === membership.membershipId,
-      url:
-        row.moderation_status === "approved"
-          ? ((await signedUrl(db, row.storage_path, ttl)) ?? "")
-          : "",
-      note:
-        row.moderation_status === "approved"
-          ? "Zeige dieses Bild sofort in der Antwort an (Markdown ![alt_text](url)); alternativ get_image mit dieser id."
-          : row.moderation_status === "pending"
-            ? "Bild wird geprüft … (nur für dich sichtbar)"
-            : "Bild abgelehnt (nur für dich sichtbar).",
-    })),
-  );
-}
-
-/** Approved images of the room plus the caller's own pending/rejected uploads. */
-export async function roomImages(db: Db, membership: MembershipContext) {
-  const approved = await listApprovedImages(db, membership.roomId, IMAGE_RETENTION);
-  const own = await listOwnUnpublishedImages(db, membership.roomId, membership.membershipId);
-  return {
-    images: await serializeImages(db, approved, membership),
-    my_pending_images: await serializeImages(db, own, membership),
-  };
-}
-
 
 /** The Universal Room is addressable by these strings in image tools. */
 const UNIVERSAL_INPUTS = new Set([

@@ -13,6 +13,7 @@ import { roomError } from "./errors";
 import { encodeMessageId } from "./ids";
 import { selectPlacements, type PlacementCard } from "./ads";
 import { universalSettings } from "./plans";
+import { roomImages } from "./imagefeed";
 import { enforceRateLimit } from "./ratelimit";
 import { clampLimit, validateMessage } from "./validation";
 import { countOnline, PRESENCE_WINDOW_SECONDS, type Db } from "./store";
@@ -105,11 +106,12 @@ export async function universalFeed(
 
   const nextCursor = hasMore && page.length ? String(page[0].id) : null;
 
-  const [trending, activeRooms, events, placements] = await Promise.all([
+  const [trending, activeRooms, events, placements, imageFeed] = await Promise.all([
     trendingTopics(db),
     activePublicRooms(db),
     upcomingEvents(db),
     selectPlacements(db, subjectHash, { topic: options.topic ?? null }),
+    roomImages(db, { roomId: membership.roomId, membershipId: membership.membershipId }),
   ]);
 
   const presence = presenceLabel(membership.presence);
@@ -125,6 +127,7 @@ export async function universalFeed(
       presence_checked_at: new Date().toISOString(),
     },
     messages,
+    ...imageFeed,
     next_cursor: nextCursor,
     has_more: hasMore,
     trending_topics: trending,
