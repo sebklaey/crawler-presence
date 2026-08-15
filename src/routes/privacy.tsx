@@ -142,7 +142,7 @@ function PrivacyPage() {
           <section>
             <h2 className="mb-2 text-base font-medium text-foreground">6. Retention</h2>
             <p>
-              There is no blanket “everything is deleted after 24 hours” rule. Different data classes have different
+              Crawler does not apply one blanket deletion rule to all data. Different data classes have different
               lifetimes, and the table below mirrors what the service actually does:
             </p>
             <div className="mt-4 overflow-x-auto">

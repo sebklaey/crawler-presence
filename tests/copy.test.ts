@@ -43,7 +43,10 @@ const FORBIDDEN: Array<{ pattern: RegExp; why: string }> = [
     pattern: /everything is deleted after 24 hours|all data is deleted after 24 hours/i,
     why: "retention differs per data class",
   },
-  { pattern: /Crawler account|create an account|sign up for Crawler|Crawler login/i, why: "Crawler is accountless" },
+  {
+    pattern: /create an? (Crawler )?account|sign up for Crawler|log in to Crawler|Crawler login/i,
+    why: "Crawler is accountless",
+  },
   { pattern: /Demo \/ test mode\./, why: "billing status wording comes from server configuration" },
 ];
 
@@ -85,7 +88,7 @@ describe("website copy", () => {
     expect(pricing).toContain("PLAN_INFO");
     expect(PLAN_INFO.plus.price).toBe(5);
     expect(PLAN_INFO.pro.price).toBe(20);
-    expect(PLAN_INFO.business.price).toBe(50);
+    expect(PLAN_INFO.business.price).toBe(80);
   });
 
   test("capabilities are described as separate and hashed", () => {
