@@ -45,7 +45,7 @@ const postInput = resolveInput.extend({
   sensitive_confirmation: z.boolean().optional(),
 });
 
-function profileFrom(data: z.infer<typeof resolveInput> & { canonical_url?: string | null }): ResolvedProfile {
+function profileFrom(data: z.infer<typeof resolveInput> & { canonical_url?: string | null | undefined }): ResolvedProfile {
   return resolveSocialProfile({
     provider: data.provider ?? null,
     identifier: data.identifier ?? null,
