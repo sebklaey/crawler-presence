@@ -115,6 +115,7 @@ function adapt(tool: RoomTool) {
         const denied = await checkToolAccess({
           tool: tool.name,
           roomToken: token,
+          sessionToken: typeof sessionId === "string" && sessionId.trim() ? sessionId.trim() : null,
           language: detectLanguage(rest),
           feature: tool.title,
         });
