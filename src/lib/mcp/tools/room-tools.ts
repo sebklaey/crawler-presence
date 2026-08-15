@@ -197,8 +197,13 @@ function adapt(tool: RoomTool) {
         }
         return {
           content: content as never,
-          structuredContent: { ...publicResult, ...(echoToken ? { room_token: echoToken } : {}) },
+          structuredContent: validateOutput(tool.name, {
+            status: "ok",
+            ...publicResult,
+            ...(echoToken ? { room_token: echoToken } : {}),
+          }),
         };
+
       } catch (error) {
         const { newCorrelationId } = await import("@/lib/core/access.server");
         console.error("[room-tool]", tool.name, error);
