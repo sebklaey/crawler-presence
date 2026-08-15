@@ -145,6 +145,7 @@ const ALL_ROOM_TOOLS = [
   ...(PLUS_TOOLS as unknown as RoomTool[]),
   ...(PROFILE_TOOLS as unknown as RoomTool[]),
   ...(MATCH_TOOLS as unknown as RoomTool[]),
+  ...(SOCIAL_TOOLS as unknown as RoomTool[]),
 ];
 
 const seen = new Set<string>();

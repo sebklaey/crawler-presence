@@ -2531,6 +2531,183 @@
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
         "outputSchema": null
+      },
+      {
+        "name": "resolve_social_profile",
+        "title": "Social-Profil erkennen",
+        "description": "Erkennt die Plattform aus Handle, Benutzername oder Link, validiert das Format, erzeugt die kanonische öffentliche Profil-URL und meldet, ob eine ausdrückliche Bestätigung nötig ist (z. B. bei Telefonnummern). Es wird nichts gepostet.",
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "provider": {
+              "type": "string",
+              "description": "Provider-ID oder Alias, z. B. instagram, x, threads, tiktok, whatsapp, custom_social."
+            },
+            "identifier": {
+              "type": "string",
+              "description": "Handle, Benutzername, Telefonnummer in E.164 oder Profil-URL."
+            },
+            "profile_url": {
+              "type": "string",
+              "description": "Vollständige öffentliche https-Profil-URL."
+            },
+            "label": {
+              "type": "string",
+              "description": "Optionaler eigener Anzeigename für benutzerdefinierte Links."
+            },
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "preview_social_profile",
+        "title": "Social-Profil Vorschau",
+        "description": "Zeigt eine kompakte, öffentlich unbedenkliche Vorschaukarte des Profils (Plattform, Handle, kanonischer Link) direkt im Chat. Reine Vorschau, es wird nichts veröffentlicht. Keine Identitätsprüfung.",
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "provider": {
+              "type": "string",
+              "description": "Provider-ID oder Alias, z. B. instagram, x, threads, tiktok, whatsapp, custom_social."
+            },
+            "identifier": {
+              "type": "string",
+              "description": "Handle, Benutzername, Telefonnummer in E.164 oder Profil-URL."
+            },
+            "profile_url": {
+              "type": "string",
+              "description": "Vollständige öffentliche https-Profil-URL."
+            },
+            "label": {
+              "type": "string",
+              "description": "Optionaler eigener Anzeigename für benutzerdefinierte Links."
+            },
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "post_social_profile_to_room",
+        "title": "Social-Profil in einen Raum posten",
+        "description": "Postet ein Social-Profil als normale öffentliche Nachricht in einen Crawler-Raum (Universal Room, Themenraum, persönlicher Raum oder Public Pair Room). Alle Räume sind öffentlich lesbar. Bei Telefonnummern oder Einladungslinks ist sensitive_confirmation=true zwingend.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "provider": {
+              "type": "string",
+              "description": "Provider-ID oder Alias, z. B. instagram, x, threads, tiktok, whatsapp, custom_social."
+            },
+            "identifier": {
+              "type": "string",
+              "description": "Handle, Benutzername, Telefonnummer in E.164 oder Profil-URL."
+            },
+            "profile_url": {
+              "type": "string",
+              "description": "Vollständige öffentliche https-Profil-URL."
+            },
+            "label": {
+              "type": "string",
+              "description": "Optionaler eigener Anzeigename für benutzerdefinierte Links."
+            },
+            "canonical_url": {
+              "type": "string",
+              "description": "Bereits aufgelöste kanonische URL aus resolve_social_profile."
+            },
+            "room_target": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string"
+                },
+                "topic": {
+                  "type": "string"
+                },
+                "username": {
+                  "type": "string"
+                },
+                "room_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "additionalProperties": true,
+              "description": "Zielraum. type=universal | topic (mit topic) | personal (mit username) | pair (mit room_id)."
+            },
+            "idempotency_key": {
+              "type": "string",
+              "description": "Verhindert Doppel-Posts bei Wiederholungen."
+            },
+            "sensitive_confirmation": {
+              "type": "boolean",
+              "description": "Ausdrückliche Zustimmung des Nutzers zur öffentlichen Veröffentlichung eines Kontaktlinks."
+            },
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+            }
+          },
+          "required": [
+            "room_target"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_social_providers",
+        "title": "Unterstützte Plattformen",
+        "description": "Listet alle bekannten Social-Plattformen mit Kategorie, Aliassen und Hinweis, ob ein Handle oder eine vollständige URL erwartet wird. Unbekannte Plattformen laufen über custom_social.",
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
       }
     ]
   }
