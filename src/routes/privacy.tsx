@@ -141,12 +141,31 @@ function PrivacyPage() {
           <section>
             <h2 className="mb-2 text-base font-medium text-foreground">6. Retention</h2>
             <p>
-              Anonymous draft sessions expire after 30 days. Minimized analytics events are retained for a maximum of
-              13 months and then deleted. Published Presence content is retained while the Presence exists and is
-              deleted or anonymised after it is taken offline and no longer needed. Billing records held by Paddle
-              follow their own statutory retention periods.
+              There is no blanket “everything is deleted after 24 hours” rule. Different data classes have different
+              lifetimes, and the table below mirrors what the service actually does:
             </p>
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full border-collapse text-left text-xs">
+                <thead>
+                  <tr className="border-b border-border text-foreground">
+                    <th className="py-2 pr-4 font-medium">Data</th>
+                    <th className="py-2 pr-4 font-medium">Retention</th>
+                    <th className="py-2 font-medium">Basis</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {RETENTION_CATALOG.map((entry) => (
+                    <tr key={entry.data} className="border-b border-border/60 align-top">
+                      <td className="py-2 pr-4 text-foreground">{entry.data}</td>
+                      <td className="py-2 pr-4">{entry.retention}</td>
+                      <td className="py-2">{entry.basis}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </section>
+
 
           <section>
             <h2 className="mb-2 text-base font-medium text-foreground">7. International transfers</h2>
