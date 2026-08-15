@@ -110,6 +110,8 @@ export type UpgradeInput = {
    * (standard room = Plus, community room = Pro).
    */
   requiredPlan?: string | null;
+  /** Correlation id of the access decision (Core V2). */
+  correlationId?: string;
 
 };
 
@@ -143,6 +145,7 @@ export async function buildUpgradePayload(input: UpgradeInput): Promise<UpgradeP
   const target: CustomerPlan | null =
     toolRequired === "admin" ? null : (required as CustomerPlan);
   const feature = input.feature ?? input.tool;
+  const correlationId = input.correlationId ?? "crw_unknown";
   const lang = input.language ?? "en";
   const info = PLAN_INFO[required];
 
@@ -159,6 +162,7 @@ export async function buildUpgradePayload(input: UpgradeInput): Promise<UpgradeP
       upgrade_url: `${siteUrl()}/support`,
       cta_label: lang === "de" ? "Support kontaktieren" : "Contact support",
       unlocks: [],
+      correlation_id: correlationId,
       message:
         lang === "de"
           ? "Diese Funktion gehört zur internen Crawler-Plattformadministration und kann nicht gekauft werden."
@@ -180,6 +184,7 @@ export async function buildUpgradePayload(input: UpgradeInput): Promise<UpgradeP
       upgrade_url: `${siteUrl()}/pricing`,
       cta_label: lang === "de" ? "Tarife ansehen" : "View plans",
       unlocks: info.benefits.slice(0, 4),
+      correlation_id: correlationId,
       message:
         "Crawler Love is available with Crawler Pro and Business. You can view the feature details on the Crawler pricing page.",
     };
@@ -216,6 +221,7 @@ export async function buildUpgradePayload(input: UpgradeInput): Promise<UpgradeP
     cta_label: cta,
     unlocks: info.benefits,
     message,
+    correlation_id: correlationId,
     ...(input.usage ? { usage: input.usage } : {}),
   };
 }
