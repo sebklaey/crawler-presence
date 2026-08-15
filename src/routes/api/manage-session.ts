@@ -11,9 +11,15 @@
  */
 import { createFileRoute } from "@tanstack/react-router";
 
-const COOKIE = "crawler_manage";
-const CSRF_COOKIE = "crawler_manage_csrf";
-const MAX_AGE = 30 * 60; // 30 minutes
+import {
+  MANAGE_COOKIE as COOKIE,
+  MANAGE_CSRF_COOKIE as CSRF_COOKIE,
+  MANAGE_MAX_AGE as MAX_AGE,
+  issueManageSession,
+  parseCookies,
+  serializeCookie as setCookie,
+  verifyManageSession,
+} from "@/lib/manage-auth.server";
 
 const json = (body: unknown, init: ResponseInit = {}) =>
   new Response(JSON.stringify(body), {
@@ -26,54 +32,7 @@ const json = (body: unknown, init: ResponseInit = {}) =>
     },
   });
 
-function cookies(request: Request): Record<string, string> {
-  const raw = request.headers.get("cookie") ?? "";
-  const out: Record<string, string> = {};
-  for (const part of raw.split(";")) {
-    const at = part.indexOf("=");
-    if (at > 0) out[part.slice(0, at).trim()] = decodeURIComponent(part.slice(at + 1).trim());
-  }
-  return out;
-}
-
-async function sign(payload: string): Promise<string> {
-  const secret = process.env["SUBJECT_HASH_SECRET"] ?? process.env["SUPABASE_SERVICE_ROLE_KEY"] ?? "";
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-  const mac = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload));
-  return [...new Uint8Array(mac)].map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-export async function issueManageSession(slug: string): Promise<{ value: string; csrf: string }> {
-  const exp = Math.floor(Date.now() / 1000) + MAX_AGE;
-  const csrf = crypto.randomUUID().replace(/-/g, "");
-  const payload = `${slug}.${exp}.${csrf}`;
-  return { value: `${payload}.${await sign(payload)}`, csrf };
-}
-
-export async function verifyManageSession(
-  value: string | undefined,
-  csrf?: string | undefined,
-): Promise<{ slug: string } | null> {
-  if (!value) return null;
-  const parts = value.split(".");
-  if (parts.length !== 4) return null;
-  const [slug, exp, boundCsrf, mac] = parts as [string, string, string, string];
-  if (Number(exp) * 1000 < Date.now()) return null;
-  if (csrf !== undefined && csrf !== boundCsrf) return null;
-  if ((await sign(`${slug}.${exp}.${boundCsrf}`)) !== mac) return null;
-  return { slug };
-}
-
-const setCookie = (name: string, value: string, opts: { httpOnly: boolean; maxAge: number }) =>
-  `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=${opts.maxAge}; SameSite=Strict; Secure${
-    opts.httpOnly ? "; HttpOnly" : ""
-  }`;
+const cookies = (request: Request) => parseCookies(request.headers.get("cookie"));
 
 export const Route = createFileRoute("/api/manage-session")({
   server: {
@@ -90,7 +49,7 @@ export const Route = createFileRoute("/api/manage-session")({
         };
 
         if (body.action === "close") {
-          const headers = new Headers({ "content-type": "application/json" });
+          const headers = new Headers({ "content-type": "application/json", "cache-control": "no-store" });
           headers.append("set-cookie", setCookie(COOKIE, "", { httpOnly: true, maxAge: 0 }));
           headers.append("set-cookie", setCookie(CSRF_COOKIE, "", { httpOnly: false, maxAge: 0 }));
           return new Response(JSON.stringify({ ok: true }), { headers });
@@ -110,15 +69,20 @@ export const Route = createFileRoute("/api/manage-session")({
         const presence = await verifyManageSecret(parsed.slug, parsed.secret).catch(() => null);
         if (!presence) return json({ ok: false, reason: "not-found" }, { status: 401 });
 
-        const { value, csrf } = await issueManageSession(presence.slug);
+        let issued: { value: string; csrf: string; maxAge: number };
+        try {
+          issued = await issueManageSession(presence.slug);
+        } catch {
+          return json({ ok: false, reason: "unavailable" }, { status: 503 });
+        }
         const headers = new Headers({
           "content-type": "application/json",
           "referrer-policy": "no-referrer",
           "cache-control": "no-store",
         });
-        headers.append("set-cookie", setCookie(COOKIE, value, { httpOnly: true, maxAge: MAX_AGE }));
-        headers.append("set-cookie", setCookie(CSRF_COOKIE, csrf, { httpOnly: false, maxAge: MAX_AGE }));
-        return new Response(JSON.stringify({ ok: true, slug: presence.slug, csrf }), { headers });
+        headers.append("set-cookie", setCookie(COOKIE, issued.value, { httpOnly: true, maxAge: MAX_AGE }));
+        headers.append("set-cookie", setCookie(CSRF_COOKIE, issued.csrf, { httpOnly: false, maxAge: MAX_AGE }));
+        return new Response(JSON.stringify({ ok: true, slug: presence.slug, csrf: issued.csrf }), { headers });
       },
     },
   },
