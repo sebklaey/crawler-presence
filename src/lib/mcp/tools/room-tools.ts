@@ -136,16 +136,26 @@ function adapt(tool: RoomTool) {
     handler: async (input: Record<string, unknown> | undefined) => {
       const raw = (input ?? {}) as Record<string, unknown>;
       const { room_token: provided, session_id: sessionId, ...rest } = raw;
-      const token = typeof provided === "string" && provided.trim() ? provided.trim() : newRoomToken();
+      const session = typeof sessionId === "string" && sessionId.trim() ? sessionId.trim() : null;
+      let token = typeof provided === "string" && provided.trim() ? provided.trim() : "";
+
+      // A known session always returns to its existing anonymous identity, so
+      // the profile (@handle, rooms, follows) is found instead of recreated.
+      const { roomTokenForSession, rememberRoomTokenForSession } = await import(
+        "@/lib/room/session-identity.server"
+      );
+      if (!token && session) token = (await roomTokenForSession(session)) ?? "";
+      if (!token) token = newRoomToken();
+      if (session) await rememberRoomTokenForSession(session, token);
       const issued = token !== provided;
 
       try {
         // Server-side plan gate — the caller never supplies its own plan.
         const { checkToolAccess, linkSessionPlanToRoomToken } = await import("@/lib/entitlements/guard.server");
         const { detectLanguage } = await import("@/lib/entitlements/upgrade.server");
-        const session = typeof sessionId === "string" && sessionId.trim() ? sessionId.trim() : null;
         // A paid draft session unlocks the room features of its subscription.
         if (session) await linkSessionPlanToRoomToken(token, session);
+
         const denied = await checkToolAccess({
           tool: tool.name,
           roomToken: token,
