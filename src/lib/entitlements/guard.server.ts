@@ -101,17 +101,60 @@ export async function resolvePlanForSession(sessionToken: string): Promise<Custo
 
 
 /**
+ * A paid draft session is proof of entitlement. Linking it to the anonymous
+ * room identity makes the plan stick for every later room_* call, so a user who
+ * paid in the Presence flow never falls back to "free" inside ChatGPT.
+ */
+export async function linkSessionPlanToRoomToken(
+  roomToken: string | null | undefined,
+  sessionToken: string | null | undefined,
+): Promise<CustomerPlan> {
+  if (!roomToken || !sessionToken) return "free";
+  try {
+    const plan = await resolvePlanForSession(sessionToken);
+    if (plan === "free") return "free";
+
+    const { resolveIdentity } = await import("../room/identity");
+    const { getDb } = await import("../room/store");
+    const identity = await resolveIdentity({ "room/token": roomToken } as never);
+    const db = await getDb();
+    const { data } = await db
+      .from("published_presences")
+      .select("slug")
+      .eq("session_token", sessionToken)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const slug = (data as { slug?: string } | null)?.slug;
+    if (!slug) return plan;
+    await db.from("room_plan_links").upsert(
+      { subject_hash: identity.subjectHash, presence_slug: slug, plan, updated_at: new Date().toISOString() },
+      { onConflict: "subject_hash" },
+    );
+    return plan;
+  } catch {
+    return "free";
+  }
+}
+
+/**
  * Returns an upgrade payload when the caller may not run this tool, or null
  * when the call is allowed. Already-entitled callers never see a message.
  */
 export async function checkToolAccess(input: {
   tool: string;
   roomToken?: string | null;
+  sessionToken?: string | null;
   language?: "de" | "en";
   feature?: string;
 }): Promise<UpgradePayload | null> {
   const required = requiredPlanForTool(input.tool);
   if (required === "free") return null;
+
+  if (input.sessionToken) {
+    const sessionPlan = await linkSessionPlanToRoomToken(input.roomToken ?? null, input.sessionToken);
+    if (required !== "admin" && meetsPlan(sessionPlan, required)) return null;
+  }
 
   const ctx = await resolvePlanContext(input.roomToken ?? null);
   if (required === "admin") {
