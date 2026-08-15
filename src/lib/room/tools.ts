@@ -56,7 +56,8 @@ import {
   type MembershipContext,
   type MessageRow,
 } from "./store";
-import { resolveTopicSlug, TOPIC_ALIASES } from "./topics";
+import { normalizeTopicInput, resolveTopicSlug, TOPIC_ALIASES } from "./topics";
+import { enterUniversal } from "./universal";
 import { clampLimit, validateMessage } from "./validation";
 
 const REPORT_REASONS = [
@@ -457,7 +458,7 @@ async function serializeImages(
 }
 
 /** Approved images of the room plus the caller's own pending/rejected uploads. */
-async function roomImages(db: Db, membership: MembershipContext) {
+export async function roomImages(db: Db, membership: MembershipContext) {
   const approved = await listApprovedImages(db, membership.roomId, IMAGE_RETENTION);
   const own = await listOwnUnpublishedImages(db, membership.roomId, membership.membershipId);
   return {
@@ -466,13 +467,51 @@ async function roomImages(db: Db, membership: MembershipContext) {
   };
 }
 
+
+/** The Universal Room is addressable by these strings in image tools. */
+const UNIVERSAL_INPUTS = new Set([
+  "universal",
+  "universal room",
+  "universalroom",
+  "universeller raum",
+  "universal raum",
+  "universal-raum",
+  "universalraum",
+  "global",
+]);
+
+function isUniversalTopic(raw: string): boolean {
+  return UNIVERSAL_INPUTS.has(normalizeTopicInput(raw));
+}
+
+/**
+ * Membership context for image tools: topic rooms as usual, plus the
+ * Universal Room (joined on demand, so images work there too).
+ */
+async function resolveImageMembership(
+  db: Db,
+  subjectHash: string,
+  raw: string,
+): Promise<MembershipContext> {
+  if (isUniversalTopic(raw)) {
+    let membership = await getActiveMembership(db, subjectHash, "universal");
+    if (!membership) {
+      await enterUniversal(db, subjectHash);
+      membership = await getActiveMembership(db, subjectHash, "universal");
+    }
+    if (!membership) throw roomError("ROOM_UNAVAILABLE");
+    return membership;
+  }
+  const slug = await resolveSlug(db, raw);
+  return requireMembership(db, subjectHash, slug);
+}
+
 export async function handleCreateImageUpload(input: unknown, meta: McpMeta) {
   const { topic, mime_type, file_size } = inputSchemas.create_image_upload.parse(input);
   const identity = await resolveIdentity(meta);
   const db = await getDb();
   await touchPresence(db, identity.subjectHash);
-  const slug = await resolveSlug(db, topic);
-  const membership = await requireMembership(db, identity.subjectHash, slug);
+  const membership = await resolveImageMembership(db, identity.subjectHash, topic);
   const settings = imageConfig();
 
   if (!ALLOWED_MIME.includes(mime_type as any)) throw roomError("IMAGE_TYPE_UNSUPPORTED");
@@ -515,8 +554,7 @@ export async function handleFinalizeImageUpload(input: unknown, meta: McpMeta) {
   const identity = await resolveIdentity(meta);
   const db = await getDb();
   await touchPresence(db, identity.subjectHash);
-  const slug = await resolveSlug(db, topic);
-  const membership = await requireMembership(db, identity.subjectHash, slug);
+  const membership = await resolveImageMembership(db, identity.subjectHash, topic);
   const settings = imageConfig();
 
   const internalId = await decodeImageId(image_id);
@@ -572,8 +610,7 @@ export async function handleSubmitImageReview(input: unknown, meta: McpMeta) {
   const identity = await resolveIdentity(meta);
   const db = await getDb();
   await touchPresence(db, identity.subjectHash);
-  const slug = await resolveSlug(db, topic);
-  const membership = await requireMembership(db, identity.subjectHash, slug);
+  const membership = await resolveImageMembership(db, identity.subjectHash, topic);
 
   const internalId = await decodeImageId(image_id);
   if (internalId === null) throw roomError("IMAGE_NOT_FOUND");
@@ -643,8 +680,7 @@ export async function handleGetImage(input: unknown, meta: McpMeta) {
   const identity = await resolveIdentity(meta);
   const db = await getDb();
   await touchPresence(db, identity.subjectHash);
-  const slug = await resolveSlug(db, topic);
-  const membership = await requireMembership(db, identity.subjectHash, slug);
+  const membership = await resolveImageMembership(db, identity.subjectHash, topic);
 
   const internalId = await decodeImageId(image_id);
   if (internalId === null) throw roomError("IMAGE_NOT_FOUND");
