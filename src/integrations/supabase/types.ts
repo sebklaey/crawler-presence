@@ -3238,6 +3238,27 @@ export type Database = {
           },
         ]
       }
+      session_room_tokens: {
+        Row: {
+          created_at: string
+          room_token: string
+          session_token: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          room_token: string
+          session_token: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          room_token?: string
+          session_token?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       social_posts: {
         Row: {
           canonical_url: string
