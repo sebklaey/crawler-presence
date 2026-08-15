@@ -2756,6 +2756,7 @@ export type Database = {
           plan: string
           presence_slug: string | null
           session_token: string | null
+          session_token_hash: string | null
           status: string
           subscription_status: string | null
           updated_at: string
@@ -2775,6 +2776,7 @@ export type Database = {
           plan?: string
           presence_slug?: string | null
           session_token?: string | null
+          session_token_hash?: string | null
           status?: string
           subscription_status?: string | null
           updated_at?: string
@@ -2794,6 +2796,7 @@ export type Database = {
           plan?: string
           presence_slug?: string | null
           session_token?: string | null
+          session_token_hash?: string | null
           status?: string
           subscription_status?: string | null
           updated_at?: string
