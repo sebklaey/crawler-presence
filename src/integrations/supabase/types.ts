@@ -3463,6 +3463,254 @@ export type Database = {
           },
         ]
       }
+      sugar_accounts: {
+        Row: {
+          balance: number
+          created_at: string
+          current_lease_expires_at: string | null
+          daily_minted_amount: number
+          daily_window_started_at: string
+          frozen_at: string | null
+          id: string
+          last_qualified_activity_at: string | null
+          lifetime_burned_from_gifts: number
+          lifetime_minted: number
+          lifetime_received: number
+          lifetime_sent: number
+          mining_remainder_seconds: number
+          mining_status: string
+          public_account_reference: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          current_lease_expires_at?: string | null
+          daily_minted_amount?: number
+          daily_window_started_at?: string
+          frozen_at?: string | null
+          id?: string
+          last_qualified_activity_at?: string | null
+          lifetime_burned_from_gifts?: number
+          lifetime_minted?: number
+          lifetime_received?: number
+          lifetime_sent?: number
+          mining_remainder_seconds?: number
+          mining_status?: string
+          public_account_reference?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          current_lease_expires_at?: string | null
+          daily_minted_amount?: number
+          daily_window_started_at?: string
+          frozen_at?: string | null
+          id?: string
+          last_qualified_activity_at?: string | null
+          lifetime_burned_from_gifts?: number
+          lifetime_minted?: number
+          lifetime_received?: number
+          lifetime_sent?: number
+          mining_remainder_seconds?: number
+          mining_status?: string
+          public_account_reference?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      sugar_global_state: {
+        Row: {
+          current_supply: number
+          latest_event_hash: string
+          latest_sequence_number: number
+          lifetime_burned: number
+          lifetime_minted: number
+          maximum_supply: number
+          singleton_id: number
+          updated_at: string
+        }
+        Insert: {
+          current_supply?: number
+          latest_event_hash?: string
+          latest_sequence_number?: number
+          lifetime_burned?: number
+          lifetime_minted?: number
+          maximum_supply?: number
+          singleton_id?: number
+          updated_at?: string
+        }
+        Update: {
+          current_supply?: number
+          latest_event_hash?: string
+          latest_sequence_number?: number
+          lifetime_burned?: number
+          lifetime_minted?: number
+          maximum_supply?: number
+          singleton_id?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sugar_ledger_events: {
+        Row: {
+          account_id: string
+          amount: number
+          counterparty_account_id: string | null
+          created_at: string
+          event_hash: string
+          event_id: string
+          event_type: string
+          metadata: Json
+          previous_hash: string
+          sequence_number: number
+          server_signature: string
+          transfer_group_id: string | null
+        }
+        Insert: {
+          account_id: string
+          amount?: number
+          counterparty_account_id?: string | null
+          created_at?: string
+          event_hash: string
+          event_id?: string
+          event_type: string
+          metadata?: Json
+          previous_hash: string
+          sequence_number: number
+          server_signature: string
+          transfer_group_id?: string | null
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          counterparty_account_id?: string | null
+          created_at?: string
+          event_hash?: string
+          event_id?: string
+          event_type?: string
+          metadata?: Json
+          previous_hash?: string
+          sequence_number?: number
+          server_signature?: string
+          transfer_group_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sugar_ledger_events_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "sugar_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sugar_ledger_events_counterparty_account_id_fkey"
+            columns: ["counterparty_account_id"]
+            isOneToOne: false
+            referencedRelation: "sugar_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sugar_mining_leases: {
+        Row: {
+          account_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          qualified_seconds: number
+          source_action: string
+          started_at: string
+          status: string
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          qualified_seconds?: number
+          source_action: string
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          qualified_seconds?: number
+          source_action?: string
+          started_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sugar_mining_leases_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "sugar_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sugar_transfers: {
+        Row: {
+          burned_amount: number
+          completed_at: string | null
+          created_at: string
+          id: string
+          idempotency_key: string
+          recipient_account_id: string
+          recipient_amount: number
+          requested_amount: number
+          sender_account_id: string
+          status: string
+        }
+        Insert: {
+          burned_amount: number
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          idempotency_key: string
+          recipient_account_id: string
+          recipient_amount: number
+          requested_amount: number
+          sender_account_id: string
+          status?: string
+        }
+        Update: {
+          burned_amount?: number
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          idempotency_key?: string
+          recipient_account_id?: string
+          recipient_amount?: number
+          requested_amount?: number
+          sender_account_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sugar_transfers_recipient_account_id_fkey"
+            columns: ["recipient_account_id"]
+            isOneToOne: false
+            referencedRelation: "sugar_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sugar_transfers_sender_account_id_fkey"
+            columns: ["sender_account_id"]
+            isOneToOne: false
+            referencedRelation: "sugar_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       support_tickets: {
         Row: {
           created_at: string
@@ -3820,6 +4068,77 @@ export type Database = {
         Returns: {
           storage_path: string
         }[]
+      }
+      sugar_activity: {
+        Args: {
+          p_activity_window_seconds: number
+          p_daily_cap: number
+          p_lease_seconds: number
+          p_min_age_hours: number
+          p_minutes_per_unit: number
+          p_signing_key: string
+          p_source_action: string
+          p_user_key: string
+        }
+        Returns: Json
+      }
+      sugar_admin_set_frozen: {
+        Args: { p_frozen: boolean; p_signing_key: string; p_user_key: string }
+        Returns: Json
+      }
+      sugar_append_event: {
+        Args: {
+          p_account: string
+          p_amount: number
+          p_counterparty: string
+          p_group: string
+          p_metadata: Json
+          p_signing_key: string
+          p_type: string
+        }
+        Returns: number
+      }
+      sugar_ensure_account: {
+        Args: { p_user_key: string }
+        Returns: {
+          balance: number
+          created_at: string
+          current_lease_expires_at: string | null
+          daily_minted_amount: number
+          daily_window_started_at: string
+          frozen_at: string | null
+          id: string
+          last_qualified_activity_at: string | null
+          lifetime_burned_from_gifts: number
+          lifetime_minted: number
+          lifetime_received: number
+          lifetime_sent: number
+          mining_remainder_seconds: number
+          mining_status: string
+          public_account_reference: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "sugar_accounts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      sugar_transfer: {
+        Args: {
+          p_amount: number
+          p_idempotency_key: string
+          p_recipient_key: string
+          p_sender_key: string
+          p_signing_key: string
+        }
+        Returns: Json
+      }
+      sugar_verify_ledger: {
+        Args: { p_limit?: number; p_signing_key: string }
+        Returns: Json
       }
     }
     Enums: {
