@@ -82,10 +82,17 @@ function profileSummary(result: any): string {
   stats.push(["Following", p.following ?? 0]);
   if (p.likes_received !== null && p.likes_received !== undefined) stats.push(["Likes", p.likes_received]);
   stats.push(["Jetzt hier", `🟢 ${p.people_here_now ?? 0}`]);
+  stats.push(["🍬 Sugar", p.sugar_balance ?? 0]);
   parts.push(
     `| ${stats.map(([label]) => label).join(" | ")} |\n|${stats.map(() => "---:").join("|")}|\n| ${stats
       .map(([, value]) => `**${value}**`)
       .join(" | ")} |`,
+  );
+
+  parts.push(
+    `_Minted all time: ${p.sugar_minted_all_time ?? 0} Sugar · Crawler Sugar hat keinen Geldwert und funktioniert nur in Crawler._${
+      p.is_owner && p.sugar_mining_status ? `\nMining: **${p.sugar_mining_status}** · heute ${p.sugar_minted_today ?? 0}` : ""
+    }`,
   );
 
   const messages = (result.tabs?.messages ?? []) as any[];
