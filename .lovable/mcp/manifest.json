@@ -1738,6 +1738,182 @@
         "outputSchema": null
       },
       {
+        "name": "add_campaign_creative",
+        "title": "Crawler Ad Creative hinzufügen",
+        "description": "Crawler Ads (nur Business): fügt einer Kampagne ein Creative für genau ein Produkt hinzu. Jedes Creative erhält einen eigenen, klar gekennzeichneten Ad Knowledge Core und ein eigenes anonymes Ad Resonance Pattern. Wird niemals automatisch veröffentlicht.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "campaign_id": {
+              "type": "string"
+            },
+            "product_name": {
+              "type": "string"
+            },
+            "product_description": {
+              "type": "string"
+            },
+            "product_category": {
+              "type": "string"
+            },
+            "product_reference": {
+              "type": "string"
+            },
+            "headline": {
+              "type": "string"
+            },
+            "body": {
+              "type": "string"
+            },
+            "image_reference": {
+              "type": "string"
+            },
+            "image_alt": {
+              "type": "string",
+              "description": "Pflicht, sobald ein Bild verwendet wird."
+            },
+            "destination_url": {
+              "type": "string",
+              "description": "Öffentliche HTTPS-URL."
+            },
+            "call_to_action": {
+              "type": "string"
+            },
+            "languages": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "start_date": {
+              "type": "string"
+            },
+            "end_date": {
+              "type": "string"
+            },
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+            },
+            "session_id": {
+              "type": "string",
+              "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+            }
+          },
+          "required": [
+            "campaign_id",
+            "product_name",
+            "headline",
+            "body",
+            "destination_url"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "preview_sponsored_campaign",
+        "title": "Crawler Ad Vorschau",
+        "description": "Zeigt für jede Anzeige einer Kampagne den Ad Knowledge Core, die Sponsored Card und eine Vorschau des Resonanzmusters. Veröffentlicht nichts.",
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "campaign_id": {
+              "type": "string"
+            },
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+            },
+            "session_id": {
+              "type": "string",
+              "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+            }
+          },
+          "required": [
+            "campaign_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "set_resonance_ads_preference",
+        "title": "Resonance Ads ein- oder ausschalten",
+        "description": "Legt fest, ob das freiwillig erstellte Resonanzmuster zusätzlich für gesponserte Empfehlungen verwendet werden darf. Standard ist aus. Das Muster wird dabei nie gelöscht und Crawler Match bleibt unabhängig davon aktiv.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+            },
+            "session_id": {
+              "type": "string",
+              "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "block_advertiser",
+        "title": "Werbekunden blockieren",
+        "description": "Blockiert alle gesponserten Karten dieses Werbekunden für diese anonyme Identität.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "campaign_id": {
+              "type": "string"
+            },
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+            },
+            "session_id": {
+              "type": "string",
+              "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+            }
+          },
+          "required": [
+            "campaign_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
         "name": "my_room",
         "title": "Mein Raum",
         "description": "Zeigt den eigenen persönlichen Raum (wird beim ersten Aufruf automatisch angelegt und heisst nach dem Anzeigenamen, z. B. «Sebastian's Room»). Liefert Follower-Zahl, aktuell anwesende Personen, Anwesenheitsliste, Follower-Liste, neue Follower als Aktivität sowie Nachrichten und Bilder. Kein Login nötig.",
