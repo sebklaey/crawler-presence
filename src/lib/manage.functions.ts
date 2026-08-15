@@ -210,17 +210,17 @@ export type PresenceAnalyticsResult =
       privacyNote: string;
     };
 
-const analyticsSchema = codeSchema.extend({ days: z.union([z.literal(7), z.literal(30), z.literal(90)]).default(7) });
+const analyticsSchema = z.object({ days: z.union([z.literal(7), z.literal(30), z.literal(90)]).default(7) });
 
 /**
  * Measured Presence analytics for the /analytics page. Capability-based: the
- * recovery code is the only key. Everything returned was actually observed
+ * management session cookie is the only key. Everything returned was observed
  * inside Crawler — there is no seeded or demo data anywhere in this path.
  */
 export const presenceAnalyticsFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => analyticsSchema.parse(input))
   .handler(async ({ data }): Promise<PresenceAnalyticsResult> => {
-    const resolved = await resolveSession({ write: true });
+    const resolved = await resolveSession({ write: false });
     if ("error" in resolved) return { ok: false, reason: resolved.error };
     const p = resolved.presence;
 
@@ -261,7 +261,7 @@ export const presenceAnalyticsFn = createServerFn({ method: "POST" })
   });
 
 export const manageOverviewFn = createServerFn({ method: "POST" })
-  .handler(async ({ data }): Promise<ManageOverview> => {
+  .handler(async (): Promise<ManageOverview> => {
     const resolved = await resolveSession({ write: false });
     if ("error" in resolved) return { ok: false, reason: resolved.error };
     const p = resolved.presence;
@@ -310,7 +310,8 @@ export const manageOverviewFn = createServerFn({ method: "POST" })
       })(),
       version: p.version,
       updatedAt: p.updatedAt,
-      sessionToken: p.sessionToken ?? null,
+      // Capabilities are never returned to the browser — only their presence.
+      sessionToken: null,
     };
 
 
@@ -479,7 +480,7 @@ export const manageSetDomainFn = createServerFn({ method: "POST" })
   });
 
 export const manageVerifyDomainFn = createServerFn({ method: "POST" })
-  .handler(async ({ data }): Promise<{ ok: boolean; verified?: boolean; reason?: string }> => {
+  .handler(async (): Promise<{ ok: boolean; verified?: boolean; reason?: string }> => {
     const resolved = await resolveSession({ write: true });
     if ("error" in resolved) return { ok: false, reason: resolved.error };
     const { customDomain, customDomainToken } = resolved.presence;
@@ -499,7 +500,7 @@ export const manageVerifyDomainFn = createServerFn({ method: "POST" })
   });
 
 export const manageRemoveDomainFn = createServerFn({ method: "POST" })
-  .handler(async ({ data }): Promise<{ ok: boolean; reason?: string }> => {
+  .handler(async (): Promise<{ ok: boolean; reason?: string }> => {
     const resolved = await resolveSession({ write: true });
     if ("error" in resolved) return { ok: false, reason: resolved.error };
     const { clearCustomDomain, PresenceStoreError } = await import("./mcp/presences");
@@ -528,11 +529,11 @@ export type ManageRestoreResult =
 
 /**
  * Returns the stored Knowledge Core for a Presence so /knowledge, /preview and
- * /publish can show the owner's real data after the recovery code was entered.
- * Capability-based: the recovery code is the only key.
+ * /publish can show the owner's real data. Authorised by the HttpOnly
+ * management session cookie that the recovery code opened.
  */
 export const manageRestoreCoreFn = createServerFn({ method: "POST" })
-  .handler(async ({ data }): Promise<ManageRestoreResult> => {
+  .handler(async (): Promise<ManageRestoreResult> => {
     const resolved = await resolveSession({ write: false });
     if ("error" in resolved) return { ok: false, reason: resolved.error };
     const p = resolved.presence;
@@ -543,8 +544,8 @@ const updateCoreSchema = z.object({ core: z.unknown() });
 
 /**
  * Push the current Knowledge Core into an already published Presence and
- * regenerate every public file. Capability-based: the recovery code is the
- * only key. Empty content is rejected so a live Presence can never be turned
+ * regenerate every public file. Authorised by the HttpOnly management session
+ * cookie plus the bound CSRF token. Empty content is rejected so a live Presence can never be turned
  * into an empty shell.
  */
 export const manageUpdateCoreFn = createServerFn({ method: "POST" })
