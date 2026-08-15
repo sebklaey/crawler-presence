@@ -44,6 +44,8 @@ export interface AccountContext {
 
 /** Ensures an account + anonymous identity record exists for this subject. */
 export async function ensureAccount(db: Db, subjectHash: string): Promise<{ accountId: string; customAlias: string | null }> {
+  const { isReadOnlyCall, UNPROVISIONED_ACCOUNT_ID } = await import("./call-context");
+  const readOnly = isReadOnlyCall();
   const { data: existing, error } = await db
     .from("anonymous_identities")
     .select("account_id, custom_alias")
@@ -52,11 +54,20 @@ export async function ensureAccount(db: Db, subjectHash: string): Promise<{ acco
   if (error) throw roomError("INTERNAL_ERROR");
 
   if (existing && (existing as any).account_id) {
+    if (readOnly) {
+      return { accountId: (existing as any).account_id, customAlias: (existing as any).custom_alias ?? null };
+    }
     await db
       .from("anonymous_identities")
       .update({ last_seen_at: new Date().toISOString() })
       .eq("subject_hash", subjectHash);
     return { accountId: (existing as any).account_id, customAlias: (existing as any).custom_alias ?? null };
+  }
+
+  // Read-only resolution of an unprovisioned subject: resolve entitlements
+  // against a non-existent account instead of creating one.
+  if (readOnly) {
+    return { accountId: UNPROVISIONED_ACCOUNT_ID, customAlias: (existing as any)?.custom_alias ?? null };
   }
 
   const { data: account, error: accountError } = await db

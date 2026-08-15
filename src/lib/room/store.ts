@@ -287,6 +287,9 @@ export const PRESENCE_WINDOW_SECONDS = 180;
 
 /** Heartbeat: every tool call marks the caller as present in all their rooms. */
 export async function touchPresence(db: Db, subjectHash: string): Promise<void> {
+  // A read-only tool call writes nothing at all — not even a heartbeat.
+  const { isReadOnlyCall } = await import("./call-context");
+  if (isReadOnlyCall()) return;
   await db
     .from("memberships")
     .update({ last_seen_at: new Date().toISOString() })

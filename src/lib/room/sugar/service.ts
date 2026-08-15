@@ -86,8 +86,15 @@ export async function ensureSugarAccount(db: Db, userKey: string): Promise<Sugar
 }
 
 export async function loadSugarAccount(db: Db, userKey: string): Promise<SugarAccount> {
-  await ensureSugarAccount(db, userKey);
+  const { isReadOnlyCall } = await import("../call-context");
+  const readOnly = isReadOnlyCall();
+  if (!readOnly) await ensureSugarAccount(db, userKey);
   const { data, error } = await db.from("sugar_accounts").select("*").eq("user_id", userKey).maybeSingle();
+  if (!data && readOnly) {
+    // A wallet is created by an explicit write (start_sugar_mining, send_sugar),
+    // never by reading the balance. Report the empty state instead.
+    return mapAccount({ user_id: userKey });
+  }
   if (error || !data) sugarError(error);
   return mapAccount(data);
 }
