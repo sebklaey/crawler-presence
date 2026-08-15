@@ -14,6 +14,7 @@ import { encodeMessageId } from "./ids";
 import { selectPlacements, type PlacementCard } from "./ads";
 import { universalSettings } from "./plans";
 import { roomImages } from "./imagefeed";
+import { enforceImageRetention } from "./imagestore";
 import { enforceRateLimit } from "./ratelimit";
 import { clampLimit, validateMessage } from "./validation";
 import { countOnline, PRESENCE_WINDOW_SECONDS, type Db } from "./store";
@@ -73,13 +74,14 @@ export async function universalFeed(
   options: UniversalFeedOptions,
 ) {
   const settings = await universalSettings(db);
+  const retentionHours = Math.min(settings.retention_hours, 24);
   const limit = clampLimit(options.limit ?? settings.page_size, settings.page_size, 1, settings.max_page_size);
 
   let query = db
     .from("messages")
     .select("id, body, created_at, membership_id, memberships(alias)")
     .eq("room_id", membership.roomId)
-    .gte("created_at", new Date(Date.now() - settings.retention_hours * 3600 * 1000).toISOString())
+    .gte("created_at", new Date(Date.now() - retentionHours * 3600 * 1000).toISOString())
     .order("id", { ascending: false })
     .limit(limit + 1);
 
@@ -204,6 +206,7 @@ export async function sendUniversalMessage(
   idempotencyKey?: string | null,
 ) {
   const settings = await universalSettings(db);
+  const retentionHours = Math.min(settings.retention_hours, 24);
   const cfg = config();
 
   if (idempotencyKey) {
@@ -246,7 +249,7 @@ export async function sendUniversalMessage(
       membership_id: membership.membershipId,
       body: text,
       created_at: now.toISOString(),
-      expires_at: new Date(now.getTime() + settings.retention_hours * 3600 * 1000).toISOString(),
+      expires_at: new Date(now.getTime() + retentionHours * 3600 * 1000).toISOString(),
       idempotency_key: idempotencyKey ?? null,
     })
     .select("id, body, created_at")
@@ -255,6 +258,7 @@ export async function sendUniversalMessage(
 
   // Time-based retention keeps the public feed light.
   await db.rpc("enforce_text_retention", { p_room_id: membership.roomId });
+  await enforceImageRetention(db, membership.roomId);
 
   return {
     duplicate: false,

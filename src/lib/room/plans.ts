@@ -75,12 +75,12 @@ export interface AdSettings {
 }
 
 const UNIVERSAL_DEFAULTS: UniversalSettings = {
-  retention_hours: 6,
+  retention_hours: 24,
   page_size: 50,
   max_page_size: 100,
   rate_per_minute: 6,
   rate_per_hour: 60,
-  image_retention: 20,
+  image_retention: 3,
 };
 
 const AD_DEFAULTS: AdSettings = {

@@ -95,8 +95,8 @@ export async function createOwnedRoom(
       title: input.title,
       description: input.description ?? null,
       visibility: input.visibility,
-      retention_texts: limitOf(ctx, "retention_texts", 7),
-      retention_images: limitOf(ctx, "retention_images", 3),
+      retention_texts: Math.min(limitOf(ctx, "retention_texts", 7), 7),
+      retention_images: Math.min(limitOf(ctx, "retention_images", 3), 3),
     })
     .select(ROOM_COLUMNS)
     .single();
@@ -218,8 +218,8 @@ export async function manageRoom(
       await db
         .from("rooms")
         .update({
-          retention_texts: Math.min(Math.max(Math.trunc(texts), 1), limitOf(ctx, "retention_texts", 7)),
-          retention_images: Math.min(Math.max(Math.trunc(images), 0), limitOf(ctx, "retention_images", 3)),
+          retention_texts: Math.min(Math.max(Math.trunc(texts), 1), limitOf(ctx, "retention_texts", 7), 7),
+          retention_images: Math.min(Math.max(Math.trunc(images), 0), limitOf(ctx, "retention_images", 3), 3),
         })
         .eq("id", room.id);
       return finish("Aufbewahrung aktualisiert.");
