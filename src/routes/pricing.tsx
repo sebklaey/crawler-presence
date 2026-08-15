@@ -202,6 +202,18 @@ function PricingPage() {
                   </li>
                 ))}
               </ul>
+
+              <div className="mt-4 rounded-lg border border-border bg-secondary/40 px-3 py-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-foreground">
+                  @crawler rooms — {ROOM_EXTENSIONS[p.id].name}
+                </p>
+                <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                  {ROOM_EXTENSIONS[p.id].features.map((f) => (
+                    <li key={f}>· {f}</li>
+                  ))}
+                </ul>
+              </div>
+
               {p.upgradeNote ? (
                 <p className="mt-4 rounded-lg border border-dashed border-border bg-secondary/50 px-3 py-2 text-xs text-muted-foreground">
                   {p.upgradeNote}
