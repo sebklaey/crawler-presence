@@ -10,7 +10,7 @@
  * Writes are upserts keyed on the provider id, so an at-least-once or
  * out-of-order delivery can never create duplicates.
  */
-import { evaluateSubscription, isStaleEvent } from "./billing/subscription-state";
+import { evaluateSubscription } from "./billing/subscription-state";
 import { db } from "./mcp/db.server";
 
 export type PaddleEnv = "sandbox" | "live";
@@ -97,40 +97,33 @@ export async function mirrorSubscription(
   occurredAt?: string | null,
 ): Promise<{ stale: boolean }> {
   const supabase = db();
-  if (!supabase) return { stale: false };
+  // No database means we cannot record verified provider state. Throwing makes
+  // the webhook fail so the provider retries — never a silent "not stale".
+  if (!supabase) throw new Error("billing mirror unavailable: no database");
 
-  // Monotonic ordering: a redelivered older event must never regress state.
-  if (occurredAt) {
-    const { data: current } = await supabase
-      .from("billing_subscriptions")
-      .select("last_event_occurred_at")
-      .eq("subscription_id", input.subscriptionId)
-      .maybeSingle();
-    const stored = (current as { last_event_occurred_at?: string | null } | null)?.last_event_occurred_at;
-    if (isStaleEvent(stored, occurredAt)) return { stale: true };
-  }
+  // Monotonic ordering happens inside PostgreSQL: the conditional
+  // INSERT … ON CONFLICT DO UPDATE WHERE only applies when the incoming event
+  // is not older than the stored one, so two concurrent deliveries cannot
+  // regress state between a SELECT and an UPSERT.
+  const { data, error } = await supabase.rpc("mirror_subscription_monotonic", {
+    p_subscription_id: input.subscriptionId,
+    p_customer_id: input.customerId,
+    p_status: input.status,
+    p_price_id: input.priceId,
+    p_product_id: input.productId,
+    p_plan: input.plan,
+    p_environment: environment,
+    p_current_period_start: input.currentPeriodStart,
+    p_current_period_end: input.currentPeriodEnd,
+    p_scheduled_change_action: input.scheduledChangeAction,
+    p_scheduled_change_at: input.scheduledChangeAt,
+    p_canceled_at: input.status === "canceled" ? new Date().toISOString() : null,
+    p_occurred_at: occurredAt ?? null,
+  });
 
-  const { error } = await supabase.from("billing_subscriptions").upsert(
-    {
-      subscription_id: input.subscriptionId,
-      customer_id: input.customerId ?? "unknown",
-      status: input.status,
-      price_id: input.priceId,
-      product_id: input.productId,
-      plan: input.plan,
-      environment,
-      current_period_start: input.currentPeriodStart,
-      current_period_end: input.currentPeriodEnd,
-      scheduled_change_action: input.scheduledChangeAction,
-      scheduled_change_at: input.scheduledChangeAt,
-      canceled_at: input.status === "canceled" ? new Date().toISOString() : null,
-      last_event_occurred_at: occurredAt ?? null,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "subscription_id" },
-  );
-  if (error) throw new Error(`billing_subscriptions upsert failed: ${error.message}`);
-  return { stale: false };
+  if (error) throw new Error(`billing_subscriptions upsert failed: ${error.code ?? "rpc_error"}`);
+  const applied = Boolean((data as { applied?: boolean } | null)?.applied);
+  return { stale: !applied };
 }
 
 /** Server-side lookup used by the accountless management portal. */
