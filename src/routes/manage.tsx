@@ -360,13 +360,10 @@ function ManagePage() {
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-muted-foreground">Session ID</dt>
-                  <dd>
-                    {data.sessionToken ? (
-                      <code className="break-all font-mono text-[11px]">{data.sessionToken}</code>
-                    ) : (
-                      <span className="text-muted-foreground">Not linked to a ChatGPT session</span>
-                    )}
+                  <dt className="text-xs text-muted-foreground">Draft session</dt>
+                  <dd className="text-muted-foreground">
+                    Stored as a one-way hash — Crawler can never show it again. It is a separate capability from this
+                    recovery code and from your ChatGPT identity.
                   </dd>
                 </div>
                 <div>
