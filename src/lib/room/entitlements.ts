@@ -148,7 +148,7 @@ export async function requiredPlanFor(db: Db, key: string): Promise<PlanRow | nu
 export function requireEntitlement(ctx: AccountContext, key: string): void {
   if (ctx.entitlements[key] !== true) {
     throw roomError("PLAN_REQUIRED", undefined, {
-      feature: key,
+      feature: publicFeatureKey(key),
       current_plan: ctx.plan.code,
       upgrade_url: UPGRADE_URL,
     });
