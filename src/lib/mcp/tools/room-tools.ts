@@ -245,20 +245,28 @@ function adapt(tool: RoomTool) {
             content: [
               { type: "text" as const, text: `${payload.message}\n\n${payload.cta_label}: ${payload.upgrade_url}` },
             ],
-            structuredContent: { ...payload, ...(echoToken ? { room_token: echoToken } : {}) },
+            structuredContent: validateOutput(tool.name, {
+              status: roomError.code === "LIMIT_REACHED" ? "limit_reached" : "upgrade_required",
+              retryable: false,
+              ...payload,
+              ...(echoToken ? { room_token: echoToken } : {}),
+            }),
           };
         }
 
         return {
           isError: true,
           content: [{ type: "text" as const, text: roomError.message }],
-          structuredContent: {
-            error: roomError.code,
+          structuredContent: validateOutput(tool.name, {
+            status: "error",
+            code: roomError.code,
             message: roomError.message,
+            retryable: roomError.code === "TEMPORARILY_UNAVAILABLE",
             ...(echoToken ? { room_token: echoToken } : {}),
             correlation_id: newCorrelationId(),
-          },
+          }),
         };
+
       }
     },
   });
