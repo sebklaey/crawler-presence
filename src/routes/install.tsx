@@ -12,7 +12,7 @@ const INSTALL_STEPS = [
     body: "In ChatGPT open Settings → Security and login (Data controls on some accounts) and enable Developer mode. Custom MCP connectors only appear once it is on.",
   },
   {
-    title: "Open Plugins",
+    title: "Open Connectors",
     body: "Go to Settings → Connectors (called Plugins in some ChatGPT builds) and press the plus button to add a new connector. If the entry is missing, reload ChatGPT after enabling developer mode.",
   },
   {
