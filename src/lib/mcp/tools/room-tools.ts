@@ -133,7 +133,7 @@ function adapt(tool: RoomTool) {
           };
         }
 
-        const result = await tool.handler(rest, { "room/token": token });
+        const result = await tool.handler(rest, { "room/token": token, "crawler/session_id": session });
         let text = tool.summary(result);
         if (issued) {
           text += `\n\nAnonymes room_token (bitte speichern und bei jedem weiteren room-Aufruf mitgeben): ${token}`;
