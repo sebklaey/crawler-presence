@@ -2392,8 +2392,11 @@ export type Database = {
         Row: {
           contact: string | null
           created_at: string
+          delete_after: string
           evidence: string | null
           id: string
+          last_requested_at: string
+          request_count: number
           resolved_at: string | null
           slug: string
           status: string
@@ -2401,8 +2404,11 @@ export type Database = {
         Insert: {
           contact?: string | null
           created_at?: string
+          delete_after?: string
           evidence?: string | null
           id?: string
+          last_requested_at?: string
+          request_count?: number
           resolved_at?: string | null
           slug: string
           status?: string
@@ -2410,8 +2416,11 @@ export type Database = {
         Update: {
           contact?: string | null
           created_at?: string
+          delete_after?: string
           evidence?: string | null
           id?: string
+          last_requested_at?: string
+          request_count?: number
           resolved_at?: string | null
           slug?: string
           status?: string
@@ -3283,22 +3292,28 @@ export type Database = {
       session_room_tokens: {
         Row: {
           created_at: string
+          revoked_at: string | null
           room_token: string | null
           session_token: string
+          session_token_hash: string | null
           subject_hash: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
+          revoked_at?: string | null
           room_token?: string | null
           session_token: string
+          session_token_hash?: string | null
           subject_hash?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
+          revoked_at?: string | null
           room_token?: string | null
           session_token?: string
+          session_token_hash?: string | null
           subject_hash?: string | null
           updated_at?: string
         }
@@ -4356,6 +4371,14 @@ export type Database = {
         Returns: {
           storage_path: string
         }[]
+      }
+      reissue_presence_session: {
+        Args: {
+          p_new_session_hash: string
+          p_old_session_hash?: string
+          p_slug: string
+        }
+        Returns: Json
       }
       sugar_activity: {
         Args: {
