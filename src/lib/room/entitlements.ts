@@ -70,43 +70,47 @@ export async function ensureAccount(db: Db, subjectHash: string): Promise<{ acco
   return { accountId, customAlias: (existing as any)?.custom_alias ?? null };
 }
 
+/** Upgrade destination shown whenever a feature is locked. */
+export const UPGRADE_URL = "https://crawler.today/room";
+
 /** Full server-side entitlement snapshot. Never trust client-provided plans. */
 export async function resolveEntitlements(db: Db, subjectHash: string): Promise<AccountContext> {
   const { accountId, customAlias } = await ensureAccount(db, subjectHash);
 
-  const [{ data: subscription }, { data: account }, { data: roles }, { data: overrides }] =
-    await Promise.all([
-      db
-        .from("subscriptions")
-        .select("plan_id, status, cancel_at_period_end, current_period_end, grace_until")
-        .eq("account_id", accountId)
-        .maybeSingle(),
-      db.from("accounts").select("stripe_customer_id").eq("id", accountId).maybeSingle(),
-      db.from("platform_roles").select("role").eq("account_id", accountId),
-      db
-        .from("entitlement_overrides")
-        .select("key, value, expires_at")
-        .eq("account_id", accountId),
-    ]);
+  const { resolveLinkedPlan } = await import("./planlink");
 
-  const freePlan = await getPlanByCode(db, "free");
-  const sub = subscription as any;
-  const status: SubscriptionStatus = "free";
-  const inGrace = false;
+  const [{ data: account }, { data: roles }, { data: overrides }, link] = await Promise.all([
+    db.from("accounts").select("stripe_customer_id").eq("id", accountId).maybeSingle(),
+    db.from("platform_roles").select("role").eq("account_id", accountId),
+    db
+      .from("entitlement_overrides")
+      .select("key, value, expires_at")
+      .eq("account_id", accountId),
+    resolveLinkedPlan(db, subjectHash),
+  ]);
 
-  const effectivePlan = freePlan;
-
-  // Everything is free: every feature of every tier is unlocked for everyone,
-  // and every limit uses the most generous value in the catalogue.
+  // The plan comes from the linked, still-paying Crawler Presence — never from
+  // anything the caller sends.
+  const effectivePlan = await getPlanByCode(db, link.plan);
+  const freePlan = link.plan === "free" ? effectivePlan : await getPlanByCode(db, "free");
   const allPlans = await listPlans(db);
+
+  // Start from the full feature catalogue as "locked", then unlock what the
+  // active plan includes.
   const entitlements: Record<string, boolean> = {};
-  const limits: Record<string, number> = {};
-  for (const plan of [freePlan, ...allPlans]) {
-    for (const key of Object.keys(plan.entitlements ?? {})) entitlements[key] = true;
-    for (const [key, value] of Object.entries(plan.limits ?? {})) {
-      const current = limits[key];
-      limits[key] = typeof current === "number" ? Math.max(current, value) : value;
-    }
+  for (const plan of allPlans) {
+    for (const key of Object.keys(plan.entitlements ?? {})) entitlements[key] = false;
+  }
+  for (const [key, value] of Object.entries(freePlan.entitlements ?? {})) {
+    entitlements[key] = Boolean(value);
+  }
+  for (const [key, value] of Object.entries(effectivePlan.entitlements ?? {})) {
+    entitlements[key] = Boolean(value);
+  }
+
+  const limits: Record<string, number> = { ...(freePlan.limits ?? {}) };
+  for (const [key, value] of Object.entries(effectivePlan.limits ?? {})) {
+    limits[key] = value;
   }
 
   for (const row of (overrides ?? []) as any[]) {
@@ -120,10 +124,10 @@ export async function resolveEntitlements(db: Db, subjectHash: string): Promise<
     subjectHash,
     customAlias,
     plan: effectivePlan,
-    status,
+    status: link.plan === "free" ? "free" : "active",
     cancelAtPeriodEnd: false,
     currentPeriodEnd: null,
-    inGrace,
+    inGrace: false,
     readOnlyPaidFeatures: false,
     entitlements,
     limits,
@@ -133,15 +137,28 @@ export async function resolveEntitlements(db: Db, subjectHash: string): Promise<
 
 }
 
-/** Everything is free — features are only blocked by an explicit admin override. */
+/** Cheapest plan in the catalogue that unlocks a feature. */
+export async function requiredPlanFor(db: Db, key: string): Promise<PlanRow | null> {
+  const plans = await listPlans(db);
+  const ordered = [...plans].sort((a, b) => a.price_cents - b.price_cents);
+  return ordered.find((plan) => plan.entitlements?.[key]) ?? null;
+}
+
+/** Blocks a feature that the active subscription does not include. */
 export function requireEntitlement(ctx: AccountContext, key: string): void {
-  if (ctx.entitlements[key] === false) {
-    throw roomError("FORBIDDEN", undefined, { feature: key });
+  if (ctx.entitlements[key] !== true) {
+    throw roomError("PLAN_REQUIRED", undefined, {
+      feature: key,
+      current_plan: ctx.plan.code,
+      upgrade_url: UPGRADE_URL,
+    });
   }
 }
 
-export function requireWritablePaidFeatures(_ctx: AccountContext): void {
-  // No subscriptions — nothing is ever read-only for billing reasons.
+export function requireWritablePaidFeatures(ctx: AccountContext): void {
+  if (ctx.readOnlyPaidFeatures) {
+    throw roomError("SUBSCRIPTION_READ_ONLY", undefined, { upgrade_url: UPGRADE_URL });
+  }
 }
 
 export function limitOf(ctx: AccountContext, key: string, fallback = 0): number {
@@ -154,12 +171,17 @@ export async function requireUnderLimit(
   key: string,
   current: number,
 ): Promise<void> {
-  // Abuse guard only: the most generous catalogue limit applies to everyone.
   const max = limitOf(ctx, key, 0);
-  if (max > 0 && current >= max) {
-    throw roomError("LIMIT_REACHED", undefined, { limit: key, max });
+  if (current >= max) {
+    throw roomError("LIMIT_REACHED", undefined, {
+      limit: key,
+      max,
+      current_plan: ctx.plan.code,
+      upgrade_url: UPGRADE_URL,
+    });
   }
 }
+
 
 
 /** Usage counters shown in room_get_my_plan and the upgrade screen. */
@@ -188,12 +210,23 @@ export async function currentUsage(db: Db, ctx: AccountContext) {
   };
 }
 
-/** All extensions are unlocked for everyone, free of charge. */
-export async function upgradeOptions(_db: Db, ctx: AccountContext) {
+/** Locked features plus the cheapest plan that unlocks them. */
+export async function upgradeOptions(db: Db, ctx: AccountContext) {
+  const plans = [...(await listPlans(db))].sort((a, b) => a.price_cents - b.price_cents);
   return Object.keys(ctx.entitlements)
-    .filter((key) => ctx.entitlements[key])
-    .map((key) => ({ feature: key, included: true }));
+    .filter((key) => !ctx.entitlements[key])
+    .map((key) => {
+      const plan = plans.find((p) => p.entitlements?.[key]);
+      return {
+        feature: key,
+        included: false,
+        required_plan: plan?.code ?? null,
+        price_usd: plan ? plan.price_cents / 100 : null,
+        upgrade_url: UPGRADE_URL,
+      };
+    });
 }
+
 
 /* ------------------------------ organizations ----------------------------- */
 

@@ -2524,6 +2524,30 @@ export type Database = {
           },
         ]
       }
+      room_plan_links: {
+        Row: {
+          linked_at: string
+          plan: string
+          presence_slug: string
+          subject_hash: string
+          updated_at: string
+        }
+        Insert: {
+          linked_at?: string
+          plan: string
+          presence_slug: string
+          subject_hash: string
+          updated_at?: string
+        }
+        Update: {
+          linked_at?: string
+          plan?: string
+          presence_slug?: string
+          subject_hash?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       rooms: {
         Row: {
           archived_at: string | null
