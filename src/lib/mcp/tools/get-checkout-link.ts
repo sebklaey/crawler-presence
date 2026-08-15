@@ -24,11 +24,21 @@ export default defineTool({
     payment_possible: z.boolean().optional(),
     note: z.string().optional(),
   },
-  handler: ({ plan, session_id }) => {
+  handler: async ({ plan, session_id }) => {
     const p = planById(plan);
     const base = siteUrl();
-    const url = `${base}/publish?plan=${plan}${session_id ? `&session=${encodeURIComponent(session_id)}` : ""}`;
     const live = paymentsConfigured();
+    // Always hand back a direct Paddle checkout URL; only fall back to the
+    // Crawler checkout page when the provider cannot be reached.
+    let url = `${base}/publish?plan=${plan}${session_id ? `&session=${encodeURIComponent(session_id)}` : ""}`;
+    if (live) {
+      try {
+        const { checkoutUrlFor } = await import("../../entitlements/upgrade.server");
+        url = await checkoutUrlFor(plan, session_id ?? null);
+      } catch {
+        /* keep the site checkout fallback */
+      }
+    }
 
     return {
       content: [
