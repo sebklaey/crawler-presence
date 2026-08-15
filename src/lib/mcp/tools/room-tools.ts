@@ -106,12 +106,21 @@ function adapt(tool: RoomTool) {
         mutating: !readOnly,
       });
       if (!identity.ok) {
+        const { newCorrelationId } = await import("@/lib/core/access.server");
+        const unavailable = identity.error === "TEMPORARILY_UNAVAILABLE";
         return {
           isError: true,
           content: [{ type: "text" as const, text: identity.message }],
-          structuredContent: { ...identity, error: identity.error },
+          structuredContent: validateOutput(tool.name, {
+            status: unavailable ? "temporarily_unavailable" : "error",
+            code: identity.error,
+            message: identity.message,
+            retryable: unavailable,
+            correlation_id: newCorrelationId(),
+          }),
         };
       }
+
       let knownSubjectHash: string | null = identity.subjectId;
       // A read-only call by a brand-new caller gets an ephemeral identity for
       // this request only — it is never returned as a durable capability.
