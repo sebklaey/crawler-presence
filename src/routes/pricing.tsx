@@ -31,6 +31,27 @@ export const Route = createFileRoute("/pricing")({
 const PENDING_INTENT_KEY = "crawler:pending-intent";
 const PENDING_PLAN_KEY = "crawler:pending-plan";
 
+/** @crawler room extensions included with each subscription (see /room). */
+const ROOM_EXTENSIONS: Record<PlanId, { name: string; features: string[] }> = {
+  plus: {
+    name: "Your own rooms",
+    features: [
+      "Personal room named after you",
+      "Followers and live presence",
+      "Secure invitations",
+      "Room settings",
+    ],
+  },
+  pro: {
+    name: "Communities",
+    features: ["Multiple communities", "Moderator roles", "Room analytics", "Listing placement"],
+  },
+  business: {
+    name: "Organisations",
+    features: ["Verified organisation", "Sponsored rooms", "Campaign analytics", "Team management"],
+  },
+};
+
 function PricingPage() {
   useFunnelOnce("pricing_viewed");
   const [plan, setPlan] = usePlan();
