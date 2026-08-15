@@ -389,20 +389,35 @@ export async function handleManageCampaign(input: unknown, meta: McpMeta) {
 export async function handleGetCampaignAnalytics(input: unknown, meta: McpMeta) {
   const data = parse(plusInputSchemas.get_campaign_analytics, input);
   const { db, ctx } = await context(meta);
-  return campaignAnalytics(db, ctx, data.organization_id);
+  const [rooms, ads] = await Promise.all([
+    campaignAnalytics(db, ctx, data.organization_id),
+    import("./ads/analytics").then((m) => m.creativeAnalytics(db, ctx, data.organization_id)),
+  ]);
+  return { ...rooms, crawler_ads: ads };
 }
 
 export async function handleHideSponsoredPlacement(input: unknown, meta: McpMeta) {
   const data = parse(plusInputSchemas.hide_sponsored_placement, input);
   const { db, ctx } = await context(meta);
+  if (data.creative_id) {
+    const { resolveCreativeId } = await import("./ads/creatives");
+    const { markPlacementEvent } = await import("./ads/matching");
+    await markPlacementEvent(db, ctx.subjectHash, await resolveCreativeId(data.creative_id), "hidden_at");
+  }
   return hideCampaign(db, ctx.subjectHash, await resolveCampaignId(data.campaign_id));
 }
 
 export async function handleReportSponsoredPlacement(input: unknown, meta: McpMeta) {
   const data = parse(plusInputSchemas.report_sponsored_placement, input);
   const { db, ctx } = await context(meta);
+  if (data.creative_id) {
+    const { resolveCreativeId } = await import("./ads/creatives");
+    const { markPlacementEvent } = await import("./ads/matching");
+    await markPlacementEvent(db, ctx.subjectHash, await resolveCreativeId(data.creative_id), "reported_at");
+  }
   return reportCampaign(db, ctx.subjectHash, await resolveCampaignId(data.campaign_id), data.reason);
 }
+
 
 export async function handleAdminReviewCampaign(input: unknown, meta: McpMeta) {
   const data = parse(plusInputSchemas.admin_review_campaign, input);
