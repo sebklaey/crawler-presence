@@ -1,1 +1,4 @@
-UPDATE public.published_presences SET session_token = 'sess_55c5dc377250dd4f929499b7e01bad92' WHERE slug = 'presence-89f4d5';
+-- A literal session capability was removed from this file for security reasons.
+-- Presence 'presence-89f4d5' keeps its subscription; see the forward repair
+-- 20260816090000_rotate_leaked_session_capability.sql.
+SELECT 1;

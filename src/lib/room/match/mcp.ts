@@ -153,7 +153,8 @@ export const MATCH_TOOLS: MatchToolDefinition[] = [
       "Öffnet einen öffentlichen Pair Room. Jede Person kann mitlesen; schreiben dürfen nur die zwei gematchten Handles.",
     inputSchema: roomSlugInput,
     outputSchema: OPEN_OUTPUT,
-    annotations: READ_ONLY,
+    // Opening a pair room records membership and a read cursor — not read-only.
+    annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false, idempotentHint: true },
     handler: (input, meta) => handleOpenPairRoom(input, meta) as Promise<Json>,
     summary: (result) => {
       const lines = [`## ${result.title} — ${result.room_url}`, String(result.notice)];

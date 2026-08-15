@@ -1,67 +1,126 @@
 import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 import { planById } from "../../billing";
-import { betaFree, paymentsConfigured, releaseVersion, siteUrl } from "../site";
+import { paymentsConfigured, releaseVersion, siteUrl } from "../site";
+import { hasEntitlement, normalizePlan, planRankOf } from "../../entitlements/features";
+import { PLAN_DEFINITIONS } from "../../entitlements/plans";
 
+/**
+ * The ONE explicit, mutating command that may create a payment transaction.
+ * Every getter (get_my_plan, get_pricing, upgrade messages) is side-effect
+ * free and links to the Crawler checkout page instead.
+ */
 export default defineTool({
   name: "get_checkout_link",
-  title: "Get checkout link",
+  title: "Create checkout link",
   description:
-    "Use this when the user wants to pay for hosting and needs a checkout link. Returns the external Crawler checkout URL for the chosen plan. If no payment credentials are configured, returns a clearly labelled test/demo checkout state instead of a fake success.",
+    "Use this only when the user explicitly wants to pay for hosting now. Creates (or reuses) one checkout for the chosen plan and returns the external Crawler checkout URL. Repeated calls with the same session reuse the same transaction. Never returns a link for a plan the user already has.",
   inputSchema: {
     plan: z.enum(["plus", "pro", "business"]).describe("Plan to purchase."),
-    session_id: z.string().trim().min(6).optional().describe("Optional Crawler session to attach to the checkout."),
+    session_id: z
+      .string()
+      .trim()
+      .min(6)
+      .optional()
+      .describe("Crawler draft session (sess_…) the checkout belongs to. Used as the idempotency key."),
+    confirm_downgrade: z
+      .boolean()
+      .optional()
+      .describe("Set true only when the user explicitly asked to move to a cheaper plan."),
   },
-  annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  // Creates a transaction — explicitly NOT read-only.
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
   outputSchema: {
-    plan: z.string().optional(),
-    plan_name: z.string().optional(),
-    price_usd_per_month: z.number().optional(),
-    checkout_url: z.string().optional().describe("External Crawler checkout URL — payment never happens in the conversation."),
-    checkout_mode: z.string().optional().describe("live or unavailable."),
-    free_beta: z.boolean().optional(),
-    release_version: z.string().optional(),
-    payment_possible: z.boolean().optional(),
-    note: z.string().optional(),
+    state: z
+      .string()
+      .describe("upgrade | downgrade | already_subscribed | payment_pending | temporarily_unavailable"),
+    plan: z.string(),
+    plan_name: z.string(),
+    price_usd_per_month: z.number(),
+    current_plan: z.string(),
+    checkout_url: z
+      .string()
+      .optional()
+      .describe("External Crawler checkout URL — payment never happens in the conversation."),
+    release_version: z.string(),
+    payment_possible: z.boolean(),
+    note: z.string(),
   },
-  handler: async ({ plan, session_id }) => {
-    const p = planById(plan);
+  handler: async ({ plan, session_id, confirm_downgrade }) => {
+    const target = planById(plan);
     const base = siteUrl();
     const live = paymentsConfigured();
-    // Always hand back a direct Paddle checkout URL; only fall back to the
-    // Crawler checkout page when the provider cannot be reached.
-    let url = `${base}/publish?plan=${plan}${session_id ? `&session=${encodeURIComponent(session_id)}` : ""}`;
-    if (live) {
+
+    let currentPlan = "free";
+    if (session_id) {
       try {
-        const { checkoutUrlFor } = await import("../../entitlements/upgrade.server");
-        url = await checkoutUrlFor(plan, session_id ?? null);
+        const { resolveAccessContext } = await import("../../core/access.server");
+        currentPlan = (await resolveAccessContext({ sessionId: session_id })).plan;
       } catch {
-        /* keep the site checkout fallback */
+        currentPlan = "free";
       }
     }
+    currentPlan = normalizePlan(currentPlan);
 
-    return {
-      content: [
-        {
-          type: "text",
-          text: live
-            ? `${p.name} — $${p.price}/month. Complete checkout here: ${url}`
-            : `${p.name} — $${p.price}/month. Crawler Alpha ${releaseVersion()} requires a paid subscription to publish, but checkout is temporarily unavailable on this deployment. Try again here shortly: ${url}`,
-        },
-      ],
+    const respond = (state: string, note: string, url?: string) => ({
+      content: [{ type: "text" as const, text: url ? `${note}\n\n${url}` : note }],
       structuredContent: {
-        plan: p.id,
-        plan_name: p.name,
-        price_usd_per_month: p.price,
-        checkout_url: url,
-        checkout_mode: live ? "live" : "unavailable",
-        free_beta: betaFree(),
+        state,
+        plan: target.id,
+        plan_name: target.name,
+        price_usd_per_month: target.price,
+        current_plan: currentPlan,
+        ...(url ? { checkout_url: url } : {}),
         release_version: releaseVersion(),
         payment_possible: live,
-        note: live
-          ? "Checkout is completed on the Crawler website, not inside this conversation. No Crawler account is created: after payment the Presence goes live and a one-time recovery code is issued."
-          : "Crawler Alpha 0.0.2: publishing always requires a paid subscription. Checkout is temporarily unavailable on this deployment — nothing can be published for free.",
+        note,
       },
-    };
+    });
+
+    if (!live) {
+      return respond(
+        "temporarily_unavailable",
+        `Checkout is temporarily unavailable on this deployment. Nothing was charged and no plan changed. Try again shortly at ${base}/pricing.`,
+      );
+    }
+
+    if (currentPlan === plan) {
+      return respond(
+        "already_subscribed",
+        `You are already on Crawler ${target.name} ($${target.price}/month). No new checkout was created. Manage the subscription at ${base}/manage.`,
+      );
+    }
+
+    if (hasEntitlement(currentPlan, plan) && planRankOf(currentPlan) > planRankOf(plan)) {
+      if (!confirm_downgrade) {
+        return respond(
+          "downgrade",
+          `Crawler ${target.name} is cheaper than your current ${PLAN_DEFINITIONS[currentPlan as "plus"].name} plan. Downgrades are handled in the Crawler billing portal so nothing is charged twice: ${base}/manage`,
+        );
+      }
+      return respond(
+        "downgrade",
+        `Open the Crawler billing portal to switch down to ${target.name}: ${base}/manage`,
+        `${base}/manage`,
+      );
+    }
+
+    let url = `${base}/publish?plan=${plan}`;
+    try {
+      const { checkoutUrlFor } = await import("../../entitlements/upgrade.server");
+      url = await checkoutUrlFor(plan, null, {
+        createTransaction: true,
+        idempotencyKey: session_id ?? null,
+        sessionToken: session_id ?? null,
+      });
+    } catch {
+      /* keep the site checkout fallback */
+    }
+
+    return respond(
+      "upgrade",
+      `Crawler ${target.name} — $${target.price}/month. Checkout is completed on the Crawler website, not in this conversation. No account is created: after the payment is confirmed the Presence goes live and a one-time recovery code is issued.`,
+      url,
+    );
   },
 });

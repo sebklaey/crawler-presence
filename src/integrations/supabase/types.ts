@@ -2791,6 +2791,7 @@ export type Database = {
           report_email: string | null
           report_frequency: string
           report_last_sent_at: string | null
+          session_rotated_at: string | null
           session_token: string | null
           slug: string
           status: string
@@ -2828,6 +2829,7 @@ export type Database = {
           report_email?: string | null
           report_frequency?: string
           report_last_sent_at?: string | null
+          session_rotated_at?: string | null
           session_token?: string | null
           slug: string
           status?: string
@@ -2865,6 +2867,7 @@ export type Database = {
           report_email?: string | null
           report_frequency?: string
           report_last_sent_at?: string | null
+          session_rotated_at?: string | null
           session_token?: string | null
           slug?: string
           status?: string

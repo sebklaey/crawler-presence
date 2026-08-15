@@ -14,7 +14,26 @@ export type PlanContext = {
   isPlatformAdmin: boolean;
   subjectHash: string | null;
   correlationId: string;
+  /** True when a plan source was unreachable (provider/DB outage). */
+  degraded: boolean;
 };
+
+/**
+ * A provider or database outage must never be answered with "buy a plan".
+ * Paid callers get a typed, retryable decision instead.
+ */
+export type UnavailablePayload = {
+  ok: false;
+  code: "temporarily_unavailable";
+  error: "TEMPORARILY_UNAVAILABLE";
+  tool: string;
+  feature: string;
+  message: string;
+  retryable: true;
+  correlation_id: string;
+};
+
+export type AccessDecision = UpgradePayload | UnavailablePayload;
 
 /** Resolves the caller's plan from the pseudonymous room identity. */
 export async function resolvePlanContext(
@@ -24,7 +43,13 @@ export async function resolvePlanContext(
 ): Promise<PlanContext> {
   const { resolveAccessContext, newCorrelationId } = await import("../core/access.server");
   if (!roomToken && !knownSubjectHash && !sessionToken) {
-    return { plan: "free", isPlatformAdmin: false, subjectHash: null, correlationId: newCorrelationId() };
+    return {
+      plan: "free",
+      isPlatformAdmin: false,
+      subjectHash: null,
+      correlationId: newCorrelationId(),
+      degraded: false,
+    };
   }
   const ctx = await resolveAccessContext({
     roomToken,
@@ -36,6 +61,7 @@ export async function resolvePlanContext(
     isPlatformAdmin: ctx.isPlatformAdmin,
     subjectHash: ctx.subjectHash,
     correlationId: ctx.correlationId,
+    degraded: ctx.degraded,
   };
 }
 
@@ -81,7 +107,7 @@ export async function checkToolAccess(input: {
   feature?: string;
   /** Argument-aware requirement (e.g. community room = Pro). */
   requiredPlan?: string | null;
-}): Promise<UpgradePayload | null> {
+}): Promise<AccessDecision | null> {
   const toolRequired = requiredPlanForTool(input.tool);
   const required =
     toolRequired === "admin"
@@ -109,6 +135,23 @@ export async function checkToolAccess(input: {
     });
   }
   if (ctx.isPlatformAdmin || hasEntitlement(ctx.plan, required)) return null;
+
+  // Outage: we could not prove the plan. Never ask a paying user to buy again.
+  if (ctx.degraded) {
+    return {
+      ok: false,
+      code: "temporarily_unavailable",
+      error: "TEMPORARILY_UNAVAILABLE",
+      tool: input.tool,
+      feature: input.feature ?? input.tool,
+      retryable: true,
+      correlation_id: ctx.correlationId,
+      message:
+        input.language === "de"
+          ? "Dein Abo konnte gerade nicht geprüft werden (vorübergehende Störung). Es wurde nichts geändert und nichts berechnet — bitte in einem Moment erneut versuchen."
+          : "Your subscription could not be verified right now (temporary outage). Nothing was changed and nothing was charged — please try again in a moment.",
+    };
+  }
 
   return buildUpgradePayload({
     tool: input.tool,

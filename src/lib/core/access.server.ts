@@ -26,6 +26,8 @@ export type AccessContext = {
   roomToken: string | null;
   sessionId: string | null;
   presenceSlug: string | null;
+  /** True when a plan source could not be read (provider/DB outage). */
+  degraded: boolean;
 };
 
 export function newCorrelationId(): string {
@@ -45,9 +47,11 @@ const stillActive = (status: unknown, periodEnd: unknown): boolean => {
 export async function resolvePlanForSession(sessionToken: string): Promise<{
   plan: CustomerPlan;
   presenceSlug: string | null;
+  degraded: boolean;
 }> {
   let best: CustomerPlan = "free";
   let slug: string | null = null;
+  let degraded = false;
 
   try {
     const { latestIntentForSession } = await import("../intents.server");
@@ -60,7 +64,7 @@ export async function resolvePlanForSession(sessionToken: string): Promise<{
       best = highestPlan(best, intent.plan);
     }
   } catch {
-    /* fall through to the Presence lookup */
+    degraded = true;
   }
 
   try {
@@ -115,10 +119,10 @@ export async function resolvePlanForSession(sessionToken: string): Promise<{
       if (live && stillActive(subscriptionStatus, periodEnd)) best = highestPlan(best, plan);
     }
   } catch {
-    /* database unreachable — free */
+    degraded = true;
   }
 
-  return { plan: best, presenceSlug: slug };
+  return { plan: best, presenceSlug: slug, degraded };
 }
 
 /**
@@ -140,11 +144,13 @@ export async function resolveAccessContext(input: {
   let presenceSlug: string | null = null;
   let plan: CustomerPlan = "free";
   let isPlatformAdmin = false;
+  let degraded = false;
 
   if (sessionId) {
     const session = await resolvePlanForSession(sessionId);
     if (session.plan !== "free") sources.push({ source: "session", plan: session.plan });
     if (session.presenceSlug) presenceSlug = session.presenceSlug;
+    if (session.degraded) degraded = true;
     plan = highestPlan(plan, session.plan);
   }
 
@@ -155,6 +161,7 @@ export async function resolveAccessContext(input: {
       subjectHash = identity.subjectHash;
     } catch {
       subjectHash = null;
+      degraded = true;
     }
   }
 
@@ -186,7 +193,7 @@ export async function resolveAccessContext(input: {
       plan = highestPlan(plan, link.plan);
       isPlatformAdmin = roles.some((role) => role.role === "platform_admin");
     } catch {
-      /* database unreachable — keep what the session already proved */
+      degraded = true;
     }
 
     // Make the merged plan visible to the room library (which only knows the
@@ -195,7 +202,17 @@ export async function resolveAccessContext(input: {
     if (plan !== "free" && presenceSlug) await persistLink(subjectHash, presenceSlug, plan);
   }
 
-  return { correlationId, plan, planSources: sources, isPlatformAdmin, subjectHash, roomToken, sessionId, presenceSlug };
+  return {
+    correlationId,
+    plan,
+    planSources: sources,
+    isPlatformAdmin,
+    subjectHash,
+    roomToken,
+    sessionId,
+    presenceSlug,
+    degraded,
+  };
 }
 
 /** Idempotent, never a downgrade. */
