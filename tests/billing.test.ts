@@ -49,7 +49,7 @@ const tool = (await import("../src/lib/mcp/tools/get-checkout-link")).default as
   }) => Promise<{ structuredContent: Record<string, unknown> }>;
 };
 
-const SESSION = "sess_test_capability_value";
+const SESSION = `sess_${"t".repeat(24)}`; // synthetic, not a real capability
 
 afterEach(() => {
   accessResult = { plan: "free", degraded: false };

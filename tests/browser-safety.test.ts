@@ -22,7 +22,13 @@ function walk(dir: string, out: string[] = []): string[] {
 
 describe("no literal capabilities in the tree", () => {
   test("no source or migration embeds a sess_ capability value", () => {
-    const files = [...walk(join(process.cwd(), "src")), ...walk(join(process.cwd(), "tests"))];
+    const files = [
+      ...walk(join(process.cwd(), "src")),
+      ...walk(join(process.cwd(), "tests")),
+      ...readdirSync(join(process.cwd(), "supabase", "migrations")).map((f) =>
+        join(process.cwd(), "supabase", "migrations", f),
+      ),
+    ];
     const offenders = files.filter((f) => /sess_[a-zA-Z0-9]{20,}/.test(readFileSync(f, "utf8")));
     expect(offenders).toEqual([]);
   });

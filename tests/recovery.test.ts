@@ -90,8 +90,8 @@ afterEach(() => {
 
 describe("capability separation", () => {
   test("a draft session id is never a management/recovery code", () => {
-    expect(parseRecoveryCode("sess_00000000000000000000000000")).toBeNull();
-    expect(parseRecoveryCode("acme~sess_00000000000000000000")).toBeNull();
+    expect(parseRecoveryCode(`sess_${"0".repeat(26)}`)).toBeNull();
+    expect(parseRecoveryCode(`acme~sess_${"0".repeat(24)}`)).toBeNull();
   });
 
   test("a well-formed recovery code parses into slug plus independent secret", () => {
