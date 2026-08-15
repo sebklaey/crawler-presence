@@ -69,7 +69,7 @@ function PairRoomPage() {
         <h1 className="display mt-3 text-3xl">{handles.join(" · ")}</h1>
         <p className="mt-3 text-sm text-muted-foreground">
           Everyone can read this conversation. Only {handles.join(" and ")} can post. Messages disappear
-          after 24 hours.
+          after 24 hours; published Presences are durable and unaffected.
         </p>
 
         <div className="mt-10 space-y-4">

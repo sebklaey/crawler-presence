@@ -308,6 +308,55 @@ export const manageRotateSecretFn = createServerFn({ method: "POST" })
     }
   });
 
+/**
+ * Reissues the *draft session* capability for an owner who proved ownership
+ * with the independent management code. The raw value is returned exactly
+ * once; only its hash is stored and the previous mapping is revoked in the
+ * same write. The paid subscription stays attached to the Presence by its
+ * internal ids and is not touched.
+ */
+export const manageReissueSessionFn = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => codeSchema.parse(input))
+  .handler(
+    async ({
+      data,
+    }): Promise<{ ok: boolean; sessionToken?: string; slug?: string; reason?: string }> => {
+      const resolved = await resolve(data.code);
+      if ("error" in resolved) return { ok: false, reason: resolved.error };
+      const { reissueSessionCapability } = await import("./mcp/recovery.server");
+      const result = await reissueSessionCapability(resolved.slug);
+      if (!result.ok) return { ok: false, reason: result.reason };
+      return { ok: true, sessionToken: result.sessionToken, slug: result.slug };
+    },
+  );
+
+/**
+ * Admin-assisted recovery. Files an auditable request for a Presence whose
+ * owner has no usable independent capability. It never grants access and
+ * never returns a capability.
+ */
+export const requestOwnerRecoveryFn = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        slug: z.string().trim().min(1).max(120),
+        contact: z.string().trim().max(300).optional(),
+        evidence: z.string().trim().max(2000).optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }): Promise<{ ok: boolean; state?: string; reason?: string }> => {
+    const { recoveryStateFor, requestAdminAssistedRecovery } = await import("./mcp/recovery.server");
+    const state = await recoveryStateFor(data.slug);
+    if (state === null) return { ok: false, reason: "not-found" };
+    const filed = await requestAdminAssistedRecovery({
+      slug: data.slug,
+      contact: data.contact ?? null,
+      evidence: data.evidence ?? null,
+    });
+    return { ok: filed.ok, state };
+  });
+
 const portalSchema = codeSchema.extend({ returnUrl: z.string().url().max(600).optional() });
 
 export const manageBillingPortalFn = createServerFn({ method: "POST" })

@@ -42,9 +42,11 @@ function PrivacyPage() {
           <section>
             <h2 className="mb-2 text-base font-medium text-foreground">2. No accounts, no login</h2>
             <p>
-              Crawler has no user registration, no login and no user profiles. Drafts are tied to an opaque,
-              randomly generated session token; a published Presence is controlled by a recovery code of which we
-              store only a cryptographic hash. We never receive your ChatGPT identity or your conversations with
+              Crawler has no user registration and no login. Public profiles in Crawler Room are optional. Drafts are
+              tied to an opaque, randomly generated session token; a published Presence is controlled by a separate
+              recovery code. Session tokens, room tokens and recovery codes are three distinct capabilities with
+              different scopes, and we store only a one-way cryptographic hash of each — never the raw value. A
+              session token can never be used as a recovery code. We never receive your ChatGPT identity or your conversations with
               ChatGPT, Claude, Gemini or any other assistant.
             </p>
           </section>

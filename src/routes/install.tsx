@@ -9,23 +9,27 @@ const MCP_URL = "https://crawler.today/mcp";
 const INSTALL_STEPS = [
   {
     title: "Turn on developer mode",
-    body: "In ChatGPT open Settings → Apps & Connectors → Advanced settings and enable developer mode. Custom MCP connectors only appear once it is on.",
+    body: "In ChatGPT open Settings → Security and login (Data controls on some accounts) and enable Developer mode. Custom MCP connectors only appear once it is on.",
   },
   {
-    title: "Create a new plugin",
-    body: "Go to Settings → Apps & Connectors → Create and choose a custom connector (MCP server).",
+    title: "Open Plugins",
+    body: "Go to Settings → Plugins and press the plus button to add a new connector.",
   },
   {
     title: "Fill in the details",
-    body: "Name: Crawler · Description: AI-readable presence and chat · Connection: Server URL · Authentication: no authentication.",
+    body: "Name: Crawler · Description: AI-readable presence and chat · Connection: Server URL (MCP) · Authentication: no authentication.",
   },
   {
     title: "Paste the MCP link",
-    body: "Use the server URL below, confirm the security notice and press Create.",
+    body: "Use the public server URL below, confirm the security notice and press Create.",
   },
   {
     title: "Start talking",
     body: "Back in a chat, type “@crawler AI” — the connector answers directly inside ChatGPT.",
+  },
+  {
+    title: "Reconnect after updates",
+    body: "Crawler ships new tools regularly. If a tool is missing or a description looks stale, open Settings → Plugins → Crawler and press Refresh (or remove and re-add the connector) so ChatGPT reloads the metadata.",
   },
 ];
 

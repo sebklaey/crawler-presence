@@ -5,6 +5,18 @@ import { paymentsConfigured, releaseVersion, siteUrl } from "../site";
 import { hasEntitlement, normalizePlan, planRankOf } from "../../entitlements/features";
 import { PLAN_DEFINITIONS } from "../../entitlements/plans";
 
+/** SHA-256 of a capability — safe to use as an external idempotency key. */
+export async function hashCapability(value: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`crawler-idem-v1:${value}`));
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function resolveAccessContext_(sessionId: string): Promise<{ plan: string; degraded: boolean }> {
+  const { resolveAccessContext } = await import("../../core/access.server");
+  const context = await resolveAccessContext({ sessionId });
+  return { plan: context.plan, degraded: Boolean((context as { degraded?: boolean }).degraded) };
+}
+
 /**
  * The ONE explicit, mutating command that may create a payment transaction.
  * Every getter (get_my_plan, get_pricing, upgrade messages) is side-effect
@@ -52,12 +64,16 @@ export default defineTool({
     const live = paymentsConfigured();
 
     let currentPlan = "free";
+    let resolverDegraded = false;
     if (session_id) {
       try {
-        const { resolveAccessContext } = await import("../../core/access.server");
-        currentPlan = (await resolveAccessContext({ sessionId: session_id })).plan;
+        const context = await resolveAccessContext_(session_id);
+        currentPlan = context.plan;
+        resolverDegraded = context.degraded;
       } catch {
-        currentPlan = "free";
+        // A resolver/database/provider failure must never be read as "free" —
+        // that would ask a paying customer to buy the same plan again.
+        resolverDegraded = true;
       }
     }
     currentPlan = normalizePlan(currentPlan);
@@ -76,6 +92,13 @@ export default defineTool({
         note,
       },
     });
+
+    if (resolverDegraded) {
+      return respond(
+        "temporarily_unavailable",
+        `Crawler cannot confirm your current plan right now, so no checkout was created and nothing was charged. Your existing subscription is unaffected. Please try again in a few minutes.`,
+      );
+    }
 
     if (!live) {
       return respond(
@@ -110,7 +133,8 @@ export default defineTool({
       const { checkoutUrlFor } = await import("../../entitlements/upgrade.server");
       url = await checkoutUrlFor(plan, null, {
         createTransaction: true,
-        idempotencyKey: session_id ?? null,
+        // Never use a raw session capability as an external idempotency key.
+        idempotencyKey: session_id ? await hashCapability(session_id) : null,
         sessionToken: session_id ?? null,
       });
     } catch {
