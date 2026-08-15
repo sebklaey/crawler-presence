@@ -32,13 +32,19 @@ export async function resolveLinkedPlan(db: Db, subjectHash: string): Promise<{
   plan: RoomPlanCode;
   presenceSlug: string | null;
 }> {
+  // Core V2: a plan proven by a draft session in this request is already known
+  // for this identity even when no link row exists yet.
+  const { notedPlanForSubject } = await import("../core/plan-cache");
+  const noted = notedPlanForSubject(subjectHash) as RoomPlanCode;
+
   const { data: link } = await db
     .from("room_plan_links")
     .select("presence_slug, plan")
     .eq("subject_hash", subjectHash)
     .maybeSingle();
   const slug = (link as any)?.presence_slug as string | undefined;
-  if (!slug) return { plan: "free", presenceSlug: null };
+  if (!slug) return { plan: noted, presenceSlug: null };
+
 
   const { data: presence } = await db
     .from("published_presences")
