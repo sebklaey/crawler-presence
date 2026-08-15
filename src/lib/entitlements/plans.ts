@@ -137,7 +137,23 @@ export const PLAN_DEFINITIONS: Record<CustomerPlan, PlanDefinition> = {
       "Crawler Sugar: mine, gift and show reputation",
     ],
     tools: FREE_TOOLS,
-    features: [],
+    // Explicit free feature keys. Unknown keys fail closed, so every feature a
+    // free caller may use has to be listed here.
+    features: [
+      "universal_room",
+      "topic_rooms",
+      "public_profile",
+      "social_profiles",
+      "sugar",
+      "get_my_sugar",
+      "public_analytics",
+      "knowledge_core",
+      "presence_preview",
+      "entity_retrieval",
+      "images",
+      "reporting",
+      "notifications",
+    ],
     limits: {
       presences: 0,
       content_records: 0,
