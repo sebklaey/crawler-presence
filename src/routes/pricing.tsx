@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useCore, usePlan } from "@/lib/store";
 import { usePaymentsStatus } from "@/hooks/use-payments-status";
 import { PLANS, planById, type PlanId } from "@/lib/billing";
+import { PLAN_INFO } from "@/lib/entitlements/catalog";
 import { isCoreEmpty } from "@/lib/knowledge";
 import { startPublishFn } from "@/lib/presence.functions";
 import { usePublishState } from "@/hooks/use-publish-state";
