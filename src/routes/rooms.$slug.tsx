@@ -80,7 +80,7 @@ function PairRoomPage() {
                 <div className="text-xs text-muted-foreground">
                   @{message.handle} · {new Date(message.created_at).toLocaleString()}
                 </div>
-                <p className="mt-2 text-sm leading-relaxed">{message.body}</p>
+                <RoomMessageBody body={message.body} />
               </div>
             ))
           )}
