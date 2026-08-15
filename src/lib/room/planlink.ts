@@ -76,13 +76,14 @@ export async function resolveLinkedPlan(db: Db, subjectHash: string): Promise<{
     }
   }
 
-  if (!presenceIsActive(current)) return { plan: "free", presenceSlug: slug };
-  // Several valid plan sources may exist (link row + reconciled presence):
-  // always take the highest active one, never a downgrade.
+  if (!presenceIsActive(current)) return { plan: noted, presenceSlug: slug };
+  // Several valid plan sources may exist (link row + reconciled presence +
+  // draft session): always take the highest active one, never a downgrade.
   return {
-    plan: highestPlan(current.plan, (link as any)?.plan) as RoomPlanCode,
+    plan: highestPlan(current.plan, (link as any)?.plan, noted) as RoomPlanCode,
     presenceSlug: slug,
   };
+
 
 }
 
