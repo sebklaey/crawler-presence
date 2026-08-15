@@ -6,8 +6,8 @@
     "slug": "crawler",
     "tagline": "Build an AI-readable public Presence for yourself, your project, or your brand — in minutes, without an account.",
     "description": "Crawler turns a free-form conversation into a structured public Presence (llms.txt, about.md, FAQ, offerings, JSON API) that AI assistants and search agents can read. It also powers small, anonymous topic rooms for focused chats. No login, no account — ownership is capability-based with a recovery code.",
-    "long_description": "Crawler is an accountless Presence builder for people, creators, companies, projects, and products. Through an adaptive AI-driven interview, it builds a verified Knowledge Core, then publishes AI-readable files (llms.txt, llms-full.txt, about.md, offerings.md, services.md, projects.md, faq.md, cv.md, JSON endpoints) and a public Presence page at a stable slug. Creation and preview are always free; publishing and hosting are a paid subscription (Plus $5/mo, Pro $20/mo, Business $80/mo).\n\nCrawler also hosts anonymous topic rooms: users can enter topic rooms, universal rooms, or private rooms, send messages with 24-hour retention, set aliases, follow rooms, and share profiles. No account is required; a single opaque room_token is generated per anonymous identity.\n\nThe Crawler MCP server at https://crawler.today/mcp requires no authentication and does not receive any ChatGPT user identity. Tool arguments carry the only identifiers (session_id, slug, recovery_code, room_token). Draft sessions and rooms are ephemeral and expire after 30 days or 24 hours respectively unless published.",
-    "instructions": "Use start_interview when a user describes a person, creator, product, company, project or brand they want to make discoverable. Ask the single most valuable follow-up question returned by the tool, then use continue_interview to merge the answer. Use get_knowledge_core to inspect the structured core. Use preview_presence to show the user what AI files will look like. When the user is ready to publish, use publish_presence and, if payment is required, hand them the publish_url to complete checkout on the Crawler website. After publishing, the user gets a recovery_code that grants access to manage, analytics, and republish.\n\nFor rooms, use list_topics to see public topics, enter_topic to join, send_message to post, read_messages to read, and set_alias/get_alias to manage a local display name. Profiles and private rooms are managed with their respective tools.\n\nAlways use continue_interview to save facts; never invent core_update fields the user did not state.",
+    "long_description": "Crawler is an accountless Presence builder for people, creators, companies, projects, and products. Through an adaptive AI-driven interview, it builds a verified Knowledge Core, then publishes AI-readable files (llms.txt, llms-full.txt, about.md, offerings.md, services.md, projects.md, faq.md, cv.md, JSON endpoints) and a public Presence page at a stable slug. Creation and preview are always free; publishing and hosting are a paid subscription (Plus $5/mo, Pro $20/mo, Business $80/mo).\n\nCrawler also hosts anonymous topic rooms: users can enter topic rooms and the Universal Room, send messages with 24-hour retention, set aliases, follow rooms, and share profiles. No account is required; a single opaque room_token is generated per anonymous identity.\n\nThe Crawler MCP server at https://crawler.today/mcp requires no authentication and does not receive any ChatGPT user identity. Tool arguments carry the only identifiers (session_id, slug, recovery_code, room_token). Draft sessions and rooms are ephemeral and expire after 30 days or 24 hours respectively unless published.",
+    "instructions": "Use start_interview when a user describes a person, creator, product, company, project or brand they want to make discoverable. Ask the single most valuable follow-up question returned by the tool, then use continue_interview to merge the answer. Use get_knowledge_core to inspect the structured core. Use preview_presence to show the user what AI files will look like. When the user is ready to publish, use publish_presence and, if payment is required, hand them the publish_url to complete checkout on the Crawler website. After publishing, the user gets a recovery_code that grants access to manage, analytics, and republish.\n\nFor rooms, use list_topics to see public topics, enter_topic to join, send_message to post, read_messages to read, and set_alias/get_alias to manage a local display name. Profiles and personal/public rooms are managed with their respective tools. Every Crawler room is publicly readable.\n\nAlways use continue_interview to save facts; never invent core_update fields the user did not state.",
     "categories": [
       "Productivity",
       "Developer Tools",
@@ -88,8 +88,8 @@
   },
   "mcp_server": {
     "url": "https://crawler.today/mcp",
-    "name": "presence-builder-01",
-    "version": "0.0.2",
+    "name": "crawler",
+    "version": "1.0.0",
     "authentication": "none",
     "identity_note": "Crawler does not receive the ChatGPT user's identity. No authentication is performed and no account is created."
   },
@@ -463,9 +463,9 @@
     },
     {
       "name": "get_checkout_link",
-      "title": "Get checkout link",
-      "description": "Use this when the user wants to pay for hosting and needs a checkout link. Returns the external Crawler checkout URL for the chosen plan. If no payment credentials are configured, returns a clearly labelled test/demo checkout state instead of a fake success.",
-      "read_only": true,
+      "title": "Create checkout link",
+      "description": "Use this only when the user explicitly wants to pay for hosting now. Creates (or reuses) one checkout for the chosen plan and returns the external Crawler checkout URL. Repeated calls with the same session reuse the same transaction. Never returns a link for a plan the user already has.",
+      "read_only": false,
       "destructive": false,
       "idempotent": true,
       "open_world": true,
@@ -484,7 +484,11 @@
           "session_id": {
             "type": "string",
             "minLength": 6,
-            "description": "Optional Crawler session to attach to the checkout."
+            "description": "Crawler draft session (sess_…) the checkout belongs to. Used as the idempotency key."
+          },
+          "confirm_downgrade": {
+            "type": "boolean",
+            "description": "Set true only when the user explicitly asked to move to a cheaper plan."
           }
         },
         "required": [
@@ -712,6 +716,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "additionalProperties": false,
@@ -740,6 +748,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "required": [
@@ -770,6 +782,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "required": [
@@ -800,6 +816,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "required": [
@@ -823,6 +843,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "additionalProperties": false,
@@ -846,6 +870,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "required": [
@@ -879,6 +907,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "required": [
@@ -908,6 +940,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "required": [
@@ -931,6 +967,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "additionalProperties": false,
@@ -949,7 +989,8 @@
         "type": "object",
         "properties": {
           "topic": {
-            "type": "string"
+            "type": "string",
+            "description": "Themen-Slug (z. B. \"ai\") oder \"universal\" für den Universal Room."
           },
           "mime_type": {
             "type": "string"
@@ -960,6 +1001,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "required": [
@@ -983,7 +1028,8 @@
         "type": "object",
         "properties": {
           "topic": {
-            "type": "string"
+            "type": "string",
+            "description": "Themen-Slug (z. B. \"ai\") oder \"universal\" für den Universal Room."
           },
           "image_id": {
             "type": "string"
@@ -994,6 +1040,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "required": [
@@ -1016,7 +1066,8 @@
         "type": "object",
         "properties": {
           "topic": {
-            "type": "string"
+            "type": "string",
+            "description": "Themen-Slug (z. B. \"ai\") oder \"universal\" für den Universal Room."
           },
           "image_id": {
             "type": "string"
@@ -1041,6 +1092,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "required": [
@@ -1065,7 +1120,8 @@
         "type": "object",
         "properties": {
           "topic": {
-            "type": "string"
+            "type": "string",
+            "description": "Themen-Slug (z. B. \"ai\") oder \"universal\" für den Universal Room."
           },
           "image_id": {
             "type": "string"
@@ -1073,6 +1129,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "required": [
@@ -1085,8 +1145,8 @@
     },
     {
       "name": "get_my_plan",
-      "title": "Meine Möglichkeiten",
-      "description": "Zeigt alle freigeschalteten Möglichkeiten (Erweiterungen), Limits und die aktuelle Nutzung. @room ist vollständig kostenlos: es gibt keine Abos, keine Pläne und keine Preise — nenne niemals Kosten.",
+      "title": "Mein Abo und meine Möglichkeiten",
+      "description": "Zeigt das aktive Crawler-Abo, die freigeschalteten Erweiterungen, Limits, die Nutzung und die gesperrten Funktionen mit dem nötigen Plan. Öffentliche Themenräume und der Universal Room sind gratis; eigene Räume gehören zu Plus ($5/Monat), Communities zu Pro ($20/Monat), Organisationen zu Business ($80/Monat) — direkt über die checkout_urls/upgrade_url aus der Antwort buchbar (Paddle-Checkout). Mit recovery_code wird ein bezahltes Presence-Abo mit dieser anonymen Kennung verknüpft.",
       "read_only": true,
       "destructive": false,
       "idempotent": true,
@@ -1094,9 +1154,17 @@
       "input_schema": {
         "type": "object",
         "properties": {
+          "recovery_code": {
+            "type": "string",
+            "description": "Presence-Wiederherstellungscode (<slug>~<secret>), um ein bezahltes Abo freizuschalten."
+          },
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "additionalProperties": false,
@@ -1104,9 +1172,9 @@
       }
     },
     {
-      "name": "create_private_room",
-      "title": "Eigenen Raum erstellen",
-      "description": "Erstellt einen eigenen Raum (für alle kostenlos). Limits für Kapazität und Anzahl Räume werden serverseitig geprüft.",
+      "name": "create_public_room",
+      "title": "Öffentlichen Raum erstellen",
+      "description": "Erstellt einen eigenen, öffentlich lesbaren Raum. Mit kind=\"community\" wird ein Community-Raum erstellt (Pro/Business); eine passende Organisation wird bei Bedarf automatisch angelegt. In Crawler Room gibt es keine privaten Räume und keine privaten Nachrichten. Limits werden serverseitig geprüft.",
       "read_only": false,
       "destructive": false,
       "idempotent": false,
@@ -1124,17 +1192,31 @@
             "type": "string"
           },
           "visibility": {
-            "type": "string"
+            "type": "string",
+            "description": "Immer public. Private Räume gibt es nicht."
           },
           "capacity": {
             "type": "number"
           },
+          "kind": {
+            "type": "string",
+            "description": "community benötigt Pro oder Business."
+          },
           "organization_id": {
-            "type": "string"
+            "type": "string",
+            "description": "Bestehende Organisation: UUID, Slug oder exakter Name."
+          },
+          "organization_name": {
+            "type": "string",
+            "description": "Name einer neuen Organisation für die Community."
           },
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "required": [
@@ -1147,7 +1229,7 @@
     {
       "name": "manage_room",
       "title": "Raum verwalten",
-      "description": "Verwaltet einen eigenen Raum: update, archive, delete, change_visibility, update_retention, assign_moderator, remove_moderator.",
+      "description": "Verwaltet einen eigenen Raum: update, archive, delete, update_retention, assign_moderator, remove_moderator. Räume sind immer öffentlich.",
       "read_only": false,
       "destructive": true,
       "idempotent": false,
@@ -1168,6 +1250,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "required": [
@@ -1204,6 +1290,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "required": [
@@ -1230,6 +1320,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "required": [
@@ -1256,6 +1350,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "additionalProperties": false,
@@ -1285,6 +1383,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "additionalProperties": false,
@@ -1311,6 +1413,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "required": [
@@ -1327,7 +1433,7 @@
       "read_only": false,
       "destructive": false,
       "idempotent": false,
-      "open_world": true,
+      "open_world": false,
       "input_schema": {
         "type": "object",
         "properties": {
@@ -1337,6 +1443,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "required": [
@@ -1353,7 +1463,7 @@
       "read_only": false,
       "destructive": false,
       "idempotent": false,
-      "open_world": true,
+      "open_world": false,
       "input_schema": {
         "type": "object",
         "properties": {
@@ -1366,6 +1476,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "required": [
@@ -1383,7 +1497,7 @@
       "read_only": false,
       "destructive": false,
       "idempotent": false,
-      "open_world": true,
+      "open_world": false,
       "input_schema": {
         "type": "object",
         "properties": {
@@ -1429,6 +1543,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "required": [
@@ -1448,7 +1566,7 @@
       "read_only": false,
       "destructive": false,
       "idempotent": false,
-      "open_world": true,
+      "open_world": false,
       "input_schema": {
         "type": "object",
         "properties": {
@@ -1458,6 +1576,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "required": [
@@ -1474,7 +1596,7 @@
       "read_only": false,
       "destructive": false,
       "idempotent": false,
-      "open_world": true,
+      "open_world": false,
       "input_schema": {
         "type": "object",
         "properties": {
@@ -1491,6 +1613,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "required": [
@@ -1518,6 +1644,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "required": [
@@ -1550,11 +1680,183 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "required": [
           "campaign_id",
           "action"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "add_campaign_creative",
+      "title": "Crawler Ad Creative hinzufügen",
+      "description": "Crawler Ads (nur Business): fügt einer Kampagne ein Creative für genau ein Produkt hinzu. Jedes Creative erhält einen eigenen, klar gekennzeichneten Ad Knowledge Core und ein eigenes anonymes Ad Resonance Pattern. Wird niemals automatisch veröffentlicht.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "campaign_id": {
+            "type": "string"
+          },
+          "product_name": {
+            "type": "string"
+          },
+          "product_description": {
+            "type": "string"
+          },
+          "product_category": {
+            "type": "string"
+          },
+          "product_reference": {
+            "type": "string"
+          },
+          "headline": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "image_reference": {
+            "type": "string"
+          },
+          "image_alt": {
+            "type": "string",
+            "description": "Pflicht, sobald ein Bild verwendet wird."
+          },
+          "destination_url": {
+            "type": "string",
+            "description": "Öffentliche HTTPS-URL."
+          },
+          "call_to_action": {
+            "type": "string"
+          },
+          "languages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "start_date": {
+            "type": "string"
+          },
+          "end_date": {
+            "type": "string"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+          }
+        },
+        "required": [
+          "campaign_id",
+          "product_name",
+          "headline",
+          "body",
+          "destination_url"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "preview_sponsored_campaign",
+      "title": "Crawler Ad Vorschau",
+      "description": "Zeigt für jede Anzeige einer Kampagne den Ad Knowledge Core, die Sponsored Card und eine Vorschau des Resonanzmusters. Veröffentlicht nichts.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "campaign_id": {
+            "type": "string"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+          }
+        },
+        "required": [
+          "campaign_id"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "set_resonance_ads_preference",
+      "title": "Resonance Ads ein- oder ausschalten",
+      "description": "Legt fest, ob das freiwillig erstellte Resonanzmuster zusätzlich für gesponserte Empfehlungen verwendet werden darf. Standard ist aus. Das Muster wird dabei nie gelöscht und Crawler Match bleibt unabhängig davon aktiv.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+          }
+        },
+        "required": [
+          "enabled"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "block_advertiser",
+      "title": "Werbekunden blockieren",
+      "description": "Blockiert alle gesponserten Karten dieses Werbekunden für diese anonyme Identität.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "campaign_id": {
+            "type": "string"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+          }
+        },
+        "required": [
+          "campaign_id"
         ],
         "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
@@ -1574,6 +1876,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "additionalProperties": false,
@@ -1601,6 +1907,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "additionalProperties": false,
@@ -1625,6 +1935,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "required": [
@@ -1652,6 +1966,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "required": [
@@ -1682,6 +2000,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "required": [
@@ -1710,6 +2032,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "required": [
@@ -1737,6 +2063,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "required": [
@@ -1760,6 +2090,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "additionalProperties": false,
@@ -1786,6 +2120,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "additionalProperties": false,
@@ -1818,6 +2156,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "additionalProperties": false,
@@ -1842,6 +2184,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "additionalProperties": false,
@@ -1889,6 +2235,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "additionalProperties": false,
@@ -1912,6 +2262,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "required": [
@@ -1945,6 +2299,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "required": [
@@ -1975,6 +2333,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "required": [
@@ -2006,6 +2368,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "required": [
@@ -2033,6 +2399,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "additionalProperties": false,
@@ -2056,6 +2426,10 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "required": [
@@ -2085,11 +2459,1046 @@
           "room_token": {
             "type": "string",
             "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
           }
         },
         "required": [
           "username"
         ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_my_sugar",
+      "title": "Mein Sugar",
+      "description": "Zeigt den eigenen Crawler-Sugar-Kontostand, 'Minted all time', den Mining-Status und die weltweite Umlaufmenge. Sugar ist kostenlos in jedem Abo, hat keinen Geldwert, ist keine Kryptowährung und funktioniert ausschliesslich innerhalb von Crawler.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "start_sugar_mining",
+      "title": "Sugar-Mining starten",
+      "description": "Startet ein serverseitiges Mining-Zeitfenster von 5 Minuten. 'Mining' ist eine Metapher für aktive, echte Nutzung: pro 5 Minuten qualifizierter Aktivität entsteht 1 Sugar, begrenzt durch ein Tageslimit und die weltweite Höchstmenge. Neue Kennungen können erst nach 24 Stunden Sugar erzeugen.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "preview_sugar_gift",
+      "title": "Sugar-Geschenk vorschauen",
+      "description": "Zeigt vor dem Senden genau, was passiert: Betrag, Anteil für die empfangende Person (30 %), verbrannter Anteil (70 %) und der Kontostand danach. Verändert nichts und verlangt danach eine ausdrückliche Bestätigung.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Handle der empfangenden Person, mit oder ohne @."
+          },
+          "amount": {
+            "type": "number",
+            "description": "Vielfaches von 10 (10, 20, 30 …)."
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+          }
+        },
+        "required": [
+          "username",
+          "amount"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "send_sugar",
+      "title": "Sugar verschenken",
+      "description": "Verschenkt Sugar in Schritten von 10 an ein Handle. 30 % kommen an, 70 % werden dauerhaft verbrannt. Ohne confirm: true wird nur die Bestätigungsfrage zurückgegeben — es wird nichts gesendet. Sugar hat keinen Geldwert und ist nicht auszahlbar.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Handle der empfangenden Person, mit oder ohne @."
+          },
+          "amount": {
+            "type": "number",
+            "description": "Vielfaches von 10 (10, 20, 30 …)."
+          },
+          "confirm": {
+            "type": "boolean",
+            "description": "Muss true sein, nachdem die Person ausdrücklich zugestimmt hat."
+          },
+          "confirmation_token": {
+            "type": "string",
+            "description": "Token aus preview_sugar_gift — verhindert doppeltes Senden."
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+          }
+        },
+        "required": [
+          "username",
+          "amount"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_public_sugar",
+      "title": "Sugar eines Profils",
+      "description": "Zeigt die öffentlichen Sugar-Werte eines Profils: Kontostand und 'Minted all time'. Mehr ist über andere Personen nicht sichtbar.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+          }
+        },
+        "required": [
+          "username"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "list_my_sugar_activity",
+      "title": "Meine Sugar-Bewegungen",
+      "description": "Listet die letzten eigenen Sugar-Ereignisse aus dem manipulationssicheren Journal: erzeugt (MINT), gesendet (TRANSFER_OUT), erhalten (TRANSFER_IN) und verbrannt (BURN).",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "number",
+            "description": "1–50, Standard 20."
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "start_love_interview",
+      "title": "Crawler Love interview",
+      "description": "Use this when a Pro or Business user explicitly wants to begin the Crawler Love compatibility interview. Crawler Love is a voluntary romantic mode with its own consent, its own profile and its own matching pool — never derived from the general Crawler profile, earlier chats or the Knowledge Core. Ask the consent points and the adult confirmation before calling with consent: true.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "consent": {
+            "type": "boolean",
+            "description": "The user explicitly agreed to all consent points."
+          },
+          "adult_self_attestation": {
+            "type": "boolean",
+            "description": "The user confirmed being 18 or older. This is a self-confirmation, never a verified age."
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "answer_love_interview_question",
+      "title": "Answer Love interview question",
+      "description": "Use this when the user wants to answer or skip the current Crawler Love interview question. Ask exactly one question per step, never several at once, and never invent an answer the user did not give.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "interview_id": {
+            "type": "string",
+            "description": "Interview reference from the previous step."
+          },
+          "question_id": {
+            "type": "string",
+            "description": "Id of the question being answered."
+          },
+          "answer": {
+            "type": "string",
+            "description": "The user's own words or chosen options, comma separated."
+          },
+          "skip": {
+            "type": "boolean",
+            "description": "True when the user prefers to skip this question."
+          },
+          "idempotency_key": {
+            "type": "string",
+            "description": "Optional key so a repeat does not duplicate."
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_love_interview_status",
+      "title": "Love interview status",
+      "description": "Use this when the user wants to continue or review their own Crawler Love interview progress. Read-only and always limited to the current person.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "review_love_profile",
+      "title": "Review Love Profile",
+      "description": "Use this when the user wants to review the human-readable Love Profile generated from their completed interview. Never reveals the internal compatibility vector, raw answers or scores.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "activate_love_profile",
+      "title": "Activate Love Profile",
+      "description": "Use this when the user explicitly approves their Love Profile and wants to become discoverable for Crawler Love matching. Requires two confirmations: discoverability and the publicly readable Pair Room.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "profile_version": {
+            "type": "number",
+            "description": "Version of the reviewed profile."
+          },
+          "confirm_discoverability": {
+            "type": "boolean"
+          },
+          "confirm_public_pair_room": {
+            "type": "boolean"
+          },
+          "idempotency_key": {
+            "type": "string"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "find_love_candidate",
+      "title": "Find a Love candidate",
+      "description": "Use this when an eligible user wants Crawler to privately calculate one potential Love match without contacting that person. Suggests at most one candidate, sends nothing and never shows a browsable list.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "send_love_match_request",
+      "title": "Send Love Match request",
+      "description": "Use this when the user has reviewed one suggested candidate and explicitly wants to send that person a Love Match request. Never call this automatically after find_love_candidate.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "candidate_reference": {
+            "type": "string",
+            "description": "Reference from find_love_candidate."
+          },
+          "confirmation": {
+            "type": "boolean",
+            "description": "The user explicitly confirmed sending."
+          },
+          "idempotency_key": {
+            "type": "string"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+          }
+        },
+        "required": [
+          "candidate_reference"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "respond_to_love_match",
+      "title": "Respond to a Love Match",
+      "description": "Use this when the recipient wants to accept, decline, block or report a Love Match request. Only a mutual accept creates the publicly readable Pair Room.",
+      "read_only": false,
+      "destructive": true,
+      "idempotent": true,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "match_request_id": {
+            "type": "string"
+          },
+          "response": {
+            "type": "string"
+          },
+          "confirm_public_pair_room": {
+            "type": "boolean"
+          },
+          "idempotency_key": {
+            "type": "string"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+          }
+        },
+        "required": [
+          "match_request_id",
+          "response"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "list_love_match_requests",
+      "title": "My Love Match requests",
+      "description": "Use this when the user wants to see their own open and past Crawler Love match requests and their status. Read-only, never shows scores or other people's profiles.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "pause_love_profile",
+      "title": "Pause Love Profile",
+      "description": "Use this when the user wants to step out of Crawler Love matching without deleting anything. The profile is removed from new match calculations immediately.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "delete_love_profile",
+      "title": "Delete Love Profile",
+      "description": "Use this when the user wants to permanently delete their Crawler Love data: interview draft, Love summary, protected compatibility pattern, discoverability and open match requests. Always ask for an explicit confirmation first.",
+      "read_only": false,
+      "destructive": true,
+      "idempotent": false,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "confirm": {
+            "type": "boolean",
+            "description": "The user explicitly confirmed deletion."
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "create_resonance_pattern",
+      "title": "Schwingungsmuster erstellen",
+      "description": "Legt ein anonymes Schwingungsmuster für Crawler Match an (Pro-Abo). Führe zuerst ein natürliches Gespräch über Interessen, Arbeitsweise und gewünschte Verbindung und leite daraus die abstrakten Dimensionen ab. Crawler speichert keine Profiltexte und keine Chatverläufe, nur die abstrakten Match-Dimensionen.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "intent": {
+            "type": "string",
+            "description": "Worum es der Person geht — keine sensiblen Kategorien."
+          },
+          "dimensions": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Abstrakte Werte zwischen 0 und 1. Erlaubte Schlüssel: creative, technical, entrepreneurial, social, reflective, experimental, structured, spontaneous, local_orientation, global_orientation, collaboration_intensity, conversation_depth. Mindestens vier angeben. Leite sie aus dem Gespräch ab; sende niemals Freitext."
+          },
+          "languages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Zweibuchstabige Sprachcodes, z. B. [\"de\", \"en\"]."
+          },
+          "broad_region": {
+            "type": "string",
+            "description": "Freiwillig und grob, z. B. CH oder DE. Nie Ort oder Adresse."
+          },
+          "connection_modes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Gewünschte Verbindungsarten."
+          },
+          "expires_in_days": {
+            "type": "number",
+            "description": "Lebensdauer des Musters, Standard 30, maximal 90."
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+          }
+        },
+        "required": [
+          "intent",
+          "dimensions",
+          "languages",
+          "connection_modes"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "update_resonance_pattern",
+      "title": "Schwingungsmuster aktualisieren",
+      "description": "Aktualisiert das eigene Schwingungsmuster (Pro-Abo).",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "intent": {
+            "type": "string",
+            "description": "Worum es der Person geht — keine sensiblen Kategorien."
+          },
+          "dimensions": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Abstrakte Werte zwischen 0 und 1. Erlaubte Schlüssel: creative, technical, entrepreneurial, social, reflective, experimental, structured, spontaneous, local_orientation, global_orientation, collaboration_intensity, conversation_depth. Mindestens vier angeben. Leite sie aus dem Gespräch ab; sende niemals Freitext."
+          },
+          "languages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Zweibuchstabige Sprachcodes, z. B. [\"de\", \"en\"]."
+          },
+          "broad_region": {
+            "type": "string",
+            "description": "Freiwillig und grob, z. B. CH oder DE. Nie Ort oder Adresse."
+          },
+          "connection_modes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Gewünschte Verbindungsarten."
+          },
+          "expires_in_days": {
+            "type": "number",
+            "description": "Lebensdauer des Musters, Standard 30, maximal 90."
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+          }
+        },
+        "required": [
+          "intent",
+          "dimensions",
+          "languages",
+          "connection_modes"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "delete_resonance_pattern",
+      "title": "Schwingungsmuster löschen",
+      "description": "Löscht das eigene Schwingungsmuster und alle offenen Match-Vorschläge unwiderruflich.",
+      "read_only": false,
+      "destructive": true,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "find_match",
+      "title": "Resonanz suchen",
+      "description": "Sucht genau eine kompatible Resonanz (Pro-Abo). Es gibt keine durchsuchbare Personenliste, keine Fotos und keine Profile — nur einen Vorschlag mit Resonanzwert und unbedenklicher Begründung. Verbunden wird erst bei beidseitiger Zustimmung.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_match_status",
+      "title": "Match-Status",
+      "description": "Zeigt das eigene Schwingungsmuster und alle offenen Match-Vorgänge inklusive Pair-Room-Link.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "respond_to_match",
+      "title": "Auf Match antworten",
+      "description": "Antwortet auf einen Match-Vorschlag: accept, decline oder block. Stimmen beide zu, entsteht automatisch ein öffentlicher Pair Room.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "public_match_id": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+          }
+        },
+        "required": [
+          "public_match_id",
+          "decision"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "open_pair_room",
+      "title": "Öffentlichen Pair Room öffnen",
+      "description": "Öffnet einen öffentlichen Pair Room. Jede Person kann mitlesen; schreiben dürfen nur die zwei gematchten Handles.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "room_slug": {
+            "type": "string",
+            "description": "Slug oder vollständige URL des öffentlichen Pair Rooms."
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+          }
+        },
+        "required": [
+          "room_slug"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "send_pair_message",
+      "title": "Im Pair Room schreiben",
+      "description": "Sendet eine Nachricht in den eigenen öffentlichen Pair Room. Nur die zwei gematchten Handles dürfen schreiben, alle können mitlesen. Nachrichten verschwinden nach 24 Stunden.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "room_slug": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string",
+            "description": "Höchstens 500 Zeichen."
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+          }
+        },
+        "required": [
+          "room_slug",
+          "message"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "close_pair_room",
+      "title": "Pair Room schliessen",
+      "description": "Beendet das Gespräch. Der Raum bleibt öffentlich lesbar, schreiben ist nicht mehr möglich.",
+      "read_only": false,
+      "destructive": true,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "room_slug": {
+            "type": "string",
+            "description": "Slug oder vollständige URL des öffentlichen Pair Rooms."
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+          }
+        },
+        "required": [
+          "room_slug"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "resolve_social_profile",
+      "title": "Social-Profil erkennen",
+      "description": "Erkennt die Plattform aus Handle, Benutzername oder Link, validiert das Format, erzeugt die kanonische öffentliche Profil-URL und meldet, ob eine ausdrückliche Bestätigung nötig ist (z. B. bei Telefonnummern). Es wird nichts gepostet.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "description": "Provider-ID oder Alias, z. B. instagram, x, threads, tiktok, whatsapp, custom_social."
+          },
+          "identifier": {
+            "type": "string",
+            "description": "Handle, Benutzername, Telefonnummer in E.164 oder Profil-URL."
+          },
+          "profile_url": {
+            "type": "string",
+            "description": "Vollständige öffentliche https-Profil-URL."
+          },
+          "label": {
+            "type": "string",
+            "description": "Optionaler eigener Anzeigename für benutzerdefinierte Links."
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "preview_social_profile",
+      "title": "Social-Profil Vorschau",
+      "description": "Zeigt eine kompakte, öffentlich unbedenkliche Vorschaukarte des Profils (Plattform, Handle, kanonischer Link) direkt im Chat. Reine Vorschau, es wird nichts veröffentlicht. Keine Identitätsprüfung.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "description": "Provider-ID oder Alias, z. B. instagram, x, threads, tiktok, whatsapp, custom_social."
+          },
+          "identifier": {
+            "type": "string",
+            "description": "Handle, Benutzername, Telefonnummer in E.164 oder Profil-URL."
+          },
+          "profile_url": {
+            "type": "string",
+            "description": "Vollständige öffentliche https-Profil-URL."
+          },
+          "label": {
+            "type": "string",
+            "description": "Optionaler eigener Anzeigename für benutzerdefinierte Links."
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "post_social_profile_to_room",
+      "title": "Social-Profil in einen Raum posten",
+      "description": "Postet ein Social-Profil als normale öffentliche Nachricht in einen Crawler-Raum (Universal Room, Themenraum, persönlicher Raum oder Public Pair Room). Alle Räume sind öffentlich lesbar. Bei Telefonnummern oder Einladungslinks ist sensitive_confirmation=true zwingend.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "description": "Provider-ID oder Alias, z. B. instagram, x, threads, tiktok, whatsapp, custom_social."
+          },
+          "identifier": {
+            "type": "string",
+            "description": "Handle, Benutzername, Telefonnummer in E.164 oder Profil-URL."
+          },
+          "profile_url": {
+            "type": "string",
+            "description": "Vollständige öffentliche https-Profil-URL."
+          },
+          "label": {
+            "type": "string",
+            "description": "Optionaler eigener Anzeigename für benutzerdefinierte Links."
+          },
+          "canonical_url": {
+            "type": "string",
+            "description": "Bereits aufgelöste kanonische URL aus resolve_social_profile."
+          },
+          "room_target": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "topic": {
+                "type": "string"
+              },
+              "username": {
+                "type": "string"
+              },
+              "room_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "additionalProperties": true,
+            "description": "Zielraum. type=universal | topic (mit topic) | personal (mit username) | pair (mit room_id)."
+          },
+          "idempotency_key": {
+            "type": "string",
+            "description": "Verhindert Doppel-Posts bei Wiederholungen."
+          },
+          "sensitive_confirmation": {
+            "type": "boolean",
+            "description": "Ausdrückliche Zustimmung des Nutzers zur öffentlichen Veröffentlichung eines Kontaktlinks."
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+          }
+        },
+        "required": [
+          "room_target"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "list_social_providers",
+      "title": "Unterstützte Plattformen",
+      "description": "Listet alle bekannten Social-Plattformen mit Kategorie, Aliassen und Hinweis, ob ein Handle oder eine vollständige URL erwartet wird. Unbekannte Plattformen laufen über custom_social.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+          }
+        },
         "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }

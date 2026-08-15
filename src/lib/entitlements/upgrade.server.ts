@@ -60,23 +60,58 @@ async function signedHandoff(context: string | null): Promise<string | null> {
  * checkout page (which opens the same Paddle flow) when the provider cannot be
  * reached, so the answer always contains a working link.
  */
-export async function checkoutUrlFor(plan: CustomerPlan, contextHash?: string | null): Promise<string> {
+export type CheckoutOptions = {
+  /**
+   * Create a real provider transaction. FALSE for every getter and every
+   * upgrade message: reading a plan must never create a Paddle transaction.
+   */
+  createTransaction?: boolean;
+  /** Idempotency key so repeated calls reuse one transaction. */
+  idempotencyKey?: string | null;
+  /** Draft session the checkout belongs to. */
+  sessionToken?: string | null;
+};
+
+export async function checkoutUrlFor(
+  plan: CustomerPlan,
+  contextHash?: string | null,
+  options: CheckoutOptions = {},
+): Promise<string> {
   const handoff = await signedHandoff(contextHash ?? null).catch(() => null);
   const fallback = `${siteUrl()}/publish?plan=${plan}${handoff ? `&h=${encodeURIComponent(handoff)}` : ""}`;
   if (plan === "free") return `${siteUrl()}/room`;
 
-  const cached = linkCache.get(plan);
+  // Side-effect-free by default: only an explicit, declared mutating command
+  // may talk to the payment provider.
+  if (!options.createTransaction) return fallback;
+
+  const cacheKey = `${plan}:${options.idempotencyKey ?? options.sessionToken ?? "anon"}`;
+  const cached = linkCache.get(cacheKey);
   if (cached && Date.now() - cached.at < CACHE_MS) return cached.url;
 
   try {
     const { paymentsReady } = await import("../payments-config");
     if (!paymentsReady()) return fallback;
-    const { createIntent } = await import("../intents.server");
-    const intent = await createIntent({ plan, status: "pending" });
-    if (!intent) return fallback;
+    const { createIntent, latestIntentForSession } = await import("../intents.server");
+    let intentRef: string | null = null;
+    if (options.sessionToken) {
+      const existing = await latestIntentForSession(options.sessionToken).catch(() => null);
+      if (existing && existing.status === "pending" && existing.plan === plan) {
+        intentRef = existing.intentRef;
+      }
+    }
+    if (!intentRef) {
+      const intent = await createIntent({
+        plan,
+        status: "pending",
+        sessionToken: options.sessionToken ?? undefined,
+      });
+      intentRef = intent?.intentRef ?? null;
+    }
+    if (!intentRef) return fallback;
     const { createHostedCheckout } = await import("../paddle.server");
-    const checkout = await createHostedCheckout({ plan, intentRef: intent.intentRef });
-    linkCache.set(plan, { url: checkout.url, at: Date.now() });
+    const checkout = await createHostedCheckout({ plan, intentRef });
+    linkCache.set(cacheKey, { url: checkout.url, at: Date.now() });
     return checkout.url;
   } catch {
     return fallback;

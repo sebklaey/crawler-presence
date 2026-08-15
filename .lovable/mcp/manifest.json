@@ -7,9 +7,9 @@
   },
   "mcp": {
     "server": {
-      "name": "presence-builder-01",
-      "version": "0.1.0",
-      "title": "Presence Builder (01)"
+      "name": "crawler",
+      "version": "1.0.0",
+      "title": "Crawler"
     },
     "tools": [
       {
@@ -1274,10 +1274,10 @@
       },
       {
         "name": "get_checkout_link",
-        "title": "Get checkout link",
-        "description": "Use this when the user wants to pay for hosting and needs a checkout link. Returns the external Crawler checkout URL for the chosen plan. If no payment credentials are configured, returns a clearly labelled test/demo checkout state instead of a fake success.",
+        "title": "Create checkout link",
+        "description": "Use this only when the user explicitly wants to pay for hosting now. Creates (or reuses) one checkout for the chosen plan and returns the external Crawler checkout URL. Repeated calls with the same session reuse the same transaction. Never returns a link for a plan the user already has.",
         "annotations": {
-          "readOnlyHint": true,
+          "readOnlyHint": false,
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": true
@@ -1297,7 +1297,11 @@
             "session_id": {
               "type": "string",
               "minLength": 6,
-              "description": "Optional Crawler session to attach to the checkout."
+              "description": "Crawler draft session (sess_…) the checkout belongs to. Used as the idempotency key."
+            },
+            "confirm_downgrade": {
+              "type": "boolean",
+              "description": "Set true only when the user explicitly asked to move to a cheaper plan."
             }
           },
           "required": [
@@ -1309,6 +1313,10 @@
         "outputSchema": {
           "type": "object",
           "properties": {
+            "state": {
+              "type": "string",
+              "description": "upgrade | downgrade | already_subscribed | payment_pending | temporarily_unavailable"
+            },
             "plan": {
               "type": "string"
             },
@@ -1318,16 +1326,12 @@
             "price_usd_per_month": {
               "type": "number"
             },
+            "current_plan": {
+              "type": "string"
+            },
             "checkout_url": {
               "type": "string",
               "description": "External Crawler checkout URL — payment never happens in the conversation."
-            },
-            "checkout_mode": {
-              "type": "string",
-              "description": "live or unavailable."
-            },
-            "free_beta": {
-              "type": "boolean"
             },
             "release_version": {
               "type": "string"
@@ -1339,6 +1343,16 @@
               "type": "string"
             }
           },
+          "required": [
+            "state",
+            "plan",
+            "plan_name",
+            "price_usd_per_month",
+            "current_plan",
+            "release_version",
+            "payment_possible",
+            "note"
+          ],
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         }

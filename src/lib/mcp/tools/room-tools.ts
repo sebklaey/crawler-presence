@@ -139,22 +139,30 @@ function adapt(tool: RoomTool) {
       const raw = (input ?? {}) as Record<string, unknown>;
       const { room_token: provided, session_id: sessionId, ...rest } = raw;
       const session = typeof sessionId === "string" && sessionId.trim() ? sessionId.trim() : null;
-      let token = typeof provided === "string" && provided.trim() ? provided.trim() : "";
+      const providedToken = typeof provided === "string" && provided.trim() ? provided.trim() : null;
+      const readOnly = (tool.annotations as { readOnlyHint?: boolean } | undefined)?.readOnlyHint === true;
 
-      // A known session always returns to its existing anonymous identity, so
-      // the profile (@handle, rooms, follows) is found instead of recreated.
-      const { identityForSession, rememberRoomTokenForSession } = await import(
-        "@/lib/room/session-identity.server"
-      );
-      let knownSubjectHash: string | null = null;
-      if (session) {
-        const mapped = await identityForSession(session);
-        knownSubjectHash = mapped.subjectHash;
-        if (!token && mapped.roomToken) token = mapped.roomToken;
+      // ONE identity resolver for every domain (Crawler Core).
+      const { resolveIdentityContext } = await import("@/lib/core/identity.server");
+      const identity = await resolveIdentityContext({
+        roomToken: providedToken,
+        sessionId: session,
+        mutating: !readOnly,
+      });
+      if (!identity.ok) {
+        return {
+          isError: true,
+          content: [{ type: "text" as const, text: identity.message }],
+          structuredContent: { ...identity, error: identity.error },
+        };
       }
-      if (!token) token = newRoomToken();
-      if (session && !knownSubjectHash) await rememberRoomTokenForSession(session, token);
-      const issued = token !== provided && !knownSubjectHash;
+      let knownSubjectHash: string | null = identity.subjectId;
+      // A read-only call by a brand-new caller gets an ephemeral identity for
+      // this request only — it is never returned as a durable capability.
+      const token = identity.roomToken ?? newRoomToken();
+      const echoToken = identity.roomToken;
+      const issued = identity.issued;
+
 
       try {
         // Core V2: one resolver merges session, identity and Presence proofs
@@ -179,11 +187,13 @@ function adapt(tool: RoomTool) {
           requiredPlan: requiredPlanForCall(tool.name, rest),
         });
         if (denied) {
+          const text =
+            denied.code === "temporarily_unavailable"
+              ? denied.message
+              : `${denied.message}\n\n${denied.cta_label}: ${denied.upgrade_url}`;
           return {
-            content: [
-              { type: "text" as const, text: `${denied.message}\n\n${denied.cta_label}: ${denied.upgrade_url}` },
-            ],
-            structuredContent: { ...denied, room_token: token },
+            content: [{ type: "text" as const, text }],
+            structuredContent: { ...denied, ...(echoToken ? { room_token: echoToken } : {}) },
           };
         }
 
@@ -195,8 +205,8 @@ function adapt(tool: RoomTool) {
         });
 
         let text = tool.summary(result);
-        if (issued) {
-          text += `\n\nAnonymes room_token (bitte speichern und bei jedem weiteren room-Aufruf mitgeben): ${token}`;
+        if (issued && echoToken) {
+          text += `\n\nAnonymes room_token (bitte speichern und bei jedem weiteren room-Aufruf mitgeben): ${echoToken}`;
         }
         // Internal fields (prefixed with "_") never leave the server as data;
         // "_ui_html" becomes an embedded UI resource block instead.
@@ -215,7 +225,7 @@ function adapt(tool: RoomTool) {
         }
         return {
           content: content as never,
-          structuredContent: { ...publicResult, room_token: token },
+          structuredContent: { ...publicResult, ...(echoToken ? { room_token: echoToken } : {}) },
         };
       } catch (error) {
         const { newCorrelationId } = await import("@/lib/core/access.server");
@@ -258,7 +268,7 @@ function adapt(tool: RoomTool) {
             content: [
               { type: "text" as const, text: `${payload.message}\n\n${payload.cta_label}: ${payload.upgrade_url}` },
             ],
-            structuredContent: { ...payload, room_token: token },
+            structuredContent: { ...payload, ...(echoToken ? { room_token: echoToken } : {}) },
           };
         }
 
@@ -268,7 +278,7 @@ function adapt(tool: RoomTool) {
           structuredContent: {
             error: roomError.code,
             message: roomError.message,
-            room_token: token,
+            ...(echoToken ? { room_token: echoToken } : {}),
             correlation_id: newCorrelationId(),
           },
         };
