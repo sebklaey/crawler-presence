@@ -106,9 +106,24 @@ function adapt(tool: RoomTool) {
         if (issued) {
           text += `\n\nAnonymes room_token (bitte speichern und bei jedem weiteren room-Aufruf mitgeben): ${token}`;
         }
+        // Internal fields (prefixed with "_") never leave the server as data;
+        // "_ui_html" becomes an embedded UI resource block instead.
+        const uiHtml = typeof result["_ui_html"] === "string" ? (result["_ui_html"] as string) : null;
+        const uiUri = typeof result["_ui_uri"] === "string" ? (result["_ui_uri"] as string) : null;
+        const uiMime = typeof result["_ui_mime"] === "string" ? (result["_ui_mime"] as string) : "text/html";
+        const publicResult = Object.fromEntries(
+          Object.entries(result).filter(([key]) => !key.startsWith("_")),
+        );
+        const content: Array<Record<string, unknown>> = [{ type: "text" as const, text }];
+        if (uiHtml && uiUri) {
+          content.push({
+            type: "resource" as const,
+            resource: { uri: uiUri, mimeType: uiMime, text: uiHtml },
+          });
+        }
         return {
-          content: [{ type: "text" as const, text }],
-          structuredContent: { ...result, room_token: token },
+          content: content as never,
+          structuredContent: { ...publicResult, room_token: token },
         };
       } catch (error) {
         console.error("[room-tool]", tool.name, error);
