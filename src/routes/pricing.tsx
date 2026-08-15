@@ -31,6 +31,27 @@ export const Route = createFileRoute("/pricing")({
 const PENDING_INTENT_KEY = "crawler:pending-intent";
 const PENDING_PLAN_KEY = "crawler:pending-plan";
 
+/** @crawler room extensions included with each subscription (see /room). */
+const ROOM_EXTENSIONS: Record<PlanId, { name: string; features: string[] }> = {
+  plus: {
+    name: "Your own rooms",
+    features: [
+      "Personal room named after you",
+      "Followers and live presence",
+      "Secure invitations",
+      "Room settings",
+    ],
+  },
+  pro: {
+    name: "Communities",
+    features: ["Multiple communities", "Moderator roles", "Room analytics", "Listing placement"],
+  },
+  business: {
+    name: "Organisations",
+    features: ["Verified organisation", "Sponsored rooms", "Campaign analytics", "Team management"],
+  },
+};
+
 function PricingPage() {
   useFunnelOnce("pricing_viewed");
   const [plan, setPlan] = usePlan();
@@ -181,6 +202,18 @@ function PricingPage() {
                   </li>
                 ))}
               </ul>
+
+              <div className="mt-4 rounded-lg border border-border bg-secondary/40 px-3 py-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-foreground">
+                  @crawler rooms — {ROOM_EXTENSIONS[p.id].name}
+                </p>
+                <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                  {ROOM_EXTENSIONS[p.id].features.map((f) => (
+                    <li key={f}>· {f}</li>
+                  ))}
+                </ul>
+              </div>
+
               {p.upgradeNote ? (
                 <p className="mt-4 rounded-lg border border-dashed border-border bg-secondary/50 px-3 py-2 text-xs text-muted-foreground">
                   {p.upgradeNote}
@@ -208,6 +241,14 @@ function PricingPage() {
         </div>
 
         <p className="mt-8 text-sm text-muted-foreground">
+          Joining public rooms and the Universal Room in ChatGPT stays free —{" "}
+          <Link to="/room" className="underline underline-offset-4 hover:text-foreground">
+            see the room extensions
+          </Link>
+          .
+        </p>
+
+        <p className="mt-3 text-sm text-muted-foreground">
           Ready to go live?{" "}
           <Link to="/publish" className="underline underline-offset-4 hover:text-foreground">
             Open the publish flow
