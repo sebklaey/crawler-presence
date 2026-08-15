@@ -45,6 +45,27 @@ export async function resolvePlanContext(roomToken: string | null): Promise<Plan
     return { plan: "free", isPlatformAdmin: false, subjectHash: null };
   }
 }
+/**
+ * Plan of a draft session: derived from the paid publish intent (and the
+ * Presence it published), never from anything the caller sends.
+ */
+export async function resolvePlanForSession(sessionToken: string): Promise<CustomerPlan> {
+  try {
+    const { latestIntentForSession } = await import("../intents.server");
+    const intent = await latestIntentForSession(sessionToken);
+    if (!intent) return "free";
+    if (!["paid", "published"].includes(intent.status)) return "free";
+    if (intent.subscriptionStatus && ["canceled", "paused", "expired"].includes(intent.subscriptionStatus)) {
+      const end = intent.currentPeriodEnd ? new Date(intent.currentPeriodEnd).getTime() : 0;
+      if (!end || end < Date.now()) return "free";
+    }
+    const plan = String(intent.plan ?? "free");
+    return (["plus", "pro", "business"].includes(plan) ? plan : "free") as CustomerPlan;
+  } catch {
+    return "free";
+  }
+}
+
 
 /**
  * Returns an upgrade payload when the caller may not run this tool, or null
