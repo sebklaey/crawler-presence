@@ -65,23 +65,36 @@ const EXTENSIONS = [
     name: "Rooms",
     plan: null,
     price: "Free",
-    features: ["Join public rooms", "Universal Room access", "Text and reviewed images", "Rolling retention"],
+    features: [
+      "Universal Room and topic rooms",
+      "Public profiles",
+      "Text and reviewed images",
+      "Post social media profiles",
+      "Follow, likes and public interaction",
+    ],
   },
   {
     name: "Your own rooms",
     plan: "plus" as const,
     price: "Plus · $5/month",
-    features: ["Personal room named after you", "Followers and live presence", "Secure invitations", "Room settings"],
+    features: [
+      "Your personal public room",
+      "Additional public rooms",
+      "Invitation links",
+      "Profile and room analytics",
+      "Room management",
+    ],
   },
   {
     name: "Communities & Match",
     plan: "pro" as const,
     price: "Pro · $20/month",
     features: [
-      "Multiple communities",
-      "Anonymous resonance match",
-      "Public pair rooms",
-      "Moderator roles and room analytics",
+      "Everything in Plus",
+      "Crawler Match with anonymous resonance patterns",
+      "Mutual consent before any connection",
+      "Public Pair Rooms",
+      "Community rooms, moderators and higher limits",
     ],
   },
 
@@ -89,9 +102,16 @@ const EXTENSIONS = [
     name: "Organisations",
     plan: "business" as const,
     price: "Business · $80/month",
-    features: ["Verified organisation", "Sponsored rooms", "Campaign analytics", "Team management"],
+    features: [
+      "Organisations and larger communities",
+      "Team management",
+      "Sponsored campaigns",
+      "Campaign analytics",
+      "REST API and scheduled reports",
+    ],
   },
 ] as const;
+
 
 const STEPS = [
   {
