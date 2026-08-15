@@ -74,11 +74,17 @@ const EXTENSIONS = [
     features: ["Personal room named after you", "Followers and live presence", "Secure invitations", "Room settings"],
   },
   {
-    name: "Communities",
+    name: "Communities & Match",
     plan: "pro" as const,
     price: "Pro · $20/month",
-    features: ["Multiple communities", "Moderator roles", "Room analytics", "Listing placement"],
+    features: [
+      "Multiple communities",
+      "Anonymous resonance match",
+      "Public pair rooms",
+      "Moderator roles and room analytics",
+    ],
   },
+
   {
     name: "Organisations",
     plan: "business" as const,
