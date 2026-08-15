@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 
-import { AppShell, PageHead } from "@/components/app-shell";
+import { AppShell } from "@/components/app-shell";
 import { getPairRoomFn } from "@/lib/pairroom.functions";
 
 export const Route = createFileRoute("/rooms/$slug")({
@@ -63,7 +63,6 @@ function PairRoomPage() {
 
   return (
     <AppShell>
-      <PageHead />
       <div className="mx-auto max-w-3xl px-5 py-16">
         <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Public Match Room</p>
         <h1 className="display mt-3 text-3xl">{handles.join(" · ")}</h1>
