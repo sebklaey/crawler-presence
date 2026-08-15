@@ -10,8 +10,6 @@ import type { HealthReason, HealthState } from "./health";
 import type { Recommendation } from "./improvements.server";
 import type { PresenceSource, SourceChange } from "./sources.server";
 
-const codeSchema = z.object({});
-
 type Failure = {
   ok: false;
   reason: "unauthenticated" | "csrf" | "not-found" | "rate-limited" | "unavailable";
@@ -41,9 +39,8 @@ export type RetentionOverview =
 const SOURCE_LIMIT: Record<string, number> = { plus: 1, pro: 5, business: 25 };
 
 export const retentionOverviewFn = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => codeSchema.parse(input))
   .handler(async ({ data }): Promise<RetentionOverview> => {
-    const resolved = await resolve(WRITE);
+    const resolved = await resolve(false);
     if ("error" in resolved) return { ok: false, reason: resolved.error };
     const p = resolved.presence;
 
@@ -107,10 +104,10 @@ export const retentionOverviewFn = createServerFn({ method: "POST" })
 
 export const addSourceFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
-    codeSchema.extend({ url: z.string().trim().min(4).max(400), label: z.string().trim().max(120).optional() }).parse(input),
+    z.object({ url: z.string().trim().min(4).max(400), label: z.string().trim().max(120).optional() }).parse(input),
   )
   .handler(async ({ data }): Promise<{ ok: true; source: PresenceSource } | Failure | { ok: false; reason: "rejected"; message: string }> => {
-    const resolved = await resolve(WRITE);
+    const resolved = await resolve(true);
     if ("error" in resolved) return { ok: false, reason: resolved.error };
     const p = resolved.presence;
     const { addSource, listSources } = await import("./sources.server");
@@ -128,9 +125,9 @@ export const addSourceFn = createServerFn({ method: "POST" })
   });
 
 export const removeSourceFn = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => codeSchema.extend({ id: z.string().uuid() }).parse(input))
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data }): Promise<{ ok: true } | Failure> => {
-    const resolved = await resolve(WRITE);
+    const resolved = await resolve(true);
     if ("error" in resolved) return { ok: false, reason: resolved.error };
     const { removeSource } = await import("./sources.server");
     await removeSource(resolved.presence.slug, data.id);
@@ -139,9 +136,8 @@ export const removeSourceFn = createServerFn({ method: "POST" })
 
 /** Owner-triggered scan; the scheduled job does the same work on a plan cadence. */
 export const scanSourcesFn = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => codeSchema.parse(input))
   .handler(async ({ data }): Promise<{ ok: true; scanned: number; changed: number } | Failure> => {
-    const resolved = await resolve(WRITE);
+    const resolved = await resolve(true);
     if ("error" in resolved) return { ok: false, reason: resolved.error };
     const { scanPresence } = await import("./sources.server");
     try {
@@ -154,10 +150,10 @@ export const scanSourcesFn = createServerFn({ method: "POST" })
 
 export const resolveChangeFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
-    codeSchema.extend({ id: z.string().uuid(), status: z.enum(["reviewed", "dismissed"]) }).parse(input),
+    z.object({ id: z.string().uuid(), status: z.enum(["reviewed", "dismissed"]) }).parse(input),
   )
   .handler(async ({ data }): Promise<{ ok: true } | Failure> => {
-    const resolved = await resolve(WRITE);
+    const resolved = await resolve(true);
     if ("error" in resolved) return { ok: false, reason: resolved.error };
     const { resolveChange } = await import("./sources.server");
     await resolveChange(resolved.presence.slug, data.id, data.status);
@@ -181,7 +177,7 @@ export const decideRecommendationFn = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data }): Promise<{ ok: true; published: boolean } | Failure | { ok: false; reason: "rejected"; message: string }> => {
-    const resolved = await resolve(WRITE);
+    const resolved = await resolve(true);
     if ("error" in resolved) return { ok: false, reason: resolved.error };
     const p = resolved.presence;
     const { getRecommendation, setRecommendationState, applyToCore } = await import("./improvements.server");
@@ -228,7 +224,7 @@ export const notificationPreferencesFn = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data }): Promise<{ ok: true; preferences: NotificationPreferences } | Failure> => {
-    const resolved = await resolve(WRITE);
+    const resolved = await resolve(true);
     if ("error" in resolved) return { ok: false, reason: resolved.error };
     const { db } = await import("./mcp/db.server");
     const supabase = db();
