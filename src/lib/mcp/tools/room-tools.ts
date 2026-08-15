@@ -11,6 +11,7 @@ import { TOOLS } from "@/lib/room/mcp";
 import { PERSONAL_TOOLS } from "@/lib/room/mcp.personal";
 import { PLUS_TOOLS } from "@/lib/room/mcp.plus";
 import { PROFILE_TOOLS } from "@/lib/room/mcp.profile";
+import { SUGAR_TOOLS } from "@/lib/room/mcp.sugar";
 import { MATCH_TOOLS } from "@/lib/room/match/mcp";
 import { SOCIAL_TOOLS } from "@/lib/room/social/mcp";
 import { toRoomError } from "@/lib/room/errors";
@@ -208,6 +209,7 @@ const ALL_ROOM_TOOLS = [
   ...(PROFILE_TOOLS as unknown as RoomTool[]),
   ...(MATCH_TOOLS as unknown as RoomTool[]),
   ...(SOCIAL_TOOLS as unknown as RoomTool[]),
+  ...(SUGAR_TOOLS as unknown as RoomTool[]),
 ];
 
 const seen = new Set<string>();
