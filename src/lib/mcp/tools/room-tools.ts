@@ -17,6 +17,8 @@ import { MATCH_TOOLS } from "@/lib/room/match/mcp";
 import { SOCIAL_TOOLS } from "@/lib/room/social/mcp";
 import { toRoomError } from "@/lib/room/errors";
 import { requiredPlanForCall } from "@/lib/entitlements/features";
+import { toShape } from "@/lib/mcp/schema-to-zod";
+import { advertisedOutputShape, responseValidator } from "@/lib/mcp/response";
 
 type Json = Record<string, unknown>;
 
@@ -31,78 +33,30 @@ interface RoomTool {
   summary: (result: any) => string;
 }
 
-function leafSchema(node: Json): z.ZodTypeAny {
-  const type = node["type"];
-  if (Array.isArray(node["enum"]) && node["enum"].every((v) => typeof v === "string")) {
-    return z.string();
-  }
-  switch (type) {
-    case "string":
-      return z.string();
-    case "integer":
-    case "number":
-      return z.number();
-    case "boolean":
-      return z.boolean();
-    case "array": {
-      const items = (node["items"] as Json | undefined) ?? {};
-      return z.array(leafSchema(items));
-    }
-    case "object": {
-      const props = (node["properties"] as Record<string, Json> | undefined) ?? {};
-      const required = (node["required"] as string[] | undefined) ?? [];
-      const shape: Record<string, z.ZodTypeAny> = {};
-      for (const [key, value] of Object.entries(props)) {
-        const inner = leafSchema(value);
-        shape[key] = required.includes(key) ? inner : inner.optional();
-      }
-      return Object.keys(shape).length ? z.object(shape).passthrough() : z.record(z.any());
-    }
-    default:
-      return z.any();
-  }
-}
-
-function toShape(schema: Json): Record<string, z.ZodTypeAny> {
-  const props = (schema["properties"] as Record<string, Json> | undefined) ?? {};
-  const required = (schema["required"] as string[] | undefined) ?? [];
-  const shape: Record<string, z.ZodTypeAny> = {};
-  for (const [key, value] of Object.entries(props)) {
-    const inner = leafSchema(value);
-    const described =
-      typeof value["description"] === "string"
-        ? inner.describe(value["description"] as string)
-        : inner;
-    shape[key] = required.includes(key) ? described : described.optional();
-  }
-  return shape;
-}
-
 /**
- * Result model advertised to the calling model. Every field is optional because
- * the same tool can also answer with an upgrade or error payload, and strict
- * output validation must never turn a valid answer into a protocol error.
+ * Runtime contract per tool, also consumed by the contract tests: the advertised
+ * shape stays permissive (one shape must cover success and envelope), while the
+ * validator is the real discriminated union and stays strict about required
+ * success fields.
  */
-function toOutputShape(schema: Json | undefined): Record<string, z.ZodTypeAny> {
-  const base: Record<string, z.ZodTypeAny> = {};
-  for (const [key, value] of Object.entries(toShape(schema ?? {}))) {
-    base[key] = value.isOptional() ? value : value.optional();
+export const roomToolContracts = new Map<string, ReturnType<typeof responseValidator>>();
+
+/** Set by the test suite: an invalid tool payload throws instead of warning. */
+const strictOutput = () =>
+  typeof process !== "undefined" && process.env?.["CRAWLER_STRICT_OUTPUT"] === "1";
+
+function validateOutput(name: string, payload: Json): Json {
+  const validator = roomToolContracts.get(name);
+  if (!validator) return payload;
+  const parsed = validator.safeParse(payload);
+  if (!parsed.success) {
+    const detail = parsed.error.issues.map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`).join("; ");
+    if (strictOutput()) throw new Error(`Output contract violated for ${name}: ${detail}`);
+    console.error("[room-tool:output]", name, detail);
   }
-  return {
-    ...base,
-    room_token: z
-      .string()
-      .optional()
-      .describe("Anonymous room identity. Store it and pass it to every later room tool — there is no account."),
-    error: z.string().optional().describe("Error code when the call failed."),
-    message: z.string().optional().describe("Human-readable message, e.g. why an upgrade is needed."),
-    plan_required: z.string().optional().describe("Plan that unlocks this feature: plus, pro or business."),
-    current_plan: z.string().optional(),
-    cta_label: z.string().optional(),
-    upgrade_url: z.string().optional().describe("Direct Paddle checkout link for the required plan."),
-    correlation_id: z.string().optional().describe("Stable id of this decision — quote it in support requests."),
-  };
+  return payload;
 }
+
 
 
 
@@ -127,13 +81,15 @@ const SESSION_FIELD = z
   );
 
 function adapt(tool: RoomTool) {
+  roomToolContracts.set(tool.name, responseValidator(tool.outputSchema));
   return defineTool({
     name: tool.name,
     title: tool.title,
     description: tool.description,
     inputSchema: { ...toShape(tool.inputSchema), room_token: TOKEN_FIELD, session_id: SESSION_FIELD },
     annotations: tool.annotations as never,
-    outputSchema: toOutputShape(tool.outputSchema),
+    outputSchema: advertisedOutputShape(tool.outputSchema),
+
 
     handler: async (input: Record<string, unknown> | undefined) => {
       const raw = (input ?? {}) as Record<string, unknown>;
@@ -150,12 +106,21 @@ function adapt(tool: RoomTool) {
         mutating: !readOnly,
       });
       if (!identity.ok) {
+        const { newCorrelationId } = await import("@/lib/core/access.server");
+        const unavailable = identity.error === "TEMPORARILY_UNAVAILABLE";
         return {
           isError: true,
           content: [{ type: "text" as const, text: identity.message }],
-          structuredContent: { ...identity, error: identity.error },
+          structuredContent: validateOutput(tool.name, {
+            status: unavailable ? "temporarily_unavailable" : "error",
+            code: identity.error,
+            message: identity.message,
+            retryable: unavailable,
+            correlation_id: newCorrelationId(),
+          }),
         };
       }
+
       let knownSubjectHash: string | null = identity.subjectId;
       // A read-only call by a brand-new caller gets an ephemeral identity for
       // this request only — it is never returned as a durable capability.
@@ -187,15 +152,22 @@ function adapt(tool: RoomTool) {
           requiredPlan: requiredPlanForCall(tool.name, rest),
         });
         if (denied) {
-          const text =
-            denied.code === "temporarily_unavailable"
-              ? denied.message
-              : `${denied.message}\n\n${denied.cta_label}: ${denied.upgrade_url}`;
+          const outage = denied.code === "temporarily_unavailable";
+          const text = outage
+            ? denied.message
+            : `${denied.message}\n\n${denied.cta_label}: ${denied.upgrade_url}`;
+          const limited = !outage && Boolean((denied as { usage?: unknown }).usage);
           return {
             content: [{ type: "text" as const, text }],
-            structuredContent: { ...denied, ...(echoToken ? { room_token: echoToken } : {}) },
+            structuredContent: validateOutput(tool.name, {
+              status: outage ? "temporarily_unavailable" : limited ? "limit_reached" : "upgrade_required",
+              retryable: outage,
+              ...denied,
+              ...(echoToken ? { room_token: echoToken } : {}),
+            }),
           };
         }
+
 
 
         const result = await tool.handler(rest, {
@@ -225,8 +197,13 @@ function adapt(tool: RoomTool) {
         }
         return {
           content: content as never,
-          structuredContent: { ...publicResult, ...(echoToken ? { room_token: echoToken } : {}) },
+          structuredContent: validateOutput(tool.name, {
+            status: "ok",
+            ...publicResult,
+            ...(echoToken ? { room_token: echoToken } : {}),
+          }),
         };
+
       } catch (error) {
         const { newCorrelationId } = await import("@/lib/core/access.server");
         console.error("[room-tool]", tool.name, error);
@@ -268,20 +245,28 @@ function adapt(tool: RoomTool) {
             content: [
               { type: "text" as const, text: `${payload.message}\n\n${payload.cta_label}: ${payload.upgrade_url}` },
             ],
-            structuredContent: { ...payload, ...(echoToken ? { room_token: echoToken } : {}) },
+            structuredContent: validateOutput(tool.name, {
+              status: roomError.code === "LIMIT_REACHED" ? "limit_reached" : "upgrade_required",
+              retryable: false,
+              ...payload,
+              ...(echoToken ? { room_token: echoToken } : {}),
+            }),
           };
         }
 
         return {
           isError: true,
           content: [{ type: "text" as const, text: roomError.message }],
-          structuredContent: {
-            error: roomError.code,
+          structuredContent: validateOutput(tool.name, {
+            status: "error",
+            code: roomError.code,
             message: roomError.message,
+            retryable: roomError.code === "IDENTITY_UNAVAILABLE",
             ...(echoToken ? { room_token: echoToken } : {}),
             correlation_id: newCorrelationId(),
-          },
+          }),
         };
+
       }
     },
   });
