@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { generateAlias, sanitizeAlias } from "./alias";
 import { config, imageConfig, IMAGE_RETENTION } from "./config";
+import { trySugarActivity } from "./sugar/service";
 import { roomError } from "./errors";
 import { resolveIdentity, type McpMeta } from "./identity";
 import { encodeMessageId } from "./ids";
@@ -246,6 +247,8 @@ export async function handleSendRoomMessage(input: unknown, meta: McpMeta) {
     "message",
     WINDOWS.message(settings.rateLimitPerMinute, settings.rateLimitPerHour),
   );
+
+  await trySugarActivity(db, identity.subjectHash, "send_room_message");
 
   const now = new Date();
   const { error } = await db.from("messages").insert({
