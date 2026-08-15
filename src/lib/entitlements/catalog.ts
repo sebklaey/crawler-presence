@@ -163,6 +163,8 @@ export const TOOL_PLANS: Record<string, EntitlementPlan> = {
   report_message: "free",
   report_sponsored_placement: "free",
   hide_sponsored_placement: "free",
+  block_advertiser: "free",
+  set_resonance_ads_preference: "free",
   notification_settings: "free",
   room_notifications: "free",
   // System and pricing
@@ -195,6 +197,8 @@ export const TOOL_PLANS: Record<string, EntitlementPlan> = {
 
   /* -------------------------------- business ------------------------------- */
   create_sponsored_campaign: "business",
+  add_campaign_creative: "business",
+  preview_sponsored_campaign: "business",
   manage_campaign: "business",
   submit_campaign_for_review: "business",
   get_campaign_analytics: "business",

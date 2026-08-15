@@ -117,6 +117,15 @@ export async function universalFeed(
     roomImages(db, { roomId: membership.roomId, membershipId: membership.membershipId }, 50),
   ]);
 
+  // Crawler Ads: resonance placements live in their own feed layer. They are
+  // never stored or returned as organic room messages and each one carries its
+  // own placement id.
+  const { selectResonancePlacements } = await import("./ads/matching");
+  const organicItemCount = messages.length + (((imageFeed as any)?.images?.length as number | undefined) ?? 0);
+  const resonancePlacements = await selectResonancePlacements(db, subjectHash, {
+    organicItemCount,
+  }).catch(() => []);
+
   const presence = presenceLabel(membership.presence);
   const onlineNow = await countOnline(db, membership.roomId);
 
@@ -136,11 +145,14 @@ export async function universalFeed(
     trending_topics: trending,
     active_rooms: activeRooms,
     upcoming_events: events,
-    sponsored: placements as PlacementCard[],
+    sponsored: [...(placements as PlacementCard[]), ...resonancePlacements] as unknown[],
+    sponsored_disclosure:
+      "Sponsored · Crawler Ad — gesponserte Inhalte sind immer gekennzeichnet und nie Teil der organischen Nachrichten.",
     notice:
       "Der Universal Room ist öffentlich. Gesponserte Karten sind immer als Anzeige gekennzeichnet und du entscheidest selbst, ob du sie betrittst.",
   };
 }
+
 
 export async function trendingTopics(db: Db, limit = 6) {
   const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();

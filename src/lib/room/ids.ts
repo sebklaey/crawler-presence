@@ -136,3 +136,33 @@ export async function decodeCampaignId(external: unknown): Promise<string | null
   if (!safeEqual(await campaignSignature(uuid), decoded.slice(separator + 1))) return null;
   return uuid;
 }
+
+/* ------------------------------ creative ids ------------------------------ */
+
+const CREATIVE_PREFIX = "crt_";
+
+async function creativeSignature(uuid: string): Promise<string> {
+  const secret = requireSecret("MESSAGE_ID_SECRET");
+  const digest = await hmacSha256Hex(secret, `creative:${uuid}`);
+  return digest.slice(0, SIGNATURE_LENGTH);
+}
+
+export async function encodeCreativeId(uuid: string): Promise<string> {
+  return CREATIVE_PREFIX + base64UrlEncode(`${uuid}.${await creativeSignature(uuid)}`);
+}
+
+export async function decodeCreativeId(external: unknown): Promise<string | null> {
+  if (typeof external !== "string" || !external.startsWith(CREATIVE_PREFIX)) return null;
+  let decoded: string;
+  try {
+    decoded = base64UrlDecode(external.slice(CREATIVE_PREFIX.length));
+  } catch {
+    return null;
+  }
+  const separator = decoded.lastIndexOf(".");
+  if (separator <= 0) return null;
+  const uuid = decoded.slice(0, separator);
+  if (!/^[0-9a-f-]{36}$/i.test(uuid)) return null;
+  if (!safeEqual(await creativeSignature(uuid), decoded.slice(separator + 1))) return null;
+  return uuid;
+}

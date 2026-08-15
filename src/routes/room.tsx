@@ -105,11 +105,13 @@ const EXTENSIONS = [
     features: [
       "Organisations and larger communities",
       "Team management",
+      "Crawler Ads — resonance-based sponsored cards",
       "Sponsored campaigns",
-      "Campaign analytics",
+      "Campaign analytics (aggregated only)",
       "REST API and scheduled reports",
     ],
   },
+
 ] as const;
 
 

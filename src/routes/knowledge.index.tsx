@@ -98,6 +98,21 @@ function KnowledgePage() {
             </Section>
 
             <Section
+              title="Crawler Ads"
+              hint="Business plan only. An ad is built from its own Ad Knowledge Core — never from this Presence's private data."
+            >
+              <p className="text-[15px] leading-relaxed text-muted-foreground">
+                One ad describes exactly one product: title, text, image and link. Crawler derives an anonymised Ad
+                Resonance Pattern from that content and matches it server-side against voluntary user patterns.
+                Advertisers never see profiles, chats or individual users — only aggregated numbers. Every placement is
+                labelled <span className="text-foreground">Sponsored</span>, appears outside the organic messages, and
+                can be hidden, reported or blocked. Ask in ChatGPT:{" "}
+                <span className="text-foreground">“@crawler create a Crawler Ad for my product”</span>.
+              </p>
+            </Section>
+
+
+            <Section
               title="Facts"
               hint="Verified facts are what you confirmed. Claims are inferred and need your confirmation."
             >

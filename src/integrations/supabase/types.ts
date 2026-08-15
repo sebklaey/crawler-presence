@@ -41,6 +41,139 @@ export type Database = {
         }
         Relationships: []
       }
+      ad_creatives: {
+        Row: {
+          approved_content_hash: string | null
+          body: string
+          call_to_action: string | null
+          campaign_id: string
+          content_version_hash: string | null
+          created_at: string
+          destination_domain: string
+          destination_url: string
+          ends_at: string | null
+          headline: string
+          id: string
+          image_alt: string | null
+          image_reference: string | null
+          knowledge_slug: string | null
+          languages: string[]
+          product_category: string | null
+          product_description: string | null
+          product_name: string
+          product_reference: string | null
+          starts_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          approved_content_hash?: string | null
+          body: string
+          call_to_action?: string | null
+          campaign_id: string
+          content_version_hash?: string | null
+          created_at?: string
+          destination_domain: string
+          destination_url: string
+          ends_at?: string | null
+          headline: string
+          id?: string
+          image_alt?: string | null
+          image_reference?: string | null
+          knowledge_slug?: string | null
+          languages?: string[]
+          product_category?: string | null
+          product_description?: string | null
+          product_name: string
+          product_reference?: string | null
+          starts_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          approved_content_hash?: string | null
+          body?: string
+          call_to_action?: string | null
+          campaign_id?: string
+          content_version_hash?: string | null
+          created_at?: string
+          destination_domain?: string
+          destination_url?: string
+          ends_at?: string | null
+          headline?: string
+          id?: string
+          image_alt?: string | null
+          image_reference?: string | null
+          knowledge_slug?: string | null
+          languages?: string[]
+          product_category?: string | null
+          product_description?: string | null
+          product_name?: string
+          product_reference?: string | null
+          starts_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_creatives_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "sponsored_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ad_resonance_patterns: {
+        Row: {
+          content_version_hash: string | null
+          created_at: string
+          created_from_approved_content: boolean
+          creative_id: string
+          dimensions: Json
+          id: string
+          intents: string[]
+          invalidated_at: string | null
+          languages: string[]
+          schema_version: string
+          version: number
+        }
+        Insert: {
+          content_version_hash?: string | null
+          created_at?: string
+          created_from_approved_content?: boolean
+          creative_id: string
+          dimensions?: Json
+          id?: string
+          intents?: string[]
+          invalidated_at?: string | null
+          languages?: string[]
+          schema_version?: string
+          version?: number
+        }
+        Update: {
+          content_version_hash?: string | null
+          created_at?: string
+          created_from_approved_content?: boolean
+          creative_id?: string
+          dimensions?: Json
+          id?: string
+          intents?: string[]
+          invalidated_at?: string | null
+          languages?: string[]
+          schema_version?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_resonance_patterns_creative_id_fkey"
+            columns: ["creative_id"]
+            isOneToOne: false
+            referencedRelation: "ad_creatives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_referral_domains: {
         Row: {
           active: boolean
@@ -519,6 +652,32 @@ export type Database = {
         }
         Relationships: []
       }
+      blocked_advertisers: {
+        Row: {
+          created_at: string
+          organization_id: string
+          subject_hash: string
+        }
+        Insert: {
+          created_at?: string
+          organization_id: string
+          subject_hash: string
+        }
+        Update: {
+          created_at?: string
+          organization_id?: string
+          subject_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blocked_advertisers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_budgets: {
         Row: {
           campaign_id: string
@@ -646,6 +805,7 @@ export type Database = {
         Row: {
           campaign_id: string
           created_at: string
+          creative_id: string | null
           decision: string
           id: string
           reason: string | null
@@ -654,6 +814,7 @@ export type Database = {
         Insert: {
           campaign_id: string
           created_at?: string
+          creative_id?: string | null
           decision: string
           id?: string
           reason?: string | null
@@ -662,6 +823,7 @@ export type Database = {
         Update: {
           campaign_id?: string
           created_at?: string
+          creative_id?: string | null
           decision?: string
           id?: string
           reason?: string | null
@@ -2513,6 +2675,27 @@ export type Database = {
         }
         Relationships: []
       }
+      resonance_ad_preferences: {
+        Row: {
+          consented_at: string | null
+          enabled: boolean
+          internal_session_reference: string
+          updated_at: string
+        }
+        Insert: {
+          consented_at?: string | null
+          enabled?: boolean
+          internal_session_reference: string
+          updated_at?: string
+        }
+        Update: {
+          consented_at?: string | null
+          enabled?: boolean
+          internal_session_reference?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       resonance_patterns: {
         Row: {
           anonymous_pattern_id: string
@@ -3137,6 +3320,53 @@ export type Database = {
             columns: ["room_id"]
             isOneToOne: false
             referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsored_impressions: {
+        Row: {
+          anonymous_frequency_key: string
+          clicked_at: string | null
+          creative_id: string
+          displayed_at: string
+          hidden_at: string | null
+          id: number
+          language: string | null
+          placement_context: string
+          reported_at: string | null
+          resonance_bucket: string | null
+        }
+        Insert: {
+          anonymous_frequency_key: string
+          clicked_at?: string | null
+          creative_id: string
+          displayed_at?: string
+          hidden_at?: string | null
+          id?: number
+          language?: string | null
+          placement_context?: string
+          reported_at?: string | null
+          resonance_bucket?: string | null
+        }
+        Update: {
+          anonymous_frequency_key?: string
+          clicked_at?: string | null
+          creative_id?: string
+          displayed_at?: string
+          hidden_at?: string | null
+          id?: number
+          language?: string | null
+          placement_context?: string
+          reported_at?: string | null
+          resonance_bucket?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsored_impressions_creative_id_fkey"
+            columns: ["creative_id"]
+            isOneToOne: false
+            referencedRelation: "ad_creatives"
             referencedColumns: ["id"]
           },
         ]
