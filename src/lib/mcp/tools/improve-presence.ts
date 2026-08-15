@@ -26,7 +26,28 @@ export default defineTool({
     const session = await getSession(session_id);
     if (!session) throw new ToolError("Unknown or expired session_id. Call start_interview to begin a new session.");
 
+    // Improvement recommendations are a Pro capability.
+    const { resolvePlanForSession } = await import("@/lib/entitlements/guard.server");
+    const { meetsPlan } = await import("@/lib/entitlements/catalog");
+    const plan = await resolvePlanForSession(session_id);
+    if (!meetsPlan(plan, "pro")) {
+      const { buildUpgradePayload, detectLanguage } = await import("@/lib/entitlements/upgrade.server");
+      const payload = await buildUpgradePayload({
+        tool: "improve_presence",
+        feature: "Improvement recommendations",
+        currentPlan: plan,
+        language: detectLanguage(insight),
+      });
+      return {
+        content: [
+          { type: "text" as const, text: `${payload.message}\n\n${payload.cta_label}: ${payload.upgrade_url}` },
+        ],
+        structuredContent: payload as unknown as Record<string, unknown>,
+      };
+    }
+
     const review = reviewCore(normalizeCore(session.core), insight);
+
 
     return {
       content: [

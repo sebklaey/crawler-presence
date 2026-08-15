@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useCore, usePlan } from "@/lib/store";
 import { usePaymentsStatus } from "@/hooks/use-payments-status";
 import { PLANS, planById, type PlanId } from "@/lib/billing";
+import { PLAN_INFO } from "@/lib/entitlements/catalog";
 import { isCoreEmpty } from "@/lib/knowledge";
 import { startPublishFn } from "@/lib/presence.functions";
 import { usePublishState } from "@/hooks/use-publish-state";
@@ -166,8 +167,37 @@ function PricingPage() {
           </div>
         ) : null}
 
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="flex flex-col rounded-2xl border border-border bg-card p-6">
+            <div className="flex items-baseline justify-between">
+              <h2 className="display text-2xl">{PLAN_INFO.free.name}</h2>
+            </div>
+            <div className="mt-3 flex items-baseline gap-1">
+              <span className="display text-4xl">$0</span>
+            </div>
+            <p className="mt-2 text-sm text-muted-foreground">{PLAN_INFO.free.headline}</p>
+            <ul className="mt-6 flex-1 space-y-2 text-sm">
+              {PLAN_INFO.free.benefits.map((f) => (
+                <li key={f} className="flex gap-2">
+                  <Check className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                  <span className="text-muted-foreground">{f}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-4 rounded-lg border border-border bg-secondary/40 px-3 py-3">
+              <p className="text-xs font-medium uppercase tracking-wide text-foreground">@crawler rooms — Free</p>
+              <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                <li>· Universal Room and topic rooms</li>
+                <li>· Text, images and social profiles</li>
+                <li>· Follow, like and public interaction</li>
+              </ul>
+            </div>
+            <Button className="mt-6" variant="outline" asChild>
+              <Link to="/room">Start free</Link>
+            </Button>
+          </div>
           {PLANS.map((p) => (
+
             <div
               key={p.id}
               className={`flex flex-col rounded-2xl border bg-card p-6 ${

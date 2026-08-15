@@ -102,6 +102,24 @@ function adapt(tool: RoomTool) {
       const issued = token !== provided;
 
       try {
+        // Server-side plan gate — the caller never supplies its own plan.
+        const { checkToolAccess } = await import("@/lib/entitlements/guard.server");
+        const { detectLanguage } = await import("@/lib/entitlements/upgrade.server");
+        const denied = await checkToolAccess({
+          tool: tool.name,
+          roomToken: token,
+          language: detectLanguage(rest),
+          feature: tool.title,
+        });
+        if (denied) {
+          return {
+            content: [
+              { type: "text" as const, text: `${denied.message}\n\n${denied.cta_label}: ${denied.upgrade_url}` },
+            ],
+            structuredContent: { ...denied, room_token: token },
+          };
+        }
+
         const result = await tool.handler(rest, { "room/token": token });
         let text = tool.summary(result);
         if (issued) {
@@ -129,6 +147,38 @@ function adapt(tool: RoomTool) {
       } catch (error) {
         console.error("[room-tool]", tool.name, error);
         const roomError = toRoomError(error);
+
+        // Plan and limit errors are answered as helpful upgrade content,
+        // never as a technical exception.
+        if (roomError.code === "PLAN_REQUIRED" || roomError.code === "LIMIT_REACHED") {
+          const { buildUpgradePayload, detectLanguage } = await import("@/lib/entitlements/upgrade.server");
+          const { resolvePlanContext } = await import("@/lib/entitlements/guard.server");
+          const ctx = await resolvePlanContext(token);
+          const details = roomError.details as { max?: number; current?: number; limit?: string };
+          const payload = await buildUpgradePayload({
+            tool: tool.name,
+            feature: tool.title,
+            currentPlan: ctx.plan,
+            language: detectLanguage(rest),
+            contextHash: ctx.subjectHash,
+            ...(roomError.code === "LIMIT_REACHED" && typeof details.max === "number"
+              ? {
+                  usage: {
+                    used: typeof details.current === "number" ? details.current : details.max,
+                    max: details.max,
+                    unit: String(details.limit ?? "items"),
+                  },
+                }
+              : {}),
+          });
+          return {
+            content: [
+              { type: "text" as const, text: `${payload.message}\n\n${payload.cta_label}: ${payload.upgrade_url}` },
+            ],
+            structuredContent: { ...payload, room_token: token },
+          };
+        }
+
         return {
           isError: true,
           content: [{ type: "text" as const, text: roomError.message }],
@@ -138,6 +188,7 @@ function adapt(tool: RoomTool) {
     },
   });
 }
+
 
 const ALL_ROOM_TOOLS = [
   ...(TOOLS as unknown as RoomTool[]),
