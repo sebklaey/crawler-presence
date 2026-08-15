@@ -1116,6 +1116,100 @@ export type Database = {
           },
         ]
       }
+      match_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: number
+          metadata: Json
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: number
+          metadata?: Json
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: number
+          metadata?: Json
+        }
+        Relationships: []
+      }
+      match_requests: {
+        Row: {
+          candidate_pattern_id: string
+          candidate_status: string
+          created_at: string
+          expires_at: string
+          id: string
+          public_match_id: string
+          requester_pattern_id: string
+          requester_status: string
+          resolved_at: string | null
+          room_id: string | null
+          safe_reasons: Json
+          score: number
+          state: string
+          updated_at: string
+        }
+        Insert: {
+          candidate_pattern_id: string
+          candidate_status?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          public_match_id: string
+          requester_pattern_id: string
+          requester_status?: string
+          resolved_at?: string | null
+          room_id?: string | null
+          safe_reasons?: Json
+          score?: number
+          state?: string
+          updated_at?: string
+        }
+        Update: {
+          candidate_pattern_id?: string
+          candidate_status?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          public_match_id?: string
+          requester_pattern_id?: string
+          requester_status?: string
+          resolved_at?: string | null
+          room_id?: string | null
+          safe_reasons?: Json
+          score?: number
+          state?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_requests_candidate_pattern_id_fkey"
+            columns: ["candidate_pattern_id"]
+            isOneToOne: false
+            referencedRelation: "resonance_patterns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_requests_requester_pattern_id_fkey"
+            columns: ["requester_pattern_id"]
+            isOneToOne: false
+            referencedRelation: "resonance_patterns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_requests_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mcp_rate_limits: {
         Row: {
           bucket_key: string
@@ -2419,6 +2513,60 @@ export type Database = {
         }
         Relationships: []
       }
+      resonance_patterns: {
+        Row: {
+          anonymous_pattern_id: string
+          broad_region: string | null
+          connection_modes: string[]
+          created_at: string
+          deleted_at: string | null
+          dimensions: Json
+          expires_at: string
+          id: string
+          intent: string
+          languages: string[]
+          resonance_signature: string | null
+          schema_version: string
+          status: string
+          subject_hash: string
+          updated_at: string
+        }
+        Insert: {
+          anonymous_pattern_id: string
+          broad_region?: string | null
+          connection_modes?: string[]
+          created_at?: string
+          deleted_at?: string | null
+          dimensions?: Json
+          expires_at?: string
+          id?: string
+          intent: string
+          languages?: string[]
+          resonance_signature?: string | null
+          schema_version?: string
+          status?: string
+          subject_hash: string
+          updated_at?: string
+        }
+        Update: {
+          anonymous_pattern_id?: string
+          broad_region?: string | null
+          connection_modes?: string[]
+          created_at?: string
+          deleted_at?: string | null
+          dimensions?: Json
+          expires_at?: string
+          id?: string
+          intent?: string
+          languages?: string[]
+          resonance_signature?: string | null
+          schema_version?: string
+          status?: string
+          subject_hash?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       room_analytics_events: {
         Row: {
           actor_hash: string | null
@@ -2524,6 +2672,47 @@ export type Database = {
           },
         ]
       }
+      room_participants: {
+        Row: {
+          can_write: boolean
+          id: string
+          joined_at: string
+          left_at: string | null
+          public_handle: string | null
+          role: string
+          room_id: string
+          subject_hash: string
+        }
+        Insert: {
+          can_write?: boolean
+          id?: string
+          joined_at?: string
+          left_at?: string | null
+          public_handle?: string | null
+          role?: string
+          room_id: string
+          subject_hash: string
+        }
+        Update: {
+          can_write?: boolean
+          id?: string
+          joined_at?: string
+          left_at?: string | null
+          public_handle?: string | null
+          role?: string
+          room_id?: string
+          subject_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_participants_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       room_plan_links: {
         Row: {
           linked_at: string
@@ -2558,8 +2747,10 @@ export type Database = {
           description: string | null
           id: string
           kind: string
+          legacy_private: boolean
           organization_id: string | null
           owner_account_id: string | null
+          public_slug: string | null
           retention_hours: number | null
           retention_images: number | null
           retention_texts: number | null
@@ -2580,8 +2771,10 @@ export type Database = {
           description?: string | null
           id?: string
           kind?: string
+          legacy_private?: boolean
           organization_id?: string | null
           owner_account_id?: string | null
+          public_slug?: string | null
           retention_hours?: number | null
           retention_images?: number | null
           retention_texts?: number | null
@@ -2602,8 +2795,10 @@ export type Database = {
           description?: string | null
           id?: string
           kind?: string
+          legacy_private?: boolean
           organization_id?: string | null
           owner_account_id?: string | null
+          public_slug?: string | null
           retention_hours?: number | null
           retention_images?: number | null
           retention_texts?: number | null
