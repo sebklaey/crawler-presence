@@ -289,8 +289,12 @@ function RoomPage() {
           <h2 className="text-2xl font-semibold tracking-tight">Extensions</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             Joining rooms stays free. The room extensions are tied to the Crawler subscriptions:
-            Plus unlocks your own room, Pro adds communities, Business adds organisations.
+            Plus unlocks your own room, Pro adds Match and communities, Business adds organisations.
           </p>
+          <p className="mt-3 rounded-lg border border-border bg-secondary/50 px-4 py-3 text-sm font-medium text-foreground">
+            All Crawler rooms are publicly readable. Crawler has no private rooms and no private messages.
+          </p>
+
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {EXTENSIONS.map((extension) => (
