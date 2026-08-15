@@ -10,7 +10,7 @@
 import { z } from "zod";
 
 import { generateAlias, sanitizeAlias } from "./alias";
-import { config, imageConfig, IMAGE_RETENTION } from "./config";
+import { config, imageConfig } from "./config";
 import { bytesToBase64, randomId } from "./crypto";
 import { roomError } from "./errors";
 import { resolveIdentity, type McpMeta } from "./identity";
@@ -23,12 +23,8 @@ import {
   enforceImageRetention,
   findDuplicate,
   getImageRow,
-  listApprovedImages,
-  listOwnUnpublishedImages,
   removeStorageObjects,
-  signedUrl,
   updateImageRow,
-  type ImageRow,
 } from "./imagestore";
 import { roomImages, serializeImages } from "./imagefeed";
 import { issueToken, subjectFingerprint, verifyToken } from "./tokens";
