@@ -950,7 +950,8 @@
           "type": "object",
           "properties": {
             "topic": {
-              "type": "string"
+              "type": "string",
+              "description": "Themen-Slug (z. B. \"ai\") oder \"universal\" für den Universal Room."
             },
             "mime_type": {
               "type": "string"
@@ -987,7 +988,8 @@
           "type": "object",
           "properties": {
             "topic": {
-              "type": "string"
+              "type": "string",
+              "description": "Themen-Slug (z. B. \"ai\") oder \"universal\" für den Universal Room."
             },
             "image_id": {
               "type": "string"
@@ -1023,7 +1025,8 @@
           "type": "object",
           "properties": {
             "topic": {
-              "type": "string"
+              "type": "string",
+              "description": "Themen-Slug (z. B. \"ai\") oder \"universal\" für den Universal Room."
             },
             "image_id": {
               "type": "string"
@@ -1075,7 +1078,8 @@
           "type": "object",
           "properties": {
             "topic": {
-              "type": "string"
+              "type": "string",
+              "description": "Themen-Slug (z. B. \"ai\") oder \"universal\" für den Universal Room."
             },
             "image_id": {
               "type": "string"

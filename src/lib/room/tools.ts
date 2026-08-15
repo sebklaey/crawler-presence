@@ -10,7 +10,7 @@
 import { z } from "zod";
 
 import { generateAlias, sanitizeAlias } from "./alias";
-import { config, imageConfig, IMAGE_RETENTION } from "./config";
+import { config, imageConfig } from "./config";
 import { bytesToBase64, randomId } from "./crypto";
 import { roomError } from "./errors";
 import { resolveIdentity, type McpMeta } from "./identity";
@@ -23,13 +23,10 @@ import {
   enforceImageRetention,
   findDuplicate,
   getImageRow,
-  listApprovedImages,
-  listOwnUnpublishedImages,
   removeStorageObjects,
-  signedUrl,
   updateImageRow,
-  type ImageRow,
 } from "./imagestore";
+import { roomImages, serializeImages } from "./imagefeed";
 import { issueToken, subjectFingerprint, verifyToken } from "./tokens";
 import { enforceRateLimit, WINDOWS } from "./ratelimit";
 import {
@@ -56,7 +53,8 @@ import {
   type MembershipContext,
   type MessageRow,
 } from "./store";
-import { resolveTopicSlug, TOPIC_ALIASES } from "./topics";
+import { normalizeTopicInput, resolveTopicSlug, TOPIC_ALIASES } from "./topics";
+import { enterUniversal } from "./universal";
 import { clampLimit, validateMessage } from "./validation";
 
 const REPORT_REASONS = [
@@ -425,45 +423,42 @@ function fileExtension(mime: string): string {
   return "jpg";
 }
 
-async function serializeImages(
-  db: Db,
-  rows: ImageRow[],
-  membership: MembershipContext,
-) {
-  const aliases = await aliasesFor(db, rows.map((row) => row.sender_membership_id));
-  const ttl = imageConfig().signedUrlTtlSeconds;
-  return Promise.all(
-    rows.map(async (row) => ({
-      id: await encodeImageId(row.id),
-      alias: aliases[row.sender_membership_id] ?? "Unbekannt",
-      created_at: new Date(row.created_at).toISOString(),
-      alt_text: row.alt_text ?? "",
-      width: row.width ?? 0,
-      height: row.height ?? 0,
-      status: row.moderation_status,
-      is_self: row.sender_membership_id === membership.membershipId,
-      url:
-        row.moderation_status === "approved"
-          ? ((await signedUrl(db, row.storage_path, ttl)) ?? "")
-          : "",
-      note:
-        row.moderation_status === "approved"
-          ? "Zeige dieses Bild sofort in der Antwort an (Markdown ![alt_text](url)); alternativ get_image mit dieser id."
-          : row.moderation_status === "pending"
-            ? "Bild wird geprüft … (nur für dich sichtbar)"
-            : "Bild abgelehnt (nur für dich sichtbar).",
-    })),
-  );
+/** The Universal Room is addressable by these strings in image tools. */
+const UNIVERSAL_INPUTS = new Set([
+  "universal",
+  "universal room",
+  "universalroom",
+  "universeller raum",
+  "universal raum",
+  "universal-raum",
+  "universalraum",
+  "global",
+]);
+
+function isUniversalTopic(raw: string): boolean {
+  return UNIVERSAL_INPUTS.has(normalizeTopicInput(raw));
 }
 
-/** Approved images of the room plus the caller's own pending/rejected uploads. */
-async function roomImages(db: Db, membership: MembershipContext) {
-  const approved = await listApprovedImages(db, membership.roomId, IMAGE_RETENTION);
-  const own = await listOwnUnpublishedImages(db, membership.roomId, membership.membershipId);
-  return {
-    images: await serializeImages(db, approved, membership),
-    my_pending_images: await serializeImages(db, own, membership),
-  };
+/**
+ * Membership context for image tools: topic rooms as usual, plus the
+ * Universal Room (joined on demand, so images work there too).
+ */
+async function resolveImageMembership(
+  db: Db,
+  subjectHash: string,
+  raw: string,
+): Promise<MembershipContext> {
+  if (isUniversalTopic(raw)) {
+    let membership = await getActiveMembership(db, subjectHash, "universal");
+    if (!membership) {
+      await enterUniversal(db, subjectHash);
+      membership = await getActiveMembership(db, subjectHash, "universal");
+    }
+    if (!membership) throw roomError("ROOM_UNAVAILABLE");
+    return membership;
+  }
+  const slug = await resolveSlug(db, raw);
+  return requireMembership(db, subjectHash, slug);
 }
 
 export async function handleCreateImageUpload(input: unknown, meta: McpMeta) {
@@ -471,8 +466,7 @@ export async function handleCreateImageUpload(input: unknown, meta: McpMeta) {
   const identity = await resolveIdentity(meta);
   const db = await getDb();
   await touchPresence(db, identity.subjectHash);
-  const slug = await resolveSlug(db, topic);
-  const membership = await requireMembership(db, identity.subjectHash, slug);
+  const membership = await resolveImageMembership(db, identity.subjectHash, topic);
   const settings = imageConfig();
 
   if (!ALLOWED_MIME.includes(mime_type as any)) throw roomError("IMAGE_TYPE_UNSUPPORTED");
@@ -515,8 +509,7 @@ export async function handleFinalizeImageUpload(input: unknown, meta: McpMeta) {
   const identity = await resolveIdentity(meta);
   const db = await getDb();
   await touchPresence(db, identity.subjectHash);
-  const slug = await resolveSlug(db, topic);
-  const membership = await requireMembership(db, identity.subjectHash, slug);
+  const membership = await resolveImageMembership(db, identity.subjectHash, topic);
   const settings = imageConfig();
 
   const internalId = await decodeImageId(image_id);
@@ -572,8 +565,7 @@ export async function handleSubmitImageReview(input: unknown, meta: McpMeta) {
   const identity = await resolveIdentity(meta);
   const db = await getDb();
   await touchPresence(db, identity.subjectHash);
-  const slug = await resolveSlug(db, topic);
-  const membership = await requireMembership(db, identity.subjectHash, slug);
+  const membership = await resolveImageMembership(db, identity.subjectHash, topic);
 
   const internalId = await decodeImageId(image_id);
   if (internalId === null) throw roomError("IMAGE_NOT_FOUND");
@@ -643,8 +635,7 @@ export async function handleGetImage(input: unknown, meta: McpMeta) {
   const identity = await resolveIdentity(meta);
   const db = await getDb();
   await touchPresence(db, identity.subjectHash);
-  const slug = await resolveSlug(db, topic);
-  const membership = await requireMembership(db, identity.subjectHash, slug);
+  const membership = await resolveImageMembership(db, identity.subjectHash, topic);
 
   const internalId = await decodeImageId(image_id);
   if (internalId === null) throw roomError("IMAGE_NOT_FOUND");
