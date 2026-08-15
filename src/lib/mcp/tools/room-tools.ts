@@ -261,7 +261,7 @@ function adapt(tool: RoomTool) {
             status: "error",
             code: roomError.code,
             message: roomError.message,
-            retryable: roomError.code === "TEMPORARILY_UNAVAILABLE",
+            retryable: roomError.code === "IDENTITY_UNAVAILABLE",
             ...(echoToken ? { room_token: echoToken } : {}),
             correlation_id: newCorrelationId(),
           }),
