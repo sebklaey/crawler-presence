@@ -3567,7 +3567,7 @@
       {
         "name": "create_public_room",
         "title": "Öffentlichen Raum erstellen",
-        "description": "Erstellt einen eigenen, öffentlich lesbaren Raum. In Crawler Room gibt es keine privaten Räume und keine privaten Nachrichten — jeder Raum ist öffentlich lesbar. Limits für Kapazität und Anzahl Räume werden serverseitig geprüft.",
+        "description": "Erstellt einen eigenen, öffentlich lesbaren Raum. Mit kind=\"community\" wird ein Community-Raum erstellt (Pro/Business); eine passende Organisation wird bei Bedarf automatisch angelegt. In Crawler Room gibt es keine privaten Räume und keine privaten Nachrichten. Limits werden serverseitig geprüft.",
         "annotations": {
           "readOnlyHint": false,
           "destructiveHint": false,
@@ -3593,8 +3593,17 @@
             "capacity": {
               "type": "number"
             },
+            "kind": {
+              "type": "string",
+              "description": "community benötigt Pro oder Business."
+            },
             "organization_id": {
-              "type": "string"
+              "type": "string",
+              "description": "Bestehende Organisation: UUID, Slug oder exakter Name."
+            },
+            "organization_name": {
+              "type": "string",
+              "description": "Name einer neuen Organisation für die Community."
             },
             "room_token": {
               "type": "string",
