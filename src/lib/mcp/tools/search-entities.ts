@@ -17,6 +17,22 @@ export default defineTool({
     limit: z.number().int().optional().describe("Maximum number of candidates (1-20, default 5)."),
   },
   annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  outputSchema: {
+    query: z.string().optional(),
+    count: z.number().optional(),
+    results: z
+      .array(
+        z.object({
+          entity_id: z.string().optional().describe("Public slug — pass it to get_entity."),
+          name: z.string().optional(),
+          entity_type: z.string().optional(),
+          domain: z.string().nullable().optional(),
+          short_description: z.string().optional(),
+          url: z.string().optional(),
+        }),
+      )
+      .optional(),
+  },
   handler: async ({ query, entity_type, limit }) => {
     const { searchEntities } = await import("../../crawlme.server");
     const results = await searchEntities(query, { entityType: entity_type, limit });

@@ -24,6 +24,29 @@ export default defineTool({
       .describe("Optional website or landing-page URL the user pasted. Used as context only."),
   },
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+  outputSchema: {
+    session_id: z.string().optional().describe("Opaque anonymous Crawler draft session id (sess_…). Reuse it in every later call."),
+    session_note: z.string().optional().describe("How long the anonymous draft session is stored."),
+    entity_type: z.string().optional().describe("Inferred entity type: person, creator, studio, organization, company or project."),
+    confidence: z.number().optional().describe("0-1 confidence of the inferred entity type."),
+    presence_score: z.number().optional().describe("Knowledge Core completeness score, 0-100."),
+    knowledge_core_summary: z
+      .object({
+        name: z.string().nullable().optional(),
+        tagline: z.string().nullable().optional(),
+        summary: z.string().nullable().optional(),
+        location: z.string().nullable().optional(),
+        website: z.string().nullable().optional(),
+      })
+      .optional()
+      .describe("Identity fields detected so far."),
+    verified_facts: z.array(z.object({ label: z.string().optional(), value: z.string().optional() })).optional().describe("Facts the user stated plainly."),
+    claimed_facts: z.array(z.object({ label: z.string().optional(), value: z.string().optional() })).optional().describe("Unconfirmed claims."),
+    narrative: z.array(z.object({ label: z.string().optional(), text: z.string().optional(), confirmed: z.boolean().optional() })).optional().describe("Positioning/story copy, not verified facts."),
+    missing_information: z.array(z.string()).optional().describe("Known gaps in the Knowledge Core."),
+    next_question: z.string().nullable().optional().describe("The single most valuable follow-up question to ask the user next."),
+    example_answers: z.array(z.string()).optional().describe("Example answers that help the user reply."),
+  },
   handler: async ({ free_text, source_url }) => {
     if (!(await allowRequest("tool:start_interview", 60)))
       throw new ToolError("Crawler is rate limited right now (60 interview starts per minute). Try again shortly.");

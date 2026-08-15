@@ -51,6 +51,23 @@ export default defineTool({
     filter: z.string().trim().optional().describe("Optional product or entity name filter."),
   },
   annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  outputSchema: {
+    found: z.boolean().optional().describe("False when Crawler has no published Presence for the identifier."),
+    entity_or_domain: z.string().optional(),
+    error: z.string().optional().describe("rate_limited, unauthorized or unavailable."),
+    measurement_scope: z.string().optional().describe("Always crawler_only."),
+    data_mode: z.string().optional(),
+    hint: z.string().optional(),
+    period_days: z.union([z.number(), z.string()]).optional(),
+    filter: z.string().nullable().optional(),
+    public_summary: z.any().optional().describe("Free aggregate: conversations_mentioning, mention_events, crawler_reads."),
+    detailed_summary: z.any().nullable().optional().describe("Only present with a valid recovery code."),
+    detail_available: z.boolean().optional(),
+    detail_hint: z.string().nullable().optional(),
+    metric_definitions: z.any().optional(),
+    not_measurable: z.any().optional().describe("What Crawler explicitly cannot measure."),
+    session_local: z.any().nullable().optional(),
+  },
   handler: async ({ entity_or_domain, period_days, recovery_code, session_id, filter }) => {
     const period = (period_days ?? 30) as 7 | 30 | 90 | "all";
 

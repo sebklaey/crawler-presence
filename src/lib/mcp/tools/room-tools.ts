@@ -77,6 +77,33 @@ function toShape(schema: Json): Record<string, z.ZodTypeAny> {
   return shape;
 }
 
+/**
+ * Result model advertised to the calling model. Every field is optional because
+ * the same tool can also answer with an upgrade or error payload, and strict
+ * output validation must never turn a valid answer into a protocol error.
+ */
+function toOutputShape(schema: Json | undefined): Record<string, z.ZodTypeAny> {
+  const base: Record<string, z.ZodTypeAny> = {};
+  for (const [key, value] of Object.entries(toShape(schema ?? {}))) {
+    base[key] = value.isOptional() ? value : value.optional();
+  }
+  return {
+    ...base,
+    room_token: z
+      .string()
+      .optional()
+      .describe("Anonymous room identity. Store it and pass it to every later room tool — there is no account."),
+    error: z.string().optional().describe("Error code when the call failed."),
+    message: z.string().optional().describe("Human-readable message, e.g. why an upgrade is needed."),
+    plan_required: z.string().optional().describe("Plan that unlocks this feature: plus, pro or business."),
+    current_plan: z.string().optional(),
+    cta_label: z.string().optional(),
+    upgrade_url: z.string().optional().describe("Direct Paddle checkout link for the required plan."),
+  };
+}
+
+
+
 function newRoomToken(): string {
   const bytes = new Uint8Array(24);
   crypto.getRandomValues(bytes);
@@ -104,6 +131,8 @@ function adapt(tool: RoomTool) {
     description: tool.description,
     inputSchema: { ...toShape(tool.inputSchema), room_token: TOKEN_FIELD, session_id: SESSION_FIELD },
     annotations: tool.annotations as never,
+    outputSchema: toOutputShape(tool.outputSchema),
+
     handler: async (input: Record<string, unknown> | undefined) => {
       const raw = (input ?? {}) as Record<string, unknown>;
       const { room_token: provided, session_id: sessionId, ...rest } = raw;

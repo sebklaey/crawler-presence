@@ -33,6 +33,21 @@ export default defineTool({
     url: z.string().url().describe("Public HTTPS URL to read."),
   },
   annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  outputSchema: {
+    available: z.boolean().optional().describe("False when the page could not be fetched — never invent content then."),
+    source_url: z.string().optional(),
+    reason: z.string().optional().describe("Why the page was unavailable."),
+    note: z.string().optional(),
+    fetched_at: z.string().optional(),
+    no_own_model: z.boolean().optional(),
+    title: z.string().nullable().optional(),
+    og_title: z.string().nullable().optional(),
+    meta_description: z.string().nullable().optional(),
+    headings: z.array(z.string()).optional(),
+    page_text: z.string().optional().describe("Readable page text you extract candidate facts from."),
+    extraction_instructions: z.string().optional(),
+    candidate_facts: z.array(z.any()).optional(),
+  },
   handler: async ({ url }) => {
     if (!(await allowRequest("tool:analyze_source_url", 30)))
       return {

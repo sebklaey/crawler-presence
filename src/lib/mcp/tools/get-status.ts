@@ -1,4 +1,5 @@
 import { defineTool } from "@lovable.dev/mcp-js";
+import { z } from "zod";
 import { sessionCount, SESSION_TTL_MS, storeMode } from "../sessions";
 import { betaFree, paymentsConfigured, paymentsEnvironment, releaseVersion, siteUrl } from "../site";
 
@@ -9,6 +10,31 @@ export default defineTool({
     "Use this when debugging the Crawler MCP connection. Returns server health, auth mode, model availability, session store state and which capabilities are demo-only.",
   inputSchema: {},
   annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  outputSchema: {
+    status: z.string().optional(),
+    time: z.string().optional(),
+    auth_mode: z.string().optional().describe("Always 'none' — no accounts, no ChatGPT identity."),
+    auth_note: z.string().optional(),
+    own_ai_model: z.boolean().optional(),
+    model_note: z.string().optional(),
+    analytics_mode: z.string().optional(),
+    analytics_note: z.string().optional(),
+    checkout_mode: z.string().optional(),
+    release_version: z.string().optional(),
+    free_beta: z.boolean().optional(),
+    paid_note: z.string().optional(),
+    checkout_environment: z.string().optional(),
+    session_store: z
+      .object({
+        type: z.string().optional(),
+        durable: z.boolean().optional(),
+        retention_days: z.number().optional(),
+        active_sessions: z.number().optional(),
+        id_format: z.string().optional(),
+      })
+      .optional(),
+    website: z.string().optional(),
+  },
   handler: async () => {
     const mode = await storeMode();
     return {
