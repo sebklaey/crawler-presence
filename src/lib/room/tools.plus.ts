@@ -199,18 +199,22 @@ export async function handleGetMyPlan(input: unknown, meta: McpMeta) {
 export async function handlePublicPlans() {
   const db = await getDb();
   const plans = await listPlans(db);
+  const { publicFeatures, planCheckoutUrl } = await import("./entitlements");
   return {
     free_tier: "Öffentliche Themenräume und der Universal Room sind kostenlos.",
-    upgrade_url: "https://crawler.today/room",
-    extensions: plans.map((plan) => ({
-      code: plan.code,
-      name: plan.name,
-      tagline: plan.tagline ?? "",
-      price_usd: plan.price_cents / 100,
-      interval: plan.interval,
-      limits: plan.limits,
-      entitlements: plan.entitlements,
-    })),
+    upgrade_url: await planCheckoutUrl("plus"),
+    extensions: await Promise.all(
+      plans.map(async (plan) => ({
+        code: plan.code,
+        name: plan.name,
+        tagline: plan.tagline ?? "",
+        price_usd: plan.price_cents / 100,
+        interval: plan.interval,
+        limits: plan.limits,
+        entitlements: publicFeatures(plan.entitlements ?? {}),
+        checkout_url: await planCheckoutUrl(plan.code),
+      })),
+    ),
   };
 }
 
