@@ -415,7 +415,7 @@ const REVIEW_INSTRUCTIONS =
   "Look at the attached image yourself and decide. Approve normal artwork, photography, illustrations and creative work — a difficult political, historical or artistic subject alone is NOT a reason to reject. Reject only on a clear violation of the listed rules. Then call submit_image_review with the review_token, your decision and a short neutral alt text. The image stays invisible to everyone else until you approve it.";
 
 export const RETENTION_NOTICE =
-  "Temporäre Räume ohne Datensammlung: In jedem Raum — auch im Universal Room — werden Texte und Bilder spätestens nach 24 Stunden unwiderruflich gelöscht. Zusätzlich bleiben pro Raum höchstens die neuesten 7 Textnachrichten und 3 Bilder erhalten; alles Ältere wird sofort und dauerhaft entfernt.";
+  "Temporäre Räume ohne Datensammlung: In jedem Raum — auch im Universal Room — werden Texte und Bilder spätestens nach 24 Stunden unwiderruflich gelöscht. In Themen- und privaten Räumen gilt zusätzlich ein Mengenlimit von 7 Textnachrichten und 3 Bildern; im Universal Room gilt ausschliesslich die 24-Stunden-Frist.";
 
 function fileExtension(mime: string): string {
   if (mime === "image/png") return "png";

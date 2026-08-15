@@ -113,7 +113,8 @@ export async function universalFeed(
     activePublicRooms(db),
     upcomingEvents(db),
     selectPlacements(db, subjectHash, { topic: options.topic ?? null }),
-    roomImages(db, { roomId: membership.roomId, membershipId: membership.membershipId }),
+    // Universal Room: no volume cap, only the 24h time limit applies.
+    roomImages(db, { roomId: membership.roomId, membershipId: membership.membershipId }, 50),
   ]);
 
   const presence = presenceLabel(membership.presence);
