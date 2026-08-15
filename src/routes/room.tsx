@@ -63,22 +63,26 @@ const TOPIC_HINTS = ["AI", "Art", "Science", "Tech", "Music", "Gaming", "Life"];
 const EXTENSIONS = [
   {
     name: "Rooms",
+    plan: null,
     price: "Free",
     features: ["Join public rooms", "Universal Room access", "Text and reviewed images", "Rolling retention"],
   },
   {
     name: "Your own rooms",
-    price: "Free",
+    plan: "plus" as const,
+    price: "Plus · $5/month",
     features: ["Personal room named after you", "Followers and live presence", "Secure invitations", "Room settings"],
   },
   {
     name: "Communities",
-    price: "Free",
+    plan: "pro" as const,
+    price: "Pro · $20/month",
     features: ["Multiple communities", "Moderator roles", "Room analytics", "Listing placement"],
   },
   {
     name: "Organisations",
-    price: "Free",
+    plan: "business" as const,
+    price: "Business · $80/month",
     features: ["Verified organisation", "Sponsored rooms", "Campaign analytics", "Team management"],
   },
 ] as const;
