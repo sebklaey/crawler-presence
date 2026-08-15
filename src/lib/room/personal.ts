@@ -73,6 +73,27 @@ export function personalRoomName(alias: string): string {
   return /s$/i.test(trimmed) ? `${trimmed}' Room` : `${trimmed}'s Room`;
 }
 
+/** Read-only lookup of the permanent personal room. Creates nothing. */
+export async function loadPersonalRoom(db: Db, subjectHash: string): Promise<PersonalRoom | null> {
+  const { data } = await db
+    .from("user_rooms")
+    .select("room_id, handle, room_name, description, created_at")
+    .eq("owner_subject_hash", subjectHash)
+    .maybeSingle();
+  const row = data as Record<string, any> | null;
+  if (!row?.["room_id"]) return null;
+  const alias = (await getCustomAlias(db, subjectHash)) ?? generateAlias(`${subjectHash}:personal`);
+  return {
+    roomId: row["room_id"],
+    handle: row["handle"],
+    roomName: row["room_name"],
+    description: row["description"] ?? null,
+    ownerSubjectHash: subjectHash,
+    ownerAlias: alias,
+    createdAt: row["created_at"],
+  };
+}
+
 /** Idempotent: returns the person's permanent room, creating it on first use. */
 export async function ensurePersonalRoom(db: Db, subjectHash: string): Promise<PersonalRoom> {
   const { isReadOnlyCall } = await import("./call-context");
