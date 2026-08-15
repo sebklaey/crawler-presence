@@ -5,7 +5,8 @@ const CORE_KEY = "crawler.core.v1";
 const CHAT_KEY = "crawler.chat.v1";
 const PLAN_KEY = "crawler.plan.v1";
 const PUBLISH_KEY = "crawler.published.v1";
-const CODE_KEY = "crawler.code.v1";
+/** Legacy key: the recovery code used to live in localStorage. It must not. */
+const LEGACY_CODE_KEY = "crawler.code.v1";
 
 export type ChatMessage = {
   id: string;
@@ -92,9 +93,47 @@ export const useCore = () => useLocal<KnowledgeCore>(CORE_KEY, emptyCore());
 export const useChat = () => useLocal<ChatMessage[]>(CHAT_KEY, []);
 export const usePlan = () => useLocal<"free" | "plus" | "pro" | "business">(PLAN_KEY, "free");
 export const usePublished = () => useLocal<{ at: string; slug: string } | null>(PUBLISH_KEY, null);
-/** Recovery code of the Presence currently opened on /manage (capability, not an account). */
-export const useRecoveryCode = () => useLocal<string>(CODE_KEY, "");
-export const readRecoveryCode = () => read<string>(CODE_KEY, "");
+/* ---------------- Management capability (never persisted) ---------------- */
+
+/**
+ * The recovery code is a high-privilege management capability. It lives in
+ * memory for the current tab only — never in localStorage, never in a URL,
+ * never in analytics. Durable browser management uses the server-verified
+ * HttpOnly cookie issued by /api/manage-session instead.
+ */
+let recoveryCodeMemory = "";
+const RECOVERY_CHANNEL = "crawler.recovery.memory";
+
+/** Removes the legacy localStorage copy without ever reading its value. */
+export function purgeLegacyRecoveryCode() {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(LEGACY_CODE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function useRecoveryCode() {
+  const [value, setValue] = useState(recoveryCodeMemory);
+  useEffect(() => {
+    purgeLegacyRecoveryCode();
+    return subscribe(RECOVERY_CHANNEL, (v) => setValue(v as string));
+  }, []);
+  const update = useCallback((next: string | ((prev: string) => string)) => {
+    const resolved = typeof next === "function" ? next(recoveryCodeMemory) : next;
+    recoveryCodeMemory = resolved;
+    setValue(resolved);
+    broadcast(RECOVERY_CHANNEL, resolved);
+  }, []);
+  return [value, update, true] as const;
+}
+
+export const readRecoveryCode = () => recoveryCodeMemory;
+
+/** Redacts a capability for UI, logs and error messages. */
+export const redactCapability = (value: string) =>
+  value ? `${value.slice(0, 4)}…${value.slice(-2)}` : "";
 
 /* ---------------- Knowledge Core editor workspace ---------------- */
 

@@ -41,7 +41,7 @@ const EXTENSIONS = [
     price: "Free",
     features: [
       "Universal Room and topic rooms",
-      "Public profiles",
+      "Optional public profile",
       "Text and reviewed images",
       "Post social media profiles",
       "Follow, likes and public interaction",
@@ -107,7 +107,7 @@ const STEPS = [
   },
   {
     title: "Your own room",
-    body: "Say “@crawlers my room”. Everyone gets one permanent public room named after them — no login. Others follow it with “@crawlers follow @you”.",
+    body: "Say “@crawler my room”. A personal room is a paid feature (Crawler Plus and up); public topic rooms and the Universal Room stay free. No login — a room is held by an anonymous room token. Others follow it with “@crawler follow @you”.",
   },
   {
     title: "Catch up",
@@ -116,13 +116,13 @@ const STEPS = [
 ];
 
 const PRIVACY = [
-  "No account, no sign-up, no profiles.",
+  "No account and no sign-up. A public profile is optional — you choose whether to create one.",
   "Every room is public: there are no private rooms and no private messages in Crawler Room.",
   "Match stores only abstract resonance dimensions — no profile texts, no chat history.",
-  "Your ChatGPT identifier is only stored as a hash — never in plain text.",
+  "Crawler never receives your ChatGPT account or identity. Your room is held by an anonymous Crawler room token, and Crawler stores only a one-way hash of it — never the raw value.",
 
   "Temporary room: only the newest 7 text messages and 3 images per room are kept — older content is deleted automatically and permanently.",
-  "Messages are deleted automatically after 24 hours.",
+  "Room messages are deleted automatically after 24 hours. A published Presence and its Knowledge Core are durable and stay online as long as the subscription runs.",
   "Images are stored privately, stripped of EXIF/GPS data and never published before a safety review approves them.",
   "You only see messages posted in your room after you joined.",
   "Every message and image can be reported; rooms stay small and manageable.",

@@ -61,8 +61,8 @@ type Blocked = {
 
 const order: PlanId[] = ["plus", "pro", "business"];
 
-const nextPlanWhere = (from: PlanId, ok: (p: PlanId) => boolean): PlanId => {
-  const start = order.indexOf(from);
+const nextPlanWhere = (from: UiPlan, ok: (p: PlanId) => boolean): PlanId => {
+  const start = order.indexOf(from as PlanId);
   return order.slice(start + 1).find(ok) ?? "business";
 };
 
@@ -74,33 +74,38 @@ function unlocksFor(current: PlanId, required: PlanId): string[] {
     .slice(0, 5);
 }
 
-type Ctx = { plan: PlanId; guard: (input: GuardInput) => boolean };
+export type PlanState = "loading" | "known" | "unavailable";
+
+export type UiPlan = PlanId | "free";
+
+type Ctx = { plan: UiPlan; state: PlanState; guard: (input: GuardInput) => boolean };
 
 const PlanLimitContext = createContext<Ctx | null>(null);
 
 export function usePlanLimits(): Ctx {
   const ctx = useContext(PlanLimitContext);
-  // Outside the provider nothing is gated — the popup is a UI affordance, the
-  // server stays the enforcing layer.
-  return ctx ?? { plan: "plus", guard: () => true };
+  // Fail closed: without the provider we know nothing about the plan, so no
+  // paid action may proceed. The server stays the enforcing layer either way.
+  return ctx ?? { plan: "free", state: "unavailable", guard: () => false };
 }
 
 export function PlanLimitProvider({ children }: { children: ReactNode }) {
-  const [stored] = usePlan();
-  const [, setPlan] = usePlan();
+  const [stored, , planHydrated] = usePlan();
   const [core] = useCore();
   const navigate = useNavigate();
   const { status: payments } = usePaymentsStatus();
   const [blocked, setBlocked] = useState<Blocked | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // A free workspace is not published yet; the lowest paid plan sets the bar.
-  const localPlan: PlanId = stored === "free" ? "plus" : stored;
+  // Free stays Free. The browser never promotes a plan on its own — only a
+  // server response backed by a verified Paddle webhook/reconciliation does.
+  const localPlan: UiPlan = stored;
+  const planState: PlanState = planHydrated ? "known" : "loading";
 
   /** Open Paddle overlay for the blocked plan; fallback to /publish if unavailable. */
   async function buy(target: PlanId) {
     if (busy) return;
-    setPlan(target);
+    // No optimistic unlock: the plan changes only after Paddle confirms.
     setBlocked(null);
 
     if (isCoreEmpty(core) || !payments.configured) {
@@ -149,10 +154,25 @@ export function PlanLimitProvider({ children }: { children: ReactNode }) {
 
   const guard = useCallback(
     (input: GuardInput): boolean => {
-      const plan = input.currentPlan && order.includes(input.currentPlan) ? input.currentPlan : localPlan;
-      const p = planById(plan);
+      // Plan unknown (still loading or server unavailable) => fail closed.
+      if (!input.currentPlan && planState !== "known") return false;
+      const plan: UiPlan =
+        input.currentPlan && order.includes(input.currentPlan) ? input.currentPlan : localPlan;
+      // Free has no paid allowance at all — every guarded action needs a plan.
+      if (plan === "free") {
+        setBlocked({
+          title: "This is a paid feature",
+          reason: "Building and previewing is free. Publishing and hosting start with Crawler Plus ($5/month).",
+          ...(input.action ? { action: input.action } : {}),
+          current: "plus",
+          required: "plus",
+          unlocks: [],
+        });
+        return false;
+      }
+      const p = planById(plan as PlanId);
       const deny = (b: Omit<Blocked, "current" | "required" | "unlocks"> & { required: PlanId }) => {
-        setBlocked({ ...b, current: plan, unlocks: unlocksFor(plan, b.required) });
+        setBlocked({ ...b, current: plan as PlanId, unlocks: unlocksFor(plan as PlanId, b.required) });
         return false;
       };
 
@@ -237,10 +257,13 @@ export function PlanLimitProvider({ children }: { children: ReactNode }) {
           return true;
       }
     },
-    [localPlan],
+    [localPlan, planState],
   );
 
-  const value = useMemo(() => ({ plan: localPlan, guard }), [localPlan, guard]);
+  const value = useMemo(
+    () => ({ plan: localPlan, state: planState, guard }),
+    [localPlan, planState, guard],
+  );
   const required = blocked ? planById(blocked.required) : null;
 
   return (

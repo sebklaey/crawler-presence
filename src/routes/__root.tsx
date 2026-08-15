@@ -80,6 +80,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
+      // Capabilities must never leak through a Referer header.
+      { name: "referrer", content: "strict-origin-when-cross-origin" },
       { title: "Crawler - AI-readable Presence" },
       {
         name: "description",

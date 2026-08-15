@@ -18,11 +18,32 @@ function signature(value: unknown): string {
   return JSON.stringify(value ?? null);
 }
 
+/**
+ * Reads a one-time `?session=` capability and strips it from the URL right
+ * away, so it never stays in history, referrers, logs or analytics.
+ */
 function tokenFromUrl(): string | null {
   if (typeof window === "undefined") return null;
-  const t = new URLSearchParams(window.location.search).get("session");
-  return t && t.trim() ? t.trim() : null;
+  const params = new URLSearchParams(window.location.search);
+  const t = params.get("session");
+  if (!t || !t.trim()) return null;
+  params.delete("session");
+  const query = params.toString();
+  try {
+    window.history.replaceState(
+      window.history.state,
+      "",
+      `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`,
+    );
+  } catch {
+    /* ignore */
+  }
+  return t.trim();
 }
+
+/** Redacted form for UI, logs and error reports — never the raw capability. */
+export const redactSessionToken = (token: string) =>
+  token ? `${token.slice(0, 9)}…${token.slice(-2)}` : "";
 
 export function rememberSessionToken(token: string) {
   try {

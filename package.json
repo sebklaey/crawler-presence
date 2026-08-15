@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "test": "bun test tests && bun scripts/check-entitlements.ts && bun scripts/check-plan-matrix.ts && bun scripts/check-tool-parity.ts",
+    "test": "bun test tests/identity.test.ts && bun test tests/recovery.test.ts && bun test tests/billing.test.ts && bun test tests/browser-safety.test.ts && bun scripts/check-entitlements.ts && bun scripts/check-plan-matrix.ts && bun scripts/check-tool-parity.ts",
     "check:parity": "bun scripts/check-tool-parity.ts"
   },
   "dependencies": {

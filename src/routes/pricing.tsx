@@ -74,7 +74,7 @@ function PricingPage() {
   const [core] = useCore();
   const navigate = useNavigate();
   const [busy, setBusy] = useState<PlanId | null>(null);
-  const { status: payments } = usePaymentsStatus();
+  const { status: payments, loading: paymentsLoading } = usePaymentsStatus();
   const publishState = usePublishState();
 
   // If the browser already controls a published Presence, the buttons reflect
@@ -168,7 +168,7 @@ function PricingPage() {
         </p>
 
 
-        {!payments.configured ? (
+        {!paymentsLoading && !payments.configured ? (
           <div className="mb-8 rounded-xl border border-dashed border-border bg-secondary/60 px-4 py-3 text-xs text-muted-foreground">
             <strong className="text-foreground">Demo / test mode.</strong> No payment credentials are configured, so
             checkout simulates a subscription locally instead of charging anything. Add Paddle credentials later to

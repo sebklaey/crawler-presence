@@ -2388,6 +2388,36 @@ export type Database = {
           },
         ]
       }
+      presence_recovery_requests: {
+        Row: {
+          contact: string | null
+          created_at: string
+          evidence: string | null
+          id: string
+          resolved_at: string | null
+          slug: string
+          status: string
+        }
+        Insert: {
+          contact?: string | null
+          created_at?: string
+          evidence?: string | null
+          id?: string
+          resolved_at?: string | null
+          slug: string
+          status?: string
+        }
+        Update: {
+          contact?: string | null
+          created_at?: string
+          evidence?: string | null
+          id?: string
+          resolved_at?: string | null
+          slug?: string
+          status?: string
+        }
+        Relationships: []
+      }
       presence_sources: {
         Row: {
           approved: boolean
@@ -2788,11 +2818,14 @@ export type Database = {
           publication_error: string | null
           publication_state: string
           published_version: number
+          recovery_notes: string | null
+          recovery_state: string
           report_email: string | null
           report_frequency: string
           report_last_sent_at: string | null
           session_rotated_at: string | null
           session_token: string | null
+          session_token_hash: string | null
           slug: string
           status: string
           subscription_status: string | null
@@ -2826,11 +2859,14 @@ export type Database = {
           publication_error?: string | null
           publication_state?: string
           published_version?: number
+          recovery_notes?: string | null
+          recovery_state?: string
           report_email?: string | null
           report_frequency?: string
           report_last_sent_at?: string | null
           session_rotated_at?: string | null
           session_token?: string | null
+          session_token_hash?: string | null
           slug: string
           status?: string
           subscription_status?: string | null
@@ -2864,11 +2900,14 @@ export type Database = {
           publication_error?: string | null
           publication_state?: string
           published_version?: number
+          recovery_notes?: string | null
+          recovery_state?: string
           report_email?: string | null
           report_frequency?: string
           report_last_sent_at?: string | null
           session_rotated_at?: string | null
           session_token?: string | null
+          session_token_hash?: string | null
           slug?: string
           status?: string
           subscription_status?: string | null
