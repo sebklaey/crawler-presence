@@ -104,6 +104,8 @@ function adapt(tool: RoomTool) {
     description: tool.description,
     inputSchema: { ...toShape(tool.inputSchema), room_token: TOKEN_FIELD, session_id: SESSION_FIELD },
     annotations: tool.annotations as never,
+    outputSchema: toOutputShape(tool.outputSchema),
+
     handler: async (input: Record<string, unknown> | undefined) => {
       const raw = (input ?? {}) as Record<string, unknown>;
       const { room_token: provided, session_id: sessionId, ...rest } = raw;
