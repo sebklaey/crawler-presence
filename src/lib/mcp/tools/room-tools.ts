@@ -217,14 +217,22 @@ function adapt(tool: RoomTool) {
           const { buildUpgradePayload, detectLanguage } = await import("@/lib/entitlements/upgrade.server");
           const { resolvePlanContext } = await import("@/lib/entitlements/guard.server");
           const ctx = await resolvePlanContext(token);
-          const details = roomError.details as { max?: number; current?: number; limit?: string };
+          const details = roomError.details as {
+            max?: number;
+            current?: number;
+            limit?: string;
+            plan_required?: string;
+            feature?: string;
+          };
           const payload = await buildUpgradePayload({
             tool: tool.name,
-            feature: tool.title,
+            feature: details.feature ?? tool.title,
             currentPlan: ctx.plan,
             language: detectLanguage(rest),
             contextHash: ctx.subjectHash,
+            ...(details.plan_required ? { requiredPlan: details.plan_required } : {}),
             ...(roomError.code === "LIMIT_REACHED" && typeof details.max === "number"
+
               ? {
                   usage: {
                     used: typeof details.current === "number" ? details.current : details.max,

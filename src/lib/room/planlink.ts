@@ -6,14 +6,13 @@
  * plan that the verified Presence currently pays for.
  */
 import type { Db } from "./store";
+import { normalizePlan as normalizeCentral, highestPlan } from "../entitlements/features";
 
 export type RoomPlanCode = "free" | "plus" | "pro" | "business";
 
-const PAID: RoomPlanCode[] = ["plus", "pro", "business"];
-
+/** Single normalizer for every plan value (see entitlements/features.ts). */
 function normalizePlan(value: unknown): RoomPlanCode {
-  const plan = String(value ?? "").toLowerCase();
-  return (PAID as string[]).includes(plan) ? (plan as RoomPlanCode) : "free";
+  return normalizeCentral(value);
 }
 
 /** True when the presence row currently pays for its plan. */
@@ -35,7 +34,7 @@ export async function resolveLinkedPlan(db: Db, subjectHash: string): Promise<{
 }> {
   const { data: link } = await db
     .from("room_plan_links")
-    .select("presence_slug")
+    .select("presence_slug, plan")
     .eq("subject_hash", subjectHash)
     .maybeSingle();
   const slug = (link as any)?.presence_slug as string | undefined;
@@ -72,7 +71,12 @@ export async function resolveLinkedPlan(db: Db, subjectHash: string): Promise<{
   }
 
   if (!presenceIsActive(current)) return { plan: "free", presenceSlug: slug };
-  return { plan: normalizePlan(current.plan), presenceSlug: slug };
+  // Several valid plan sources may exist (link row + reconciled presence):
+  // always take the highest active one, never a downgrade.
+  return {
+    plan: highestPlan(current.plan, (link as any)?.plan) as RoomPlanCode,
+    presenceSlug: slug,
+  };
 
 }
 

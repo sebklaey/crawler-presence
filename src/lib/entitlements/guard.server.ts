@@ -4,7 +4,8 @@
  * The plan is always derived from the anonymous identity and the database —
  * never from anything the caller sends. Frontend checks are cosmetic only.
  */
-import { requiredPlanForTool, meetsPlan, type CustomerPlan } from "./catalog";
+import { requiredPlanForTool, type CustomerPlan } from "./catalog";
+import { hasEntitlement, highestPlan, normalizePlan } from "./features";
 import { buildUpgradePayload, type UpgradePayload } from "./upgrade.server";
 
 export type PlanContext = {
@@ -43,7 +44,7 @@ export async function resolvePlanContext(
         }),
     ]);
     return {
-      plan: plan as CustomerPlan,
+      plan: normalizePlan(plan),
       isPlatformAdmin: roles.some((r) => r.role === "platform_admin"),
       subjectHash: identity.subjectHash,
     };
@@ -56,10 +57,7 @@ export async function resolvePlanContext(
  * Presence it published), never from anything the caller sends.
  */
 export async function resolvePlanForSession(sessionToken: string): Promise<CustomerPlan> {
-  const normalize = (value: unknown): CustomerPlan => {
-    const plan = String(value ?? "free").toLowerCase();
-    return (["plus", "pro", "business"].includes(plan) ? plan : "free") as CustomerPlan;
-  };
+  const normalize = (value: unknown): CustomerPlan => normalizePlan(value);
   const stillActive = (status: unknown, periodEnd: unknown): boolean => {
     const s = String(status ?? "active");
     if (!["canceled", "paused", "expired"].includes(s)) return true;
@@ -165,11 +163,26 @@ export async function linkSessionPlanToRoomToken(
       .maybeSingle();
     const slug = (data as { slug?: string } | null)?.slug;
     if (!slug) return plan;
+
+    // Idempotent and never a downgrade: an existing link keeps its plan when it
+    // is higher than the one this session proves.
+    const { data: existing } = await db
+      .from("room_plan_links")
+      .select("plan")
+      .eq("subject_hash", identity.subjectHash)
+      .maybeSingle();
+    const merged = highestPlan(plan, (existing as { plan?: string } | null)?.plan);
     await db.from("room_plan_links").upsert(
-      { subject_hash: identity.subjectHash, presence_slug: slug, plan, updated_at: new Date().toISOString() },
+      {
+        subject_hash: identity.subjectHash,
+        presence_slug: slug,
+        plan: merged,
+        updated_at: new Date().toISOString(),
+      },
       { onConflict: "subject_hash" },
     );
-    return plan;
+    return merged;
+
   } catch {
     return "free";
   }
@@ -196,7 +209,7 @@ export async function checkToolAccess(input: {
       input.sessionToken,
       input.subjectHash ?? null,
     );
-    if (required !== "admin" && meetsPlan(sessionPlan, required)) return null;
+    if (required !== "admin" && hasEntitlement(sessionPlan, required)) return null;
   }
 
   const ctx = await resolvePlanContext(input.roomToken ?? null, input.subjectHash ?? null);
@@ -211,7 +224,7 @@ export async function checkToolAccess(input: {
       contextHash: ctx.subjectHash,
     });
   }
-  if (ctx.isPlatformAdmin || meetsPlan(ctx.plan, required)) return null;
+  if (ctx.isPlatformAdmin || hasEntitlement(ctx.plan, required)) return null;
 
   return buildUpgradePayload({
     tool: input.tool,

@@ -6,6 +6,14 @@
  * (HMAC of the MCP subject) and the database.
  */
 import { roomError } from "./errors";
+import {
+  featureMapFor,
+  hasEntitlement,
+  normalizePlan,
+  planRankOf,
+  requiredPlanForFeature,
+} from "../entitlements/features";
+
 import { getPlanByCode, listPlans, type PlanRow } from "./plans";
 import type { Db } from "./store";
 
@@ -91,26 +99,34 @@ export async function resolveEntitlements(db: Db, subjectHash: string): Promise<
 
   // The plan comes from the linked, still-paying Crawler Presence — never from
   // anything the caller sends.
-  const effectivePlan = await getPlanByCode(db, link.plan);
-  const freePlan = link.plan === "free" ? effectivePlan : await getPlanByCode(db, "free");
+  const planCode = normalizePlan(link.plan);
+  const effectivePlan = await getPlanByCode(db, planCode);
   const allPlans = await listPlans(db);
 
-  // Start from the full feature catalogue as "locked", then unlock what the
-  // active plan includes.
+  // Plan hierarchy: a plan inherits every feature and every limit of all
+  // cheaper plans. The code-level feature matrix (features.ts) is the binding
+  // source of truth and is applied last, so a missing/legacy database row can
+  // never lock a higher plan out of a lower plan's feature.
   const entitlements: Record<string, boolean> = {};
   for (const plan of allPlans) {
     for (const key of Object.keys(plan.entitlements ?? {})) entitlements[key] = false;
   }
-  for (const [key, value] of Object.entries(freePlan.entitlements ?? {})) {
-    entitlements[key] = Boolean(value);
-  }
-  for (const [key, value] of Object.entries(effectivePlan.entitlements ?? {})) {
-    entitlements[key] = Boolean(value);
-  }
+  const inherited = [...allPlans]
+    .filter((plan) => hasEntitlement(planCode, normalizePlan(plan.code)))
+    .sort((a, b) => planRankOf(a.code) - planRankOf(b.code));
 
-  const limits: Record<string, number> = { ...(freePlan.limits ?? {}) };
-  for (const [key, value] of Object.entries(effectivePlan.limits ?? {})) {
-    limits[key] = value;
+  const limits: Record<string, number> = {};
+  for (const plan of inherited) {
+    for (const [key, value] of Object.entries(plan.entitlements ?? {})) {
+      if (value) entitlements[key] = true;
+    }
+    for (const [key, value] of Object.entries(plan.limits ?? {})) {
+      if (typeof value === "number") limits[key] = Math.max(limits[key] ?? 0, value);
+    }
+  }
+  for (const [key, value] of Object.entries(featureMapFor(planCode))) {
+    if (value) entitlements[key] = true;
+    else if (entitlements[key] !== true) entitlements[key] = false;
   }
 
   for (const row of (overrides ?? []) as any[]) {
@@ -124,7 +140,7 @@ export async function resolveEntitlements(db: Db, subjectHash: string): Promise<
     subjectHash,
     customAlias,
     plan: effectivePlan,
-    status: link.plan === "free" ? "free" : "active",
+    status: planCode === "free" ? "free" : "active",
     cancelAtPeriodEnd: false,
     currentPeriodEnd: null,
     inGrace: false,
@@ -144,16 +160,24 @@ export async function requiredPlanFor(db: Db, key: string): Promise<PlanRow | nu
   return ordered.find((plan) => plan.entitlements?.[key]) ?? null;
 }
 
-/** Blocks a feature that the active subscription does not include. */
+/**
+ * Blocks a feature that the active subscription does not include.
+ * The required plan comes from the central matrix, so the error always names
+ * the plan that really unlocks the feature (Pro for communities, not Plus).
+ */
 export function requireEntitlement(ctx: AccountContext, key: string): void {
-  if (ctx.entitlements[key] !== true) {
-    throw roomError("PLAN_REQUIRED", undefined, {
-      feature: publicFeatureKey(key),
-      current_plan: ctx.plan.code,
-      upgrade_url: UPGRADE_URL,
-    });
-  }
+  const required = requiredPlanForFeature(key);
+  if (hasEntitlement(ctx.plan.code, required)) return;
+  if (ctx.entitlements[key] === true) return;
+  throw roomError("PLAN_REQUIRED", undefined, {
+    feature: publicFeatureKey(key),
+    plan_required: required,
+    required_plan: required,
+    current_plan: normalizePlan(ctx.plan.code),
+    upgrade_url: UPGRADE_URL,
+  });
 }
+
 
 export function requireWritablePaidFeatures(ctx: AccountContext): void {
   if (ctx.readOnlyPaidFeatures) {
