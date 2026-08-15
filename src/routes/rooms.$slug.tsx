@@ -68,8 +68,9 @@ function PairRoomPage() {
         <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Public Match Room</p>
         <h1 className="display mt-3 text-3xl">{handles.join(" · ")}</h1>
         <p className="mt-3 text-sm text-muted-foreground">
-          Everyone can read this conversation. Only {handles.join(" and ")} can post. Messages disappear
-          after 24 hours; published Presences are durable and unaffected.
+          Everyone can read this conversation. Only {handles.join(" and ")} can post. Room messages are deleted after at
+          most 24 hours, and only the newest few per room are kept. Published Presences are durable and unaffected —
+          see the retention table in the privacy notice.
         </p>
 
         <div className="mt-10 space-y-4">

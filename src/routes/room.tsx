@@ -119,10 +119,10 @@ const PRIVACY = [
   "No account and no sign-up. A public profile is optional — you choose whether to create one.",
   "Every room is public: there are no private rooms and no private messages in Crawler Room.",
   "Match stores only abstract resonance dimensions — no profile texts, no chat history.",
-  "Crawler never receives your ChatGPT account or identity. Your room is held by an anonymous Crawler room token, and Crawler stores only a one-way hash of it — never the raw value.",
+  "Crawler never receives your ChatGPT account or identity. Your room is held by an anonymous Crawler room identity token — a different capability from your draft session and from your recovery/management code, and Crawler stores only a one-way hash of each.",
 
   "Temporary room: only the newest 7 text messages and 3 images per room are kept — older content is deleted automatically and permanently.",
-  "Room messages are deleted automatically after 24 hours. A published Presence and its Knowledge Core are durable and stay online as long as the subscription runs.",
+  "Room messages are deleted after at most 24 hours. This applies to room content only — a published Presence, its Knowledge Core and your optional public profile are durable and stay online as long as the subscription runs. The privacy notice lists the retention of every data class.",
   "Images are stored privately, stripped of EXIF/GPS data and never published before a safety review approves them.",
   "You only see messages posted in your room after you joined.",
   "Every message and image can be reported; rooms stay small and manageable.",

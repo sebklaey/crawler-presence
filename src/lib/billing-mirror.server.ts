@@ -10,6 +10,7 @@
  * Writes are upserts keyed on the provider id, so an at-least-once or
  * out-of-order delivery can never create duplicates.
  */
+import { evaluateSubscription, isStaleEvent } from "./billing/subscription-state";
 import { db } from "./mcp/db.server";
 
 export type PaddleEnv = "sandbox" | "live";
@@ -33,24 +34,19 @@ export type MirroredSubscription = {
 /**
  * Does this subscription currently grant paid access?
  *
- * `active` and `trialing` grant access. A scheduled change to cancel or pause
- * does NOT revoke anything — the customer paid for the period they are in.
- * Access ends only when the status itself is `canceled`. `past_due` keeps
- * access during the provider's dunning retries; `paused` does not.
+ * Delegates to the single state machine in `./billing/subscription-state` —
+ * an unrecognised status is NOT access and NOT Free, it is an unknown state
+ * the caller must surface as temporarily unavailable.
  */
 export function grantsAccess(subscription: {
   status?: string | null;
   currentPeriodEnd?: string | null;
 } | null | undefined): boolean {
-  const status = subscription?.status ?? null;
-  if (!status) return false;
-  if (status === "active" || status === "trialing" || status === "past_due") return true;
-  if (status === "canceled") {
-    // A cancelled subscription keeps access until the paid period runs out.
-    const end = subscription?.currentPeriodEnd;
-    return Boolean(end && new Date(end).getTime() > Date.now());
-  }
-  return false;
+  return evaluateSubscription({
+    status: subscription?.status,
+    currentPeriodEnd: subscription?.currentPeriodEnd,
+    treatMissingAsNone: true,
+  }).grantsAccess;
 }
 
 export async function mirrorCustomer(
@@ -98,9 +94,21 @@ export function subscriptionFromEvent(subscription: Record<string, any>): Mirror
 export async function mirrorSubscription(
   input: MirroredSubscription,
   environment: PaddleEnv,
-): Promise<void> {
+  occurredAt?: string | null,
+): Promise<{ stale: boolean }> {
   const supabase = db();
-  if (!supabase) return;
+  if (!supabase) return { stale: false };
+
+  // Monotonic ordering: a redelivered older event must never regress state.
+  if (occurredAt) {
+    const { data: current } = await supabase
+      .from("billing_subscriptions")
+      .select("last_event_occurred_at")
+      .eq("subscription_id", input.subscriptionId)
+      .maybeSingle();
+    const stored = (current as { last_event_occurred_at?: string | null } | null)?.last_event_occurred_at;
+    if (isStaleEvent(stored, occurredAt)) return { stale: true };
+  }
 
   const { error } = await supabase.from("billing_subscriptions").upsert(
     {
@@ -116,11 +124,13 @@ export async function mirrorSubscription(
       scheduled_change_action: input.scheduledChangeAction,
       scheduled_change_at: input.scheduledChangeAt,
       canceled_at: input.status === "canceled" ? new Date().toISOString() : null,
+      last_event_occurred_at: occurredAt ?? null,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "subscription_id" },
   );
   if (error) throw new Error(`billing_subscriptions upsert failed: ${error.message}`);
+  return { stale: false };
 }
 
 /** Server-side lookup used by the accountless management portal. */

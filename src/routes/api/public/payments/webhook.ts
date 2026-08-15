@@ -55,7 +55,12 @@ async function planOf(subscription: AnyRecord): Promise<string | null> {
   return planFromPriceExternalId(externalId);
 }
 
-async function handleSubscription(subscription: AnyRecord, env: PaddleEnv, forcedStatus?: string) {
+async function handleSubscription(
+  subscription: AnyRecord,
+  env: PaddleEnv,
+  forcedStatus?: string,
+  occurredAt?: string | null,
+) {
   const shape = subscriptionShape(subscription);
   const ref = intentRefOf(subscription);
   const status = forcedStatus ?? shape.status;
@@ -66,7 +71,17 @@ async function handleSubscription(subscription: AnyRecord, env: PaddleEnv, force
   const { subscriptionFromEvent, mirrorSubscription } = await import("@/lib/billing-mirror.server");
   const mirrored = subscriptionFromEvent(subscription);
   if (mirrored) {
-    await mirrorSubscription({ ...mirrored, status: status ?? mirrored.status, plan }, env);
+    const result = await mirrorSubscription(
+      { ...mirrored, status: status ?? mirrored.status, plan },
+      env,
+      occurredAt ?? null,
+    );
+    // A stale (out-of-order) delivery is acknowledged but must not regress the
+    // newer state we already stored.
+    if (result.stale) {
+      console.log("[crawler] ignoring stale subscription event for", mirrored.subscriptionId);
+      return;
+    }
   }
 
   if (ref) {
@@ -150,10 +165,10 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
             case "subscription.updated":
             case "subscription.activated":
             case "subscription.resumed":
-              await handleSubscription(event.data, env);
+              await handleSubscription(event.data, env, undefined, event.occurredAt);
               break;
             case "subscription.canceled":
-              await handleSubscription(event.data, env, "canceled");
+              await handleSubscription(event.data, env, "canceled", event.occurredAt);
               break;
             case "customer.created":
             case "customer.updated": {

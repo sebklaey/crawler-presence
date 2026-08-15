@@ -173,11 +173,12 @@ function PricingPage() {
 
         {!paymentsLoading && !payments.configured ? (
           <div className="mb-8 rounded-xl border border-dashed border-border bg-secondary/60 px-4 py-3 text-xs text-muted-foreground">
-            <strong className="text-foreground">Demo / test mode.</strong> No payment credentials are configured, so
-            checkout simulates a subscription locally instead of charging anything. Add Paddle credentials later to
-            switch the same flow to live checkout.
+            <strong className="text-foreground">Checkout temporarily unavailable.</strong> The payment provider is not
+            reachable from this environment right now, so no plan can be purchased or activated here. Building and
+            previewing stay free; nothing is simulated and no plan is unlocked without a confirmed payment.
           </div>
         ) : null}
+
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <div className="flex flex-col rounded-2xl border border-border bg-card p-6">

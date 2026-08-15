@@ -12,8 +12,8 @@ const INSTALL_STEPS = [
     body: "In ChatGPT open Settings → Security and login (Data controls on some accounts) and enable Developer mode. Custom MCP connectors only appear once it is on.",
   },
   {
-    title: "Open Plugins",
-    body: "Go to Settings → Plugins and press the plus button to add a new connector.",
+    title: "Open Connectors",
+    body: "Go to Settings → Connectors (called Plugins in some ChatGPT builds) and press the plus button to add a new connector. If the entry is missing, reload ChatGPT after enabling developer mode.",
   },
   {
     title: "Fill in the details",
@@ -29,7 +29,7 @@ const INSTALL_STEPS = [
   },
   {
     title: "Reconnect after updates",
-    body: "Crawler ships new tools regularly. If a tool is missing or a description looks stale, open Settings → Plugins → Crawler and press Refresh (or remove and re-add the connector) so ChatGPT reloads the metadata.",
+    body: "Crawler ships new tools regularly. If a tool is missing or a description looks stale, open Settings → Connectors → Crawler and refresh it (or remove and re-add the connector) so ChatGPT reloads the tool metadata. Nothing is lost: your Presence and rooms are held by capabilities, not by the connector entry.",
   },
 ];
 
