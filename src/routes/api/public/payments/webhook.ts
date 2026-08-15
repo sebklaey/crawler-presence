@@ -60,6 +60,7 @@ async function handleSubscription(
   env: PaddleEnv,
   forcedStatus?: string,
   occurredAt?: string | null,
+  eventId?: string | null,
 ) {
   const shape = subscriptionShape(subscription);
   const ref = intentRefOf(subscription);
@@ -75,11 +76,17 @@ async function handleSubscription(
       { ...mirrored, status: status ?? mirrored.status, plan },
       env,
       occurredAt ?? null,
+      eventId ?? null,
     );
-    // A stale (out-of-order) delivery is acknowledged but must not regress the
-    // newer state we already stored.
-    if (result.stale) {
-      console.log("[crawler] ignoring stale subscription event for", mirrored.subscriptionId);
+    // Superseded or refused deliveries must not touch downstream fulfilment:
+    // a stale event is older than what we stored, and a rejected one cannot be
+    // ordered safely at all. Neither may regress verified state.
+    if (!result.applied) {
+      console.log(
+        "[crawler] subscription event not applied:",
+        result.rejected ?? "stale",
+        mirrored.subscriptionId,
+      );
       return;
     }
   }
@@ -135,12 +142,22 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
 
         // Idempotency: claim the event id before doing any work. A retry or a
         // replay of the same event must never publish or charge twice.
-        const { claimPaymentEvent, finishPaymentEvent } = await import("@/lib/payment-events.server");
+        const { claimPaymentEvent, finishPaymentEvent, sanitizeErrorCode } =
+          await import("@/lib/payment-events.server");
         const eventId = event.id ?? str(event.data["event_id"]);
         if (!eventId) {
           console.error("[crawler] payment event without id:", event.type);
           return new Response("Webhook error", { status: 400 });
         }
+        // Ordering precondition: a subscription event without a usable
+        // occurred_at can never be ordered against stored state. Reject it
+        // BEFORE claiming, so it neither consumes an attempt nor mutates state.
+        const { isValidOccurredAt } = await import("@/lib/billing-mirror.server");
+        if (event.type.startsWith("subscription.") && !isValidOccurredAt(event.occurredAt)) {
+          console.error("[crawler] subscription event without valid occurred_at:", event.type);
+          return new Response("Missing occurred_at", { status: 400 });
+        }
+
         const correlationId = `whk_${crypto.randomUUID().replace(/-/g, "").slice(0, 16)}`;
         const claim = await claimPaymentEvent({
           eventId,
@@ -177,10 +194,10 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
             case "subscription.updated":
             case "subscription.activated":
             case "subscription.resumed":
-              await handleSubscription(event.data, env, undefined, event.occurredAt);
+              await handleSubscription(event.data, env, undefined, event.occurredAt, eventId);
               break;
             case "subscription.canceled":
-              await handleSubscription(event.data, env, "canceled", event.occurredAt);
+              await handleSubscription(event.data, env, "canceled", event.occurredAt, eventId);
               break;
             case "customer.created":
             case "customer.updated": {
@@ -195,13 +212,21 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
             default:
               console.log("[crawler] unhandled payment event:", event.type);
           }
-          await finishPaymentEvent(eventId, undefined, correlationId);
+          const finished = await finishPaymentEvent(eventId, claim.claimToken, undefined, correlationId);
+          if (!finished.applied) {
+            // We processed the event but could not record that fact against our
+            // own lease (another worker reclaimed it, or storage is down). That
+            // is an observable conflict, never a silent acknowledgement.
+            console.error("[crawler] finalize conflict:", finished.reason, correlationId);
+            return new Response("Finalize conflict", { status: 503 });
+          }
           return Response.json({ received: true, correlation_id: correlationId });
         } catch (e) {
-          console.error("[crawler] payments webhook error:", correlationId, e);
-          // Only a sanitized code is persisted; the event stays retryable until
-          // the bounded attempt budget is spent.
-          await finishPaymentEvent(eventId, e, correlationId);
+          // Only an allowlisted code is logged and persisted — never the raw
+          // message, which can quote keys, tokens, emails or URLs.
+          const code = sanitizeErrorCode(e);
+          console.error("[crawler] payments webhook error:", correlationId, code);
+          await finishPaymentEvent(eventId, claim.claimToken, e, correlationId);
           return new Response("Webhook error", { status: 500 });
         }
       },
