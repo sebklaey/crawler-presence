@@ -54,7 +54,12 @@ const REPORT_REASONS = [
 ] as const;
 
 export const plusInputSchemas = {
-  get_my_plan: z.object({ recovery_code: z.string().min(6).max(200).optional() }).strict(),
+  get_my_plan: z
+    .object({
+      recovery_code: z.string().min(6).max(200).optional(),
+      session_id: z.string().min(6).max(200).optional(),
+    })
+    .strict(),
   create_public_room: z
     .object({
       title: z.string().min(2).max(120),
@@ -168,6 +173,30 @@ export async function handleGetMyPlan(input: unknown, meta: McpMeta) {
 
   let linked: { plan: string; presenceSlug: string } | null = null;
   let linkError: string | null = null;
+
+  // A paid draft session (sess_…) is proof of entitlement on its own. The
+  // wrapper already forwards it, and passing it directly also works.
+  const sessionId =
+    data.session_id ??
+    (typeof (meta as Record<string, unknown> | undefined)?.["crawler/session_id"] === "string"
+      ? String((meta as Record<string, unknown>)["crawler/session_id"])
+      : null);
+  let sessionPlan: string | null = null;
+  let sessionError: string | null = null;
+  if (sessionId) {
+    const { linkSessionPlanToRoomToken, resolvePlanForSession } = await import(
+      "../entitlements/guard.server"
+    );
+    const { readSubject } = await import("./identity");
+    sessionPlan = await resolvePlanForSession(sessionId);
+    if (sessionPlan === "free") {
+      sessionError =
+        "Zu dieser Session ist kein aktives bezahltes Abo hinterlegt. Nutze den Wiederherstellungscode der bezahlten Presence (recovery_code).";
+    } else {
+      await linkSessionPlanToRoomToken(readSubject(meta), sessionId);
+    }
+  }
+
   if (data.recovery_code) {
     const { linkPlanByRecoveryCode } = await import("./planlink");
     linked = await linkPlanByRecoveryCode(db, identity.subjectHash, data.recovery_code);
@@ -191,6 +220,9 @@ export async function handleGetMyPlan(input: unknown, meta: McpMeta) {
     price_usd: ctx.plan.price_cents / 100,
     linked_presence: linked?.presenceSlug ?? null,
     link_error: linkError,
+    session_id_checked: sessionId ? true : false,
+    session_plan: sessionPlan,
+    session_link_error: sessionError,
     features: publicFeatures(ctx.entitlements),
     limits: ctx.limits,
     usage,

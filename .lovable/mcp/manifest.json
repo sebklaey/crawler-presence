@@ -2780,6 +2780,375 @@
         "outputSchema": null
       },
       {
+        "name": "start_love_interview",
+        "title": "Crawler Love interview",
+        "description": "Use this when a Pro or Business user explicitly wants to begin the Crawler Love compatibility interview. Crawler Love is a voluntary romantic mode with its own consent, its own profile and its own matching pool — never derived from the general Crawler profile, earlier chats or the Knowledge Core. Ask the consent points and the adult confirmation before calling with consent: true.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "consent": {
+              "type": "boolean",
+              "description": "The user explicitly agreed to all consent points."
+            },
+            "adult_self_attestation": {
+              "type": "boolean",
+              "description": "The user confirmed being 18 or older. This is a self-confirmation, never a verified age."
+            },
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+            },
+            "session_id": {
+              "type": "string",
+              "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "answer_love_interview_question",
+        "title": "Answer Love interview question",
+        "description": "Use this when the user wants to answer or skip the current Crawler Love interview question. Ask exactly one question per step, never several at once, and never invent an answer the user did not give.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false,
+          "idempotentHint": true
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "interview_id": {
+              "type": "string",
+              "description": "Interview reference from the previous step."
+            },
+            "question_id": {
+              "type": "string",
+              "description": "Id of the question being answered."
+            },
+            "answer": {
+              "type": "string",
+              "description": "The user's own words or chosen options, comma separated."
+            },
+            "skip": {
+              "type": "boolean",
+              "description": "True when the user prefers to skip this question."
+            },
+            "idempotency_key": {
+              "type": "string",
+              "description": "Optional key so a repeat does not duplicate."
+            },
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+            },
+            "session_id": {
+              "type": "string",
+              "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_love_interview_status",
+        "title": "Love interview status",
+        "description": "Use this when the user wants to continue or review their own Crawler Love interview progress. Read-only and always limited to the current person.",
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false,
+          "idempotentHint": true
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+            },
+            "session_id": {
+              "type": "string",
+              "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "review_love_profile",
+        "title": "Review Love Profile",
+        "description": "Use this when the user wants to review the human-readable Love Profile generated from their completed interview. Never reveals the internal compatibility vector, raw answers or scores.",
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false,
+          "idempotentHint": true
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+            },
+            "session_id": {
+              "type": "string",
+              "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "activate_love_profile",
+        "title": "Activate Love Profile",
+        "description": "Use this when the user explicitly approves their Love Profile and wants to become discoverable for Crawler Love matching. Requires two confirmations: discoverability and the publicly readable Pair Room.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": true,
+          "idempotentHint": true
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "profile_version": {
+              "type": "number",
+              "description": "Version of the reviewed profile."
+            },
+            "confirm_discoverability": {
+              "type": "boolean"
+            },
+            "confirm_public_pair_room": {
+              "type": "boolean"
+            },
+            "idempotency_key": {
+              "type": "string"
+            },
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+            },
+            "session_id": {
+              "type": "string",
+              "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "find_love_candidate",
+        "title": "Find a Love candidate",
+        "description": "Use this when an eligible user wants Crawler to privately calculate one potential Love match without contacting that person. Suggests at most one candidate, sends nothing and never shows a browsable list.",
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+            },
+            "session_id": {
+              "type": "string",
+              "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "send_love_match_request",
+        "title": "Send Love Match request",
+        "description": "Use this when the user has reviewed one suggested candidate and explicitly wants to send that person a Love Match request. Never call this automatically after find_love_candidate.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": true,
+          "idempotentHint": true
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "candidate_reference": {
+              "type": "string",
+              "description": "Reference from find_love_candidate."
+            },
+            "confirmation": {
+              "type": "boolean",
+              "description": "The user explicitly confirmed sending."
+            },
+            "idempotency_key": {
+              "type": "string"
+            },
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+            },
+            "session_id": {
+              "type": "string",
+              "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+            }
+          },
+          "required": [
+            "candidate_reference"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "respond_to_love_match",
+        "title": "Respond to a Love Match",
+        "description": "Use this when the recipient wants to accept, decline, block or report a Love Match request. Only a mutual accept creates the publicly readable Pair Room.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": true,
+          "openWorldHint": true,
+          "idempotentHint": true
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "match_request_id": {
+              "type": "string"
+            },
+            "response": {
+              "type": "string"
+            },
+            "confirm_public_pair_room": {
+              "type": "boolean"
+            },
+            "idempotency_key": {
+              "type": "string"
+            },
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+            },
+            "session_id": {
+              "type": "string",
+              "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+            }
+          },
+          "required": [
+            "match_request_id",
+            "response"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_love_match_requests",
+        "title": "My Love Match requests",
+        "description": "Use this when the user wants to see their own open and past Crawler Love match requests and their status. Read-only, never shows scores or other people's profiles.",
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false,
+          "idempotentHint": true
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+            },
+            "session_id": {
+              "type": "string",
+              "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "pause_love_profile",
+        "title": "Pause Love Profile",
+        "description": "Use this when the user wants to step out of Crawler Love matching without deleting anything. The profile is removed from new match calculations immediately.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false,
+          "idempotentHint": true
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+            },
+            "session_id": {
+              "type": "string",
+              "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "delete_love_profile",
+        "title": "Delete Love Profile",
+        "description": "Use this when the user wants to permanently delete their Crawler Love data: interview draft, Love summary, protected compatibility pattern, discoverability and open match requests. Always ask for an explicit confirmation first.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "confirm": {
+              "type": "boolean",
+              "description": "The user explicitly confirmed deletion."
+            },
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+            },
+            "session_id": {
+              "type": "string",
+              "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
         "name": "create_resonance_pattern",
         "title": "Schwingungsmuster erstellen",
         "description": "Legt ein anonymes Schwingungsmuster für Crawler Match an (Pro-Abo). Führe zuerst ein natürliches Gespräch über Interessen, Arbeitsweise und gewünschte Verbindung und leite daraus die abstrakten Dimensionen ab. Crawler speichert keine Profiltexte und keine Chatverläufe, nur die abstrakten Match-Dimensionen.",

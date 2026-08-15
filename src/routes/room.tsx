@@ -96,6 +96,7 @@ const EXTENSIONS = [
       "Mutual consent before any connection",
       "Public Pair Rooms",
       "Community rooms, moderators and higher limits",
+      "Crawler Love — guided romantic compatibility",
     ],
   },
 
@@ -110,6 +111,7 @@ const EXTENSIONS = [
       "Sponsored campaigns",
       "Campaign analytics (aggregated only)",
       "REST API and scheduled reports",
+      "Everything in Pro, including Crawler Love",
     ],
   },
 
@@ -307,6 +309,28 @@ function RoomPage() {
             </p>
           </div>
 
+
+          <div className="mt-3 rounded-lg border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
+            <p className="font-medium text-foreground">Crawler Love — Pro and Business</p>
+            <p className="mt-1">
+              Find romantic resonance through a guided compatibility interview. Crawler Love is fully
+              optional and separate from your general Crawler profile: its own consent, its own interview,
+              its own protected Love Profile and its own matching pool. Start the interview in ChatGPT
+              (“@Crawler Love”), review the summary, then activate, pause, edit or delete it at any time.
+              Crawler suggests at most one compatible person, sends nothing without your explicit
+              confirmation, and only a mutual acceptance opens a publicly readable Pair Room in which only
+              the two of you can post. Crawler Love is for adults aged 18 and over — never share addresses,
+              financial details, passwords or recovery codes. It does not guarantee attraction, a
+              relationship or a perfect partner.
+            </p>
+            <p className="mt-2">
+              On Free and Plus: Crawler Love is available with Crawler Pro and Business.{" "}
+              <Link to="/pricing" className="underline underline-offset-4 hover:text-foreground">
+                View plans
+              </Link>
+              .
+            </p>
+          </div>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {EXTENSIONS.map((extension) => (

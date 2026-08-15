@@ -81,6 +81,39 @@ function PrivacyPage() {
           </section>
 
           <section>
+            <h2 className="mb-2 text-base font-medium text-foreground">3a. Crawler Love (optional, Pro and Business)</h2>
+            <p>
+              Crawler Love is entirely voluntary and only starts after you give explicit consent inside the Love
+              interview. It is separate from your general Crawler profile and has its own data:
+            </p>
+            <ul className="mt-2 list-disc space-y-2 pl-5">
+              <li>
+                <span className="text-foreground">Love interview answers</span> — the free-text and choice answers
+                you give in the guided interview. They are encrypted at rest, never shown to other users, never
+                published and never sent to another person.
+              </li>
+              <li>
+                <span className="text-foreground">Love Resonance Profile</span> — a derived, protected compatibility
+                vector plus the short public-facing summary you approve. Only the summary and your handle can ever
+                be shown to a potential match.
+              </li>
+              <li>
+                <span className="text-foreground">Match state</span> — pending, accepted or declined requests, an
+                expiry timestamp and a block list. Internal compatibility scores stay server-side and are never
+                disclosed to any user.
+              </li>
+            </ul>
+            <p className="mt-3">
+              Matching runs entirely server-side. Nobody sees your raw answers, your vector or your score. You can
+              pause, edit or delete your Love Profile at any time; deletion removes the answers, the vector and the
+              open match requests. Unanswered Love interview drafts and expired match requests are cleaned up
+              automatically. Crawler Love is for adults aged 18 and over. A mutual acceptance opens a publicly
+              readable Pair Room — messages posted there are public, follow the standard 24-hour room retention and
+              should never contain addresses, financial details, passwords or recovery codes.
+            </p>
+          </section>
+
+          <section>
             <h2 className="mb-2 text-base font-medium text-foreground">4. Published content is public</h2>
             <p>
               Anything you publish to a Presence (files under /p/…) is intentionally public and readable by people,

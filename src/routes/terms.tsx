@@ -111,6 +111,23 @@ function TermsPage() {
           </section>
 
           <section>
+            <h2 className="mb-2 text-base font-medium text-foreground">6a. Crawler Love</h2>
+            <p>
+              Crawler Love is an optional compatibility experience included in the Pro and Business subscriptions and
+              restricted to adults aged 18 and over. Participation is voluntary and requires explicit in-app consent.
+              Crawler compares protected, voluntarily created Love Profiles and may suggest possible mutual
+              resonance; it does not guarantee attraction, compatibility, a match, a relationship or a perfect
+              partner, and it is not a dating, matchmaking or introduction agency service. No contact is created
+              without both people accepting. A mutual acceptance opens a publicly readable Pair Room — everything
+              posted there is public. Never share addresses, financial details, passwords or recovery codes, and meet
+              strangers safely and at your own risk. You can pause or delete your Love Profile at any time; abusive,
+              harassing, sexualised-minor, commercial or impersonating use leads to immediate removal from Crawler
+              Love and may lead to termination. If your plan is downgraded or ends, your Love Profile is paused and
+              stops matching.
+            </p>
+          </section>
+
+          <section>
             <h2 className="mb-2 text-base font-medium text-foreground">7. Intellectual property</h2>
             <p>
               SEBKLAEY retains all rights in Crawler itself — software, generation logic, documentation and branding.

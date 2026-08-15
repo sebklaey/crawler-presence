@@ -12,6 +12,7 @@ import { PERSONAL_TOOLS } from "@/lib/room/mcp.personal";
 import { PLUS_TOOLS } from "@/lib/room/mcp.plus";
 import { PROFILE_TOOLS } from "@/lib/room/mcp.profile";
 import { SUGAR_TOOLS } from "@/lib/room/mcp.sugar";
+import { LOVE_TOOLS } from "@/lib/room/mcp.love";
 import { MATCH_TOOLS } from "@/lib/room/match/mcp";
 import { SOCIAL_TOOLS } from "@/lib/room/social/mcp";
 import { toRoomError } from "@/lib/room/errors";
@@ -132,7 +133,7 @@ function adapt(tool: RoomTool) {
           };
         }
 
-        const result = await tool.handler(rest, { "room/token": token });
+        const result = await tool.handler(rest, { "room/token": token, "crawler/session_id": session });
         let text = tool.summary(result);
         if (issued) {
           text += `\n\nAnonymes room_token (bitte speichern und bei jedem weiteren room-Aufruf mitgeben): ${token}`;
@@ -210,6 +211,7 @@ const ALL_ROOM_TOOLS = [
   ...(MATCH_TOOLS as unknown as RoomTool[]),
   ...(SOCIAL_TOOLS as unknown as RoomTool[]),
   ...(SUGAR_TOOLS as unknown as RoomTool[]),
+  ...(LOVE_TOOLS as unknown as RoomTool[]),
 ];
 
 const seen = new Set<string>();

@@ -71,6 +71,7 @@ export const PLAN_INFO: Record<EntitlementPlan, PlanInfo> = {
     headline: "Match, grow and build a community.",
     benefits: [
       "Crawler Match with anonymous resonance patterns",
+      "Crawler Love: guided compatibility interview and mutual romantic matching",
       "Public Pair Rooms",
       "200 content records, 50 documents",
       "90-day analytics, insights and improvement recommendations",
@@ -85,6 +86,7 @@ export const PLAN_INFO: Record<EntitlementPlan, PlanInfo> = {
     headline: "Operate organizations, campaigns and data at scale.",
     benefits: [
       "5,000 content records, unlimited documents",
+      "Everything in Pro, including Crawler Love",
       "Organizations and shared team access",
       "Sponsored campaigns and campaign analytics",
       "REST API and scheduled reports",
@@ -181,6 +183,11 @@ export const TOOL_PLANS: Record<string, EntitlementPlan> = {
   get_checkout_link: "free",
   get_status: "free",
   get_analytics: "free",
+  get_love_interview_status: "free",
+  review_love_profile: "free",
+  list_love_match_requests: "free",
+  pause_love_profile: "free",
+  delete_love_profile: "free",
 
   /* ---------------------------------- plus --------------------------------- */
   publish_presence: "plus",
@@ -202,6 +209,14 @@ export const TOOL_PLANS: Record<string, EntitlementPlan> = {
   send_pair_message: "pro",
   close_pair_room: "pro",
   improve_presence: "pro",
+  // Crawler Love (Pro and Business). Review, pause and delete stay reachable
+  // after a downgrade so nobody is locked out of their own Love data.
+  start_love_interview: "pro",
+  answer_love_interview_question: "pro",
+  activate_love_profile: "pro",
+  find_love_candidate: "pro",
+  send_love_match_request: "pro",
+  respond_to_love_match: "pro",
 
   /* -------------------------------- business ------------------------------- */
   create_sponsored_campaign: "business",
