@@ -2834,6 +2834,147 @@ export type Database = {
           },
         ]
       }
+      social_posts: {
+        Row: {
+          canonical_url: string
+          contains_sensitive_contact: boolean
+          created_at: string
+          display_handle: string | null
+          expires_at: string
+          id: string
+          idempotency_key: string | null
+          is_identity_verified: boolean
+          preview_status: string
+          provider_id: string
+          provider_label: string
+          room_kind: string
+          room_ref: string | null
+          subject_hash: string
+        }
+        Insert: {
+          canonical_url: string
+          contains_sensitive_contact?: boolean
+          created_at?: string
+          display_handle?: string | null
+          expires_at?: string
+          id?: string
+          idempotency_key?: string | null
+          is_identity_verified?: boolean
+          preview_status?: string
+          provider_id: string
+          provider_label: string
+          room_kind: string
+          room_ref?: string | null
+          subject_hash: string
+        }
+        Update: {
+          canonical_url?: string
+          contains_sensitive_contact?: boolean
+          created_at?: string
+          display_handle?: string | null
+          expires_at?: string
+          id?: string
+          idempotency_key?: string | null
+          is_identity_verified?: boolean
+          preview_status?: string
+          provider_id?: string
+          provider_label?: string
+          room_kind?: string
+          room_ref?: string | null
+          subject_hash?: string
+        }
+        Relationships: []
+      }
+      social_preview_cache: {
+        Row: {
+          expires_at: string
+          fetched_at: string
+          normalized_url_hash: string
+          preview_status: string
+          provider_id: string
+          safe_avatar_proxy_url: string | null
+          safe_description: string | null
+          safe_title: string | null
+        }
+        Insert: {
+          expires_at?: string
+          fetched_at?: string
+          normalized_url_hash: string
+          preview_status?: string
+          provider_id: string
+          safe_avatar_proxy_url?: string | null
+          safe_description?: string | null
+          safe_title?: string | null
+        }
+        Update: {
+          expires_at?: string
+          fetched_at?: string
+          normalized_url_hash?: string
+          preview_status?: string
+          provider_id?: string
+          safe_avatar_proxy_url?: string | null
+          safe_description?: string | null
+          safe_title?: string | null
+        }
+        Relationships: []
+      }
+      social_provider_registry: {
+        Row: {
+          aliases: string[]
+          canonical_hosts: string[]
+          category: string
+          created_at: string
+          display_name: string
+          enabled: boolean
+          handle_pattern: string | null
+          icon_key: string | null
+          id: string
+          preview_strategy: string
+          profile_url_template: string | null
+          sensitive_identifier: boolean
+          supports_direct_url: boolean
+          supports_handle: boolean
+          supports_public_preview: boolean
+          updated_at: string
+        }
+        Insert: {
+          aliases?: string[]
+          canonical_hosts?: string[]
+          category?: string
+          created_at?: string
+          display_name: string
+          enabled?: boolean
+          handle_pattern?: string | null
+          icon_key?: string | null
+          id: string
+          preview_strategy?: string
+          profile_url_template?: string | null
+          sensitive_identifier?: boolean
+          supports_direct_url?: boolean
+          supports_handle?: boolean
+          supports_public_preview?: boolean
+          updated_at?: string
+        }
+        Update: {
+          aliases?: string[]
+          canonical_hosts?: string[]
+          category?: string
+          created_at?: string
+          display_name?: string
+          enabled?: boolean
+          handle_pattern?: string | null
+          icon_key?: string | null
+          id?: string
+          preview_strategy?: string
+          profile_url_template?: string | null
+          sensitive_identifier?: boolean
+          supports_direct_url?: boolean
+          supports_handle?: boolean
+          supports_public_preview?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       source_changes: {
         Row: {
           classification: string

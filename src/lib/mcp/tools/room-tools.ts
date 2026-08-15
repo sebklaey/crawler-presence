@@ -12,6 +12,7 @@ import { PERSONAL_TOOLS } from "@/lib/room/mcp.personal";
 import { PLUS_TOOLS } from "@/lib/room/mcp.plus";
 import { PROFILE_TOOLS } from "@/lib/room/mcp.profile";
 import { MATCH_TOOLS } from "@/lib/room/match/mcp";
+import { SOCIAL_TOOLS } from "@/lib/room/social/mcp";
 import { toRoomError } from "@/lib/room/errors";
 
 type Json = Record<string, unknown>;
@@ -106,9 +107,24 @@ function adapt(tool: RoomTool) {
         if (issued) {
           text += `\n\nAnonymes room_token (bitte speichern und bei jedem weiteren room-Aufruf mitgeben): ${token}`;
         }
+        // Internal fields (prefixed with "_") never leave the server as data;
+        // "_ui_html" becomes an embedded UI resource block instead.
+        const uiHtml = typeof result["_ui_html"] === "string" ? (result["_ui_html"] as string) : null;
+        const uiUri = typeof result["_ui_uri"] === "string" ? (result["_ui_uri"] as string) : null;
+        const uiMime = typeof result["_ui_mime"] === "string" ? (result["_ui_mime"] as string) : "text/html";
+        const publicResult = Object.fromEntries(
+          Object.entries(result).filter(([key]) => !key.startsWith("_")),
+        );
+        const content: Array<Record<string, unknown>> = [{ type: "text" as const, text }];
+        if (uiHtml && uiUri) {
+          content.push({
+            type: "resource" as const,
+            resource: { uri: uiUri, mimeType: uiMime, text: uiHtml },
+          });
+        }
         return {
-          content: [{ type: "text" as const, text }],
-          structuredContent: { ...result, room_token: token },
+          content: content as never,
+          structuredContent: { ...publicResult, room_token: token },
         };
       } catch (error) {
         console.error("[room-tool]", tool.name, error);
@@ -129,6 +145,7 @@ const ALL_ROOM_TOOLS = [
   ...(PLUS_TOOLS as unknown as RoomTool[]),
   ...(PROFILE_TOOLS as unknown as RoomTool[]),
   ...(MATCH_TOOLS as unknown as RoomTool[]),
+  ...(SOCIAL_TOOLS as unknown as RoomTool[]),
 ];
 
 const seen = new Set<string>();
