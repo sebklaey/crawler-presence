@@ -241,6 +241,14 @@ function PricingPage() {
         </div>
 
         <p className="mt-8 text-sm text-muted-foreground">
+          Joining public rooms and the Universal Room in ChatGPT stays free —{" "}
+          <Link to="/room" className="underline underline-offset-4 hover:text-foreground">
+            see the room extensions
+          </Link>
+          .
+        </p>
+
+        <p className="mt-3 text-sm text-muted-foreground">
           Ready to go live?{" "}
           <Link to="/publish" className="underline underline-offset-4 hover:text-foreground">
             Open the publish flow
