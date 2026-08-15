@@ -43,7 +43,12 @@ export function newCorrelationId(): string {
  * degraded so callers answer `current_plan_unknown` / temporarily unavailable.
  */
 const evaluate = (status: unknown, periodEnd: unknown) =>
-  evaluateSubscription({ status, currentPeriodEnd: periodEnd, treatMissingAsNone: false });
+  evaluateSubscription({
+    // A record that is already marked paid/published but carries no provider
+    // status yet (webhook still in flight) counts as active — it was verified.
+    status: status === null || status === undefined || status === "" ? "active" : status,
+    currentPeriodEnd: periodEnd,
+  });
 
 /** Plan a draft session proves: paid intent first, then its published Presence. */
 export async function resolvePlanForSession(sessionToken: string): Promise<{
