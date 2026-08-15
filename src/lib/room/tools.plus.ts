@@ -67,9 +67,16 @@ export const plusInputSchemas = {
       topic: z.string().max(64).optional(),
       visibility: z.literal("public").default("public"),
       capacity: z.number().int().min(2).max(5000).optional(),
-      organization_id: z.string().uuid().optional(),
+      /** "community" creates (or reuses) an organization-backed room. */
+      kind: z.enum(["room", "community"]).optional(),
+      /** Existing organization: uuid, slug or exact name. */
+      organization_id: z.string().max(200).optional(),
+      organization_name: z.string().max(120).optional(),
     })
-    .strict(),
+    // Not strict: assistants often add harmless extra fields; those are ignored
+    // instead of failing the whole call with an argument error.
+    .passthrough(),
+
   manage_room: z
     .object({
       room_id: z.string().min(1),
