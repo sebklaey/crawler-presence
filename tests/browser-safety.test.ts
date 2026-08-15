@@ -61,10 +61,14 @@ describe("browser management session", () => {
   const route = read("src/routes/api/manage-session.ts");
 
   test("the cookie is HttpOnly, Secure and SameSite=Strict with a short expiry", () => {
-    expect(route).toContain("HttpOnly");
-    expect(route).toContain("SameSite=Strict");
-    expect(route).toContain("Secure");
-    expect(route).toContain("const MAX_AGE = 30 * 60");
+    const auth = readFileSync("src/lib/manage-auth.server.ts", "utf8");
+    expect(auth).toContain("HttpOnly");
+    expect(auth).toContain("SameSite=Strict");
+    expect(auth).toContain("Secure");
+    expect(auth).toContain("const MAX_AGE = 30 * 60");
+    // Fails closed instead of signing with an empty key.
+    expect(auth).toContain("MANAGE_SESSION_SECRET_MISSING");
+    expect(auth).not.toContain("SUPABASE_SERVICE_ROLE_KEY");
   });
 
   test("it carries a CSRF token and rejects a session id as a code", () => {
