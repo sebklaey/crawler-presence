@@ -32,16 +32,20 @@ export async function openManageSession(code: string): Promise<ManageSessionResu
       referrerPolicy: "no-referrer",
       body: JSON.stringify({ code }),
     });
-    const body = (await response.json().catch(() => ({}))) as ManageSessionResult;
-    if (body && body.ok) {
+    const body = (await response.json().catch(() => ({}))) as {
+      ok?: boolean;
+      slug?: string;
+      reason?: "invalid-code" | "not-found" | "rate-limited" | "unavailable";
+    };
+    if (body?.ok && body.slug) {
       try {
         window.sessionStorage.setItem(MANAGE_SLUG_KEY, body.slug);
       } catch {
         /* ignore */
       }
-      return body;
+      return { ok: true, slug: body.slug };
     }
-    return { ok: false, reason: (body as { reason?: ManageSessionResult["ok"] extends true ? never : "invalid-code" }).reason ?? "unavailable" } as ManageSessionResult;
+    return { ok: false, reason: body?.reason ?? "unavailable" };
   } catch {
     return { ok: false, reason: "unavailable" };
   }
