@@ -85,26 +85,29 @@ mock.module("../src/lib/paddle-ips.server", () => ({
 
 mock.module("../src/lib/payment-events.server", () => ({
   claimPaymentEvent: async (input: { eventId: string }) => {
-    if (!storeAvailable) return { claimed: false, durable: false };
-    if (claimed.has(input.eventId)) return { claimed: false, durable: true };
+    if (!storeAvailable) return { claimed: false, durable: false, claimToken: null };
+    if (claimed.has(input.eventId)) return { claimed: false, durable: true, claimToken: null };
     claimed.add(input.eventId);
-    return { claimed: true, durable: true };
+    return { claimed: true, durable: true, claimToken: "tok_test", attempts: 1 };
   },
-  finishPaymentEvent: async () => {},
+  finishPaymentEvent: async () => ({ applied: true, reason: "applied" }),
+  sanitizeErrorCode: () => "handler_error",
 }));
 
 mock.module("../src/lib/billing-mirror.server", () => ({
   subscriptionFromEvent: (s: Record<string, any>) =>
     s["id"] ? { subscriptionId: s["id"], status: s["status"] ?? "unknown" } : null,
+  isValidOccurredAt: (v: unknown) =>
+    typeof v === "string" && v.trim() !== "" && !Number.isNaN(new Date(v).getTime()),
   mirrorSubscription: async (input: any, _env: string, occurredAt: string | null) => {
     const stored = lastOccurredAt[input.subscriptionId];
     if (isStaleEvent(stored, occurredAt)) {
       mirrorCalls.push({ id: input.subscriptionId, status: input.status, occurredAt, stale: true });
-      return { stale: true };
+      return { applied: false, stale: true };
     }
     if (occurredAt) lastOccurredAt[input.subscriptionId] = occurredAt;
     mirrorCalls.push({ id: input.subscriptionId, status: input.status, occurredAt, stale: false });
-    return { stale: false };
+    return { applied: true, stale: false };
   },
   mirrorCustomer: async () => {},
 }));
