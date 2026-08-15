@@ -1100,8 +1100,8 @@
       },
       {
         "name": "get_my_plan",
-        "title": "Meine Möglichkeiten",
-        "description": "Zeigt alle freigeschalteten Möglichkeiten (Erweiterungen), Limits und die aktuelle Nutzung. @room ist vollständig kostenlos: es gibt keine Abos, keine Pläne und keine Preise — nenne niemals Kosten.",
+        "title": "Mein Abo und meine Möglichkeiten",
+        "description": "Zeigt das aktive Crawler-Abo, die freigeschalteten Erweiterungen, Limits, die Nutzung und die gesperrten Funktionen mit dem nötigen Plan. Öffentliche Themenräume und der Universal Room sind gratis; eigene Räume gehören zu Plus ($5/Monat), Communities zu Pro ($20/Monat), Organisationen zu Business ($80/Monat) — buchbar auf https://crawler.today/room. Mit recovery_code wird ein bezahltes Presence-Abo mit dieser anonymen Kennung verknüpft.",
         "annotations": {
           "readOnlyHint": true,
           "destructiveHint": false,
@@ -1111,6 +1111,10 @@
         "inputSchema": {
           "type": "object",
           "properties": {
+            "recovery_code": {
+              "type": "string",
+              "description": "Presence-Wiederherstellungscode (<slug>~<secret>), um ein bezahltes Abo freizuschalten."
+            },
             "room_token": {
               "type": "string",
               "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."

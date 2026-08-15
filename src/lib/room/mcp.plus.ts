@@ -65,16 +65,25 @@ function feedSummary(result: any): string {
 export const PLUS_TOOLS: PlusToolDefinition[] = [
   {
     name: "get_my_plan",
-    title: "Meine Möglichkeiten",
+    title: "Mein Abo und meine Möglichkeiten",
     description:
-      "Zeigt alle freigeschalteten Möglichkeiten (Erweiterungen), Limits und die aktuelle Nutzung. @room ist vollständig kostenlos: es gibt keine Abos, keine Pläne und keine Preise — nenne niemals Kosten.",
-    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+      "Zeigt das aktive Crawler-Abo, die freigeschalteten Erweiterungen, Limits, die Nutzung und die gesperrten Funktionen mit dem nötigen Plan. Öffentliche Themenräume und der Universal Room sind gratis; eigene Räume gehören zu Plus ($5/Monat), Communities zu Pro ($20/Monat), Organisationen zu Business ($80/Monat) — buchbar auf https://crawler.today/room. Mit recovery_code wird ein bezahltes Presence-Abo mit dieser anonymen Kennung verknüpft.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        recovery_code: {
+          type: "string",
+          description: "Presence-Wiederherstellungscode (<slug>~<secret>), um ein bezahltes Abo freizuschalten.",
+        },
+      },
+      additionalProperties: false,
+    },
     outputSchema: OPEN_OUTPUT,
     annotations: READ_ONLY,
     handler: (input, meta) => handleGetMyPlan(input, meta) as Promise<Json>,
-    summary: (result) =>
-      `Alle Möglichkeiten sind freigeschaltet. ${result.notice}`,
+    summary: (result) => String(result.notice ?? "Plan geladen."),
   },
+
   {
     name: "create_private_room",
     title: "Eigenen Raum erstellen",
