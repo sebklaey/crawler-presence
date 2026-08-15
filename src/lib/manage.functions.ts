@@ -71,10 +71,15 @@ async function resolve(code: string) {
     if (!presence) return { error: "not-found" } as ResolveError;
 
     // An upgrade made seconds ago may not have reached us as a webhook yet —
-    // ask the payment provider directly so /manage shows the current plan.
-    if (presence.billingSubscriptionId) {
-      const { refreshSubscriptionPlan } = await import("./billing-refresh.server");
-      const fresh = await refreshSubscriptionPlan(presence.billingSubscriptionId);
+    // ask the payment provider directly (including for a brand-new
+    // subscription of the same customer) so /manage shows the current plan.
+    if (presence.billingSubscriptionId || presence.billingCustomerId) {
+      const { reconcilePresenceBilling } = await import("./billing-refresh.server");
+      const fresh = await reconcilePresenceBilling({
+        slug: presence.slug,
+        customerId: presence.billingCustomerId,
+        subscriptionId: presence.billingSubscriptionId,
+      });
       if (fresh && (fresh.plan ?? presence.plan) !== presence.plan) {
         presence = (await verifyManageSecret(parsed.slug, parsed.secret)) ?? presence;
       }
