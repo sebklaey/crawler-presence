@@ -23,14 +23,16 @@ import { manageUpdateCoreFn } from "@/lib/manage.functions";
 import { generatedFiles, isCoreEmpty } from "@/lib/knowledge";
 import { completeness, completenessScore } from "@/lib/kc/model";
 import { snapshot } from "@/lib/kc/apply";
-import { useCore, usePublished, useRecoveryCode, useProposals, useVersions } from "@/lib/store";
+import { useCore, usePublished, useProposals, useVersions } from "@/lib/store";
+import { useManageSession } from "@/hooks/use-manage-session";
 
 export const Route = createFileRoute("/knowledge/publish")({ component: PublishPage });
 
 function PublishPage() {
   const [core] = useCore();
   const [published] = usePublished();
-  const [code, setCode] = useRecoveryCode();
+  const session = useManageSession();
+  const [code, setCode] = useState("");
   const [proposals] = useProposals();
   const [, setVersions] = useVersions();
   const [busy, setBusy] = useState(false);
@@ -42,13 +44,23 @@ function PublishPage() {
   const pending = proposals.filter((p) => p.state === "pending").length;
 
   async function publish() {
-    if (!code.trim()) {
-      toast.error("Enter your recovery code first.");
-      return;
-    }
     setBusy(true);
     try {
-      const result = (await update({ data: { code: code.trim(), core } })) as {
+      // The recovery code is exchanged once for an HttpOnly management session
+      // and never kept in the browser afterwards.
+      if (!session.active) {
+        const opened = await session.open(code.trim());
+        setCode("");
+        if (!opened.ok) {
+          toast.error(
+            opened.reason === "invalid-code"
+              ? "That recovery code does not match a published Presence."
+              : "Publishing did not work right now. Please try again.",
+          );
+          return;
+        }
+      }
+      const result = (await update({ data: { core } })) as {
         ok: boolean;
         reason?: string;
         paths?: string[];
@@ -138,16 +150,24 @@ function PublishPage() {
             </p>
           )}
 
-          <Input
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            placeholder="presence-xxxxxx~crw_…"
-            className="font-mono text-xs"
-          />
+          {session.active ? (
+            <p className="text-xs text-muted-foreground">
+              Management session open for <span className="font-mono">{session.slug}</span>.
+            </p>
+          ) : (
+            <Input
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="presence-xxxxxx~crw_…"
+              type="password"
+              autoComplete="off"
+              className="font-mono text-xs"
+            />
+          )}
 
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button className="w-full" disabled={busy || isCoreEmpty(core)}>
+              <Button className="w-full" disabled={busy || isCoreEmpty(core) || (!session.active && code.trim().length < 10)}>
                 {busy ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Upload className="mr-1.5 h-4 w-4" />}
                 Publish current Knowledge Core
               </Button>
