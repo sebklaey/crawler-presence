@@ -152,15 +152,22 @@ function adapt(tool: RoomTool) {
           requiredPlan: requiredPlanForCall(tool.name, rest),
         });
         if (denied) {
-          const text =
-            denied.code === "temporarily_unavailable"
-              ? denied.message
-              : `${denied.message}\n\n${denied.cta_label}: ${denied.upgrade_url}`;
+          const outage = denied.code === "temporarily_unavailable";
+          const text = outage
+            ? denied.message
+            : `${denied.message}\n\n${denied.cta_label}: ${denied.upgrade_url}`;
+          const limited = !outage && Boolean((denied as { usage?: unknown }).usage);
           return {
             content: [{ type: "text" as const, text }],
-            structuredContent: { ...denied, ...(echoToken ? { room_token: echoToken } : {}) },
+            structuredContent: validateOutput(tool.name, {
+              status: outage ? "temporarily_unavailable" : limited ? "limit_reached" : "upgrade_required",
+              retryable: outage,
+              ...denied,
+              ...(echoToken ? { room_token: echoToken } : {}),
+            }),
           };
         }
+
 
 
         const result = await tool.handler(rest, {
