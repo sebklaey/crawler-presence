@@ -45,9 +45,15 @@ function tokenFromUrl(): string | null {
 export const redactSessionToken = (token: string) =>
   token ? `${token.slice(0, 9)}…${token.slice(-2)}` : "";
 
+/**
+ * Draft session capabilities live in tab-scoped sessionStorage only. They are
+ * never written to localStorage, never logged and never put in a URL, and the
+ * legacy localStorage key is purged (not read) on first use.
+ */
 export function rememberSessionToken(token: string) {
   try {
-    localStorage.setItem(LAST_SESSION_KEY, token);
+    localStorage.removeItem(LAST_SESSION_KEY);
+    sessionStorage.setItem(LAST_SESSION_KEY, token);
   } catch {
     /* ignore */
   }
@@ -60,7 +66,8 @@ export function readSessionToken(): string | null {
     return fromUrl;
   }
   try {
-    return localStorage.getItem(LAST_SESSION_KEY);
+    localStorage.removeItem(LAST_SESSION_KEY);
+    return sessionStorage.getItem(LAST_SESSION_KEY);
   } catch {
     return null;
   }
