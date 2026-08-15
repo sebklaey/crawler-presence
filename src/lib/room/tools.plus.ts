@@ -122,10 +122,17 @@ export const plusInputSchemas = {
     })
     .strict(),
   get_campaign_analytics: z.object({ organization_id: z.string().uuid() }).strict(),
-  hide_sponsored_placement: z.object({ campaign_id: z.string().min(1) }).strict(),
-  report_sponsored_placement: z
-    .object({ campaign_id: z.string().min(1), reason: z.enum(REPORT_REASONS) })
+  hide_sponsored_placement: z
+    .object({ campaign_id: z.string().min(1), creative_id: z.string().min(1).optional() })
     .strict(),
+  report_sponsored_placement: z
+    .object({
+      campaign_id: z.string().min(1),
+      creative_id: z.string().min(1).optional(),
+      reason: z.enum(REPORT_REASONS),
+    })
+    .strict(),
+
   admin_review_campaign: z
     .object({
       campaign_id: z.string().min(1),
