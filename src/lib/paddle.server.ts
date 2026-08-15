@@ -197,6 +197,7 @@ export async function createHostedCheckout(input: {
 export type PaddleSubscription = {
   id: string;
   status?: string | null;
+  created_at?: string | null;
   current_billing_period?: { ends_at?: string | null } | null;
   items?: Array<{ price?: { id?: string; import_meta?: { external_id?: string | null } | null } | null }>;
 };
