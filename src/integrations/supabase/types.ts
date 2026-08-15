@@ -1278,6 +1278,227 @@ export type Database = {
           },
         ]
       }
+      love_interview_drafts: {
+        Row: {
+          adult_status: string
+          answers_encrypted: string | null
+          consent_version: string | null
+          consented_at: string | null
+          created_at: string
+          current_question: string | null
+          expires_at: string
+          id: string
+          progress: number
+          subject_hash: string
+          updated_at: string
+        }
+        Insert: {
+          adult_status?: string
+          answers_encrypted?: string | null
+          consent_version?: string | null
+          consented_at?: string | null
+          created_at?: string
+          current_question?: string | null
+          expires_at?: string
+          id?: string
+          progress?: number
+          subject_hash: string
+          updated_at?: string
+        }
+        Update: {
+          adult_status?: string
+          answers_encrypted?: string | null
+          consent_version?: string | null
+          consented_at?: string | null
+          created_at?: string
+          current_question?: string | null
+          expires_at?: string
+          id?: string
+          progress?: number
+          subject_hash?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      love_match_requests: {
+        Row: {
+          candidate_responded_at: string | null
+          candidate_score_internal: number | null
+          candidate_subject_hash: string
+          created_at: string
+          expires_at: string
+          id: string
+          idempotency_key: string | null
+          match_reasons_safe: Json
+          public_match_id: string
+          requester_confirmed_at: string | null
+          requester_score_internal: number | null
+          requester_subject_hash: string
+          room_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          candidate_responded_at?: string | null
+          candidate_score_internal?: number | null
+          candidate_subject_hash: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          idempotency_key?: string | null
+          match_reasons_safe?: Json
+          public_match_id: string
+          requester_confirmed_at?: string | null
+          requester_score_internal?: number | null
+          requester_subject_hash: string
+          room_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          candidate_responded_at?: string | null
+          candidate_score_internal?: number | null
+          candidate_subject_hash?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          idempotency_key?: string | null
+          match_reasons_safe?: Json
+          public_match_id?: string
+          requester_confirmed_at?: string | null
+          requester_score_internal?: number | null
+          requester_subject_hash?: string
+          room_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "love_match_requests_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      love_profile_blocks: {
+        Row: {
+          blocked_subject_hash: string
+          blocker_subject_hash: string
+          created_at: string
+          reason_code: string | null
+        }
+        Insert: {
+          blocked_subject_hash: string
+          blocker_subject_hash: string
+          created_at?: string
+          reason_code?: string | null
+        }
+        Update: {
+          blocked_subject_hash?: string
+          blocker_subject_hash?: string
+          created_at?: string
+          reason_code?: string | null
+        }
+        Relationships: []
+      }
+      love_profiles: {
+        Row: {
+          activated_at: string | null
+          adult_status: string
+          allow_love_match_requests: boolean
+          broad_region_encrypted: string | null
+          communication_data_encrypted: string | null
+          conflict_style_data_encrypted: string | null
+          connection_style_data_encrypted: string | null
+          consent_version: string | null
+          consented_at: string | null
+          created_at: string
+          daily_rhythm_data_encrypted: string | null
+          deleted_at: string | null
+          human_readable_summary_encrypted: string | null
+          id: string
+          love_discoverable: boolean
+          love_enabled: boolean
+          love_vector_encrypted: string | null
+          love_vector_integrity_hash: string | null
+          love_vector_version: number
+          partner_preferences_encrypted: string | null
+          paused_at: string | null
+          preferred_languages: string[]
+          public_pair_room_consent: boolean
+          relationship_intention: string | null
+          status: string
+          subject_hash: string
+          suspended_at: string | null
+          updated_at: string
+          values_data_encrypted: string | null
+        }
+        Insert: {
+          activated_at?: string | null
+          adult_status?: string
+          allow_love_match_requests?: boolean
+          broad_region_encrypted?: string | null
+          communication_data_encrypted?: string | null
+          conflict_style_data_encrypted?: string | null
+          connection_style_data_encrypted?: string | null
+          consent_version?: string | null
+          consented_at?: string | null
+          created_at?: string
+          daily_rhythm_data_encrypted?: string | null
+          deleted_at?: string | null
+          human_readable_summary_encrypted?: string | null
+          id?: string
+          love_discoverable?: boolean
+          love_enabled?: boolean
+          love_vector_encrypted?: string | null
+          love_vector_integrity_hash?: string | null
+          love_vector_version?: number
+          partner_preferences_encrypted?: string | null
+          paused_at?: string | null
+          preferred_languages?: string[]
+          public_pair_room_consent?: boolean
+          relationship_intention?: string | null
+          status?: string
+          subject_hash: string
+          suspended_at?: string | null
+          updated_at?: string
+          values_data_encrypted?: string | null
+        }
+        Update: {
+          activated_at?: string | null
+          adult_status?: string
+          allow_love_match_requests?: boolean
+          broad_region_encrypted?: string | null
+          communication_data_encrypted?: string | null
+          conflict_style_data_encrypted?: string | null
+          connection_style_data_encrypted?: string | null
+          consent_version?: string | null
+          consented_at?: string | null
+          created_at?: string
+          daily_rhythm_data_encrypted?: string | null
+          deleted_at?: string | null
+          human_readable_summary_encrypted?: string | null
+          id?: string
+          love_discoverable?: boolean
+          love_enabled?: boolean
+          love_vector_encrypted?: string | null
+          love_vector_integrity_hash?: string | null
+          love_vector_version?: number
+          partner_preferences_encrypted?: string | null
+          paused_at?: string | null
+          preferred_languages?: string[]
+          public_pair_room_consent?: boolean
+          relationship_intention?: string | null
+          status?: string
+          subject_hash?: string
+          suspended_at?: string | null
+          updated_at?: string
+          values_data_encrypted?: string | null
+        }
+        Relationships: []
+      }
       match_events: {
         Row: {
           created_at: string
@@ -4063,6 +4284,7 @@ export type Database = {
         Args: { p_alias: string; p_subject_hash: string }
         Returns: Json
       }
+      love_cleanup_expired: { Args: never; Returns: Json }
       purge_dead_images: {
         Args: never
         Returns: {
