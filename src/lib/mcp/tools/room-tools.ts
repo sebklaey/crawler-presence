@@ -136,20 +136,36 @@ function adapt(tool: RoomTool) {
     handler: async (input: Record<string, unknown> | undefined) => {
       const raw = (input ?? {}) as Record<string, unknown>;
       const { room_token: provided, session_id: sessionId, ...rest } = raw;
-      const token = typeof provided === "string" && provided.trim() ? provided.trim() : newRoomToken();
-      const issued = token !== provided;
+      const session = typeof sessionId === "string" && sessionId.trim() ? sessionId.trim() : null;
+      let token = typeof provided === "string" && provided.trim() ? provided.trim() : "";
+
+      // A known session always returns to its existing anonymous identity, so
+      // the profile (@handle, rooms, follows) is found instead of recreated.
+      const { identityForSession, rememberRoomTokenForSession } = await import(
+        "@/lib/room/session-identity.server"
+      );
+      let knownSubjectHash: string | null = null;
+      if (session) {
+        const mapped = await identityForSession(session);
+        knownSubjectHash = mapped.subjectHash;
+        if (!token && mapped.roomToken) token = mapped.roomToken;
+      }
+      if (!token) token = newRoomToken();
+      if (session && !knownSubjectHash) await rememberRoomTokenForSession(session, token);
+      const issued = token !== provided && !knownSubjectHash;
 
       try {
         // Server-side plan gate — the caller never supplies its own plan.
         const { checkToolAccess, linkSessionPlanToRoomToken } = await import("@/lib/entitlements/guard.server");
         const { detectLanguage } = await import("@/lib/entitlements/upgrade.server");
-        const session = typeof sessionId === "string" && sessionId.trim() ? sessionId.trim() : null;
         // A paid draft session unlocks the room features of its subscription.
-        if (session) await linkSessionPlanToRoomToken(token, session);
+        if (session) await linkSessionPlanToRoomToken(token, session, knownSubjectHash);
+
         const denied = await checkToolAccess({
           tool: tool.name,
           roomToken: token,
           sessionToken: session,
+          subjectHash: knownSubjectHash,
           language: detectLanguage(rest),
           feature: tool.title,
         });
@@ -162,7 +178,12 @@ function adapt(tool: RoomTool) {
           };
         }
 
-        const result = await tool.handler(rest, { "room/token": token, "crawler/session_id": session });
+        const result = await tool.handler(rest, {
+          "room/token": token,
+          "crawler/session_id": session,
+          ...(knownSubjectHash ? { "room/subject_hash": knownSubjectHash } : {}),
+        });
+
         let text = tool.summary(result);
         if (issued) {
           text += `\n\nAnonymes room_token (bitte speichern und bei jedem weiteren room-Aufruf mitgeben): ${token}`;
