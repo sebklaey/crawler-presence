@@ -100,6 +100,7 @@ function toOutputShape(schema: Json | undefined): Record<string, z.ZodTypeAny> {
     current_plan: z.string().optional(),
     cta_label: z.string().optional(),
     upgrade_url: z.string().optional().describe("Direct Paddle checkout link for the required plan."),
+    correlation_id: z.string().optional().describe("Stable id of this decision — quote it in support requests."),
   };
 }
 
@@ -156,17 +157,23 @@ function adapt(tool: RoomTool) {
       const issued = token !== provided && !knownSubjectHash;
 
       try {
-        // Server-side plan gate — the caller never supplies its own plan.
-        const { checkToolAccess, linkSessionPlanToRoomToken } = await import("@/lib/entitlements/guard.server");
+        // Core V2: one resolver merges session, identity and Presence proofs
+        // before any gate decides. The caller never supplies its own plan.
+        const { resolveAccessContext } = await import("@/lib/core/access.server");
+        const { checkToolAccess } = await import("@/lib/entitlements/guard.server");
         const { detectLanguage } = await import("@/lib/entitlements/upgrade.server");
-        // A paid draft session unlocks the room features of its subscription.
-        if (session) await linkSessionPlanToRoomToken(token, session, knownSubjectHash);
+        const access = await resolveAccessContext({
+          roomToken: token,
+          sessionId: session,
+          subjectHash: knownSubjectHash,
+        });
+        if (!knownSubjectHash && access.subjectHash) knownSubjectHash = access.subjectHash;
 
         const denied = await checkToolAccess({
           tool: tool.name,
           roomToken: token,
           sessionToken: session,
-          subjectHash: knownSubjectHash,
+          subjectHash: access.subjectHash,
           language: detectLanguage(rest),
           feature: tool.title,
           requiredPlan: requiredPlanForCall(tool.name, rest),
@@ -179,6 +186,7 @@ function adapt(tool: RoomTool) {
             structuredContent: { ...denied, room_token: token },
           };
         }
+
 
         const result = await tool.handler(rest, {
           "room/token": token,
@@ -210,6 +218,7 @@ function adapt(tool: RoomTool) {
           structuredContent: { ...publicResult, room_token: token },
         };
       } catch (error) {
+        const { newCorrelationId } = await import("@/lib/core/access.server");
         console.error("[room-tool]", tool.name, error);
         const roomError = toRoomError(error);
 
@@ -218,7 +227,7 @@ function adapt(tool: RoomTool) {
         if (roomError.code === "PLAN_REQUIRED" || roomError.code === "LIMIT_REACHED") {
           const { buildUpgradePayload, detectLanguage } = await import("@/lib/entitlements/upgrade.server");
           const { resolvePlanContext } = await import("@/lib/entitlements/guard.server");
-          const ctx = await resolvePlanContext(token);
+          const ctx = await resolvePlanContext(token, knownSubjectHash, session);
           const details = roomError.details as {
             max?: number;
             current?: number;
@@ -232,6 +241,7 @@ function adapt(tool: RoomTool) {
             currentPlan: ctx.plan,
             language: detectLanguage(rest),
             contextHash: ctx.subjectHash,
+            correlationId: ctx.correlationId,
             ...(details.plan_required ? { requiredPlan: details.plan_required } : {}),
             ...(roomError.code === "LIMIT_REACHED" && typeof details.max === "number"
 
@@ -255,7 +265,12 @@ function adapt(tool: RoomTool) {
         return {
           isError: true,
           content: [{ type: "text" as const, text: roomError.message }],
-          structuredContent: { error: roomError.code, message: roomError.message, room_token: token },
+          structuredContent: {
+            error: roomError.code,
+            message: roomError.message,
+            room_token: token,
+            correlation_id: newCorrelationId(),
+          },
         };
       }
     },
