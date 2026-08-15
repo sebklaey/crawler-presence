@@ -143,15 +143,18 @@ export async function resolvePlanForSession(sessionToken: string): Promise<Custo
 export async function linkSessionPlanToRoomToken(
   roomToken: string | null | undefined,
   sessionToken: string | null | undefined,
+  knownSubjectHash?: string | null,
 ): Promise<CustomerPlan> {
-  if (!roomToken || !sessionToken) return "free";
+  if ((!roomToken && !knownSubjectHash) || !sessionToken) return "free";
   try {
     const plan = await resolvePlanForSession(sessionToken);
     if (plan === "free") return "free";
 
     const { resolveIdentity } = await import("../room/identity");
     const { getDb } = await import("../room/store");
-    const identity = await resolveIdentity({ "room/token": roomToken } as never);
+    const identity = await resolveIdentity(
+      (knownSubjectHash ? { "room/subject_hash": knownSubjectHash } : { "room/token": roomToken }) as never,
+    );
     const db = await getDb();
     const { data } = await db
       .from("published_presences")
@@ -180,6 +183,7 @@ export async function checkToolAccess(input: {
   tool: string;
   roomToken?: string | null;
   sessionToken?: string | null;
+  subjectHash?: string | null;
   language?: "de" | "en";
   feature?: string;
 }): Promise<UpgradePayload | null> {
@@ -187,11 +191,16 @@ export async function checkToolAccess(input: {
   if (required === "free") return null;
 
   if (input.sessionToken) {
-    const sessionPlan = await linkSessionPlanToRoomToken(input.roomToken ?? null, input.sessionToken);
+    const sessionPlan = await linkSessionPlanToRoomToken(
+      input.roomToken ?? null,
+      input.sessionToken,
+      input.subjectHash ?? null,
+    );
     if (required !== "admin" && meetsPlan(sessionPlan, required)) return null;
   }
 
-  const ctx = await resolvePlanContext(input.roomToken ?? null);
+  const ctx = await resolvePlanContext(input.roomToken ?? null, input.subjectHash ?? null);
+
   if (required === "admin") {
     if (ctx.isPlatformAdmin) return null;
     return buildUpgradePayload({
