@@ -259,26 +259,43 @@ function RoomPage() {
         <section className="border-t border-border py-14">
           <h2 className="text-2xl font-semibold tracking-tight">Extensions</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            @crawler is completely free. No subscriptions, no plans, no prices — every extension is
-            unlocked for everyone.
+            Joining rooms stays free. The room extensions are tied to the Crawler subscriptions:
+            Plus unlocks your own room, Pro adds communities, Business adds organisations.
           </p>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {EXTENSIONS.map((extension) => (
-              <div key={extension.name} className="rounded-lg border border-border bg-card p-5">
+              <div key={extension.name} className="flex flex-col rounded-lg border border-border bg-card p-5">
                 <h3 className="text-lg font-semibold">{extension.name}</h3>
                 <p className="mt-1 text-sm text-muted-foreground">{extension.price}</p>
-                <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
+                <ul className="mt-4 flex-1 space-y-2 text-sm text-muted-foreground">
                   {extension.features.map((feature) => (
                     <li key={feature}>· {feature}</li>
                   ))}
                 </ul>
+                {extension.plan ? (
+                  <Link
+                    to="/publish"
+                    search={{ plan: extension.plan }}
+                    className="mt-5 inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+                  >
+                    Buy {extension.name}
+                  </Link>
+                ) : (
+                  <span className="mt-5 inline-flex items-center justify-center rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground">
+                    Included for everyone
+                  </span>
+                )}
               </div>
             ))}
           </div>
 
           <p className="mt-6 text-sm text-muted-foreground">
-            Ask ChatGPT “show my @crawler options” to see what is unlocked. Sponsored rooms are always
+            Full plan details are on the{" "}
+            <Link to="/pricing" className="underline underline-offset-4">
+              pricing page
+            </Link>
+            . Ask ChatGPT “show my @crawler options” to see what is unlocked. Sponsored rooms are always
             labelled as advertising, reviewed before publication, and can be hidden at any time.
           </p>
         </section>
