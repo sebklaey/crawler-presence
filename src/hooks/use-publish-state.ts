@@ -53,7 +53,7 @@ export function usePublishState(): PublishState {
     queryKey: ["publish-state", published?.slug ?? "", code ? "code" : ""],
     enabled,
     staleTime: 30 * 1000,
-    queryFn: () => manageRestoreCoreFn({ data: { code } }),
+    queryFn: () => manageRestoreCoreFn(),
   });
 
   const result = query.data;

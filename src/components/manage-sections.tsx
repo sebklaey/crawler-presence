@@ -54,11 +54,9 @@ const REASONS: Record<string, string> = {
 
 /** Pro and Business: connect a custom domain that serves the Presence files. */
 export function CustomDomainSection({
-  code,
   data,
   refresh,
 }: {
-  code: string;
   data: Overview;
   refresh: () => Promise<void>;
 }) {
@@ -71,16 +69,16 @@ export function CustomDomainSection({
     setBusy(true);
     try {
       if (action === "save") {
-        const result = await manageSetDomainFn({ data: { code, domain } });
+        const result = await manageSetDomainFn({ data: { domain } });
         if (!result.ok) return void toast.error(REASONS[result.reason ?? ""] ?? "Could not save that domain.");
         toast.success("Domain saved. Add the DNS records, then verify.");
       } else if (action === "verify") {
-        const result = await manageVerifyDomainFn({ data: { code } });
+        const result = await manageVerifyDomainFn();
         if (!result.ok) return void toast.error(REASONS[result.reason ?? ""] ?? "Verification failed.");
         if (!result.verified) return void toast.error(REASONS["txt-missing"]);
         toast.success("Domain verified. Your Presence is now served from it.");
       } else {
-        const result = await manageRemoveDomainFn({ data: { code } });
+        const result = await manageRemoveDomainFn();
         if (!result.ok) return void toast.error(REASONS[result.reason ?? ""] ?? "Could not remove the domain.");
         setDomain("");
         toast.success("Custom domain removed.");

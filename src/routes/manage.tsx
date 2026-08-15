@@ -85,7 +85,7 @@ function ManagePage() {
    */
   async function restoreWorkspace(next: string) {
     try {
-      const restored = await manageRestoreCoreFn({ data: { code: next } });
+      const restored = await manageRestoreCoreFn();
       if (!restored.ok) return;
       const remote = restored.core as KnowledgeCore;
       // Never overwrite a filled local draft with an empty published shell —
@@ -103,7 +103,7 @@ function ManagePage() {
   async function open(next = code, opts?: { silent?: boolean }) {
     setBusy(true);
     try {
-      const result = await manageOverviewFn({ data: { code: next } });
+      const result = await manageOverviewFn();
       if (!result.ok) {
         setData(null);
         // A stored code that no longer works must not keep the session locked open.
@@ -447,7 +447,7 @@ function ManagePage() {
             </div>
 
             
-            <CustomDomainSection code={code} data={data} refresh={() => open()} />
+            <CustomDomainSection data={data} refresh={() => open()} />
             <ApiAccessSection data={data} />
             <RetentionSection code={code} />
             <TeamAndReportsSection code={code} plan={data.plan} />
