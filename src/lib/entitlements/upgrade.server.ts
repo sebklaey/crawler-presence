@@ -29,8 +29,11 @@ export type UpgradePayload = {
   cta_label: string;
   unlocks: string[];
   message: string;
+  /** Stable id of this decision — quote it in support requests. */
+  correlation_id: string;
   usage?: { used: number; max: number; unit: string };
 };
+
 
 const CACHE_MS = 10 * 60 * 1000;
 const linkCache = new Map<string, { url: string; at: number }>();
