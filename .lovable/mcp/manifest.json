@@ -8052,7 +8052,7 @@
         "title": "Öffentlichen Pair Room öffnen",
         "description": "Öffnet einen öffentlichen Pair Room. Jede Person kann mitlesen; schreiben dürfen nur die zwei gematchten Handles.",
         "annotations": {
-          "readOnlyHint": true,
+          "readOnlyHint": false,
           "destructiveHint": false,
           "openWorldHint": false,
           "idempotentHint": true
