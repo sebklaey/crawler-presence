@@ -18,6 +18,7 @@ import { Route as ChatgptRouteImport } from './routes/chatgpt'
 import { Route as CrawlmeRouteImport } from './routes/crawlme'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as FaqDotmdRouteImport } from './routes/faq[.]md'
+import { Route as InstallRouteImport } from './routes/install'
 import { Route as KnowledgeRouteImport } from './routes/knowledge'
 import { Route as LlmsFullDottxtRouteImport } from './routes/llms-full[.]txt'
 import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
@@ -114,6 +115,11 @@ const DemoRoute = DemoRouteImport.update({
 const FaqDotmdRoute = FaqDotmdRouteImport.update({
   id: '/faq.md',
   path: '/faq.md',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InstallRoute = InstallRouteImport.update({
+  id: '/install',
+  path: '/install',
   getParentRoute: () => rootRouteImport,
 } as any)
 const KnowledgeRoute = KnowledgeRouteImport.update({
@@ -393,6 +399,7 @@ export interface FileRoutesByFullPath {
   '/crawlme': typeof CrawlmeRoute
   '/demo': typeof DemoRoute
   '/faq.md': typeof FaqDotmdRoute
+  '/install': typeof InstallRoute
   '/knowledge': typeof KnowledgeRouteWithChildren
   '/llms-full.txt': typeof LlmsFullDottxtRoute
   '/llms.txt': typeof LlmsDottxtRoute
@@ -456,6 +463,7 @@ export interface FileRoutesByTo {
   '/crawlme': typeof CrawlmeRoute
   '/demo': typeof DemoRoute
   '/faq.md': typeof FaqDotmdRoute
+  '/install': typeof InstallRoute
   '/llms-full.txt': typeof LlmsFullDottxtRoute
   '/llms.txt': typeof LlmsDottxtRoute
   '/manage': typeof ManageRoute
@@ -519,6 +527,7 @@ export interface FileRoutesById {
   '/crawlme': typeof CrawlmeRoute
   '/demo': typeof DemoRoute
   '/faq.md': typeof FaqDotmdRoute
+  '/install': typeof InstallRoute
   '/knowledge': typeof KnowledgeRouteWithChildren
   '/llms-full.txt': typeof LlmsFullDottxtRoute
   '/llms.txt': typeof LlmsDottxtRoute
@@ -584,6 +593,7 @@ export interface FileRouteTypes {
     | '/crawlme'
     | '/demo'
     | '/faq.md'
+    | '/install'
     | '/knowledge'
     | '/llms-full.txt'
     | '/llms.txt'
@@ -647,6 +657,7 @@ export interface FileRouteTypes {
     | '/crawlme'
     | '/demo'
     | '/faq.md'
+    | '/install'
     | '/llms-full.txt'
     | '/llms.txt'
     | '/manage'
@@ -709,6 +720,7 @@ export interface FileRouteTypes {
     | '/crawlme'
     | '/demo'
     | '/faq.md'
+    | '/install'
     | '/knowledge'
     | '/llms-full.txt'
     | '/llms.txt'
@@ -773,6 +785,7 @@ export interface RootRouteChildren {
   CrawlmeRoute: typeof CrawlmeRoute
   DemoRoute: typeof DemoRoute
   FaqDotmdRoute: typeof FaqDotmdRoute
+  InstallRoute: typeof InstallRoute
   KnowledgeRoute: typeof KnowledgeRouteWithChildren
   LlmsFullDottxtRoute: typeof LlmsFullDottxtRoute
   LlmsDottxtRoute: typeof LlmsDottxtRoute
@@ -883,6 +896,13 @@ declare module '@tanstack/react-router' {
       path: '/faq.md'
       fullPath: '/faq.md'
       preLoaderRoute: typeof FaqDotmdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/install': {
+      id: '/install'
+      path: '/install'
+      fullPath: '/install'
+      preLoaderRoute: typeof InstallRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/knowledge': {
@@ -1286,6 +1306,7 @@ const rootRouteChildren: RootRouteChildren = {
   CrawlmeRoute: CrawlmeRoute,
   DemoRoute: DemoRoute,
   FaqDotmdRoute: FaqDotmdRoute,
+  InstallRoute: InstallRoute,
   KnowledgeRoute: KnowledgeRouteWithChildren,
   LlmsFullDottxtRoute: LlmsFullDottxtRoute,
   LlmsDottxtRoute: LlmsDottxtRoute,
