@@ -12,6 +12,7 @@
  * Crawler stays accountless: all three are opaque capability values. The plan
  * is never read from anything the model sends.
  */
+import { evaluateSubscription } from "../billing/subscription-state";
 import { highestPlan, normalizePlan, type CustomerPlan } from "../entitlements/features";
 import { notePlanForSubject, notedPlanForSubject } from "./plan-cache";
 
@@ -36,12 +37,13 @@ export function newCorrelationId(): string {
   return `crw_${Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("")}`;
 }
 
-const stillActive = (status: unknown, periodEnd: unknown): boolean => {
-  const value = String(status ?? "active");
-  if (!["canceled", "paused", "expired", "unpaid"].includes(value)) return true;
-  const end = periodEnd ? new Date(String(periodEnd)).getTime() : 0;
-  return Boolean(end && end >= Date.now());
-};
+/**
+ * Positive allowlist via the single subscription state machine. An
+ * unrecognised status never silently becomes Free: it marks the resolution as
+ * degraded so callers answer `current_plan_unknown` / temporarily unavailable.
+ */
+const evaluate = (status: unknown, periodEnd: unknown) =>
+  evaluateSubscription({ status, currentPeriodEnd: periodEnd, treatMissingAsNone: false });
 
 /** Plan a draft session proves: paid intent first, then its published Presence. */
 export async function resolvePlanForSession(sessionToken: string): Promise<{
@@ -56,12 +58,10 @@ export async function resolvePlanForSession(sessionToken: string): Promise<{
   try {
     const { latestIntentForSession } = await import("../intents.server");
     const intent = await latestIntentForSession(sessionToken);
-    if (
-      intent &&
-      ["paid", "published"].includes(intent.status) &&
-      stillActive(intent.subscriptionStatus, intent.currentPeriodEnd)
-    ) {
-      best = highestPlan(best, intent.plan);
+    if (intent && ["paid", "published"].includes(intent.status)) {
+      const decision = evaluate(intent.subscriptionStatus, intent.currentPeriodEnd);
+      if (decision.unknown) degraded = true;
+      else if (decision.grantsAccess) best = highestPlan(best, intent.plan);
     }
   } catch {
     degraded = true;
@@ -116,7 +116,11 @@ export async function resolvePlanForSession(sessionToken: string): Promise<{
       }
 
       const live = !row.status || ["live", "active", "published"].includes(row.status);
-      if (live && stillActive(subscriptionStatus, periodEnd)) best = highestPlan(best, plan);
+      if (live) {
+        const decision = evaluate(subscriptionStatus, periodEnd);
+        if (decision.unknown) degraded = true;
+        else if (decision.grantsAccess) best = highestPlan(best, plan);
+      }
     }
   } catch {
     degraded = true;
