@@ -18,6 +18,7 @@ import { ArrowRight, Loader2, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PLANS, planById, type PlanId } from "@/lib/billing";
+import { PLAN_INFO } from "@/lib/entitlements/catalog";
 import { useCore, usePlan } from "@/lib/store";
 import { usePaymentsStatus } from "@/hooks/use-payments-status";
 import { isCoreEmpty } from "@/lib/knowledge";
@@ -54,7 +55,7 @@ type Blocked = {
   title: string;
   reason: string;
   action?: string;
-  current: PlanId;
+  current: UiPlan;
   required: PlanId;
   unlocks: string[];
 };
@@ -164,7 +165,7 @@ export function PlanLimitProvider({ children }: { children: ReactNode }) {
           title: "This is a paid feature",
           reason: "Building and previewing is free. Publishing and hosting start with Crawler Plus ($5/month).",
           ...(input.action ? { action: input.action } : {}),
-          current: "plus",
+          current: "free",
           required: "plus",
           unlocks: [],
         });
@@ -287,7 +288,7 @@ export function PlanLimitProvider({ children }: { children: ReactNode }) {
               <div className="rounded-xl border border-border bg-secondary/40 p-4">
                 <div className="flex items-baseline justify-between">
                   <span className="text-sm font-medium">
-                    {planById(blocked.current).name} → {required.name}
+                    {PLAN_INFO[blocked.current].name} → {required.name}
                   </span>
                   <span className="text-sm text-muted-foreground">${required.price}/month</span>
                 </div>

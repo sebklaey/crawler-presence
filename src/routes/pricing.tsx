@@ -5,7 +5,7 @@ import { useState } from "react";
 import { AppShell, PageHead } from "@/components/app-shell";
 import { PaymentTestModeBanner } from "@/components/payment-test-mode-banner";
 import { Button } from "@/components/ui/button";
-import { useCore, usePlan } from "@/lib/store";
+import { useCore, usePendingPlan, usePlan } from "@/lib/store";
 import { usePaymentsStatus } from "@/hooks/use-payments-status";
 import { PLANS, planById, type PlanId } from "@/lib/billing";
 import { PLAN_INFO } from "@/lib/entitlements/catalog";
@@ -70,7 +70,8 @@ const ROOM_EXTENSIONS: Record<PlanId, { name: string; features: string[] }> = {
 
 function PricingPage() {
   useFunnelOnce("pricing_viewed");
-  const [plan, setPlan] = usePlan();
+  const [plan] = usePlan();
+  const [, setPendingPlan] = usePendingPlan();
   const [core] = useCore();
   const navigate = useNavigate();
   const [busy, setBusy] = useState<PlanId | null>(null);
@@ -89,7 +90,9 @@ function PricingPage() {
   async function buy(planId: PlanId) {
     if (busy) return;
     if (publishState.isLive && planId === currentPlan) return;
-    setPlan(planId);
+    // A click is a selection, not an entitlement. The active plan only changes
+    // after a verified Paddle webhook/reconciliation reaches the server.
+    setPendingPlan(planId);
     // Nothing to publish yet, or checkout not available: keep the guided flow.
     if (isCoreEmpty(core) || !payments.configured) {
       void navigate({ to: "/publish", search: { plan: planId } });

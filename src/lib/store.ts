@@ -5,6 +5,10 @@ const CORE_KEY = "crawler.core.v1";
 const CHAT_KEY = "crawler.chat.v1";
 const PLAN_KEY = "crawler.plan.v1";
 const PUBLISH_KEY = "crawler.published.v1";
+/** Tab-scoped plan *selection*. Never an entitlement. */
+const PENDING_PLAN_KEY = "crawler.pending-plan.v1";
+
+export type PendingPlan = "plus" | "pro" | "business" | null;
 /** Legacy key: the recovery code used to live in localStorage. It must not. */
 const LEGACY_CODE_KEY = "crawler.code.v1";
 
@@ -91,7 +95,39 @@ function useLocal<T>(key: string, fallback: T) {
 
 export const useCore = () => useLocal<KnowledgeCore>(CORE_KEY, emptyCore());
 export const useChat = () => useLocal<ChatMessage[]>(CHAT_KEY, []);
+/**
+ * The VERIFIED active plan. It may only be written from a server response that
+ * is itself backed by a verified Paddle webhook/reconciliation (currently
+ * /publish redemption and /manage restore). A plan the user merely selected is
+ * NOT an entitlement — keep that in `usePendingPlan`.
+ */
 export const usePlan = () => useLocal<"free" | "plus" | "pro" | "business">(PLAN_KEY, "free");
+
+/**
+ * The plan a visitor picked but has not paid for yet. Tab-scoped, never an
+ * entitlement, never shown as the current plan.
+ */
+export function usePendingPlan(): [PendingPlan, (p: PendingPlan) => void] {
+  const [value, setValue] = useState<PendingPlan>(null);
+  useEffect(() => {
+    try {
+      const raw = window.sessionStorage.getItem(PENDING_PLAN_KEY);
+      setValue(raw === "plus" || raw === "pro" || raw === "business" ? raw : null);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+  const write = useCallback((next: PendingPlan) => {
+    setValue(next);
+    try {
+      if (next) window.sessionStorage.setItem(PENDING_PLAN_KEY, next);
+      else window.sessionStorage.removeItem(PENDING_PLAN_KEY);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+  return [value, write];
+}
 export const usePublished = () => useLocal<{ at: string; slug: string } | null>(PUBLISH_KEY, null);
 /* ---------------- Management capability (never persisted) ---------------- */
 
