@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { ScopeNotice, VisibilityDashboardView } from "@/components/visibility-dashboard";
 import { SCOPE_NOTICE, type EventType, type Period, type SourceType, type VisibilityDashboard } from "@/lib/visibility/model";
 import { visibilityConnectSourceFn, visibilityDashboardFn, visibilityExportFn } from "@/lib/visibility.functions";
-import { useRecoveryCode } from "@/lib/store";
+import { useManageSession } from "@/hooks/use-manage-session";
 
 export const Route = createFileRoute("/manage_/$slug/analytics")({
   head: () => ({
@@ -41,7 +41,7 @@ const REASONS: Record<string, string> = {
 
 function VisibilityPage() {
   const { slug } = Route.useParams();
-  const [storedCode, setStoredCode, hydrated] = useRecoveryCode();
+  const session = useManageSession();
   const [code, setCode] = useState("");
   const [data, setData] = useState<VisibilityDashboard | null>(null);
   const [name, setName] = useState<string>(slug);
@@ -55,14 +55,12 @@ function VisibilityPage() {
   });
 
   const load = useCallback(
-    async (activeCode: string, next = filters) => {
-      if (!activeCode) return;
+    async (next = filters) => {
       setBusy(true);
       setError(null);
       try {
         const result = await visibilityDashboardFn({
           data: {
-            code: activeCode,
             period: next.period,
             source: next.source === "all" ? undefined : next.source,
             eventType: next.eventType === "all" ? undefined : next.eventType,
@@ -86,20 +84,19 @@ function VisibilityPage() {
   );
 
   useEffect(() => {
-    if (hydrated && storedCode) void load(storedCode);
+    if (session.ready && session.active) void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hydrated, storedCode]);
+  }, [session.ready, session.active]);
 
   function onFilterChange(next: Partial<typeof filters>) {
     const merged = { ...filters, ...next };
     setFilters(merged);
-    void load(storedCode || code, merged);
+    void load(merged);
   }
 
   async function onExport() {
-    const activeCode = storedCode || code;
     try {
-      const result = await visibilityExportFn({ data: { code: activeCode } });
+      const result = await visibilityExportFn();
       if (!result.ok) {
         toast.error("Export failed.");
         return;
@@ -117,11 +114,9 @@ function VisibilityPage() {
   }
 
   async function onConnect(input: { source: string; connected: boolean; value?: string }) {
-    const activeCode = storedCode || code;
     try {
       const result = await visibilityConnectSourceFn({
         data: {
-          code: activeCode,
           source: input.source as "authorized_ai" | "public_web" | "search_console" | "visibility_benchmark" | "user_reported",
           connected: input.connected,
           ...(input.value ? { value: input.value } : {}),
@@ -132,7 +127,7 @@ function VisibilityPage() {
         return;
       }
       toast.success(input.connected ? "Source connected." : "Source disconnected.");
-      await load(activeCode);
+      await load();
     } catch {
       toast.error("Could not update this source.");
     }
@@ -157,15 +152,23 @@ function VisibilityPage() {
           </Link>
         </p>
 
-        {!storedCode && !data ? (
+        {!session.active && !data ? (
           <div className="space-y-4">
             <ScopeNotice text={SCOPE_NOTICE} />
             <form
               className="flex flex-col gap-2 sm:flex-row"
               onSubmit={(e) => {
                 e.preventDefault();
-                setStoredCode(code);
-                void load(code);
+                void (async () => {
+                  // The code opens the HttpOnly session once, then it is gone.
+                  const opened = await session.open(code.trim());
+                  setCode("");
+                  if (!opened.ok) {
+                    setError(REASONS[opened.reason] ?? "Analytics could not be loaded.");
+                    return;
+                  }
+                  await load();
+                })();
               }}
             >
               <Input
@@ -192,7 +195,7 @@ function VisibilityPage() {
           </div>
         ) : null}
 
-        {error && data === null && storedCode ? (
+        {error && data === null && session.active ? (
           <div className="rounded-xl border border-destructive/40 px-4 py-6 text-sm text-destructive">{error}</div>
         ) : null}
 
