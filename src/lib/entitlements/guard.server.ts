@@ -14,13 +14,19 @@ export type PlanContext = {
 };
 
 /** Resolves the caller's plan from the pseudonymous room identity. */
-export async function resolvePlanContext(roomToken: string | null): Promise<PlanContext> {
-  if (!roomToken) return { plan: "free", isPlatformAdmin: false, subjectHash: null };
+export async function resolvePlanContext(
+  roomToken: string | null,
+  knownSubjectHash?: string | null,
+): Promise<PlanContext> {
+  if (!roomToken && !knownSubjectHash) return { plan: "free", isPlatformAdmin: false, subjectHash: null };
   try {
     const { resolveIdentity } = await import("../room/identity");
     const { getDb } = await import("../room/store");
     const { resolveLinkedPlan } = await import("../room/planlink");
-    const identity = await resolveIdentity({ "room/token": roomToken } as never);
+    const identity = await resolveIdentity(
+      (knownSubjectHash ? { "room/subject_hash": knownSubjectHash } : { "room/token": roomToken }) as never,
+    );
+
     const db = await getDb();
     const [{ plan }, roles] = await Promise.all([
       resolveLinkedPlan(db, identity.subjectHash),
