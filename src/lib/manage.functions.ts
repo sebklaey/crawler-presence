@@ -12,6 +12,14 @@ import { z } from "zod";
 
 const codeSchema = z.object({ code: z.string().trim().min(10).max(200) });
 
+export type ManageFailure =
+  | "invalid-code"
+  | "not-found"
+  | "rate-limited"
+  | "unavailable"
+  | "unauthenticated"
+  | "csrf";
+
 export type ManageAnalytics = {
   /** "measured" once real events exist, "empty" before the first event. */
   mode: "measured" | "empty";
@@ -22,7 +30,7 @@ export type ManageAnalytics = {
 };
 
 export type ManageOverview =
-  | { ok: false; reason: "invalid-code" | "not-found" | "rate-limited" | "unavailable" }
+  | { ok: false; reason: ManageFailure }
   | {
       ok: true;
       slug: string;
@@ -53,7 +61,9 @@ export type ManageOverview =
     };
 
 
-type ResolveError = { error: "invalid-code" | "not-found" | "rate-limited" | "unavailable" };
+type ResolveError = {
+  error: "invalid-code" | "not-found" | "rate-limited" | "unavailable" | "unauthenticated" | "csrf";
+};
 
 /**
  * Capability check. Any database failure resolves to "unavailable" — never to
@@ -91,6 +101,42 @@ async function resolve(code: string) {
   }
 }
 
+
+/**
+ * Cookie authority. The slug comes from the verified HttpOnly management
+ * cookie only — never from the request body — and every write additionally
+ * requires the CSRF token bound into that cookie.
+ */
+async function resolveSession(opts: { write: boolean }) {
+  const { requireManageSession } = await import("./manage-auth.server");
+  const auth = await requireManageSession(opts);
+  if ("error" in auth) return { error: auth.error === "csrf" ? "csrf" : "unauthenticated" } as ResolveError;
+  return resolveBySlug(auth.slug);
+}
+
+/** Loads a Presence by an already-authenticated slug (no capability needed). */
+async function resolveBySlug(slug: string) {
+  const { getPublished, PresenceStoreError } = await import("./mcp/presences");
+  try {
+    let presence = await getPublished(slug);
+    if (!presence) return { error: "not-found" } as ResolveError;
+    if (presence.billingSubscriptionId || presence.billingCustomerId) {
+      const { reconcilePresenceBilling } = await import("./billing-refresh.server");
+      const fresh = await reconcilePresenceBilling({
+        slug: presence.slug,
+        customerId: presence.billingCustomerId,
+        subscriptionId: presence.billingSubscriptionId,
+      });
+      if (fresh && (fresh.plan ?? presence.plan) !== presence.plan) {
+        presence = (await getPublished(slug)) ?? presence;
+      }
+    }
+    return { presence, slug: presence.slug };
+  } catch (error) {
+    if (error instanceof PresenceStoreError) return { error: "unavailable" } as ResolveError;
+    throw error;
+  }
+}
 
 /**
  * Measurable Presence analytics only: Crawler-internal conversations/queries,
@@ -142,7 +188,7 @@ async function analyticsFor(slug: string, plan: string): Promise<ManageAnalytics
 }
 
 export type PresenceAnalyticsResult =
-  | { ok: false; reason: "invalid-code" | "not-found" | "rate-limited" | "unavailable" }
+  | { ok: false; reason: ManageFailure }
   | {
       ok: true;
       slug: string;
@@ -164,17 +210,17 @@ export type PresenceAnalyticsResult =
       privacyNote: string;
     };
 
-const analyticsSchema = codeSchema.extend({ days: z.union([z.literal(7), z.literal(30), z.literal(90)]).default(7) });
+const analyticsSchema = z.object({ days: z.union([z.literal(7), z.literal(30), z.literal(90)]).default(7) });
 
 /**
  * Measured Presence analytics for the /analytics page. Capability-based: the
- * recovery code is the only key. Everything returned was actually observed
+ * management session cookie is the only key. Everything returned was observed
  * inside Crawler — there is no seeded or demo data anywhere in this path.
  */
 export const presenceAnalyticsFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => analyticsSchema.parse(input))
   .handler(async ({ data }): Promise<PresenceAnalyticsResult> => {
-    const resolved = await resolve(data.code);
+    const resolved = await resolveSession({ write: false });
     if ("error" in resolved) return { ok: false, reason: resolved.error };
     const p = resolved.presence;
 
@@ -215,9 +261,8 @@ export const presenceAnalyticsFn = createServerFn({ method: "POST" })
   });
 
 export const manageOverviewFn = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => codeSchema.parse(input))
-  .handler(async ({ data }): Promise<ManageOverview> => {
-    const resolved = await resolve(data.code);
+  .handler(async (): Promise<ManageOverview> => {
+    const resolved = await resolveSession({ write: false });
     if ("error" in resolved) return { ok: false, reason: resolved.error };
     const p = resolved.presence;
     const { applyCatalogLimit, isRestricted } = await import("./entitlements");
@@ -265,18 +310,19 @@ export const manageOverviewFn = createServerFn({ method: "POST" })
       })(),
       version: p.version,
       updatedAt: p.updatedAt,
-      sessionToken: p.sessionToken ?? null,
+      // Capabilities are never returned to the browser — only their presence.
+      sessionToken: null,
     };
 
 
   });
 
-const statusSchema = codeSchema.extend({ status: z.enum(["live", "offline"]) });
+const statusSchema = z.object({ status: z.enum(["live", "offline"]) });
 
 export const manageSetStatusFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => statusSchema.parse(input))
   .handler(async ({ data }): Promise<{ ok: boolean; status?: "live" | "offline"; reason?: string }> => {
-    const resolved = await resolve(data.code);
+    const resolved = await resolveSession({ write: true });
     if ("error" in resolved) return { ok: false, reason: resolved.error };
     const { setPresenceStatus, PresenceStoreError } = await import("./mcp/presences");
     try {
@@ -318,9 +364,7 @@ export const manageRotateSecretFn = createServerFn({ method: "POST" })
 export const manageReissueSessionFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => codeSchema.parse(input))
   .handler(
-    async ({
-      data,
-    }): Promise<{ ok: boolean; sessionToken?: string; slug?: string; reason?: string }> => {
+    async ({ data }): Promise<{ ok: boolean; sessionToken?: string; slug?: string; reason?: string }> => {
       const resolved = await resolve(data.code);
       if ("error" in resolved) return { ok: false, reason: resolved.error };
       const { reissueSessionCapability } = await import("./mcp/recovery.server");
@@ -357,12 +401,12 @@ export const requestOwnerRecoveryFn = createServerFn({ method: "POST" })
     return { ok: filed.ok, state };
   });
 
-const portalSchema = codeSchema.extend({ returnUrl: z.string().url().max(600).optional() });
+const portalSchema = z.object({ returnUrl: z.string().url().max(600).optional() });
 
 export const manageBillingPortalFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => portalSchema.parse(input))
   .handler(async ({ data }): Promise<{ ok: boolean; url?: string; reason?: string }> => {
-    const resolved = await resolve(data.code);
+    const resolved = await resolveSession({ write: true });
     if ("error" in resolved) return { ok: false, reason: resolved.error };
     const customerId = resolved.presence.billingCustomerId;
     if (!customerId) return { ok: false, reason: "no-subscription" };
@@ -395,7 +439,7 @@ export type CustomDomainState = {
   allowedOnPlan: boolean;
 };
 
-const domainSchema = codeSchema.extend({ domain: z.string().trim().min(4).max(253) });
+const domainSchema = z.object({ domain: z.string().trim().min(4).max(253) });
 
 /** Looks up the verification TXT record over DNS-over-HTTPS. */
 async function txtRecords(name: string): Promise<string[]> {
@@ -410,7 +454,7 @@ async function txtRecords(name: string): Promise<string[]> {
 export const manageSetDomainFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => domainSchema.parse(input))
   .handler(async ({ data }): Promise<{ ok: boolean; state?: CustomDomainState; reason?: string }> => {
-    const resolved = await resolve(data.code);
+    const resolved = await resolveSession({ write: true });
     if ("error" in resolved) return { ok: false, reason: resolved.error };
     if (!DOMAIN_PLANS.includes(resolved.presence.plan)) return { ok: false, reason: "plan" };
 
@@ -436,9 +480,8 @@ export const manageSetDomainFn = createServerFn({ method: "POST" })
   });
 
 export const manageVerifyDomainFn = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => codeSchema.parse(input))
-  .handler(async ({ data }): Promise<{ ok: boolean; verified?: boolean; reason?: string }> => {
-    const resolved = await resolve(data.code);
+  .handler(async (): Promise<{ ok: boolean; verified?: boolean; reason?: string }> => {
+    const resolved = await resolveSession({ write: true });
     if ("error" in resolved) return { ok: false, reason: resolved.error };
     const { customDomain, customDomainToken } = resolved.presence;
     if (!customDomain || !customDomainToken) return { ok: false, reason: "no-domain" };
@@ -457,9 +500,8 @@ export const manageVerifyDomainFn = createServerFn({ method: "POST" })
   });
 
 export const manageRemoveDomainFn = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => codeSchema.parse(input))
-  .handler(async ({ data }): Promise<{ ok: boolean; reason?: string }> => {
-    const resolved = await resolve(data.code);
+  .handler(async (): Promise<{ ok: boolean; reason?: string }> => {
+    const resolved = await resolveSession({ write: true });
     if ("error" in resolved) return { ok: false, reason: resolved.error };
     const { clearCustomDomain, PresenceStoreError } = await import("./mcp/presences");
     try {
@@ -476,7 +518,7 @@ export const manageRemoveDomainFn = createServerFn({ method: "POST" })
 /* ------------------------------------------------------------------ */
 
 export type ManageRestoreResult =
-  | { ok: false; reason: "invalid-code" | "not-found" | "rate-limited" | "unavailable" }
+  | { ok: false; reason: ManageFailure }
   | {
       ok: true;
       slug: string;
@@ -487,30 +529,29 @@ export type ManageRestoreResult =
 
 /**
  * Returns the stored Knowledge Core for a Presence so /knowledge, /preview and
- * /publish can show the owner's real data after the recovery code was entered.
- * Capability-based: the recovery code is the only key.
+ * /publish can show the owner's real data. Authorised by the HttpOnly
+ * management session cookie that the recovery code opened.
  */
 export const manageRestoreCoreFn = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => codeSchema.parse(input))
-  .handler(async ({ data }): Promise<ManageRestoreResult> => {
-    const resolved = await resolve(data.code);
+  .handler(async (): Promise<ManageRestoreResult> => {
+    const resolved = await resolveSession({ write: false });
     if ("error" in resolved) return { ok: false, reason: resolved.error };
     const p = resolved.presence;
     return { ok: true, slug: p.slug, plan: p.plan, publishedAt: p.publishedAt, core: p.core };
   });
 
-const updateCoreSchema = codeSchema.extend({ core: z.unknown() });
+const updateCoreSchema = z.object({ core: z.unknown() });
 
 /**
  * Push the current Knowledge Core into an already published Presence and
- * regenerate every public file. Capability-based: the recovery code is the
- * only key. Empty content is rejected so a live Presence can never be turned
+ * regenerate every public file. Authorised by the HttpOnly management session
+ * cookie plus the bound CSRF token. Empty content is rejected so a live Presence can never be turned
  * into an empty shell.
  */
 export const manageUpdateCoreFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => updateCoreSchema.parse(input))
   .handler(async ({ data }): Promise<{ ok: boolean; reason?: string; paths?: string[]; version?: number }> => {
-    const resolved = await resolve(data.code);
+    const resolved = await resolveSession({ write: true });
     if ("error" in resolved) return { ok: false, reason: resolved.error };
 
     const { isCoreEmpty } = await import("./knowledge");

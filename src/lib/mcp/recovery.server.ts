@@ -50,24 +50,36 @@ export async function recoveryStateFor(slug: string): Promise<RecoveryState | nu
  * Issues a fresh draft session capability for an already-verified owner.
  * The caller MUST have verified the management secret first.
  */
+/**
+ * Issues a fresh draft session capability for an already-verified owner.
+ * The caller MUST have verified the independent management secret first.
+ *
+ * The whole rotation happens inside one database routine
+ * (`reissue_presence_session`), so the Presence hash, the revocation of the
+ * old session→identity mappings and the new mapping either all apply or none
+ * do. Billing ids, plan and content are never touched. Only the hash is
+ * stored; the raw capability is returned exactly once.
+ */
 export async function reissueSessionCapability(slug: string): Promise<ReissueResult> {
   const supabase = await client();
   if (!supabase) return { ok: false, reason: "unavailable" };
 
-  const state = await recoveryStateFor(slug);
-  if (state === null) return { ok: false, reason: "not-found" };
-  if (state === "admin_assist_required") return { ok: false, reason: "admin-assist-required" };
-
   const sessionToken = newSessionCapability();
   const hash = await hashSessionToken(sessionToken);
-  // One atomic write: the new mapping replaces the previous one, so any older
-  // session capability (including a rotated/leaked one) stops resolving here.
-  const { data, error } = await supabase
-    .from("published_presences")
-    .update({ session_token: null, session_token_hash: hash })
-    .eq("slug", slug)
-    .select("slug");
-  if (error || !data || data.length !== 1) return { ok: false, reason: "unavailable" };
+
+  const { data, error } = await supabase.rpc("reissue_presence_session", {
+    p_slug: slug,
+    p_new_session_hash: hash,
+    p_old_session_hash: null,
+  });
+  if (error) return { ok: false, reason: "unavailable" };
+  const result = (data ?? null) as { ok?: boolean; reason?: string } | null;
+  if (!result?.ok) {
+    const reason = result?.reason;
+    if (reason === "not-found") return { ok: false, reason: "not-found" };
+    if (reason === "admin-assist-required") return { ok: false, reason: "admin-assist-required" };
+    return { ok: false, reason: "unavailable" };
+  }
   return { ok: true, sessionToken, slug };
 }
 
@@ -76,14 +88,46 @@ export async function requestAdminAssistedRecovery(input: {
   slug: string;
   contact?: string | null;
   evidence?: string | null;
-}): Promise<{ ok: boolean }> {
+}): Promise<{ ok: boolean; deduplicated?: boolean; reason?: "rate-limited" | "unavailable" }> {
   const supabase = await client();
-  if (!supabase) return { ok: false };
+  if (!supabase) return { ok: false, reason: "unavailable" };
+
+  const { allowRequest } = await import("./presences");
+  if (!(await allowRequest(`recovery-request:${input.slug}`, 3))) {
+    return { ok: false, reason: "rate-limited" };
+  }
+
+  // Deduplicated by the partial unique index on (slug) WHERE status = 'open':
+  // a repeated request bumps the counter instead of creating a second ticket.
+  const { data: existing } = await supabase
+    .from("presence_recovery_requests")
+    .select("id, request_count")
+    .eq("slug", input.slug)
+    .eq("status", "open")
+    .maybeSingle();
+
+  if (existing) {
+    const row = existing as { id: string; request_count: number | null };
+    const { error } = await supabase
+      .from("presence_recovery_requests")
+      .update({
+        request_count: (row.request_count ?? 1) + 1,
+        last_requested_at: new Date().toISOString(),
+        ...(input.contact ? { contact: input.contact } : {}),
+      })
+      .eq("id", row.id);
+    return error ? { ok: false, reason: "unavailable" } : { ok: true, deduplicated: true };
+  }
+
+  // Minimal data only: slug, an optional contact, a short free-text evidence
+  // note. No capability, no token, no request body is ever stored here, and
+  // the row deletes itself after the retention window (delete_after).
   const { error } = await supabase.from("presence_recovery_requests").insert({
     slug: input.slug,
     contact: input.contact ?? null,
-    evidence: input.evidence ?? null,
+    evidence: input.evidence ? input.evidence.slice(0, 500) : null,
     status: "open",
   });
-  return { ok: !error };
+  if (error && (error as { code?: string }).code === "23505") return { ok: true, deduplicated: true };
+  return error ? { ok: false, reason: "unavailable" } : { ok: true };
 }

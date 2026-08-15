@@ -24,6 +24,21 @@ const csrfMiddleware = createCsrfMiddleware({
   filter: (ctx) => ctx.handlerType === "serverFn",
 });
 
+/**
+ * Attaches the double-submit management CSRF token to every server function
+ * call. The token is a non-secret companion of the HttpOnly management
+ * cookie; state-changing management handlers reject a request without it.
+ */
+const manageCsrfMiddleware = createMiddleware({ type: "function" }).client(async ({ next }) => {
+  let token = "";
+  if (typeof document !== "undefined") {
+    const match = document.cookie.match(/(?:^|; )crawler_manage_csrf=([^;]*)/);
+    token = match ? decodeURIComponent(match[1]!) : "";
+  }
+  return next(token ? { headers: { "x-crawler-csrf": token } } : {});
+});
+
 export const startInstance = createStart(() => ({
   requestMiddleware: [errorMiddleware, csrfMiddleware],
+  functionMiddleware: [manageCsrfMiddleware],
 }));

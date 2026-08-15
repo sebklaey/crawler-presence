@@ -34,7 +34,17 @@ export type IdentityConflict = {
   correlation_id: string;
 };
 
-export type IdentityResult = IdentityContext | IdentityConflict;
+/** The identity store could not be read or written. Never degrade to a new
+ *  anonymous identity — that would orphan the caller's rooms and profile. */
+export type IdentityUnavailable = {
+  ok: false;
+  error: "TEMPORARILY_UNAVAILABLE";
+  message: string;
+  retryable: true;
+  correlation_id: string;
+};
+
+export type IdentityResult = IdentityContext | IdentityConflict | IdentityUnavailable;
 
 export const SESSION_PREFIX = "sess_";
 
@@ -82,12 +92,25 @@ export async function resolveIdentityContext(input: {
     "../room/session-identity.server"
   );
 
+  const unavailable = (): IdentityResult => ({
+    ok: false,
+    error: "TEMPORARILY_UNAVAILABLE",
+    message:
+      "Crawler cannot reach the identity store right now. Nothing was changed and no new identity was created. Please retry in a moment.",
+    retryable: true,
+    correlation_id: correlationId,
+  });
+
   let mappedToken: string | null = null;
   let mappedSubject: string | null = null;
   if (sessionId) {
-    const mapped = await identityForSession(sessionId);
-    mappedToken = mapped.roomToken;
-    mappedSubject = mapped.subjectHash;
+    try {
+      const mapped = await identityForSession(sessionId);
+      mappedToken = mapped.roomToken;
+      mappedSubject = mapped.subjectHash;
+    } catch {
+      return unavailable();
+    }
   }
 
   // Both credentials present: they must describe the same person.
@@ -143,8 +166,17 @@ export async function resolveIdentityContext(input: {
   if (sessionId) {
     // Unique constraint on session_token makes this safe under parallel calls:
     // whoever loses the race simply re-reads the winner's token.
-    await rememberRoomTokenForSession(sessionId, token);
-    const settled = await identityForSession(sessionId);
+    try {
+      await rememberRoomTokenForSession(sessionId, token);
+    } catch {
+      return unavailable();
+    }
+    let settled: { roomToken: string | null; subjectHash: string | null };
+    try {
+      settled = await identityForSession(sessionId);
+    } catch {
+      return unavailable();
+    }
     const winner = settled.roomToken ?? token;
     return {
       ok: true,
