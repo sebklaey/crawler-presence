@@ -22,6 +22,8 @@ import { trySugarActivity } from "./sugar/service";
 import {
   currentUsage,
   requireEntitlement,
+  requireOrganizationAccess,
+
   resolveEntitlements,
   upgradeOptions,
   type AccountContext,
