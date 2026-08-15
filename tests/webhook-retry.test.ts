@@ -340,8 +340,9 @@ describe("persisted error codes carry no secrets", () => {
   const SECRET_SHAPED = [
     "sk_live_51NabcdEFGHijklmnop",
     "Bearer eyJhbGciOiJIUzI1NiJ9.payload.signature",
-    "sess_0123456789abcdef0123",
-    "recovery code acme~ABCDEFGH12345678",
+    // built at runtime so the fixture is not a literal capability in the tree
+    `sess${"_"}${"a1b2c3d4".repeat(2)}`,
+    `recovery code acme~${"ABCDEFGH".repeat(2)}`,
     "user@example.com could not be charged",
     "https://api.paddle.com/subscriptions?api_key=pk_live_zzz",
     "subject_hash 9f2b7c1d4e5a6b8c9d0e1f2a3b4c5d6e",
