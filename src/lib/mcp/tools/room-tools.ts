@@ -110,12 +110,15 @@ function adapt(tool: RoomTool) {
 
       try {
         // Server-side plan gate — the caller never supplies its own plan.
-        const { checkToolAccess } = await import("@/lib/entitlements/guard.server");
+        const { checkToolAccess, linkSessionPlanToRoomToken } = await import("@/lib/entitlements/guard.server");
         const { detectLanguage } = await import("@/lib/entitlements/upgrade.server");
+        const session = typeof sessionId === "string" && sessionId.trim() ? sessionId.trim() : null;
+        // A paid draft session unlocks the room features of its subscription.
+        if (session) await linkSessionPlanToRoomToken(token, session);
         const denied = await checkToolAccess({
           tool: tool.name,
           roomToken: token,
-          sessionToken: typeof sessionId === "string" && sessionId.trim() ? sessionId.trim() : null,
+          sessionToken: session,
           language: detectLanguage(rest),
           feature: tool.title,
         });
