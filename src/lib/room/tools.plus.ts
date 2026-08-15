@@ -169,39 +169,52 @@ export async function handleGetMyPlan(input: unknown, meta: McpMeta) {
   const ctx = await resolveEntitlements(db, identity.subjectHash);
   const usage = await currentUsage(db, ctx);
   const locked = await upgradeOptions(db, ctx);
+  const { publicFeatures, planCheckoutUrl } = await import("./entitlements");
+  const nextPlan = ctx.plan.code === "free" ? "plus" : ctx.plan.code === "plus" ? "pro" : "business";
+  const upgradeUrl = await planCheckoutUrl(ctx.plan.code === "business" ? "" : nextPlan);
+  const checkout = {
+    plus: await planCheckoutUrl("plus"),
+    pro: await planCheckoutUrl("pro"),
+    business: await planCheckoutUrl("business"),
+  };
   return {
     plan: ctx.plan.code,
     plan_name: ctx.plan.name,
     price_usd: ctx.plan.price_cents / 100,
     linked_presence: linked?.presenceSlug ?? null,
     link_error: linkError,
-    features: ctx.entitlements,
+    features: publicFeatures(ctx.entitlements),
     limits: ctx.limits,
     usage,
     locked,
-    upgrade_url: "https://crawler.today/room",
+    upgrade_url: upgradeUrl,
+    checkout_urls: checkout,
     notice:
       ctx.plan.code === "free"
-        ? "Du nutzt @crawler Rooms gratis: öffentliche Themenräume und der Universal Room sind frei. Eigene Räume (Plus $5/Monat), Communities (Pro $20/Monat) und Organisationen (Business $80/Monat) gehören zum Crawler-Abo. Nach dem Kauf auf crawler.today/room den Wiederherstellungscode hier mit recovery_code angeben, um die Erweiterungen freizuschalten."
-        : `Aktives Abo: ${ctx.plan.name}. Upgrades und Verwaltung auf https://crawler.today/room.`,
+        ? `Du nutzt @crawler Rooms gratis: öffentliche Themenräume und der Universal Room sind frei. Eigene öffentliche Räume (Plus $5/Monat), Communities (Pro $20/Monat) und Organisationen (Business $80/Monat) sind Teil des Crawler-Abos. Direkt kaufen: Plus ${checkout.plus} · Pro ${checkout.pro} · Business ${checkout.business}. Nach dem Kauf den Wiederherstellungscode hier mit recovery_code angeben.`
+        : `Aktives Abo: ${ctx.plan.name}.${ctx.plan.code === "business" ? "" : ` Upgrade direkt kaufen: ${upgradeUrl}`}`,
   };
 }
 
 export async function handlePublicPlans() {
   const db = await getDb();
   const plans = await listPlans(db);
+  const { publicFeatures, planCheckoutUrl } = await import("./entitlements");
   return {
     free_tier: "Öffentliche Themenräume und der Universal Room sind kostenlos.",
-    upgrade_url: "https://crawler.today/room",
-    extensions: plans.map((plan) => ({
-      code: plan.code,
-      name: plan.name,
-      tagline: plan.tagline ?? "",
-      price_usd: plan.price_cents / 100,
-      interval: plan.interval,
-      limits: plan.limits,
-      entitlements: plan.entitlements,
-    })),
+    upgrade_url: await planCheckoutUrl("plus"),
+    extensions: await Promise.all(
+      plans.map(async (plan) => ({
+        code: plan.code,
+        name: plan.name,
+        tagline: plan.tagline ?? "",
+        price_usd: plan.price_cents / 100,
+        interval: plan.interval,
+        limits: plan.limits,
+        entitlements: publicFeatures(plan.entitlements ?? {}),
+        checkout_url: await planCheckoutUrl(plan.code),
+      })),
+    ),
   };
 }
 
