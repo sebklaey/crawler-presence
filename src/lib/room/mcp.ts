@@ -10,6 +10,7 @@ import { SERVICE_NAME, SERVICE_VERSION } from "./config";
 import { PLUS_TOOLS } from "./mcp.plus";
 import { PERSONAL_TOOLS } from "./mcp.personal";
 import { PROFILE_TOOLS } from "./mcp.profile";
+import { SUGAR_TOOLS } from "./mcp.sugar";
 import { toRoomError } from "./errors";
 import type { McpMeta } from "./identity";
 import {
