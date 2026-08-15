@@ -561,6 +561,7 @@ for (const tool of TOOLS) {
 TOOLS.push(...(PLUS_TOOLS as unknown as ToolDefinition[]));
 TOOLS.push(...(PERSONAL_TOOLS as unknown as ToolDefinition[]));
 TOOLS.push(...(PROFILE_TOOLS as unknown as ToolDefinition[]));
+TOOLS.push(...(SUGAR_TOOLS as unknown as ToolDefinition[]));
 
 const INSTRUCTIONS = `@room verbindet Menschen in kleinen anonymen Themenräumen mit maximal fünf Personen.
 Neue Nachrichten erscheinen bei jedem @room-Aufruf; es gibt kein Push-Messaging.
