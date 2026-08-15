@@ -117,7 +117,7 @@ describe("shared response envelope", () => {
       cta_label: "Upgrade",
       upgrade_url: "https://crawler.today/pricing",
     };
-    expect(v.safeParse({ ...base, plan_required: "business" }).success).toBe(true);
+    expect(v.safeParse({ ...base, required_plan: "business" }).success).toBe(true);
     expect(v.safeParse({ ...base, plan_required: null }).success).toBe(false);
     expect(v.safeParse({ ...base }).success).toBe(false);
   });
