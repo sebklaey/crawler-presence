@@ -78,17 +78,19 @@ export async function resolvePlanForSession(sessionToken: string): Promise<Custo
     const db = await getDb();
     const { data } = await db
       .from("published_presences")
-      .select("plan, status, subscription_status, current_period_end, billing_subscription_id")
+      .select("slug, plan, status, subscription_status, current_period_end, billing_subscription_id, billing_customer_id")
       .eq("session_token", sessionToken)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
     const row = data as {
+      slug?: string | undefined;
       plan?: string | undefined;
       status?: string | undefined;
       subscription_status?: string | undefined;
       current_period_end?: string | undefined;
       billing_subscription_id?: string | null | undefined;
+      billing_customer_id?: string | null | undefined;
     } | null;
     if (!row) return "free";
 
@@ -98,15 +100,22 @@ export async function resolvePlanForSession(sessionToken: string): Promise<Custo
 
     // A just-completed upgrade may still be in flight as a webhook — read the
     // provider state directly (throttled) so the new plan counts right away.
-    if (row.billing_subscription_id) {
-      const { refreshSubscriptionPlan } = await import("../billing-refresh.server");
-      const fresh = await refreshSubscriptionPlan(row.billing_subscription_id);
+    // A new checkout creates a new subscription, so the whole customer is
+    // reconciled, not only the subscription this Presence started with.
+    if (row.slug && (row.billing_subscription_id || row.billing_customer_id)) {
+      const { reconcilePresenceBilling } = await import("../billing-refresh.server");
+      const fresh = await reconcilePresenceBilling({
+        slug: row.slug,
+        customerId: row.billing_customer_id,
+        subscriptionId: row.billing_subscription_id,
+      });
       if (fresh) {
         plan = fresh.plan ?? plan;
         subscriptionStatus = fresh.subscriptionStatus ?? subscriptionStatus;
         periodEnd = fresh.currentPeriodEnd ?? periodEnd;
       }
     }
+
 
     if (row.status && !["live", "active", "published"].includes(row.status)) return "free";
     if (!stillActive(subscriptionStatus, periodEnd)) return "free";
