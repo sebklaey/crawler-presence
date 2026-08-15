@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 
 import { AppShell } from "@/components/app-shell";
+import { RoomMessageBody } from "@/components/social-profile-card";
 import { getPairRoomFn } from "@/lib/pairroom.functions";
 
 export const Route = createFileRoute("/rooms/$slug")({
