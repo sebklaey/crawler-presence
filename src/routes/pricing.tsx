@@ -50,6 +50,7 @@ const ROOM_EXTENSIONS: Record<PlanId, { name: string; features: string[] }> = {
       "Anonymous resonance match",
       "Public pair rooms",
       "Moderator roles and room analytics",
+      "Crawler Love — guided compatibility interview",
     ],
   },
 
@@ -61,6 +62,7 @@ const ROOM_EXTENSIONS: Record<PlanId, { name: string; features: string[] }> = {
       "Server-side resonance matching, never user profiles",
       "Aggregated campaign analytics",
       "Team management",
+      "Everything in Pro, including Crawler Love",
     ],
   },
 
@@ -258,6 +260,21 @@ function PricingPage() {
                 </ul>
               </div>
 
+              {p.id === "pro" || p.id === "business" ? (
+                <div className="mt-3 rounded-lg border border-border bg-secondary/40 px-3 py-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-foreground">Crawler Love</p>
+                  <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                    <li>· Guided Love compatibility interview in ChatGPT</li>
+                    <li>· Protected Love Resonance Profile</li>
+                    <li>· Mutual romantic matching</li>
+                    <li>· One compatible candidate at a time</li>
+                    <li>· Mutual acceptance before contact</li>
+                    <li>· Public Pair Room after both users consent</li>
+                    <li>· Pause or delete your Love Profile anytime</li>
+                  </ul>
+                </div>
+              ) : null}
+
               {p.upgradeNote ? (
                 <p className="mt-4 rounded-lg border border-dashed border-border bg-secondary/50 px-3 py-2 text-xs text-muted-foreground">
                   {p.upgradeNote}
@@ -283,6 +300,12 @@ function PricingPage() {
             </div>
           ))}
         </div>
+
+        <p className="mt-8 rounded-xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
+          Crawler Love is an optional compatibility experience for eligible adult users. It compares
+          protected, voluntarily created Love Profiles and suggests possible mutual resonance. It does not
+          guarantee attraction, compatibility, a relationship or a perfect partner.
+        </p>
 
         <p className="mt-8 text-sm text-muted-foreground">
           Joining public rooms and the Universal Room in ChatGPT stays free —{" "}
