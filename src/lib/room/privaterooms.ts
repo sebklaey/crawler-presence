@@ -43,12 +43,13 @@ export async function createOwnedRoom(
     title: string;
     description?: string;
     topic?: string;
-    visibility: "public" | "private" | "invite" | "paid";
+    /** Kept for compatibility — every room in Crawler Room is public. */
+    visibility?: "public";
     capacity?: number;
     organizationId?: string;
   },
 ): Promise<OwnedRoom> {
-  requireEntitlement(ctx, "private_rooms");
+  requireEntitlement(ctx, "owned_rooms_feature");
   requireWritablePaidFeatures(ctx);
 
   const { count } = await db
@@ -58,9 +59,7 @@ export async function createOwnedRoom(
     .is("archived_at", null);
   await requireUnderLimit(ctx, "owned_rooms", count ?? 0);
 
-  if (input.visibility === "paid" && !ctx.entitlements["paid_rooms"]) {
-    throw roomError("PLAN_REQUIRED", undefined, { required_feature: "paid_rooms" });
-  }
+
 
   const maxMembers = limitOf(ctx, "room_members", 5);
   const capacity = Math.min(Math.max(input.capacity ?? maxMembers, 2), maxMembers);
