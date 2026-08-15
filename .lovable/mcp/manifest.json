@@ -2215,6 +2215,322 @@
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
         "outputSchema": null
+      },
+      {
+        "name": "create_resonance_pattern",
+        "title": "Schwingungsmuster erstellen",
+        "description": "Legt ein anonymes Schwingungsmuster für Crawler Match an (Pro-Abo). Führe zuerst ein natürliches Gespräch über Interessen, Arbeitsweise und gewünschte Verbindung und leite daraus die abstrakten Dimensionen ab. Crawler speichert keine Profiltexte und keine Chatverläufe, nur die abstrakten Match-Dimensionen.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": true,
+          "idempotentHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "intent": {
+              "type": "string",
+              "description": "Worum es der Person geht — keine sensiblen Kategorien."
+            },
+            "dimensions": {
+              "type": "object",
+              "additionalProperties": {},
+              "description": "Abstrakte Werte zwischen 0 und 1. Erlaubte Schlüssel: creative, technical, entrepreneurial, social, reflective, experimental, structured, spontaneous, local_orientation, global_orientation, collaboration_intensity, conversation_depth. Mindestens vier angeben. Leite sie aus dem Gespräch ab; sende niemals Freitext."
+            },
+            "languages": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Zweibuchstabige Sprachcodes, z. B. [\"de\", \"en\"]."
+            },
+            "broad_region": {
+              "type": "string",
+              "description": "Freiwillig und grob, z. B. CH oder DE. Nie Ort oder Adresse."
+            },
+            "connection_modes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Gewünschte Verbindungsarten."
+            },
+            "expires_in_days": {
+              "type": "number",
+              "description": "Lebensdauer des Musters, Standard 30, maximal 90."
+            },
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+            }
+          },
+          "required": [
+            "intent",
+            "dimensions",
+            "languages",
+            "connection_modes"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "update_resonance_pattern",
+        "title": "Schwingungsmuster aktualisieren",
+        "description": "Aktualisiert das eigene Schwingungsmuster (Pro-Abo).",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": true,
+          "idempotentHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "intent": {
+              "type": "string",
+              "description": "Worum es der Person geht — keine sensiblen Kategorien."
+            },
+            "dimensions": {
+              "type": "object",
+              "additionalProperties": {},
+              "description": "Abstrakte Werte zwischen 0 und 1. Erlaubte Schlüssel: creative, technical, entrepreneurial, social, reflective, experimental, structured, spontaneous, local_orientation, global_orientation, collaboration_intensity, conversation_depth. Mindestens vier angeben. Leite sie aus dem Gespräch ab; sende niemals Freitext."
+            },
+            "languages": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Zweibuchstabige Sprachcodes, z. B. [\"de\", \"en\"]."
+            },
+            "broad_region": {
+              "type": "string",
+              "description": "Freiwillig und grob, z. B. CH oder DE. Nie Ort oder Adresse."
+            },
+            "connection_modes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Gewünschte Verbindungsarten."
+            },
+            "expires_in_days": {
+              "type": "number",
+              "description": "Lebensdauer des Musters, Standard 30, maximal 90."
+            },
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+            }
+          },
+          "required": [
+            "intent",
+            "dimensions",
+            "languages",
+            "connection_modes"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "delete_resonance_pattern",
+        "title": "Schwingungsmuster löschen",
+        "description": "Löscht das eigene Schwingungsmuster und alle offenen Match-Vorschläge unwiderruflich.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": true,
+          "openWorldHint": true,
+          "idempotentHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "find_match",
+        "title": "Resonanz suchen",
+        "description": "Sucht genau eine kompatible Resonanz (Pro-Abo). Es gibt keine durchsuchbare Personenliste, keine Fotos und keine Profile — nur einen Vorschlag mit Resonanzwert und unbedenklicher Begründung. Verbunden wird erst bei beidseitiger Zustimmung.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": true,
+          "idempotentHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_match_status",
+        "title": "Match-Status",
+        "description": "Zeigt das eigene Schwingungsmuster und alle offenen Match-Vorgänge inklusive Pair-Room-Link.",
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false,
+          "idempotentHint": true
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "respond_to_match",
+        "title": "Auf Match antworten",
+        "description": "Antwortet auf einen Match-Vorschlag: accept, decline oder block. Stimmen beide zu, entsteht automatisch ein öffentlicher Pair Room.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": true,
+          "idempotentHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "public_match_id": {
+              "type": "string"
+            },
+            "decision": {
+              "type": "string"
+            },
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+            }
+          },
+          "required": [
+            "public_match_id",
+            "decision"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "open_pair_room",
+        "title": "Öffentlichen Pair Room öffnen",
+        "description": "Öffnet einen öffentlichen Pair Room. Jede Person kann mitlesen; schreiben dürfen nur die zwei gematchten Handles.",
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false,
+          "idempotentHint": true
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "room_slug": {
+              "type": "string",
+              "description": "Slug oder vollständige URL des öffentlichen Pair Rooms."
+            },
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+            }
+          },
+          "required": [
+            "room_slug"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "send_pair_message",
+        "title": "Im Pair Room schreiben",
+        "description": "Sendet eine Nachricht in den eigenen öffentlichen Pair Room. Nur die zwei gematchten Handles dürfen schreiben, alle können mitlesen. Nachrichten verschwinden nach 24 Stunden.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": true,
+          "idempotentHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "room_slug": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string",
+              "description": "Höchstens 500 Zeichen."
+            },
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+            }
+          },
+          "required": [
+            "room_slug",
+            "message"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "close_pair_room",
+        "title": "Pair Room schliessen",
+        "description": "Beendet das Gespräch. Der Raum bleibt öffentlich lesbar, schreiben ist nicht mehr möglich.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": true,
+          "openWorldHint": true,
+          "idempotentHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "room_slug": {
+              "type": "string",
+              "description": "Slug oder vollständige URL des öffentlichen Pair Rooms."
+            },
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+            }
+          },
+          "required": [
+            "room_slug"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
       }
     ]
   }
