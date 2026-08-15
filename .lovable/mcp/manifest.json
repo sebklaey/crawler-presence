@@ -1929,7 +1929,62 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "topics": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "slug": {
+                    "type": "string"
+                  },
+                  "display_name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "slug",
+                  "display_name",
+                  "description"
+                ],
+                "additionalProperties": true
+              }
+            },
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "enter_topic",
@@ -1967,7 +2022,232 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "topic": {
+              "type": "object",
+              "properties": {
+                "slug": {
+                  "type": "string"
+                },
+                "display_name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "slug",
+                "display_name"
+              ],
+              "additionalProperties": true
+            },
+            "room": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "member_count": {
+                  "type": "number"
+                },
+                "capacity": {
+                  "type": "number"
+                },
+                "online_now": {
+                  "type": "number"
+                },
+                "presence_window_seconds": {
+                  "type": "number"
+                },
+                "presence_checked_at": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "label",
+                "member_count",
+                "capacity",
+                "online_now"
+              ],
+              "additionalProperties": true
+            },
+            "membership": {
+              "type": "object",
+              "properties": {
+                "alias": {
+                  "type": "string"
+                },
+                "joined_now": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "alias",
+                "joined_now"
+              ],
+              "additionalProperties": true
+            },
+            "messages": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "alias": {
+                    "type": "string"
+                  },
+                  "text": {
+                    "type": "string"
+                  },
+                  "created_at": {
+                    "type": "string"
+                  },
+                  "is_self": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "alias",
+                  "text",
+                  "created_at",
+                  "is_self"
+                ],
+                "additionalProperties": true
+              }
+            },
+            "unread_count": {
+              "type": "number"
+            },
+            "images": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "alias": {
+                    "type": "string"
+                  },
+                  "created_at": {
+                    "type": "string"
+                  },
+                  "alt_text": {
+                    "type": "string"
+                  },
+                  "width": {
+                    "type": "number"
+                  },
+                  "height": {
+                    "type": "number"
+                  },
+                  "status": {
+                    "type": "string"
+                  },
+                  "is_self": {
+                    "type": "boolean"
+                  },
+                  "url": {
+                    "type": "string"
+                  },
+                  "note": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "alias",
+                  "created_at",
+                  "alt_text",
+                  "status",
+                  "is_self"
+                ],
+                "additionalProperties": true
+              }
+            },
+            "my_pending_images": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "alias": {
+                    "type": "string"
+                  },
+                  "created_at": {
+                    "type": "string"
+                  },
+                  "alt_text": {
+                    "type": "string"
+                  },
+                  "width": {
+                    "type": "number"
+                  },
+                  "height": {
+                    "type": "number"
+                  },
+                  "status": {
+                    "type": "string"
+                  },
+                  "is_self": {
+                    "type": "boolean"
+                  },
+                  "url": {
+                    "type": "string"
+                  },
+                  "note": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "alias",
+                  "created_at",
+                  "alt_text",
+                  "status",
+                  "is_self"
+                ],
+                "additionalProperties": true
+              }
+            },
+            "notice": {
+              "type": "string"
+            },
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "send_message",
@@ -2005,7 +2285,281 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "sent": {
+              "type": "boolean"
+            },
+            "topic": {
+              "type": "object",
+              "properties": {
+                "slug": {
+                  "type": "string"
+                },
+                "display_name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "slug",
+                "display_name"
+              ],
+              "additionalProperties": true
+            },
+            "room": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "member_count": {
+                  "type": "number"
+                },
+                "capacity": {
+                  "type": "number"
+                },
+                "online_now": {
+                  "type": "number"
+                },
+                "presence_window_seconds": {
+                  "type": "number"
+                },
+                "presence_checked_at": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "label",
+                "member_count",
+                "capacity",
+                "online_now"
+              ],
+              "additionalProperties": true
+            },
+            "sent_message": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "alias": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string"
+                },
+                "created_at": {
+                  "type": "string"
+                },
+                "is_self": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "id",
+                "alias",
+                "text",
+                "created_at",
+                "is_self"
+              ],
+              "additionalProperties": true
+            },
+            "new_messages": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "alias": {
+                    "type": "string"
+                  },
+                  "text": {
+                    "type": "string"
+                  },
+                  "created_at": {
+                    "type": "string"
+                  },
+                  "is_self": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "alias",
+                  "text",
+                  "created_at",
+                  "is_self"
+                ],
+                "additionalProperties": true
+              }
+            },
+            "recent_messages": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "alias": {
+                    "type": "string"
+                  },
+                  "text": {
+                    "type": "string"
+                  },
+                  "created_at": {
+                    "type": "string"
+                  },
+                  "is_self": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "alias",
+                  "text",
+                  "created_at",
+                  "is_self"
+                ],
+                "additionalProperties": true
+              }
+            },
+            "display_instruction": {
+              "type": "string"
+            },
+            "unread_count": {
+              "type": "number"
+            },
+            "images": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "alias": {
+                    "type": "string"
+                  },
+                  "created_at": {
+                    "type": "string"
+                  },
+                  "alt_text": {
+                    "type": "string"
+                  },
+                  "width": {
+                    "type": "number"
+                  },
+                  "height": {
+                    "type": "number"
+                  },
+                  "status": {
+                    "type": "string"
+                  },
+                  "is_self": {
+                    "type": "boolean"
+                  },
+                  "url": {
+                    "type": "string"
+                  },
+                  "note": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "alias",
+                  "created_at",
+                  "alt_text",
+                  "status",
+                  "is_self"
+                ],
+                "additionalProperties": true
+              }
+            },
+            "my_pending_images": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "alias": {
+                    "type": "string"
+                  },
+                  "created_at": {
+                    "type": "string"
+                  },
+                  "alt_text": {
+                    "type": "string"
+                  },
+                  "width": {
+                    "type": "number"
+                  },
+                  "height": {
+                    "type": "number"
+                  },
+                  "status": {
+                    "type": "string"
+                  },
+                  "is_self": {
+                    "type": "boolean"
+                  },
+                  "url": {
+                    "type": "string"
+                  },
+                  "note": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "alias",
+                  "created_at",
+                  "alt_text",
+                  "status",
+                  "is_self"
+                ],
+                "additionalProperties": true
+              }
+            },
+            "notice": {
+              "type": "string"
+            },
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "read_messages",
@@ -2041,7 +2595,219 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "topic": {
+              "type": "object",
+              "properties": {
+                "slug": {
+                  "type": "string"
+                },
+                "display_name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "slug",
+                "display_name"
+              ],
+              "additionalProperties": true
+            },
+            "room": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "member_count": {
+                  "type": "number"
+                },
+                "capacity": {
+                  "type": "number"
+                },
+                "online_now": {
+                  "type": "number"
+                },
+                "presence_window_seconds": {
+                  "type": "number"
+                },
+                "presence_checked_at": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "label",
+                "member_count",
+                "capacity",
+                "online_now"
+              ],
+              "additionalProperties": true
+            },
+            "messages": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "alias": {
+                    "type": "string"
+                  },
+                  "text": {
+                    "type": "string"
+                  },
+                  "created_at": {
+                    "type": "string"
+                  },
+                  "is_self": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "alias",
+                  "text",
+                  "created_at",
+                  "is_self"
+                ],
+                "additionalProperties": true
+              }
+            },
+            "unread_count": {
+              "type": "number"
+            },
+            "has_more": {
+              "type": "boolean"
+            },
+            "images": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "alias": {
+                    "type": "string"
+                  },
+                  "created_at": {
+                    "type": "string"
+                  },
+                  "alt_text": {
+                    "type": "string"
+                  },
+                  "width": {
+                    "type": "number"
+                  },
+                  "height": {
+                    "type": "number"
+                  },
+                  "status": {
+                    "type": "string"
+                  },
+                  "is_self": {
+                    "type": "boolean"
+                  },
+                  "url": {
+                    "type": "string"
+                  },
+                  "note": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "alias",
+                  "created_at",
+                  "alt_text",
+                  "status",
+                  "is_self"
+                ],
+                "additionalProperties": true
+              }
+            },
+            "my_pending_images": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "alias": {
+                    "type": "string"
+                  },
+                  "created_at": {
+                    "type": "string"
+                  },
+                  "alt_text": {
+                    "type": "string"
+                  },
+                  "width": {
+                    "type": "number"
+                  },
+                  "height": {
+                    "type": "number"
+                  },
+                  "status": {
+                    "type": "string"
+                  },
+                  "is_self": {
+                    "type": "boolean"
+                  },
+                  "url": {
+                    "type": "string"
+                  },
+                  "note": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "alias",
+                  "created_at",
+                  "alt_text",
+                  "status",
+                  "is_self"
+                ],
+                "additionalProperties": true
+              }
+            },
+            "notice": {
+              "type": "string"
+            },
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "my_rooms",
@@ -2068,7 +2834,82 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "rooms": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "topic_slug": {
+                    "type": "string"
+                  },
+                  "topic_display_name": {
+                    "type": "string"
+                  },
+                  "room_label": {
+                    "type": "string"
+                  },
+                  "alias": {
+                    "type": "string"
+                  },
+                  "member_count": {
+                    "type": "number"
+                  },
+                  "online_now": {
+                    "type": "number"
+                  },
+                  "capacity": {
+                    "type": "number"
+                  },
+                  "unread_count": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "topic_slug",
+                  "topic_display_name",
+                  "room_label",
+                  "alias",
+                  "member_count",
+                  "online_now",
+                  "capacity",
+                  "unread_count"
+                ],
+                "additionalProperties": true
+              }
+            },
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "leave_topic",
@@ -2101,7 +2942,45 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "left": {
+              "type": "boolean"
+            },
+            "topic_display_name": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "report_message",
@@ -2143,7 +3022,42 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "reported": {
+              "type": "boolean"
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "set_alias",
@@ -2177,7 +3091,46 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "alias": {
+              "type": "string"
+            },
+            "previous_alias": {},
+            "rooms_updated": {
+              "type": "number"
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "get_alias",
@@ -2204,7 +3157,43 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "alias": {},
+            "has_custom_alias": {
+              "type": "boolean"
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "create_image_upload",
@@ -2246,7 +3235,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "finalize_image_upload",
@@ -2287,7 +3308,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "submit_image_review",
@@ -2344,7 +3397,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "get_image",
@@ -2382,7 +3467,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "get_my_plan",
@@ -2413,7 +3530,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "create_public_room",
@@ -2462,7 +3611,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "manage_room",
@@ -2503,7 +3684,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "create_invitation",
@@ -2545,7 +3758,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "join_invitation",
@@ -2578,7 +3823,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "enter_universal",
@@ -2608,7 +3885,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "list_universal",
@@ -2644,7 +3953,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "send_universal_message",
@@ -2680,7 +4021,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "hide_sponsored_placement",
@@ -2712,7 +4085,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "report_sponsored_placement",
@@ -2748,7 +4153,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "create_sponsored_campaign",
@@ -2819,7 +4256,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "submit_campaign_for_review",
@@ -2851,7 +4320,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "manage_campaign",
@@ -2891,7 +4392,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "get_campaign_analytics",
@@ -2924,7 +4457,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "admin_review_campaign",
@@ -2964,7 +4529,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "add_campaign_creative",
@@ -3044,7 +4641,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "preview_sponsored_campaign",
@@ -3076,7 +4705,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "set_resonance_ads_preference",
@@ -3108,7 +4769,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "block_advertiser",
@@ -3140,7 +4833,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "my_room",
@@ -3167,7 +4892,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "update_my_room",
@@ -3201,7 +4958,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "open_room",
@@ -3235,7 +5024,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "leave_room",
@@ -3269,7 +5090,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "send_room_message",
@@ -3307,7 +5160,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "follow_room",
@@ -3341,7 +5226,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "unfollow_room",
@@ -3375,7 +5292,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "following_rooms",
@@ -3402,7 +5351,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "room_notifications",
@@ -3435,7 +5416,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "notification_settings",
@@ -3474,7 +5487,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "get_profile",
@@ -3505,7 +5550,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "update_profile",
@@ -3559,7 +5636,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "change_handle",
@@ -3592,7 +5701,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "set_profile_image",
@@ -3632,7 +5773,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "like_content",
@@ -3670,7 +5843,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "unlike_content",
@@ -3708,7 +5913,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "profile_analytics",
@@ -3738,7 +5975,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "open_profile_link",
@@ -3771,7 +6040,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "block_profile",
@@ -3807,7 +6108,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "get_my_sugar",
@@ -3834,7 +6167,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "start_sugar_mining",
@@ -3861,7 +6226,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "preview_sugar_gift",
@@ -3900,7 +6297,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "send_sugar",
@@ -3947,7 +6376,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "get_public_sugar",
@@ -3980,7 +6441,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "list_my_sugar_activity",
@@ -4011,7 +6504,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "start_love_interview",
@@ -4045,7 +6570,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "answer_love_interview_question",
@@ -4092,7 +6649,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "get_love_interview_status",
@@ -4119,7 +6708,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "review_love_profile",
@@ -4146,7 +6767,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "activate_love_profile",
@@ -4186,7 +6839,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "find_love_candidate",
@@ -4212,7 +6897,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "send_love_match_request",
@@ -4253,7 +6970,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "respond_to_love_match",
@@ -4296,7 +7045,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "list_love_match_requests",
@@ -4323,7 +7104,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "pause_love_profile",
@@ -4350,7 +7163,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "delete_love_profile",
@@ -4380,7 +7225,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "create_resonance_pattern",
@@ -4444,7 +7321,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "update_resonance_pattern",
@@ -4508,7 +7417,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "delete_resonance_pattern",
@@ -4535,7 +7476,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "find_match",
@@ -4562,7 +7535,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "get_match_status",
@@ -4589,7 +7594,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "respond_to_match",
@@ -4626,7 +7663,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "open_pair_room",
@@ -4660,7 +7729,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "send_pair_message",
@@ -4698,7 +7799,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "close_pair_room",
@@ -4732,7 +7865,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "resolve_social_profile",
@@ -4775,7 +7940,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "preview_social_profile",
@@ -4818,7 +8015,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "post_social_profile_to_room",
@@ -4898,7 +8127,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "list_social_providers",
@@ -4925,7 +8186,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
+            },
+            "error": {
+              "type": "string",
+              "description": "Error code when the call failed."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Plan that unlocks this feature: plus, pro or business."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct Paddle checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       }
     ]
   }
