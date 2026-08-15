@@ -242,6 +242,8 @@ export async function manageCampaign(
       patch["status"] = "draft";
       patch["safety_status"] = "unreviewed";
       await db.from("sponsored_campaigns").update(patch).eq("id", campaign.id);
+      const { invalidateCreativesForCampaign } = await import("./ads/creatives");
+      await invalidateCreativesForCampaign(db, campaign.id, "changes_requested");
       break;
     }
     case "pause": {
@@ -548,6 +550,12 @@ export async function adminReviewCampaign(
       rejection_reason: action === "approve" ? null : (reason ?? null),
     })
     .eq("id", campaignId);
+
+  // Crawler Ads: approval builds each creative's pattern from approved content;
+  // every other decision invalidates delivery immediately.
+  const { approveCreativesForCampaign, invalidateCreativesForCampaign } = await import("./ads/creatives");
+  if (action === "approve") await approveCreativesForCampaign(db, campaignId);
+  else await invalidateCreativesForCampaign(db, campaignId, action === "suspend" ? "suspended" : "changes_requested");
 
   await db.from("campaign_reviews").insert({
     campaign_id: campaignId,
