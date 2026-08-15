@@ -92,7 +92,7 @@ export const PLUS_TOOLS: PlusToolDefinition[] = [
     name: "create_public_room",
     title: "Öffentlichen Raum erstellen",
     description:
-      "Erstellt einen eigenen, öffentlich lesbaren Raum. In Crawler Room gibt es keine privaten Räume und keine privaten Nachrichten — jeder Raum ist öffentlich lesbar. Limits für Kapazität und Anzahl Räume werden serverseitig geprüft.",
+      "Erstellt einen eigenen, öffentlich lesbaren Raum. Mit kind=\"community\" wird ein Community-Raum erstellt (Pro/Business); eine passende Organisation wird bei Bedarf automatisch angelegt. In Crawler Room gibt es keine privaten Räume und keine privaten Nachrichten. Limits werden serverseitig geprüft.",
     inputSchema: {
       type: "object",
       properties: {
@@ -101,11 +101,14 @@ export const PLUS_TOOLS: PlusToolDefinition[] = [
         topic: { type: "string" },
         visibility: { type: "string", enum: ["public"], description: "Immer public. Private Räume gibt es nicht." },
         capacity: { type: "integer" },
-        organization_id: { type: "string" },
+        kind: { type: "string", enum: ["room", "community"], description: "community benötigt Pro oder Business." },
+        organization_id: { type: "string", description: "Bestehende Organisation: UUID, Slug oder exakter Name." },
+        organization_name: { type: "string", description: "Name einer neuen Organisation für die Community." },
       },
       required: ["title"],
       additionalProperties: false,
     },
+
     outputSchema: OPEN_OUTPUT,
     annotations: WRITE,
     handler: (input, meta) => handleCreatePublicRoom(input, meta) as Promise<Json>,
