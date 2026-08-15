@@ -53,6 +53,7 @@ import { Route as KnowledgeDataRouteImport } from './routes/knowledge.data'
 import { Route as KnowledgeHistoryRouteImport } from './routes/knowledge.history'
 import { Route as KnowledgePublishRouteImport } from './routes/knowledge.publish'
 import { Route as KnowledgeSourcesRouteImport } from './routes/knowledge.sources'
+import { Route as RoomsSlugRouteImport } from './routes/rooms.$slug'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as ApiPublicMcpHealthRouteImport } from './routes/api/public/mcp-health'
 import { Route as ApiPublicRoomHealthRouteImport } from './routes/api/public/room-health'
@@ -293,6 +294,11 @@ const KnowledgeSourcesRoute = KnowledgeSourcesRouteImport.update({
   path: '/sources',
   getParentRoute: () => KnowledgeRoute,
 } as any)
+const RoomsSlugRoute = RoomsSlugRouteImport.update({
+  id: '/rooms/$slug',
+  path: '/rooms/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
     id: '/.mcp/invoke-tool/$tool',
@@ -421,6 +427,7 @@ export interface FileRoutesByFullPath {
   '/knowledge/history': typeof KnowledgeHistoryRoute
   '/knowledge/publish': typeof KnowledgePublishRoute
   '/knowledge/sources': typeof KnowledgeSourcesRoute
+  '/rooms/$slug': typeof RoomsSlugRoute
   '/knowledge/': typeof KnowledgeIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
@@ -482,6 +489,7 @@ export interface FileRoutesByTo {
   '/knowledge/history': typeof KnowledgeHistoryRoute
   '/knowledge/publish': typeof KnowledgePublishRoute
   '/knowledge/sources': typeof KnowledgeSourcesRoute
+  '/rooms/$slug': typeof RoomsSlugRoute
   '/knowledge': typeof KnowledgeIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
@@ -545,6 +553,7 @@ export interface FileRoutesById {
   '/knowledge/history': typeof KnowledgeHistoryRoute
   '/knowledge/publish': typeof KnowledgePublishRoute
   '/knowledge/sources': typeof KnowledgeSourcesRoute
+  '/rooms/$slug': typeof RoomsSlugRoute
   '/knowledge/': typeof KnowledgeIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
@@ -609,6 +618,7 @@ export interface FileRouteTypes {
     | '/knowledge/history'
     | '/knowledge/publish'
     | '/knowledge/sources'
+    | '/rooms/$slug'
     | '/knowledge/'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
@@ -670,6 +680,7 @@ export interface FileRouteTypes {
     | '/knowledge/history'
     | '/knowledge/publish'
     | '/knowledge/sources'
+    | '/rooms/$slug'
     | '/knowledge'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
@@ -732,6 +743,7 @@ export interface FileRouteTypes {
     | '/knowledge/history'
     | '/knowledge/publish'
     | '/knowledge/sources'
+    | '/rooms/$slug'
     | '/knowledge/'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
@@ -789,6 +801,7 @@ export interface RootRouteChildren {
   ApiOfferingsDotjsonRoute: typeof ApiOfferingsDotjsonRoute
   ApiSearchRoute: typeof ApiSearchRoute
   ApiServicesDotjsonRoute: typeof ApiServicesDotjsonRoute
+  RoomsSlugRoute: typeof RoomsSlugRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicMcpHealthRoute: typeof ApiPublicMcpHealthRoute
   ApiPublicRoomHealthRoute: typeof ApiPublicRoomHealthRoute
@@ -1117,6 +1130,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof KnowledgeSourcesRouteImport
       parentRoute: typeof KnowledgeRoute
     }
+    '/rooms/$slug': {
+      id: '/rooms/$slug'
+      path: '/rooms/$slug'
+      fullPath: '/rooms/$slug'
+      preLoaderRoute: typeof RoomsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/.mcp/invoke-tool/$tool': {
       id: '/.mcp/invoke-tool/$tool'
       path: '/.mcp/invoke-tool/$tool'
@@ -1296,6 +1316,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiOfferingsDotjsonRoute: ApiOfferingsDotjsonRoute,
   ApiSearchRoute: ApiSearchRoute,
   ApiServicesDotjsonRoute: ApiServicesDotjsonRoute,
+  RoomsSlugRoute: RoomsSlugRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicMcpHealthRoute: ApiPublicMcpHealthRoute,
   ApiPublicRoomHealthRoute: ApiPublicRoomHealthRoute,

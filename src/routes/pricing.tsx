@@ -43,9 +43,15 @@ const ROOM_EXTENSIONS: Record<PlanId, { name: string; features: string[] }> = {
     ],
   },
   pro: {
-    name: "Communities",
-    features: ["Multiple communities", "Moderator roles", "Room analytics", "Listing placement"],
+    name: "Communities & Match",
+    features: [
+      "Multiple communities",
+      "Anonymous resonance match",
+      "Public pair rooms",
+      "Moderator roles and room analytics",
+    ],
   },
+
   business: {
     name: "Organisations",
     features: ["Verified organisation", "Sponsored rooms", "Campaign analytics", "Team management"],

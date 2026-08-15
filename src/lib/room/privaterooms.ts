@@ -43,7 +43,8 @@ export async function createOwnedRoom(
     title: string;
     description?: string;
     topic?: string;
-    visibility: "public" | "private" | "invite" | "paid";
+    /** Kept for compatibility — every room in Crawler Room is public. */
+    visibility?: "public";
     capacity?: number;
     organizationId?: string;
   },
@@ -58,9 +59,7 @@ export async function createOwnedRoom(
     .is("archived_at", null);
   await requireUnderLimit(ctx, "owned_rooms", count ?? 0);
 
-  if (input.visibility === "paid" && !ctx.entitlements["paid_rooms"]) {
-    throw roomError("PLAN_REQUIRED", undefined, { required_feature: "paid_rooms" });
-  }
+
 
   const maxMembers = limitOf(ctx, "room_members", 5);
   const capacity = Math.min(Math.max(input.capacity ?? maxMembers, 2), maxMembers);
@@ -89,12 +88,12 @@ export async function createOwnedRoom(
       topic_id: topicId,
       room_number: ((maxRow as any)?.room_number ?? 0) + 1,
       capacity,
-      kind: input.organizationId ? "community" : "private",
+      kind: input.organizationId ? "community" : "room",
       owner_account_id: ctx.accountId,
       organization_id: input.organizationId ?? null,
       title: input.title,
       description: input.description ?? null,
-      visibility: input.visibility,
+      visibility: "public",
       retention_texts: Math.min(limitOf(ctx, "retention_texts", 7), 7),
       retention_images: Math.min(limitOf(ctx, "retention_images", 3), 3),
     })
@@ -205,11 +204,8 @@ export async function manageRoom(
       return finish("Raum und Inhalte wurden gelöscht.");
     }
     case "change_visibility": {
-      const visibility = String(payload["visibility"] ?? "");
-      if (!["public", "private", "invite", "paid"].includes(visibility)) throw roomError("INVALID_INPUT");
-      if (visibility === "paid" && !ctx.entitlements["paid_rooms"]) throw roomError("PLAN_REQUIRED");
-      await db.from("rooms").update({ visibility }).eq("id", room.id);
-      return finish(`Sichtbarkeit auf «${visibility}» gesetzt.`);
+      // Every room in Crawler Room is public — visibility cannot be narrowed.
+      throw roomError("FORBIDDEN", "Alle Räume in Crawler Room sind öffentlich. Sichtbarkeit lässt sich nicht ändern.");
     }
     case "update_retention": {
       const texts = Number(payload["retention_texts"] ?? room.retention_texts ?? 7);

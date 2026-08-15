@@ -11,6 +11,7 @@ import { TOOLS } from "@/lib/room/mcp";
 import { PERSONAL_TOOLS } from "@/lib/room/mcp.personal";
 import { PLUS_TOOLS } from "@/lib/room/mcp.plus";
 import { PROFILE_TOOLS } from "@/lib/room/mcp.profile";
+import { MATCH_TOOLS } from "@/lib/room/match/mcp";
 import { toRoomError } from "@/lib/room/errors";
 
 type Json = Record<string, unknown>;
@@ -127,6 +128,7 @@ const ALL_ROOM_TOOLS = [
   ...(PERSONAL_TOOLS as unknown as RoomTool[]),
   ...(PLUS_TOOLS as unknown as RoomTool[]),
   ...(PROFILE_TOOLS as unknown as RoomTool[]),
+  ...(MATCH_TOOLS as unknown as RoomTool[]),
 ];
 
 const seen = new Set<string>();

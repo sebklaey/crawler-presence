@@ -54,12 +54,12 @@ const REPORT_REASONS = [
 
 export const plusInputSchemas = {
   get_my_plan: z.object({ recovery_code: z.string().min(6).max(200).optional() }).strict(),
-  create_private_room: z
+  create_public_room: z
     .object({
       title: z.string().min(2).max(120),
       description: z.string().max(1000).optional(),
       topic: z.string().max(64).optional(),
-      visibility: z.enum(["public", "private", "invite", "paid"]).default("private"),
+      visibility: z.literal("public").default("public"),
       capacity: z.number().int().min(2).max(5000).optional(),
       organization_id: z.string().uuid().optional(),
     })
@@ -71,7 +71,6 @@ export const plusInputSchemas = {
         "update",
         "archive",
         "delete",
-        "change_visibility",
         "update_retention",
         "assign_moderator",
         "remove_moderator",
@@ -209,15 +208,15 @@ export async function handlePublicPlans() {
 
 /* ------------------------------ owned rooms ------------------------------ */
 
-export async function handleCreatePrivateRoom(input: unknown, meta: McpMeta) {
-  const data = parse(plusInputSchemas.create_private_room, input);
+export async function handleCreatePublicRoom(input: unknown, meta: McpMeta) {
+  const data = parse(plusInputSchemas.create_public_room, input);
   const { db, ctx } = await context(meta);
 
   const room = await createOwnedRoom(db, ctx, {
     title: data.title,
     ...(data.description !== undefined ? { description: data.description } : {}),
     ...(data.topic !== undefined ? { topic: data.topic } : {}),
-    visibility: data.visibility,
+    visibility: "public",
     ...(data.capacity !== undefined ? { capacity: data.capacity } : {}),
     ...(data.organization_id !== undefined ? { organizationId: data.organization_id } : {}),
   });
