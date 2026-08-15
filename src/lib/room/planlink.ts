@@ -43,12 +43,36 @@ export async function resolveLinkedPlan(db: Db, subjectHash: string): Promise<{
 
   const { data: presence } = await db
     .from("published_presences")
-    .select("slug, plan, status, subscription_status, current_period_end")
+    .select("slug, plan, status, subscription_status, current_period_end, billing_subscription_id")
     .eq("slug", slug)
     .maybeSingle();
 
-  if (!presenceIsActive(presence)) return { plan: "free", presenceSlug: slug };
-  return { plan: normalizePlan((presence as any).plan), presenceSlug: slug };
+  // Reconcile with the payment provider (throttled) so an upgrade bought a
+  // moment ago is known to ChatGPT on the very next tool call.
+  let current: any = presence;
+  const subscriptionId = (presence as any)?.billing_subscription_id as string | undefined;
+  if (subscriptionId) {
+    const { refreshSubscriptionPlan } = await import("../billing-refresh.server");
+    const fresh = await refreshSubscriptionPlan(subscriptionId);
+    if (fresh) {
+      current = {
+        ...(presence as any),
+        plan: fresh.plan ?? (presence as any)?.plan,
+        subscription_status: fresh.subscriptionStatus ?? (presence as any)?.subscription_status,
+        current_period_end: fresh.currentPeriodEnd ?? (presence as any)?.current_period_end,
+      };
+      if (fresh.plan) {
+        await db
+          .from("room_plan_links")
+          .update({ plan: normalizePlan(fresh.plan), updated_at: new Date().toISOString() })
+          .eq("subject_hash", subjectHash);
+      }
+    }
+  }
+
+  if (!presenceIsActive(current)) return { plan: "free", presenceSlug: slug };
+  return { plan: normalizePlan(current.plan), presenceSlug: slug };
+
 }
 
 /**

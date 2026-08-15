@@ -67,14 +67,25 @@ async function resolve(code: string) {
   if (!parsed) return { error: "invalid-code" } as ResolveError;
   try {
     if (!(await allowRequest(`manage:${parsed.rateKey}`, 20))) return { error: "rate-limited" } as ResolveError;
-    const presence = await verifyManageSecret(parsed.slug, parsed.secret);
+    let presence = await verifyManageSecret(parsed.slug, parsed.secret);
     if (!presence) return { error: "not-found" } as ResolveError;
+
+    // An upgrade made seconds ago may not have reached us as a webhook yet —
+    // ask the payment provider directly so /manage shows the current plan.
+    if (presence.billingSubscriptionId) {
+      const { refreshSubscriptionPlan } = await import("./billing-refresh.server");
+      const fresh = await refreshSubscriptionPlan(presence.billingSubscriptionId);
+      if (fresh && (fresh.plan ?? presence.plan) !== presence.plan) {
+        presence = (await verifyManageSecret(parsed.slug, parsed.secret)) ?? presence;
+      }
+    }
     return { presence, slug: presence.slug };
   } catch (error) {
     if (error instanceof PresenceStoreError) return { error: "unavailable" } as ResolveError;
     throw error;
   }
 }
+
 
 /**
  * Measurable Presence analytics only: Crawler-internal conversations/queries,

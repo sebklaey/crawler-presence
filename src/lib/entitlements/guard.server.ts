@@ -78,25 +78,45 @@ export async function resolvePlanForSession(sessionToken: string): Promise<Custo
     const db = await getDb();
     const { data } = await db
       .from("published_presences")
-      .select("plan, status, subscription_status, current_period_end")
+      .select("plan, status, subscription_status, current_period_end, billing_subscription_id")
       .eq("session_token", sessionToken)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
     const row = data as {
-      plan?: string;
-      status?: string;
-      subscription_status?: string;
-      current_period_end?: string;
+      plan?: string | undefined;
+      status?: string | undefined;
+      subscription_status?: string | undefined;
+      current_period_end?: string | undefined;
+      billing_subscription_id?: string | null | undefined;
     } | null;
     if (!row) return "free";
+
+    let plan: string | undefined = row.plan;
+    let subscriptionStatus: string | undefined = row.subscription_status;
+    let periodEnd: string | undefined = row.current_period_end;
+
+    // A just-completed upgrade may still be in flight as a webhook — read the
+    // provider state directly (throttled) so the new plan counts right away.
+    if (row.billing_subscription_id) {
+      const { refreshSubscriptionPlan } = await import("../billing-refresh.server");
+      const fresh = await refreshSubscriptionPlan(row.billing_subscription_id);
+      if (fresh) {
+        plan = fresh.plan ?? plan;
+        subscriptionStatus = fresh.subscriptionStatus ?? subscriptionStatus;
+        periodEnd = fresh.currentPeriodEnd ?? periodEnd;
+      }
+    }
+
     if (row.status && !["live", "active", "published"].includes(row.status)) return "free";
-    if (!stillActive(row.subscription_status, row.current_period_end)) return "free";
-    return normalize(row.plan);
+    if (!stillActive(subscriptionStatus, periodEnd)) return "free";
+    return normalize(plan);
+
   } catch {
     return "free";
   }
 }
+
 
 
 
