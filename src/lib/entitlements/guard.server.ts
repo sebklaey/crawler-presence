@@ -50,21 +50,54 @@ export async function resolvePlanContext(roomToken: string | null): Promise<Plan
  * Presence it published), never from anything the caller sends.
  */
 export async function resolvePlanForSession(sessionToken: string): Promise<CustomerPlan> {
+  const normalize = (value: unknown): CustomerPlan => {
+    const plan = String(value ?? "free").toLowerCase();
+    return (["plus", "pro", "business"].includes(plan) ? plan : "free") as CustomerPlan;
+  };
+  const stillActive = (status: unknown, periodEnd: unknown): boolean => {
+    const s = String(status ?? "active");
+    if (!["canceled", "paused", "expired"].includes(s)) return true;
+    const end = periodEnd ? new Date(String(periodEnd)).getTime() : 0;
+    return Boolean(end && end >= Date.now());
+  };
+
   try {
     const { latestIntentForSession } = await import("../intents.server");
     const intent = await latestIntentForSession(sessionToken);
-    if (!intent) return "free";
-    if (!["paid", "published"].includes(intent.status)) return "free";
-    if (intent.subscriptionStatus && ["canceled", "paused", "expired"].includes(intent.subscriptionStatus)) {
-      const end = intent.currentPeriodEnd ? new Date(intent.currentPeriodEnd).getTime() : 0;
-      if (!end || end < Date.now()) return "free";
+    if (intent && ["paid", "published"].includes(intent.status)) {
+      if (stillActive(intent.subscriptionStatus, intent.currentPeriodEnd)) return normalize(intent.plan);
     }
-    const plan = String(intent.plan ?? "free");
-    return (["plus", "pro", "business"].includes(plan) ? plan : "free") as CustomerPlan;
+  } catch {
+    /* fall through to the published Presence lookup */
+  }
+
+  // Older / webhook-created intents are not always linked back to the draft
+  // session, so a live Presence published from this session is authoritative.
+  try {
+    const { getDb } = await import("../room/store");
+    const db = await getDb();
+    const { data } = await db
+      .from("published_presences")
+      .select("plan, status, subscription_status, current_period_end")
+      .eq("session_token", sessionToken)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const row = data as {
+      plan?: string;
+      status?: string;
+      subscription_status?: string;
+      current_period_end?: string;
+    } | null;
+    if (!row) return "free";
+    if (row.status && !["live", "active", "published"].includes(row.status)) return "free";
+    if (!stillActive(row.subscription_status, row.current_period_end)) return "free";
+    return normalize(row.plan);
   } catch {
     return "free";
   }
 }
+
 
 
 /**
