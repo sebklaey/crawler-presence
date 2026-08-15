@@ -257,7 +257,7 @@ export async function leaveTopic(db: Db, subjectHash: string, topicSlug: string)
 export async function listMyRooms(db: Db, subjectHash: string) {
   const { data, error } = await db
     .from("memberships")
-    .select("id, alias, joined_at, last_read_message_id, room_id, rooms(room_number, capacity), topics(slug, display_name)")
+    .select("id, alias, joined_at, last_read_message_id, room_id, rooms(room_number, capacity, kind, title), topics(slug, display_name)")
     .eq("subject_hash", subjectHash)
     .is("left_at", null)
     .order("joined_at", { ascending: true });
