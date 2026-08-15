@@ -20,7 +20,7 @@ import {
   syncAnalyticsSourceFn,
 } from "@/lib/ai-analytics.functions";
 import { decideRecommendationFn } from "@/lib/retention.functions";
-import { useRecoveryCode } from "@/lib/store";
+import { useManageSession } from "@/hooks/use-manage-session";
 
 export const Route = createFileRoute("/analytics")({
   head: () => ({
@@ -51,7 +51,7 @@ const REASONS: Record<string, string> = {
 };
 
 function AnalyticsPage() {
-  const [storedCode, setStoredCode, hydrated] = useRecoveryCode();
+  const session = useManageSession();
   const [code, setCode] = useState("");
   const [data, setData] = useState<InsightsDashboard | null>(null);
   const [period, setPeriod] = useState<InsightsPeriod>(30);
@@ -63,12 +63,11 @@ function AnalyticsPage() {
   const [aiBusy, setAiBusy] = useState(false);
   const [pending, setPending] = useState<string | null>(null);
 
-  const load = useCallback(async (activeCode: string, nextPeriod: InsightsPeriod) => {
-    if (!activeCode) return;
+  const load = useCallback(async (nextPeriod: InsightsPeriod) => {
     setBusy(true);
     setError(null);
     try {
-      const result = await insightsDashboardFn({ data: { code: activeCode, period: nextPeriod } });
+      const result = await insightsDashboardFn({ data: { period: nextPeriod } });
       if (!result.ok) {
         setData(null);
         setError(REASONS[result.reason] ?? "Analytics could not be loaded.");
@@ -83,11 +82,10 @@ function AnalyticsPage() {
     }
   }, []);
 
-  const loadAi = useCallback(async (activeCode: string, nextPeriod: AnalyticsPeriod) => {
-    if (!activeCode) return;
+  const loadAi = useCallback(async (nextPeriod: AnalyticsPeriod) => {
     setAiBusy(true);
     try {
-      const result = await aiAnalyticsDashboardFn({ data: { code: activeCode, period: nextPeriod } });
+      const result = await aiAnalyticsDashboardFn({ data: { period: nextPeriod } });
       if (result.ok) {
         setAiData(result.dashboard);
         setAiPeriod(result.dashboard.period);
@@ -100,13 +98,11 @@ function AnalyticsPage() {
   }, []);
 
   useEffect(() => {
-    if (hydrated && storedCode) {
-      void load(storedCode, 30);
-      void loadAi(storedCode, 30);
+    if (session.ready && session.active) {
+      void load(30);
+      void loadAi(30);
     }
-  }, [hydrated, storedCode, load, loadAi]);
-
-  const activeCode = storedCode || code;
+  }, [session.ready, session.active, load, loadAi]);
 
   async function runAction(key: string, action: () => Promise<{ ok: boolean; message: string }>) {
     setPending(key);
@@ -114,7 +110,7 @@ function AnalyticsPage() {
       const result = await action();
       if (result.ok) toast.success(result.message);
       else toast.error(result.message);
-      await loadAi(activeCode, aiPeriod);
+      await loadAi(aiPeriod);
     } catch {
       toast.error("The action failed. Nothing was changed.");
     } finally {
@@ -123,7 +119,7 @@ function AnalyticsPage() {
   }
 
   async function onExport() {
-    const result = await exportAnalyticsCsvFn({ data: { code: activeCode, period: aiPeriod } });
+    const result = await exportAnalyticsCsvFn({ data: { period: aiPeriod } });
     if (!result.ok) {
       toast.error("The export could not be created.");
       return;
@@ -141,13 +137,13 @@ function AnalyticsPage() {
     setImproving(true);
     try {
       const result = await decideRecommendationFn({
-        data: { code: activeCode, id: data.nextImprovement.id, decision: "approve", value },
+        data: { id: data.nextImprovement.id, decision: "approve", value },
       });
       if (!result.ok) {
         toast.error("message" in result ? result.message : (REASONS[result.reason] ?? "The change could not be published."));
         return false;
       }
-      await load(activeCode, period);
+      await load(period);
       return true;
     } catch {
       toast.error("The change could not be published.");
@@ -160,7 +156,7 @@ function AnalyticsPage() {
   return (
     <AppShell>
       <div className="mx-auto max-w-6xl px-5 pb-24 pt-14">
-        {!storedCode && !data ? (
+        {!session.active && !data ? (
           <div className="space-y-4">
             <h1 className="text-2xl font-semibold tracking-tight">Your AI Presence is being seen</h1>
             <p className="text-sm text-muted-foreground">{MEASUREMENT_NOTICE}</p>
@@ -168,8 +164,17 @@ function AnalyticsPage() {
               className="flex flex-col gap-2 sm:flex-row"
               onSubmit={(e) => {
                 e.preventDefault();
-                setStoredCode(code);
-                void load(code, period);
+                void (async () => {
+                  // One-time exchange: the code becomes an HttpOnly session.
+                  const opened = await session.open(code.trim());
+                  setCode("");
+                  if (!opened.ok) {
+                    setError(REASONS[opened.reason] ?? "Analytics could not be loaded.");
+                    return;
+                  }
+                  await load(period);
+                  await loadAi(30);
+                })();
               }}
             >
               <Input
@@ -202,7 +207,7 @@ function AnalyticsPage() {
           </div>
         ) : null}
 
-        {error && data === null && storedCode ? (
+        {error && data === null && session.active ? (
           <div className="space-y-4">
             <div className="rounded-xl border border-destructive/40 px-4 py-6 text-sm text-destructive">{error}</div>
             <div className="rounded-xl border bg-card px-5 py-8 text-center">
@@ -221,7 +226,7 @@ function AnalyticsPage() {
               period={period}
               onPeriodChange={(next) => {
                 setPeriod(next);
-                void load(activeCode, next);
+                void load(next);
               }}
               onImprove={onImprove}
               improving={improving}
@@ -236,27 +241,27 @@ function AnalyticsPage() {
                   pending={pending}
                   onPeriodChange={(next) => {
                     setAiPeriod(next);
-                    void loadAi(activeCode, next);
+                    void loadAi(next);
                   }}
                   onSync={(source) =>
-                    runAction(source, () => syncAnalyticsSourceFn({ data: { code: activeCode, source } }))
+                    runAction(source, () => syncAnalyticsSourceFn({ data: { source } }))
                   }
                   onSaveSource={(source, value) =>
-                    runAction(source, () => saveAnalyticsSourceFn({ data: { code: activeCode, source, value } }))
+                    runAction(source, () => saveAnalyticsSourceFn({ data: { source, value } }))
                   }
                   onSaveProviderKey={(provider, key) =>
-                    runAction("ai_probes", () => saveProviderKeyFn({ data: { code: activeCode, provider, key } }))
+                    runAction("ai_probes", () => saveProviderKeyFn({ data: { provider, key } }))
                   }
                   onConnect={async (source, choice) => {
                     setPending(`connect:${source}`);
                     try {
                       const result = await connectAnalyticsSourceFn({
-                        data: { code: activeCode, source, ...(choice ? { choice } : {}) },
+                        data: { source, ...(choice ? { choice } : {}) },
                       });
                       if (result.ok) toast.success(result.message);
                       else if (!result.choices?.length) toast.error(result.message);
                       else toast.message(result.message);
-                      if (result.ok) await loadAi(activeCode, aiPeriod);
+                      if (result.ok) await loadAi(aiPeriod);
                       return { ok: result.ok, ...(result.choices ? { choices: result.choices } : {}) };
                     } catch {
                       toast.error("The connection failed. Nothing was changed.");
