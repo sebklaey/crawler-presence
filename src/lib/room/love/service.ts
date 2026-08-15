@@ -311,7 +311,7 @@ export interface LoveCandidate {
 async function publicProfileOf(db: Db, subjectHash: string) {
   const { data } = await db
     .from("user_rooms")
-    .select("handle, room_name, description, avatar_url")
+    .select("handle, room_name, description, avatar_path")
     .eq("owner_subject_hash", subjectHash)
     .maybeSingle();
   const row = data as any;
@@ -319,7 +319,7 @@ async function publicProfileOf(db: Db, subjectHash: string) {
     handle: row?.handle ?? "anon",
     display_name: row?.room_name ?? "Crawler user",
     bio: row?.description ?? "",
-    avatar_url: row?.avatar_url ?? null,
+    avatar_url: row?.avatar_path ?? null,
   };
 }
 
@@ -551,11 +551,12 @@ export async function respondToLoveRequest(
       .from("love_match_requests")
       .update({ status: "reported", candidate_responded_at: now })
       .eq("id", row.id);
-    await db.from("moderation_decisions").insert({
-      subject_type: "love_match_request",
-      subject_id: row.id,
-      decision: "reported",
-      reason: "love_match_report",
+    const { audit } = await import("../audit");
+    await audit(db, {
+      action: "love_match_reported",
+      targetType: "love_match_request",
+      targetId: row.id,
+      metadata: { status: "reported" },
     });
     return {
       status: "reported",
