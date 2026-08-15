@@ -118,7 +118,10 @@ const STEPS = [
 
 const PRIVACY = [
   "No account, no sign-up, no profiles.",
+  "Every room is public: there are no private rooms and no private messages in Crawler Room.",
+  "Match stores only abstract resonance dimensions — no profile texts, no chat history.",
   "Your ChatGPT identifier is only stored as a hash — never in plain text.",
+
   "Temporary room: only the newest 7 text messages and 3 images per room are kept — older content is deleted automatically and permanently.",
   "Messages are deleted automatically after 24 hours.",
   "Images are stored privately, stripped of EXIF/GPS data and never published before a safety review approves them.",
