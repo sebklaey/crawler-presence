@@ -53,6 +53,177 @@ const WRITE = {
   idempotentHint: false,
 };
 
+const UNIVERSAL_MESSAGE_SCHEMA: Json = {
+  type: "object",
+  properties: {
+    id: { type: "string" },
+    alias: { type: "string" },
+    text: { type: "string" },
+    created_at: { type: "string" },
+    is_self: { type: "boolean" },
+  },
+  required: ["id", "alias", "text", "created_at", "is_self"],
+};
+
+const FEED_IMAGE_SCHEMA: Json = {
+  type: "object",
+  properties: {
+    id: { type: "string" },
+    alias: { type: "string" },
+    created_at: { type: "string" },
+    alt_text: { type: "string" },
+    width: { type: "number" },
+    height: { type: "number" },
+    status: { type: "string" },
+    is_self: { type: "boolean" },
+    url: { type: "string" },
+    note: { type: "string" },
+  },
+  required: ["id", "alias", "created_at", "alt_text", "width", "height", "status", "is_self", "url", "note"],
+};
+
+const UNIVERSAL_FEED_PROPERTIES: Json = {
+  room: {
+    type: "object",
+    properties: {
+      label: { type: "string" },
+      presence: { type: "string" },
+      approximate_online: { type: "number" },
+      online_now: { type: "number" },
+      presence_window_seconds: { type: "number" },
+      presence_checked_at: { type: "string" },
+    },
+    required: [
+      "label",
+      "presence",
+      "approximate_online",
+      "online_now",
+      "presence_window_seconds",
+      "presence_checked_at",
+    ],
+  },
+  messages: { type: "array", items: UNIVERSAL_MESSAGE_SCHEMA },
+  images: { type: "array", items: FEED_IMAGE_SCHEMA },
+  my_pending_images: { type: "array", items: FEED_IMAGE_SCHEMA },
+  next_cursor: { type: ["string", "null"], description: "Cursor for the next page, or null when there is none." },
+  has_more: { type: "boolean" },
+  trending_topics: {
+    type: "array",
+    items: {
+      type: "object",
+      properties: {
+        slug: { type: "string" },
+        display_name: { type: "string" },
+        count: { type: "number" },
+      },
+      required: ["slug", "display_name", "count"],
+    },
+  },
+  active_rooms: {
+    type: "array",
+    items: {
+      type: "object",
+      properties: {
+        title: { type: "string" },
+        description: { type: "string" },
+        capacity: { type: "number" },
+      },
+      required: ["title", "description", "capacity"],
+    },
+  },
+  upcoming_events: { type: "array", items: { type: "object", additionalProperties: true } },
+  sponsored: {
+    type: "array",
+    description: "Sponsored Room cards and/or resonance-matched Crawler Ad placements, always disclosed.",
+    items: { type: "object", additionalProperties: true },
+  },
+  sponsored_disclosure: { type: "string" },
+  notice: { type: "string" },
+};
+
+const UNIVERSAL_FEED_REQUIRED = [
+  "room",
+  "messages",
+  "images",
+  "my_pending_images",
+  "next_cursor",
+  "has_more",
+  "trending_topics",
+  "active_rooms",
+  "upcoming_events",
+  "sponsored",
+  "sponsored_disclosure",
+  "notice",
+];
+
+const AD_KNOWLEDGE_CORE_SCHEMA: Json = {
+  type: "object",
+  properties: {
+    schema_version: { type: "string" },
+    content_type: { type: "string", enum: ["sponsored_knowledge"] },
+    ad_id: { type: "string" },
+    campaign_id: { type: "string" },
+    advertiser: {
+      type: "object",
+      properties: {
+        name: { type: "string" },
+        crawler_presence_url: { type: ["string", "null"] },
+      },
+      required: ["name", "crawler_presence_url"],
+    },
+    product: {
+      type: "object",
+      properties: {
+        name: { type: "string" },
+        description: { type: "string" },
+        category: { type: ["string", "null"] },
+      },
+      required: ["name", "description", "category"],
+    },
+    creative: {
+      type: "object",
+      properties: {
+        headline: { type: "string" },
+        body: { type: "string" },
+        image_url: { type: ["string", "null"] },
+        image_alt: { type: ["string", "null"] },
+        call_to_action: { type: "string" },
+        destination_url: { type: "string" },
+      },
+      required: ["headline", "body", "image_url", "image_alt", "call_to_action", "destination_url"],
+    },
+    advertiser_claims: { type: "array", items: { type: "string" } },
+    marketing_narrative: { type: "string" },
+    disclosure: {
+      type: "object",
+      properties: {
+        sponsored: { type: "boolean", enum: [true] },
+        label: { type: "string" },
+        matching: { type: "string" },
+      },
+      required: ["sponsored", "label", "matching"],
+    },
+    status: { type: "string" },
+    published_at: { type: ["string", "null"] },
+    updated_at: { type: "string" },
+  },
+  required: [
+    "schema_version",
+    "content_type",
+    "ad_id",
+    "campaign_id",
+    "advertiser",
+    "product",
+    "creative",
+    "advertiser_claims",
+    "marketing_narrative",
+    "disclosure",
+    "status",
+    "published_at",
+    "updated_at",
+  ],
+};
+
 function feedSummary(result: any): string {
   const messages = (result.messages ?? []) as Array<{ alias: string; text: string }>;
   const head = `Universal Room — ${result.room?.presence ?? "öffentlich"}.`;

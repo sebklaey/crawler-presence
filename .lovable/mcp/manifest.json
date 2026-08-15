@@ -3307,6 +3307,58 @@
         "outputSchema": {
           "type": "object",
           "properties": {
+            "image_id": {
+              "type": "string",
+              "description": "Opake Bild-ID für finalize_image_upload."
+            },
+            "upload": {
+              "type": "object",
+              "properties": {
+                "url": {
+                  "type": "string"
+                },
+                "method": {
+                  "type": "string"
+                },
+                "token": {
+                  "type": "string"
+                },
+                "token_header": {
+                  "type": "string"
+                },
+                "content_type_header": {
+                  "type": "string"
+                },
+                "body": {
+                  "type": "string"
+                },
+                "expires_in_seconds": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "url",
+                "method",
+                "token",
+                "token_header",
+                "content_type_header",
+                "body",
+                "expires_in_seconds"
+              ],
+              "additionalProperties": true
+            },
+            "status": {
+              "type": "string"
+            },
+            "max_bytes": {
+              "type": "number"
+            },
+            "notice": {
+              "type": "string"
+            },
+            "next_step": {
+              "type": "string"
+            },
             "room_token": {
               "type": "string",
               "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
@@ -3384,6 +3436,129 @@
         "outputSchema": {
           "type": "object",
           "properties": {
+            "image_id": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "review_required": {
+              "type": "boolean",
+              "description": "True wenn eine Prüfung noch aussteht."
+            },
+            "review_token": {
+              "type": "string"
+            },
+            "safety_rules": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "instructions": {
+              "type": "string"
+            },
+            "notice": {
+              "type": "string"
+            },
+            "images": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "alias": {
+                    "type": "string"
+                  },
+                  "created_at": {
+                    "type": "string"
+                  },
+                  "alt_text": {
+                    "type": "string"
+                  },
+                  "width": {
+                    "type": "number"
+                  },
+                  "height": {
+                    "type": "number"
+                  },
+                  "status": {
+                    "type": "string"
+                  },
+                  "is_self": {
+                    "type": "boolean"
+                  },
+                  "url": {
+                    "type": "string"
+                  },
+                  "note": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "alias",
+                  "created_at",
+                  "alt_text",
+                  "status",
+                  "is_self"
+                ],
+                "additionalProperties": true
+              }
+            },
+            "my_pending_images": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "alias": {
+                    "type": "string"
+                  },
+                  "created_at": {
+                    "type": "string"
+                  },
+                  "alt_text": {
+                    "type": "string"
+                  },
+                  "width": {
+                    "type": "number"
+                  },
+                  "height": {
+                    "type": "number"
+                  },
+                  "status": {
+                    "type": "string"
+                  },
+                  "is_self": {
+                    "type": "boolean"
+                  },
+                  "url": {
+                    "type": "string"
+                  },
+                  "note": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "alias",
+                  "created_at",
+                  "alt_text",
+                  "status",
+                  "is_self"
+                ],
+                "additionalProperties": true
+              }
+            },
             "room_token": {
               "type": "string",
               "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
@@ -3391,10 +3566,6 @@
             "error": {
               "type": "string",
               "description": "Error code when the call failed."
-            },
-            "message": {
-              "type": "string",
-              "description": "Human-readable message, e.g. why an upgrade is needed."
             },
             "plan_required": {
               "type": "string",
@@ -3477,6 +3648,116 @@
         "outputSchema": {
           "type": "object",
           "properties": {
+            "image_id": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "visible_to_others": {
+              "type": "boolean"
+            },
+            "notice": {
+              "type": "string"
+            },
+            "images": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "alias": {
+                    "type": "string"
+                  },
+                  "created_at": {
+                    "type": "string"
+                  },
+                  "alt_text": {
+                    "type": "string"
+                  },
+                  "width": {
+                    "type": "number"
+                  },
+                  "height": {
+                    "type": "number"
+                  },
+                  "status": {
+                    "type": "string"
+                  },
+                  "is_self": {
+                    "type": "boolean"
+                  },
+                  "url": {
+                    "type": "string"
+                  },
+                  "note": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "alias",
+                  "created_at",
+                  "alt_text",
+                  "status",
+                  "is_self"
+                ],
+                "additionalProperties": true
+              }
+            },
+            "my_pending_images": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "alias": {
+                    "type": "string"
+                  },
+                  "created_at": {
+                    "type": "string"
+                  },
+                  "alt_text": {
+                    "type": "string"
+                  },
+                  "width": {
+                    "type": "number"
+                  },
+                  "height": {
+                    "type": "number"
+                  },
+                  "status": {
+                    "type": "string"
+                  },
+                  "is_self": {
+                    "type": "boolean"
+                  },
+                  "url": {
+                    "type": "string"
+                  },
+                  "note": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "alias",
+                  "created_at",
+                  "alt_text",
+                  "status",
+                  "is_self"
+                ],
+                "additionalProperties": true
+              }
+            },
             "room_token": {
               "type": "string",
               "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
@@ -3484,10 +3765,6 @@
             "error": {
               "type": "string",
               "description": "Error code when the call failed."
-            },
-            "message": {
-              "type": "string",
-              "description": "Human-readable message, e.g. why an upgrade is needed."
             },
             "plan_required": {
               "type": "string",
@@ -3551,6 +3828,30 @@
         "outputSchema": {
           "type": "object",
           "properties": {
+            "image_id": {
+              "type": "string"
+            },
+            "alias": {
+              "type": "string"
+            },
+            "created_at": {
+              "type": "string"
+            },
+            "alt_text": {
+              "type": "string"
+            },
+            "mime_type": {
+              "type": "string"
+            },
+            "width": {
+              "type": "number"
+            },
+            "height": {
+              "type": "number"
+            },
+            "notice": {
+              "type": "string"
+            },
             "room_token": {
               "type": "string",
               "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
@@ -6853,6 +7154,63 @@
         "outputSchema": {
           "type": "object",
           "properties": {
+            "ok": {
+              "type": "boolean"
+            },
+            "code": {
+              "type": "string",
+              "description": "Present only on non-success responses (e.g. consent_required, age_check_required)."
+            },
+            "interview_id": {
+              "type": "string"
+            },
+            "intro": {
+              "type": "string"
+            },
+            "safety_notice": {
+              "type": "string"
+            },
+            "pair_room_notice": {
+              "type": "string"
+            },
+            "disclaimer": {
+              "type": "string"
+            },
+            "consent_items": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "question_id": {},
+            "question": {},
+            "area": {},
+            "options": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "answer_kind": {},
+            "skippable": {
+              "type": "boolean"
+            },
+            "step": {
+              "type": "number"
+            },
+            "total_questions": {
+              "type": "number"
+            },
+            "progress": {
+              "type": "number"
+            },
+            "draft_expires_at": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
             "room_token": {
               "type": "string",
               "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
@@ -6860,10 +7218,6 @@
             "error": {
               "type": "string",
               "description": "Error code when the call failed."
-            },
-            "message": {
-              "type": "string",
-              "description": "Human-readable message, e.g. why an upgrade is needed."
             },
             "plan_required": {
               "type": "string",
@@ -6936,6 +7290,95 @@
         "outputSchema": {
           "type": "object",
           "properties": {
+            "ok": {
+              "type": "boolean"
+            },
+            "code": {
+              "type": "string",
+              "description": "Present only when there is no open interview (no_interview)."
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable message, e.g. why an upgrade is needed."
+            },
+            "interview_id": {
+              "type": "string"
+            },
+            "interview_complete": {
+              "type": "boolean"
+            },
+            "question_id": {},
+            "question": {},
+            "area": {},
+            "options": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "answer_kind": {},
+            "skippable": {
+              "type": "boolean"
+            },
+            "step": {
+              "type": "number"
+            },
+            "total_questions": {
+              "type": "number"
+            },
+            "progress": {
+              "type": "number"
+            },
+            "draft_expires_at": {
+              "type": "string"
+            },
+            "profile": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string"
+                },
+                "discoverable": {
+                  "type": "boolean"
+                },
+                "allow_match_requests": {
+                  "type": "boolean"
+                },
+                "public_pair_room_consent": {
+                  "type": "boolean"
+                },
+                "adult_status": {
+                  "type": "string"
+                },
+                "activated_at": {},
+                "paused_at": {},
+                "summary": {
+                  "type": "string"
+                },
+                "consent_version": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "status",
+                "discoverable",
+                "allow_match_requests",
+                "public_pair_room_consent",
+                "adult_status",
+                "summary",
+                "consent_version"
+              ],
+              "additionalProperties": true
+            },
+            "next_step": {
+              "type": "string"
+            },
+            "activation_notice": {
+              "type": "string"
+            },
+            "disclaimer": {
+              "type": "string"
+            },
             "room_token": {
               "type": "string",
               "description": "Anonymous room identity. Store it and pass it to every later room tool — there is no account."
@@ -6943,10 +7386,6 @@
             "error": {
               "type": "string",
               "description": "Error code when the call failed."
-            },
-            "message": {
-              "type": "string",
-              "description": "Human-readable message, e.g. why an upgrade is needed."
             },
             "plan_required": {
               "type": "string",
