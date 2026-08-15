@@ -11,6 +11,7 @@
  * out-of-order delivery can never create duplicates.
  */
 import { evaluateSubscription } from "./billing/subscription-state";
+import { PaymentProcessingError } from "./payment-events.server";
 import { db } from "./mcp/db.server";
 
 export type PaddleEnv = "sandbox" | "live";
@@ -91,15 +92,34 @@ export function subscriptionFromEvent(subscription: Record<string, any>): Mirror
   };
 }
 
+export type MirrorResult = {
+  applied: boolean;
+  stale: boolean;
+  /** Set when the event was refused outright rather than merely superseded. */
+  rejected?: "missing_occurred_at" | "equal_timestamp_conflict";
+};
+
+/** An event may only move subscription state when it can be ordered. */
+export function isValidOccurredAt(value: unknown): value is string {
+  if (typeof value !== "string" || !value.trim()) return false;
+  return !Number.isNaN(new Date(value).getTime());
+}
+
 export async function mirrorSubscription(
   input: MirroredSubscription,
   environment: PaddleEnv,
   occurredAt?: string | null,
-): Promise<{ stale: boolean }> {
+  eventId?: string | null,
+): Promise<MirrorResult> {
   const supabase = db();
   // No database means we cannot record verified provider state. Throwing makes
   // the webhook fail so the provider retries — never a silent "not stale".
-  if (!supabase) throw new Error("billing mirror unavailable: no database");
+  if (!supabase) throw new PaymentProcessingError("db_unavailable");
+
+  // Fail closed: an undated or unparseable event is never "the newest state".
+  if (!isValidOccurredAt(occurredAt)) {
+    return { applied: false, stale: false, rejected: "missing_occurred_at" };
+  }
 
   // Monotonic ordering happens inside PostgreSQL: the conditional
   // INSERT … ON CONFLICT DO UPDATE WHERE only applies when the incoming event
@@ -118,12 +138,20 @@ export async function mirrorSubscription(
     p_scheduled_change_action: input.scheduledChangeAction,
     p_scheduled_change_at: input.scheduledChangeAt,
     p_canceled_at: input.status === "canceled" ? new Date().toISOString() : null,
-    p_occurred_at: occurredAt ?? null,
+    p_occurred_at: occurredAt,
+    p_event_id: eventId ?? null,
   });
 
-  if (error) throw new Error(`billing_subscriptions upsert failed: ${error.code ?? "rpc_error"}`);
-  const applied = Boolean((data as { applied?: boolean } | null)?.applied);
-  return { stale: !applied };
+  if (error) throw new PaymentProcessingError("mirror_failed");
+  const result = (data ?? {}) as { applied?: boolean; stale?: boolean; rejected?: string };
+  if (result.rejected === "equal_timestamp_conflict") {
+    return { applied: false, stale: false, rejected: "equal_timestamp_conflict" };
+  }
+  if (result.rejected === "missing_occurred_at") {
+    return { applied: false, stale: false, rejected: "missing_occurred_at" };
+  }
+  const applied = Boolean(result.applied);
+  return { applied, stale: !applied };
 }
 
 /** Server-side lookup used by the accountless management portal. */
