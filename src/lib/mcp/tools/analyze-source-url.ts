@@ -32,7 +32,7 @@ export default defineTool({
   inputSchema: {
     url: z.string().url().describe("Public HTTPS URL to read."),
   },
-  annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
   outputSchema: {
     available: z.boolean().optional().describe("False when the page could not be fetched — never invent content then."),
     source_url: z.string().optional(),

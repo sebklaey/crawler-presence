@@ -50,7 +50,7 @@ export default defineTool({
     session_id: z.string().trim().min(6).optional().describe("Optional Crawler session for session-local metrics."),
     filter: z.string().trim().optional().describe("Optional product or entity name filter."),
   },
-  annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   outputSchema: {
     found: z.boolean().optional().describe("False when Crawler has no published Presence for the identifier."),
     entity_or_domain: z.string().optional(),

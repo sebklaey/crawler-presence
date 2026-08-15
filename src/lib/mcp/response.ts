@@ -44,7 +44,7 @@ export const upgradeEnvelopeShape = {
   message: z.string(),
   retryable: z.literal(false),
   correlation_id: z.string(),
-  plan_required: z.enum(["plus", "pro", "business"]),
+  required_plan: z.enum(["plus", "pro", "business", "admin"]),
   current_plan: z.enum(["free", "plus", "pro", "business"]),
   cta_label: z.string(),
   upgrade_url: z.string(),
@@ -54,6 +54,34 @@ export const upgradeEnvelopeShape = {
     .optional()
     .describe("Present when a numeric plan limit was reached."),
 } as const;
+
+/**
+ * `status` is the reserved discriminator of the shared envelope. A few domain
+ * schemas declare their own `status` (e.g. "pending_review"); that field is
+ * advertised and validated as `result_status` so the discriminator always wins
+ * and no domain value can masquerade as an envelope state.
+ */
+export const RESERVED_DISCRIMINATOR = "status";
+export const DOMAIN_STATUS_FIELD = "result_status";
+
+function renameReserved<T>(entries: Record<string, T>): Record<string, T> {
+  const out: Record<string, T> = {};
+  for (const [key, value] of Object.entries(entries)) {
+    out[key === RESERVED_DISCRIMINATOR ? DOMAIN_STATUS_FIELD : key] = value;
+  }
+  return out;
+}
+
+/** Applies the same rename to a raw JSON Schema before validation. */
+function withRenamedStatus(schema: JsonSchema | undefined): JsonSchema | undefined {
+  if (!schema || typeof schema !== "object") return schema;
+  const props = (schema as { properties?: Record<string, unknown> }).properties;
+  if (!props || !(RESERVED_DISCRIMINATOR in props)) return schema;
+  const required = ((schema as { required?: string[] }).required ?? []).map((k) =>
+    k === RESERVED_DISCRIMINATOR ? DOMAIN_STATUS_FIELD : k,
+  );
+  return { ...schema, properties: renameReserved(props), required } as JsonSchema;
+}
 
 const ROOM_TOKEN = z
   .string()
@@ -67,7 +95,7 @@ const ROOM_TOKEN = z
  */
 export function advertisedOutputShape(successSchema: JsonSchema | undefined): Record<string, z.ZodTypeAny> {
   const success: Record<string, z.ZodTypeAny> = {};
-  for (const [key, value] of Object.entries(toShape(successSchema ?? {}))) {
+  for (const [key, value] of Object.entries(renameReserved(toShape(successSchema ?? {})))) {
     success[key] = value.isOptional() ? value : value.optional();
   }
   return {
@@ -80,7 +108,7 @@ export function advertisedOutputShape(successSchema: JsonSchema | undefined): Re
     message: z.string().optional(),
     retryable: z.boolean().optional(),
     correlation_id: z.string().optional(),
-    plan_required: z.string().optional().describe("Plan that unlocks this feature: plus, pro or business."),
+    required_plan: z.string().optional().describe("Plan that unlocks this feature: plus, pro, business or admin."),
     current_plan: z.string().optional(),
     cta_label: z.string().optional(),
     upgrade_url: z.string().optional().describe("Direct checkout link for the required plan."),
@@ -92,7 +120,11 @@ export function advertisedOutputShape(successSchema: JsonSchema | undefined): Re
  * success branch keeps every required field of the tool's own payload.
  */
 export function responseValidator(successSchema: JsonSchema | undefined) {
-  const declared = schemaToZod({ type: "object", additionalProperties: true, ...(successSchema ?? {}) });
+  const declared = schemaToZod({
+    type: "object",
+    additionalProperties: true,
+    ...(withRenamedStatus(successSchema) ?? {}),
+  });
   const successObject =
     declared instanceof z.ZodObject ? declared : z.object({}).passthrough();
 

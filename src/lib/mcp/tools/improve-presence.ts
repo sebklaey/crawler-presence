@@ -19,7 +19,7 @@ export default defineTool({
       .max(2000)
       .describe("The analytics insight or requested change, e.g. 'people keep asking about licensing'."),
   },
-  annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
   outputSchema: {
     session_id: z.string().optional(),
     no_own_model: z.boolean().optional(),
@@ -32,7 +32,7 @@ export default defineTool({
     next_question: z.string().nullable().optional(),
     example_answers: z.array(z.string()).optional(),
     apply_hint: z.string().optional(),
-    plan_required: z.string().optional().describe("Present when the plan does not include this feature."),
+    required_plan: z.string().optional().describe("Present when the plan does not include this feature."),
     current_plan: z.string().optional(),
     message: z.string().optional(),
     cta_label: z.string().optional(),

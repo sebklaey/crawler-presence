@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "test": "bun test tests/identity.test.ts && bun test tests/recovery.test.ts && bun test tests/billing.test.ts && bun test tests/browser-safety.test.ts && bun test tests/manage-session.test.ts && bun test tests/schema-contract.test.ts && bun scripts/check-entitlements.ts && bun scripts/check-plan-matrix.ts && bun scripts/check-tool-parity.ts",
+    "test": "bun test tests/identity.test.ts && bun test tests/recovery.test.ts && bun test tests/billing.test.ts && bun test tests/browser-safety.test.ts && bun test tests/manage-session.test.ts && bun test tests/schema-contract.test.ts && bun test tests/output-contract.test.ts && bun test tests/entitlement-field.test.ts && bun test tests/read-only.test.ts && bun scripts/check-entitlements.ts && bun scripts/check-plan-matrix.ts && bun scripts/check-tool-parity.ts",
     "check:parity": "bun scripts/check-tool-parity.ts"
   },
   "dependencies": {

@@ -12,6 +12,7 @@ export type RoomErrorCode =
   | "TOPIC_NOT_FOUND"
   | "IDENTITY_UNAVAILABLE"
   | "ROOM_UNAVAILABLE"
+  | "ROOM_NOT_INITIALIZED"
   | "INVALID_INPUT"
   | "ALIAS_TAKEN"
   | "MESSAGE_NOT_FOUND"
@@ -44,8 +45,10 @@ const DEFAULT_MESSAGES: Record<RoomErrorCode, string> = {
   NOT_A_MEMBER: "Du bist in diesem Thema aktuell in keinem Raum.",
   TOPIC_NOT_FOUND: "Dieses Thema kenne ich nicht.",
   IDENTITY_UNAVAILABLE:
-    "Ich konnte deine anonyme Kennung nicht ermitteln. Bitte öffne @room in einer unterstützten ChatGPT-Oberfläche, die Plugin-Kennungen übermittelt.",
+    "Ich konnte deine anonyme Kennung nicht ermitteln. Gib das room_token mit, das Crawler dir ausgestellt hat, oder starte mit einem schreibenden Aufruf.",
   ROOM_UNAVAILABLE: "Dein Raum ist gerade nicht verfügbar. Bitte versuche es erneut.",
+  ROOM_NOT_INITIALIZED:
+    "Dein persönlicher Raum ist noch nicht angelegt. Lesende Aufrufe erstellen nichts — rufe update_my_room auf, um ihn einmalig einzurichten.",
   INVALID_INPUT: "Die Angaben waren unvollständig oder ungültig.",
   ALIAS_TAKEN: "Dieser Name ist bereits vergeben. Bitte wähle einen anderen.",
   MESSAGE_NOT_FOUND: "Diese Nachricht ist nicht (mehr) verfügbar.",
@@ -63,7 +66,7 @@ const DEFAULT_MESSAGES: Record<RoomErrorCode, string> = {
   FORBIDDEN: "Dafür fehlt dir die Berechtigung.",
   ORGANIZATION_REQUIRED: "Dafür wird eine verifizierte Organisation mit Business-Abo benötigt.",
   CAMPAIGN_INVALID: "Die Kampagnendaten sind unvollständig oder unzulässig.",
-  POLICY_VIOLATION: "Dieser Inhalt verstösst gegen die Werberichtlinien von @room.",
+  POLICY_VIOLATION: "Dieser Inhalt verstösst gegen die Werberichtlinien von Crawler.",
   DUPLICATE_REQUEST: "Diese Anfrage wurde bereits verarbeitet.",
   BILLING_REQUIRED: "Diese Aktion ist derzeit nicht möglich.",
   REVIEW_INVALID: "Die Prüfung konnte nicht bestätigt werden. Bitte starte die Prüfung neu.",
