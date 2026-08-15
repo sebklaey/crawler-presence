@@ -30,14 +30,27 @@ export function readSubject(meta: McpMeta): string | null {
 }
 
 export async function resolveIdentity(meta: McpMeta): Promise<Identity> {
+  const secret = roomSubjectSecret();
+
+  // Server-side recovery of a known identity (session -> existing profile).
+  // Never accepted from the model: only Crawler's own code sets this key.
+  const direct = readMetaString(meta, "room/subject_hash");
+  const session = readMetaString(meta, "room/session") ?? readMetaString(meta, "openai/session");
+  if (direct && /^[0-9a-f]{64}$/i.test(direct)) {
+    return {
+      subjectHash: direct.toLowerCase(),
+      sessionHash: session ? await hmacSha256Hex(secret, session) : null,
+      locale: readMetaString(meta, "openai/locale"),
+    };
+  }
+
   const subject = readSubject(meta);
   if (!subject) throw roomError("IDENTITY_UNAVAILABLE");
 
-  const secret = roomSubjectSecret();
   const subjectHash = await hmacSha256Hex(secret, subject);
 
-  const session = readMetaString(meta, "room/session") ?? readMetaString(meta, "openai/session");
   const sessionHash = session ? await hmacSha256Hex(secret, session) : null;
+
 
   return {
     subjectHash,
