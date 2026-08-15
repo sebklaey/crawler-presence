@@ -58,7 +58,11 @@ export default defineTool({
     measurement_scope: z.string().optional().describe("Always crawler_only."),
     data_mode: z.string().optional(),
     hint: z.string().optional(),
-    period_days: z.union([z.number(), z.string()]).optional(),
+    period_days: z.union([z.number(), z.string()]).optional().describe("Effective window actually used."),
+    requested_period_days: z.union([z.number(), z.string()]).optional().describe("Window the caller asked for."),
+    period_clamped: z.boolean().optional().describe("True when the plan limits the requested window."),
+    plan: z.string().optional().describe("Plan of the Presence: it decides the maximum window (Plus 7 days, Pro 90 days, Business unlimited)."),
+    period_note: z.string().optional(),
     filter: z.string().nullable().optional(),
     public_summary: z.any().optional().describe("Free aggregate: conversations_mentioning, mention_events, crawler_reads."),
     detailed_summary: z.any().nullable().optional().describe("Only present with a valid recovery code."),
@@ -146,11 +150,21 @@ export default defineTool({
       const text = `${summary.conversations_mentioning} anonyme Crawler-Gespräche erwähnten ${lookup} im ${windowLabel} (${summary.mention_events} Erwähnungs-Events, ${summary.crawler_reads} öffentliche Presence-Reads). Gemessen ausschließlich innerhalb von Crawler — das ist keine Auswertung aller ChatGPT-, Claude-, Gemini- oder Internet-Gespräche.`;
 
       const detailed = authorizedSlug ? await analytics.detailedSummary(slug, effectivePeriod) : null;
+      const presencePlan = presence?.plan ?? "plus";
+      const clamped = effectivePeriod !== period;
 
       return {
         content: [{ type: "text" as const, text }],
         structuredContent: {
           found: true,
+          entity_or_domain: lookup,
+          plan: presencePlan,
+          requested_period_days: period === "all" ? "all" : period,
+          period_days: effectivePeriod === "all" ? "all" : effectivePeriod,
+          period_clamped: clamped,
+          period_note: clamped
+            ? `The requested window (${period === "all" ? "all" : `${period} days`}) exceeds what the ${presencePlan} plan covers, so ${effectivePeriod === "all" ? "the full history" : `${effectivePeriod} days`} were measured.`
+            : "The requested window was fully covered by the plan.",
           public_summary: summary,
           detailed_summary: detailed,
           detail_available: Boolean(detailed),

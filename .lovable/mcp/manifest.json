@@ -921,7 +921,26 @@
               "type": [
                 "number",
                 "string"
-              ]
+              ],
+              "description": "Effective window actually used."
+            },
+            "requested_period_days": {
+              "type": [
+                "number",
+                "string"
+              ],
+              "description": "Window the caller asked for."
+            },
+            "period_clamped": {
+              "type": "boolean",
+              "description": "True when the plan limits the requested window."
+            },
+            "plan": {
+              "type": "string",
+              "description": "Plan of the Presence: it decides the maximum window (Plus 7 days, Pro 90 days, Business unlimited)."
+            },
+            "period_note": {
+              "type": "string"
             },
             "filter": {
               "type": [
