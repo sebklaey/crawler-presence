@@ -71,7 +71,6 @@ export const plusInputSchemas = {
         "update",
         "archive",
         "delete",
-        "change_visibility",
         "update_retention",
         "assign_moderator",
         "remove_moderator",
