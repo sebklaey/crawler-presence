@@ -19,7 +19,7 @@ function normalizePlan(value: unknown): RoomPlanCode {
 /** True when the presence row currently pays for its plan. */
 function presenceIsActive(presence: any): boolean {
   if (!presence) return false;
-  if (presence.status && presence.status !== "active") return false;
+  if (presence.status && !["live", "active", "published"].includes(String(presence.status))) return false;
   const subscriptionStatus = String(presence.subscription_status ?? "active");
   if (["canceled", "paused", "expired"].includes(subscriptionStatus)) {
     const end = presence.current_period_end ? new Date(presence.current_period_end).getTime() : 0;
