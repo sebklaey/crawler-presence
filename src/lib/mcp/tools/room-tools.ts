@@ -17,6 +17,8 @@ import { MATCH_TOOLS } from "@/lib/room/match/mcp";
 import { SOCIAL_TOOLS } from "@/lib/room/social/mcp";
 import { toRoomError } from "@/lib/room/errors";
 import { requiredPlanForCall } from "@/lib/entitlements/features";
+import { toShape } from "@/lib/mcp/schema-to-zod";
+import { advertisedOutputShape, responseValidator } from "@/lib/mcp/response";
 
 type Json = Record<string, unknown>;
 
@@ -31,78 +33,30 @@ interface RoomTool {
   summary: (result: any) => string;
 }
 
-function leafSchema(node: Json): z.ZodTypeAny {
-  const type = node["type"];
-  if (Array.isArray(node["enum"]) && node["enum"].every((v) => typeof v === "string")) {
-    return z.string();
-  }
-  switch (type) {
-    case "string":
-      return z.string();
-    case "integer":
-    case "number":
-      return z.number();
-    case "boolean":
-      return z.boolean();
-    case "array": {
-      const items = (node["items"] as Json | undefined) ?? {};
-      return z.array(leafSchema(items));
-    }
-    case "object": {
-      const props = (node["properties"] as Record<string, Json> | undefined) ?? {};
-      const required = (node["required"] as string[] | undefined) ?? [];
-      const shape: Record<string, z.ZodTypeAny> = {};
-      for (const [key, value] of Object.entries(props)) {
-        const inner = leafSchema(value);
-        shape[key] = required.includes(key) ? inner : inner.optional();
-      }
-      return Object.keys(shape).length ? z.object(shape).passthrough() : z.record(z.any());
-    }
-    default:
-      return z.any();
-  }
-}
-
-function toShape(schema: Json): Record<string, z.ZodTypeAny> {
-  const props = (schema["properties"] as Record<string, Json> | undefined) ?? {};
-  const required = (schema["required"] as string[] | undefined) ?? [];
-  const shape: Record<string, z.ZodTypeAny> = {};
-  for (const [key, value] of Object.entries(props)) {
-    const inner = leafSchema(value);
-    const described =
-      typeof value["description"] === "string"
-        ? inner.describe(value["description"] as string)
-        : inner;
-    shape[key] = required.includes(key) ? described : described.optional();
-  }
-  return shape;
-}
-
 /**
- * Result model advertised to the calling model. Every field is optional because
- * the same tool can also answer with an upgrade or error payload, and strict
- * output validation must never turn a valid answer into a protocol error.
+ * Runtime contract per tool, also consumed by the contract tests: the advertised
+ * shape stays permissive (one shape must cover success and envelope), while the
+ * validator is the real discriminated union and stays strict about required
+ * success fields.
  */
-function toOutputShape(schema: Json | undefined): Record<string, z.ZodTypeAny> {
-  const base: Record<string, z.ZodTypeAny> = {};
-  for (const [key, value] of Object.entries(toShape(schema ?? {}))) {
-    base[key] = value.isOptional() ? value : value.optional();
+export const roomToolContracts = new Map<string, ReturnType<typeof responseValidator>>();
+
+/** Set by the test suite: an invalid tool payload throws instead of warning. */
+const strictOutput = () =>
+  typeof process !== "undefined" && process.env?.["CRAWLER_STRICT_OUTPUT"] === "1";
+
+function validateOutput(name: string, payload: Json): Json {
+  const validator = roomToolContracts.get(name);
+  if (!validator) return payload;
+  const parsed = validator.safeParse(payload);
+  if (!parsed.success) {
+    const detail = parsed.error.issues.map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`).join("; ");
+    if (strictOutput()) throw new Error(`Output contract violated for ${name}: ${detail}`);
+    console.error("[room-tool:output]", name, detail);
   }
-  return {
-    ...base,
-    room_token: z
-      .string()
-      .optional()
-      .describe("Anonymous room identity. Store it and pass it to every later room tool — there is no account."),
-    error: z.string().optional().describe("Error code when the call failed."),
-    message: z.string().optional().describe("Human-readable message, e.g. why an upgrade is needed."),
-    plan_required: z.string().optional().describe("Plan that unlocks this feature: plus, pro or business."),
-    current_plan: z.string().optional(),
-    cta_label: z.string().optional(),
-    upgrade_url: z.string().optional().describe("Direct Paddle checkout link for the required plan."),
-    correlation_id: z.string().optional().describe("Stable id of this decision — quote it in support requests."),
-  };
+  return payload;
 }
+
 
 
 

@@ -44,6 +44,67 @@ const WRITE = {
   idempotentHint: false,
 };
 
+const ROOM_STATS_PROPERTIES: Json = {
+  followers: { type: "number" },
+  people_here_now: { type: "number" },
+  presence_window_seconds: { type: "number" },
+  presence_checked_at: { type: "string" },
+  headline: { type: "string" },
+};
+const ROOM_STATS_REQUIRED = [
+  "followers",
+  "people_here_now",
+  "presence_window_seconds",
+  "presence_checked_at",
+  "headline",
+];
+
+const PRESENT_MEMBER_SCHEMA: Json = {
+  type: "object",
+  properties: {
+    alias: { type: "string" },
+    joined_at: { type: "string" },
+    last_seen_at: { type: "string" },
+    presence_status: { type: "string" },
+  },
+  required: ["alias", "joined_at", "last_seen_at", "presence_status"],
+};
+
+const ROOM_MESSAGE_SCHEMA: Json = {
+  type: "object",
+  properties: {
+    id: { type: "string" },
+    alias: { type: "string" },
+    text: { type: "string" },
+    created_at: { type: "string" },
+    is_self: { type: "boolean" },
+    is_owner: { type: "boolean" },
+  },
+  required: ["id", "alias", "text", "created_at", "is_self", "is_owner"],
+};
+
+const ROOM_IMAGE_SCHEMA: Json = {
+  type: "object",
+  properties: {
+    alias: { type: "string" },
+    alt_text: { type: "string" },
+    created_at: { type: "string" },
+    url: { type: "string" },
+  },
+  required: ["alias", "alt_text", "created_at", "url"],
+};
+
+const NOTIFICATION_SETTINGS_SCHEMA: Json = {
+  type: "object",
+  properties: {
+    new_conversation: { type: "boolean" },
+    public_message: { type: "boolean" },
+    live_event: { type: "boolean" },
+    new_follower: { type: "boolean" },
+  },
+  required: ["new_conversation", "public_message", "live_event", "new_follower"],
+};
+
 const usernameInput: Json = {
   type: "object",
   properties: {
