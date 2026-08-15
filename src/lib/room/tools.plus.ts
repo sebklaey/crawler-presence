@@ -410,3 +410,79 @@ export async function handleAdminReviewCampaign(input: unknown, meta: McpMeta) {
   return { ...result, message: `Kampagne: ${result.status}.` };
 }
 
+
+/* ------------------------------ Crawler Ads ------------------------------ */
+
+const adSchemas = {
+  add_campaign_creative: z
+    .object({
+      campaign_id: z.string().min(1),
+      product_name: z.string().min(2).max(120),
+      product_description: z.string().max(800).optional(),
+      product_category: z.string().max(80).optional(),
+      product_reference: z.string().max(120).optional(),
+      headline: z.string().min(3).max(120),
+      body: z.string().min(10).max(800),
+      image_reference: z.string().max(300).optional(),
+      image_alt: z.string().max(200).optional(),
+      destination_url: z.string().url(),
+      call_to_action: z.string().max(60).optional(),
+      languages: z.array(z.string().max(8)).min(1).max(6).optional(),
+      start_date: z.string().optional(),
+      end_date: z.string().optional(),
+    })
+    .strict(),
+  preview_sponsored_campaign: z.object({ campaign_id: z.string().min(1) }).strict(),
+  set_resonance_ads_preference: z.object({ enabled: z.boolean() }).strict(),
+  block_advertiser: z.object({ campaign_id: z.string().min(1) }).strict(),
+};
+
+export async function handleAddCampaignCreative(input: unknown, meta: McpMeta) {
+  const data = parse(adSchemas.add_campaign_creative, input);
+  const { db, ctx } = await context(meta);
+  const { addCampaignCreative } = await import("./ads/creatives");
+  return addCampaignCreative(db, ctx, {
+    campaignId: await resolveCampaignId(data.campaign_id),
+    productName: data.product_name,
+    headline: data.headline,
+    body: data.body,
+    destinationUrl: data.destination_url,
+    ...(data.product_description !== undefined ? { productDescription: data.product_description } : {}),
+    ...(data.product_category !== undefined ? { productCategory: data.product_category } : {}),
+    ...(data.product_reference !== undefined ? { productReference: data.product_reference } : {}),
+    ...(data.image_reference !== undefined ? { imageReference: data.image_reference } : {}),
+    ...(data.image_alt !== undefined ? { imageAlt: data.image_alt } : {}),
+    ...(data.call_to_action !== undefined ? { callToAction: data.call_to_action } : {}),
+    ...(data.languages !== undefined ? { languages: data.languages } : {}),
+    ...(data.start_date !== undefined ? { startsAt: data.start_date } : {}),
+    ...(data.end_date !== undefined ? { endsAt: data.end_date } : {}),
+  });
+}
+
+export async function handlePreviewSponsoredCampaign(input: unknown, meta: McpMeta) {
+  const data = parse(adSchemas.preview_sponsored_campaign, input);
+  const { db, ctx } = await context(meta);
+  const { previewCampaign } = await import("./ads/creatives");
+  return previewCampaign(db, ctx, await resolveCampaignId(data.campaign_id));
+}
+
+export async function handleSetResonanceAdsPreference(input: unknown, meta: McpMeta) {
+  const data = parse(adSchemas.set_resonance_ads_preference, input);
+  const { db, ctx } = await context(meta);
+  const { setResonanceAdsPreference } = await import("./ads/matching");
+  return setResonanceAdsPreference(db, ctx.subjectHash, data.enabled);
+}
+
+export async function handleBlockAdvertiser(input: unknown, meta: McpMeta) {
+  const data = parse(adSchemas.block_advertiser, input);
+  const { db, ctx } = await context(meta);
+  const campaignId = await resolveCampaignId(data.campaign_id);
+  const { data: campaign } = await db
+    .from("sponsored_campaigns")
+    .select("organization_id")
+    .eq("id", campaignId)
+    .maybeSingle();
+  if (!campaign) throw roomError("NOT_FOUND");
+  const { blockAdvertiser } = await import("./ads/matching");
+  return blockAdvertiser(db, ctx.subjectHash, (campaign as { organization_id: string }).organization_id);
+}
