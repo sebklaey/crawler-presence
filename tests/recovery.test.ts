@@ -95,7 +95,7 @@ describe("capability separation", () => {
   });
 
   test("a well-formed recovery code parses into slug plus independent secret", () => {
-    const parsed = parseRecoveryCode(`acme~crw_${"a".repeat(32)}`);
+    const parsed = parseRecoveryCode(`acme~crw_${"a".repeat(64)}`);
     expect(parsed?.slug).toBe("acme");
   });
 });
