@@ -4188,7 +4188,8 @@
         "annotations": {
           "readOnlyHint": false,
           "destructiveHint": false,
-          "openWorldHint": false
+          "openWorldHint": false,
+          "idempotentHint": false
         },
         "inputSchema": {
           "type": "object",
@@ -4256,7 +4257,8 @@
         "annotations": {
           "readOnlyHint": false,
           "destructiveHint": false,
-          "openWorldHint": false
+          "openWorldHint": false,
+          "idempotentHint": false
         },
         "inputSchema": {
           "type": "object",
@@ -4328,7 +4330,8 @@
         "annotations": {
           "readOnlyHint": false,
           "destructiveHint": false,
-          "openWorldHint": false
+          "openWorldHint": false,
+          "idempotentHint": false
         },
         "inputSchema": {
           "type": "object",
@@ -4435,7 +4438,8 @@
         "annotations": {
           "readOnlyHint": false,
           "destructiveHint": false,
-          "openWorldHint": false
+          "openWorldHint": false,
+          "idempotentHint": false
         },
         "inputSchema": {
           "type": "object",
@@ -4503,7 +4507,8 @@
         "annotations": {
           "readOnlyHint": false,
           "destructiveHint": false,
-          "openWorldHint": false
+          "openWorldHint": false,
+          "idempotentHint": false
         },
         "inputSchema": {
           "type": "object",
@@ -4724,7 +4729,8 @@
         "annotations": {
           "readOnlyHint": false,
           "destructiveHint": false,
-          "openWorldHint": false
+          "openWorldHint": false,
+          "idempotentHint": false
         },
         "inputSchema": {
           "type": "object",
@@ -4840,7 +4846,8 @@
         "annotations": {
           "readOnlyHint": true,
           "destructiveHint": false,
-          "openWorldHint": false
+          "openWorldHint": false,
+          "idempotentHint": true
         },
         "inputSchema": {
           "type": "object",
@@ -4908,7 +4915,8 @@
         "annotations": {
           "readOnlyHint": false,
           "destructiveHint": false,
-          "openWorldHint": false
+          "openWorldHint": false,
+          "idempotentHint": false
         },
         "inputSchema": {
           "type": "object",
@@ -4976,7 +4984,8 @@
         "annotations": {
           "readOnlyHint": false,
           "destructiveHint": false,
-          "openWorldHint": false
+          "openWorldHint": false,
+          "idempotentHint": false
         },
         "inputSchema": {
           "type": "object",
@@ -6815,7 +6824,8 @@
         "annotations": {
           "readOnlyHint": false,
           "destructiveHint": false,
-          "openWorldHint": false
+          "openWorldHint": false,
+          "idempotentHint": false
         },
         "inputSchema": {
           "type": "object",
@@ -7170,7 +7180,8 @@
         "annotations": {
           "readOnlyHint": true,
           "destructiveHint": false,
-          "openWorldHint": false
+          "openWorldHint": false,
+          "idempotentHint": true
         },
         "inputSchema": {
           "type": "object",
@@ -7514,7 +7525,8 @@
         "annotations": {
           "readOnlyHint": false,
           "destructiveHint": true,
-          "openWorldHint": false
+          "openWorldHint": false,
+          "idempotentHint": true
         },
         "inputSchema": {
           "type": "object",

@@ -34,8 +34,8 @@ export interface LoveToolDefinition {
 }
 
 const OPEN_OUTPUT: Json = { type: "object", additionalProperties: true };
-const READ_ONLY = { readOnlyHint: true, destructiveHint: false, openWorldHint: false };
-const WRITE = { readOnlyHint: false, destructiveHint: false, openWorldHint: false };
+const READ_ONLY = { readOnlyHint: true, destructiveHint: false, openWorldHint: false, idempotentHint: true };
+const WRITE = { readOnlyHint: false, destructiveHint: false, openWorldHint: false, idempotentHint: false };
 const WRITE_IDEMPOTENT = { ...WRITE, idempotentHint: true };
 const WRITE_OPEN = { readOnlyHint: false, destructiveHint: false, openWorldHint: true, idempotentHint: true };
 const DESTRUCTIVE_OPEN = {
@@ -44,7 +44,7 @@ const DESTRUCTIVE_OPEN = {
   openWorldHint: true,
   idempotentHint: true,
 };
-const DESTRUCTIVE = { readOnlyHint: false, destructiveHint: true, openWorldHint: false };
+const DESTRUCTIVE = { readOnlyHint: false, destructiveHint: true, openWorldHint: false, idempotentHint: true };
 
 const DISCLAIMER = `_${LOVE_NOT_A_DIAGNOSIS}_`;
 
