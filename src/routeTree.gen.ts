@@ -56,6 +56,7 @@ import { Route as KnowledgeSourcesRouteImport } from './routes/knowledge.sources
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as ApiPublicMcpHealthRouteImport } from './routes/api/public/mcp-health'
 import { Route as ApiPublicRoomHealthRouteImport } from './routes/api/public/room-health'
+import { Route as ApiPublicRoomRetentionRouteImport } from './routes/api/public/room-retention'
 import { Route as CSlugSplatRouteImport } from './routes/c.$slug.$'
 import { Route as ManageSlugAnalyticsRouteImport } from './routes/manage_.$slug.analytics'
 import { Route as PSlugIndexRouteImport } from './routes/p.$slug.index'
@@ -308,6 +309,11 @@ const ApiPublicRoomHealthRoute = ApiPublicRoomHealthRouteImport.update({
   path: '/api/public/room-health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicRoomRetentionRoute = ApiPublicRoomRetentionRouteImport.update({
+  id: '/api/public/room-retention',
+  path: '/api/public/room-retention',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CSlugSplatRoute = CSlugSplatRouteImport.update({
   id: '/c/$slug/$',
   path: '/c/$slug/$',
@@ -419,6 +425,7 @@ export interface FileRoutesByFullPath {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
   '/api/public/room-health': typeof ApiPublicRoomHealthRoute
+  '/api/public/room-retention': typeof ApiPublicRoomRetentionRoute
   '/c/$slug/$': typeof CSlugSplatRoute
   '/manage/$slug/analytics': typeof ManageSlugAnalyticsRoute
   '/p/$slug/$': typeof PSlugSplatRoute
@@ -479,6 +486,7 @@ export interface FileRoutesByTo {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
   '/api/public/room-health': typeof ApiPublicRoomHealthRoute
+  '/api/public/room-retention': typeof ApiPublicRoomRetentionRoute
   '/c/$slug/$': typeof CSlugSplatRoute
   '/manage/$slug/analytics': typeof ManageSlugAnalyticsRoute
   '/p/$slug/$': typeof PSlugSplatRoute
@@ -541,6 +549,7 @@ export interface FileRoutesById {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/mcp-health': typeof ApiPublicMcpHealthRoute
   '/api/public/room-health': typeof ApiPublicRoomHealthRoute
+  '/api/public/room-retention': typeof ApiPublicRoomRetentionRoute
   '/c/$slug/$': typeof CSlugSplatRoute
   '/manage_/$slug/analytics': typeof ManageSlugAnalyticsRoute
   '/p/$slug/$': typeof PSlugSplatRoute
@@ -604,6 +613,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
     | '/api/public/room-health'
+    | '/api/public/room-retention'
     | '/c/$slug/$'
     | '/manage/$slug/analytics'
     | '/p/$slug/$'
@@ -664,6 +674,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
     | '/api/public/room-health'
+    | '/api/public/room-retention'
     | '/c/$slug/$'
     | '/manage/$slug/analytics'
     | '/p/$slug/$'
@@ -725,6 +736,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/mcp-health'
     | '/api/public/room-health'
+    | '/api/public/room-retention'
     | '/c/$slug/$'
     | '/manage_/$slug/analytics'
     | '/p/$slug/$'
@@ -780,6 +792,7 @@ export interface RootRouteChildren {
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicMcpHealthRoute: typeof ApiPublicMcpHealthRoute
   ApiPublicRoomHealthRoute: typeof ApiPublicRoomHealthRoute
+  ApiPublicRoomRetentionRoute: typeof ApiPublicRoomRetentionRoute
   CSlugSplatRoute: typeof CSlugSplatRoute
   ManageSlugAnalyticsRoute: typeof ManageSlugAnalyticsRoute
   PSlugSplatRoute: typeof PSlugSplatRoute
@@ -1125,6 +1138,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicRoomHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/room-retention': {
+      id: '/api/public/room-retention'
+      path: '/api/public/room-retention'
+      fullPath: '/api/public/room-retention'
+      preLoaderRoute: typeof ApiPublicRoomRetentionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/c/$slug/$': {
       id: '/c/$slug/$'
       path: '/c/$slug/$'
@@ -1279,6 +1299,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicMcpHealthRoute: ApiPublicMcpHealthRoute,
   ApiPublicRoomHealthRoute: ApiPublicRoomHealthRoute,
+  ApiPublicRoomRetentionRoute: ApiPublicRoomRetentionRoute,
   CSlugSplatRoute: CSlugSplatRoute,
   ManageSlugAnalyticsRoute: ManageSlugAnalyticsRoute,
   PSlugSplatRoute: PSlugSplatRoute,
