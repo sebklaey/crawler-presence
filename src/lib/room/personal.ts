@@ -75,6 +75,14 @@ export function personalRoomName(alias: string): string {
 
 /** Idempotent: returns the person's permanent room, creating it on first use. */
 export async function ensurePersonalRoom(db: Db, subjectHash: string): Promise<PersonalRoom> {
+  const { isReadOnlyCall } = await import("./call-context");
+  if (isReadOnlyCall()) {
+    const existing = await loadPersonalRoom(db, subjectHash);
+    // A read never bootstraps the permanent room; the caller reports the
+    // not-yet-initialised state and the user creates it with an explicit write.
+    if (!existing) throw roomError("ROOM_NOT_INITIALIZED");
+    return existing;
+  }
   const alias = (await getCustomAlias(db, subjectHash)) ?? generateAlias(`${subjectHash}:personal`);
   const handle = await uniqueHandle(db, subjectHash, slugifyHandle(alias));
 

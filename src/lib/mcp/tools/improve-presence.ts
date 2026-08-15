@@ -19,7 +19,7 @@ export default defineTool({
       .max(2000)
       .describe("The analytics insight or requested change, e.g. 'people keep asking about licensing'."),
   },
-  annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+  annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
   outputSchema: {
     session_id: z.string().optional(),
     no_own_model: z.boolean().optional(),
