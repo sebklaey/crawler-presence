@@ -609,6 +609,7 @@ export type Database = {
           current_period_start: string | null
           customer_id: string
           environment: string
+          last_event_occurred_at: string | null
           plan: string | null
           price_id: string | null
           product_id: string | null
@@ -625,6 +626,7 @@ export type Database = {
           current_period_start?: string | null
           customer_id: string
           environment?: string
+          last_event_occurred_at?: string | null
           plan?: string | null
           price_id?: string | null
           product_id?: string | null
@@ -641,6 +643,7 @@ export type Database = {
           current_period_start?: string | null
           customer_id?: string
           environment?: string
+          last_event_occurred_at?: string | null
           plan?: string | null
           price_id?: string | null
           product_id?: string | null
@@ -2046,6 +2049,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      payment_event_duplicates: {
+        Row: {
+          environment: string | null
+          event_id: string
+          event_type: string | null
+          id: string
+          intent_ref: string | null
+          occurred_at: string | null
+          original_id: string | null
+          quarantined_at: string
+          status: string | null
+          subscription_id: string | null
+        }
+        Insert: {
+          environment?: string | null
+          event_id: string
+          event_type?: string | null
+          id?: string
+          intent_ref?: string | null
+          occurred_at?: string | null
+          original_id?: string | null
+          quarantined_at?: string
+          status?: string | null
+          subscription_id?: string | null
+        }
+        Update: {
+          environment?: string | null
+          event_id?: string
+          event_type?: string | null
+          id?: string
+          intent_ref?: string | null
+          occurred_at?: string | null
+          original_id?: string | null
+          quarantined_at?: string
+          status?: string | null
+          subscription_id?: string | null
+        }
+        Relationships: []
       }
       payment_events: {
         Row: {
