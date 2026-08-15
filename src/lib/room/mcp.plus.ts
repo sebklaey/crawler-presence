@@ -6,7 +6,7 @@ import type { McpMeta } from "./identity";
 import {
   handleAdminReviewCampaign,
   handleCreateInvitation,
-  handleCreatePrivateRoom,
+  handleCreatePublicRoom,
   handleCreateSponsoredCampaign,
   handleEnterUniversal,
   handleGetCampaignAnalytics,
@@ -85,17 +85,17 @@ export const PLUS_TOOLS: PlusToolDefinition[] = [
   },
 
   {
-    name: "create_private_room",
-    title: "Eigenen Raum erstellen",
+    name: "create_public_room",
+    title: "Öffentlichen Raum erstellen",
     description:
-      "Erstellt einen eigenen Raum (für alle kostenlos). Limits für Kapazität und Anzahl Räume werden serverseitig geprüft.",
+      "Erstellt einen eigenen, öffentlich lesbaren Raum. In Crawler Room gibt es keine privaten Räume und keine privaten Nachrichten — jeder Raum ist öffentlich lesbar. Limits für Kapazität und Anzahl Räume werden serverseitig geprüft.",
     inputSchema: {
       type: "object",
       properties: {
         title: { type: "string" },
         description: { type: "string" },
         topic: { type: "string" },
-        visibility: { type: "string", enum: ["public", "private", "invite", "paid"] },
+        visibility: { type: "string", enum: ["public"], description: "Immer public. Private Räume gibt es nicht." },
         capacity: { type: "integer" },
         organization_id: { type: "string" },
       },
@@ -104,14 +104,14 @@ export const PLUS_TOOLS: PlusToolDefinition[] = [
     },
     outputSchema: OPEN_OUTPUT,
     annotations: WRITE,
-    handler: (input, meta) => handleCreatePrivateRoom(input, meta) as Promise<Json>,
+    handler: (input, meta) => handleCreatePublicRoom(input, meta) as Promise<Json>,
     summary: (result) => String(result.message ?? "Raum erstellt."),
   },
   {
     name: "manage_room",
     title: "Raum verwalten",
     description:
-      "Verwaltet einen eigenen Raum: update, archive, delete, change_visibility, update_retention, assign_moderator, remove_moderator.",
+      "Verwaltet einen eigenen Raum: update, archive, delete, update_retention, assign_moderator, remove_moderator. Räume sind immer öffentlich.",
     inputSchema: {
       type: "object",
       properties: {
@@ -122,7 +122,6 @@ export const PLUS_TOOLS: PlusToolDefinition[] = [
             "update",
             "archive",
             "delete",
-            "change_visibility",
             "update_retention",
             "assign_moderator",
             "remove_moderator",

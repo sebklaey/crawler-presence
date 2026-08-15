@@ -1126,9 +1126,9 @@
         "outputSchema": null
       },
       {
-        "name": "create_private_room",
-        "title": "Eigenen Raum erstellen",
-        "description": "Erstellt einen eigenen Raum (für alle kostenlos). Limits für Kapazität und Anzahl Räume werden serverseitig geprüft.",
+        "name": "create_public_room",
+        "title": "Öffentlichen Raum erstellen",
+        "description": "Erstellt einen eigenen, öffentlich lesbaren Raum. In Crawler Room gibt es keine privaten Räume und keine privaten Nachrichten — jeder Raum ist öffentlich lesbar. Limits für Kapazität und Anzahl Räume werden serverseitig geprüft.",
         "annotations": {
           "readOnlyHint": false,
           "destructiveHint": false,
@@ -1148,7 +1148,8 @@
               "type": "string"
             },
             "visibility": {
-              "type": "string"
+              "type": "string",
+              "description": "Immer public. Private Räume gibt es nicht."
             },
             "capacity": {
               "type": "number"
@@ -1172,7 +1173,7 @@
       {
         "name": "manage_room",
         "title": "Raum verwalten",
-        "description": "Verwaltet einen eigenen Raum: update, archive, delete, change_visibility, update_retention, assign_moderator, remove_moderator.",
+        "description": "Verwaltet einen eigenen Raum: update, archive, delete, update_retention, assign_moderator, remove_moderator. Räume sind immer öffentlich.",
         "annotations": {
           "readOnlyHint": false,
           "destructiveHint": true,
