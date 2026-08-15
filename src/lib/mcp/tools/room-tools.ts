@@ -218,11 +218,14 @@ function adapt(tool: RoomTool) {
 
 
 
-        const result = await tool.handler(rest, {
-          ...(token ? { "room/token": token } : {}),
-          "crawler/session_id": session,
-          ...(knownSubjectHash ? { "room/subject_hash": knownSubjectHash } : {}),
-        });
+        const { runInCallContext } = await import("@/lib/room/call-context");
+        const result = await runInCallContext({ readOnly, toolName: tool.name }, () =>
+          tool.handler(rest, {
+            ...(token ? { "room/token": token } : {}),
+            "crawler/session_id": session,
+            ...(knownSubjectHash ? { "room/subject_hash": knownSubjectHash } : {}),
+          }),
+        );
 
 
         let text = tool.summary(result);

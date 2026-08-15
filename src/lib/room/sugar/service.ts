@@ -44,8 +44,8 @@ const n = (value: unknown): number => Number(value ?? 0);
 
 function mapAccount(row: any): SugarAccount {
   return {
-    id: row.id,
-    publicReference: row.public_account_reference,
+    id: row.id ?? null,
+    publicReference: row.public_account_reference ?? null,
     balance: n(row.balance),
     lifetimeMinted: n(row.lifetime_minted),
     lifetimeReceived: n(row.lifetime_received),
@@ -55,7 +55,7 @@ function mapAccount(row: any): SugarAccount {
     leaseExpiresAt: row.current_lease_expires_at ?? null,
     progressSeconds: n(row.mining_remainder_seconds),
     dailyMinted: n(row.daily_minted_amount),
-    createdAt: row.created_at,
+    createdAt: row.created_at ?? new Date(0).toISOString(),
     frozen: Boolean(row.frozen_at),
   };
 }
@@ -134,6 +134,22 @@ export async function recordSugarActivity(
   userKey: string,
   sourceAction: string,
 ): Promise<ActivityResult> {
+  const { isReadOnlyCall } = await import("../call-context");
+  if (isReadOnlyCall()) {
+    // Reading the balance must never mint, extend a lease or write a ledger
+    // row. Mining is driven by explicit write tools only.
+    const account = await loadSugarAccount(db, userKey);
+    return {
+      mintedNow: 0,
+      miningStatus: account.miningStatus,
+      pausedReason: null,
+      balance: account.balance,
+      lifetimeMinted: account.lifetimeMinted,
+      dailyMinted: account.dailyMinted,
+      progressSeconds: account.progressSeconds,
+      leaseExpiresAt: account.leaseExpiresAt,
+    };
+  }
   const cfg = sugarConfig();
   const { data, error } = await db.rpc("sugar_activity", {
     p_user_key: userKey,
