@@ -39,7 +39,7 @@ export type RetentionOverview =
 const SOURCE_LIMIT: Record<string, number> = { plus: 1, pro: 5, business: 25 };
 
 export const retentionOverviewFn = createServerFn({ method: "POST" })
-  .handler(async ({ data }): Promise<RetentionOverview> => {
+  .handler(async (): Promise<RetentionOverview> => {
     const resolved = await resolve(false);
     if ("error" in resolved) return { ok: false, reason: resolved.error };
     const p = resolved.presence;
@@ -136,7 +136,7 @@ export const removeSourceFn = createServerFn({ method: "POST" })
 
 /** Owner-triggered scan; the scheduled job does the same work on a plan cadence. */
 export const scanSourcesFn = createServerFn({ method: "POST" })
-  .handler(async ({ data }): Promise<{ ok: true; scanned: number; changed: number } | Failure> => {
+  .handler(async (): Promise<{ ok: true; scanned: number; changed: number } | Failure> => {
     const resolved = await resolve(true);
     if ("error" in resolved) return { ok: false, reason: resolved.error };
     const { scanPresence } = await import("./sources.server");
@@ -167,8 +167,8 @@ export const resolveChangeFn = createServerFn({ method: "POST" })
  */
 export const decideRecommendationFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
-    codeSchema
-      .extend({
+    z
+      .object({
         id: z.string().uuid(),
         decision: z.enum(["approve", "reject", "postpone"]),
         value: z.string().trim().max(4000).optional(),
@@ -215,8 +215,8 @@ export type NotificationPreferences = { sourceChanges: boolean; billing: boolean
 
 export const notificationPreferencesFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
-    codeSchema
-      .extend({
+    z
+      .object({
         sourceChanges: z.boolean().optional(),
         billing: z.boolean().optional(),
         reports: z.boolean().optional(),
