@@ -31,7 +31,8 @@ import {
   manageUpdateCoreFn,
   type ManageOverview,
 } from "@/lib/manage.functions";
-import { useCore, usePlan, usePublished, useRecoveryCode } from "@/lib/store";
+import { useCore, usePlan, usePublished } from "@/lib/store";
+import { useManageSession } from "@/hooks/use-manage-session";
 import { isCoreEmpty, type KnowledgeCore } from "@/lib/knowledge";
 
 export const Route = createFileRoute("/manage")({
@@ -56,7 +57,8 @@ export const Route = createFileRoute("/manage")({
 });
 
 const REASONS: Record<string, string> = {
-  "invalid-code": "That does not look like a Crawler recovery code. It is your session ID (sess_…) or a legacy slug~crw_… code.",
+  "invalid-code":
+    "That is not a Crawler recovery code. A ChatGPT session ID (sess_…) is a different capability and can never manage a Presence.",
   "not-found": "No Presence matches this recovery code.",
   "rate-limited": "Too many attempts. Wait a minute and try again.",
   "no-subscription": "This Presence has no subscription — it was published in demo mode.",
@@ -76,7 +78,8 @@ function ManagePage() {
   const [core, setCore] = useCore();
   const [, setPlan] = usePlan();
   const [, setPublished] = usePublished();
-  const [storedCode, setStoredCode, codeHydrated] = useRecoveryCode();
+  const session = useManageSession();
+  const [rotateCode, setRotateCode] = useState("");
   const autoOpened = useRef(false);
 
   /**
@@ -111,13 +114,12 @@ function ManagePage() {
     try {
       if (next && next.trim().length >= 10) {
         const { openManageSession } = await import("@/lib/manage-session");
-        const session = await openManageSession(next.trim());
+        const opened = await openManageSession(next.trim());
         // The capability has done its one job: forget it immediately.
         setCode("");
-        setStoredCode("");
-        if (!session.ok) {
+        if (!opened.ok) {
           setData(null);
-          if (!opts?.silent) toast.error(REASONS[session.reason] ?? "Could not open that Presence.");
+          if (!opts?.silent) toast.error(REASONS[opened.reason] ?? "Could not open that Presence.");
           return;
         }
       }
@@ -126,7 +128,7 @@ function ManagePage() {
         setData(null);
         // An expired or missing management cookie must not keep the page open.
         if (opts?.silent && (result.reason === "unauthenticated" || result.reason === "not-found")) {
-          setStoredCode("");
+          session.invalidate();
           return;
         }
         if (!opts?.silent) toast.error(REASONS[result.reason] ?? "Could not open that Presence.");
@@ -145,14 +147,11 @@ function ManagePage() {
 
   /** Stay unlocked while the HttpOnly management cookie is still valid. */
   useEffect(() => {
-    if (!codeHydrated || autoOpened.current) return;
+    if (!session.ready || autoOpened.current) return;
     autoOpened.current = true;
-    void (async () => {
-      const { manageSessionActive } = await import("@/lib/manage-session");
-      if ((await manageSessionActive()).active) void open("", { silent: true });
-    })();
+    if (session.active) void open("", { silent: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [codeHydrated, storedCode]);
+  }, [session.ready, session.active]);
 
   /**
    * Coming back from a checkout must show the new plan at once: whenever this
@@ -179,12 +178,12 @@ function ManagePage() {
 
 
   function signOut() {
-    setStoredCode("");
+    void session.close();
     setData(null);
     setCode("");
     setRotated(null);
     autoOpened.current = true;
-    toast.success("Recovery code removed from this browser.");
+    toast.success("Management session closed on this device.");
   }
 
 
@@ -203,16 +202,21 @@ function ManagePage() {
     }
   }
 
-  async function rotate() {
+  /** Rotation re-confirms ownership with the independent recovery code. */
+  async function rotate(confirmCode: string) {
+    if (confirmCode.trim().length < 10) {
+      toast.error("Enter your current recovery code to confirm the rotation.");
+      return;
+    }
     setBusy(true);
     try {
-      const result = await manageRotateSecretFn({ data: { code } });
+      const result = await manageRotateSecretFn({ data: { code: confirmCode.trim() } });
       if (!result.ok || !result.recoveryCode) {
         toast.error(REASONS[result.reason ?? ""] ?? "Could not rotate the code.");
         return;
       }
       setRotated(result.recoveryCode);
-      setCode(result.recoveryCode);
+      setRotateCode("");
       toast.success("New recovery code issued. The old one no longer works.");
       await open(result.recoveryCode);
     } finally {
@@ -271,7 +275,8 @@ function ManagePage() {
             Recovery code
           </label>
           <p className="mt-1 text-xs text-muted-foreground">
-            You received it once, right after publishing. It is the same code as your ChatGPT session ID: <code className="font-mono">sess_…</code>
+            You received it once, right after publishing. It is an independent management capability — your ChatGPT
+            session ID (<code className="font-mono">sess_…</code>) is a different capability and is never accepted here.
           </p>
           <div className="mt-3 flex gap-2">
             <Input
@@ -494,18 +499,29 @@ function ManagePage() {
                   <>
                     Every public file (llms.txt, the markdown pages and the JSON endpoints) stops being served right
                     away and starts returning 404 for AI crawlers and visitors. The Presence and its content are kept —
-                    you can put it back online at any time with this recovery code.
+                    you can put it back online at any time from this management session.
                   </>
                 )}
               </AlertDialogDescription>
             </AlertDialogHeader>
+            {confirming === "rotate" ? (
+              <Input
+                value={rotateCode}
+                onChange={(e) => setRotateCode(e.target.value)}
+                type="password"
+                autoComplete="off"
+                placeholder="Current recovery code"
+                aria-label="Current recovery code"
+                className="font-mono text-xs"
+              />
+            ) : null}
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => {
                   const action = confirming;
                   setConfirming(null);
-                  if (action === "rotate") void rotate();
+                  if (action === "rotate") void rotate(rotateCode);
                   if (action === "offline") void setStatus("offline");
                 }}
               >
