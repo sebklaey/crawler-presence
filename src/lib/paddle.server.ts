@@ -191,8 +191,44 @@ export async function createHostedCheckout(input: {
 }
 
 /* ------------------------------------------------------------------ */
+/* Subscription read-back                                              */
+/* ------------------------------------------------------------------ */
+
+export type PaddleSubscription = {
+  id: string;
+  status?: string | null;
+  current_billing_period?: { ends_at?: string | null } | null;
+  items?: Array<{ price?: { id?: string; import_meta?: { external_id?: string | null } | null } | null }>;
+};
+
+/** Current provider state of one subscription — used to reconcile immediately. */
+export async function fetchSubscription(subscriptionId: string): Promise<PaddleSubscription> {
+  return paddleFetch<PaddleSubscription>(`/subscriptions/${encodeURIComponent(subscriptionId)}`);
+}
+
+/** Plan a live subscription currently bills for, or null when unknown. */
+export async function planOfSubscription(subscription: PaddleSubscription): Promise<PlanId | null> {
+  const item = subscription.items?.[0]?.price;
+  const { planFromPriceExternalId } = await import("./entitlements");
+  const byExternal = planFromPriceExternalId(item?.import_meta?.external_id ?? null);
+  if (byExternal) return byExternal;
+
+  const priceId = item?.id;
+  if (!priceId) return null;
+  for (const plan of ["plus", "pro", "business"] as PlanId[]) {
+    try {
+      if ((await resolvePriceId(plan)) === priceId) return plan;
+    } catch {
+      /* price lookup unavailable — try the next plan */
+    }
+  }
+  return null;
+}
+
+/* ------------------------------------------------------------------ */
 /* Customer portal                                                     */
 /* ------------------------------------------------------------------ */
+
 
 type PortalResponse = { urls?: { general?: { overview?: string } } };
 
