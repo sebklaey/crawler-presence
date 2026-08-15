@@ -50,9 +50,8 @@ export async function resolvePlanForSession(sessionToken: string): Promise<Custo
 
 
 /**
- * A paid draft session is proof of entitlement. Linking it to the anonymous
- * room identity makes the plan stick for every later room_* call, so a user who
- * paid in the Presence flow never falls back to "free" inside ChatGPT.
+ * A paid draft session is proof of entitlement. Core V2 links it to the
+ * anonymous room identity, so the plan sticks for every later room_* call.
  */
 export async function linkSessionPlanToRoomToken(
   roomToken: string | null | undefined,
@@ -60,48 +59,13 @@ export async function linkSessionPlanToRoomToken(
   knownSubjectHash?: string | null,
 ): Promise<CustomerPlan> {
   if ((!roomToken && !knownSubjectHash) || !sessionToken) return "free";
-  try {
-    const plan = await resolvePlanForSession(sessionToken);
-    if (plan === "free") return "free";
-
-    const { resolveIdentity } = await import("../room/identity");
-    const { getDb } = await import("../room/store");
-    const identity = await resolveIdentity(
-      (knownSubjectHash ? { "room/subject_hash": knownSubjectHash } : { "room/token": roomToken }) as never,
-    );
-    const db = await getDb();
-    const { data } = await db
-      .from("published_presences")
-      .select("slug")
-      .eq("session_token", sessionToken)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    const slug = (data as { slug?: string } | null)?.slug;
-    if (!slug) return plan;
-
-    // Idempotent and never a downgrade: an existing link keeps its plan when it
-    // is higher than the one this session proves.
-    const { data: existing } = await db
-      .from("room_plan_links")
-      .select("plan")
-      .eq("subject_hash", identity.subjectHash)
-      .maybeSingle();
-    const merged = highestPlan(plan, (existing as { plan?: string } | null)?.plan);
-    await db.from("room_plan_links").upsert(
-      {
-        subject_hash: identity.subjectHash,
-        presence_slug: slug,
-        plan: merged,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "subject_hash" },
-    );
-    return merged;
-
-  } catch {
-    return "free";
-  }
+  const { resolveAccessContext } = await import("../core/access.server");
+  const ctx = await resolveAccessContext({
+    roomToken: roomToken ?? null,
+    sessionId: sessionToken,
+    subjectHash: knownSubjectHash ?? null,
+  });
+  return ctx.plan;
 }
 
 /**
@@ -125,16 +89,13 @@ export async function checkToolAccess(input: {
       : highestPlan(toolRequired, input.requiredPlan ?? "free");
   if (required === "free") return null;
 
-  if (input.sessionToken) {
-    const sessionPlan = await linkSessionPlanToRoomToken(
-      input.roomToken ?? null,
-      input.sessionToken,
-      input.subjectHash ?? null,
-    );
-    if (required !== "admin" && hasEntitlement(sessionPlan, required)) return null;
-  }
-
-  const ctx = await resolvePlanContext(input.roomToken ?? null, input.subjectHash ?? null);
+  // ONE resolver — session, identity and Presence proofs are merged before any
+  // decision is taken, so a Pro caller is never told to buy Plus.
+  const ctx = await resolvePlanContext(
+    input.roomToken ?? null,
+    input.subjectHash ?? null,
+    input.sessionToken ?? null,
+  );
 
   if (required === "admin") {
     if (ctx.isPlatformAdmin) return null;
@@ -144,6 +105,7 @@ export async function checkToolAccess(input: {
       currentPlan: ctx.plan,
       language: input.language ?? "en",
       contextHash: ctx.subjectHash,
+      correlationId: ctx.correlationId,
     });
   }
   if (ctx.isPlatformAdmin || hasEntitlement(ctx.plan, required)) return null;
@@ -155,5 +117,7 @@ export async function checkToolAccess(input: {
     language: input.language ?? "en",
     contextHash: ctx.subjectHash,
     requiredPlan: required,
+    correlationId: ctx.correlationId,
   });
 }
+
