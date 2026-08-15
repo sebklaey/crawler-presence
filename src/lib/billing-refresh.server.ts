@@ -54,7 +54,9 @@ export async function refreshSubscriptionPlan(
   } catch (error) {
     console.error("[crawler] plan refresh failed:", error);
     return null;
+  }
 }
+
 
 const PLAN_RANK: Record<string, number> = { plus: 1, pro: 2, business: 3 };
 const ACTIVE = new Set(["active", "trialing", "past_due"]);
