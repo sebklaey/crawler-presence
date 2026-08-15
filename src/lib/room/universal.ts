@@ -121,7 +121,7 @@ export async function universalFeed(
   // never stored or returned as organic room messages and each one carries its
   // own placement id.
   const { selectResonancePlacements } = await import("./ads/matching");
-  const organicItemCount = messages.length + (imageFeed as any)?.images?.length ?? messages.length;
+  const organicItemCount = messages.length + (((imageFeed as any)?.images?.length as number | undefined) ?? 0);
   const resonancePlacements = await selectResonancePlacements(db, subjectHash, {
     organicItemCount,
   }).catch(() => []);
