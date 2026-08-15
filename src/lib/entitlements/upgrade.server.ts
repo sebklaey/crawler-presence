@@ -102,6 +102,16 @@ export type UpgradeInput = {
 };
 
 /** Structured `upgrade_required` / `limit_reached` answer for a blocked tool. */
+/** Tools that may only link to /pricing, never to a checkout. */
+const INFO_ONLY_TOOLS = new Set([
+  "start_love_interview",
+  "answer_love_interview_question",
+  "activate_love_profile",
+  "find_love_candidate",
+  "send_love_match_request",
+  "respond_to_love_match",
+]);
+
 export async function buildUpgradePayload(input: UpgradeInput): Promise<UpgradePayload> {
   const required = requiredPlanForTool(input.tool);
   const target = upgradeTargetForTool(input.tool);
@@ -125,6 +135,25 @@ export async function buildUpgradePayload(input: UpgradeInput): Promise<UpgradeP
         lang === "de"
           ? "Diese Funktion gehört zur internen Crawler-Plattformadministration und kann nicht gekauft werden."
           : "This tool is reserved for internal Crawler platform administration and cannot be purchased.",
+    };
+  }
+
+  // Crawler Love never starts a checkout inside ChatGPT — only an
+  // informational link to the pricing page is allowed.
+  if (INFO_ONLY_TOOLS.has(input.tool)) {
+    return {
+      ok: false,
+      code: "upgrade_required",
+      feature,
+      tool: input.tool,
+      current_plan: input.currentPlan,
+      required_plan: required,
+      required_plan_price: PLAN_INFO[required].price,
+      upgrade_url: `${siteUrl()}/pricing`,
+      cta_label: lang === "de" ? "Tarife ansehen" : "View plans",
+      unlocks: info.benefits.slice(0, 4),
+      message:
+        "Crawler Love is available with Crawler Pro and Business. You can view the feature details on the Crawler pricing page.",
     };
   }
 
