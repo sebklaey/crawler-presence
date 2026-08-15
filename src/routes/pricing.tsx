@@ -54,9 +54,16 @@ const ROOM_EXTENSIONS: Record<PlanId, { name: string; features: string[] }> = {
   },
 
   business: {
-    name: "Organisations",
-    features: ["Verified organisation", "Sponsored rooms", "Campaign analytics", "Team management"],
+    name: "Organisations & Crawler Ads",
+    features: [
+      "Verified organisation",
+      "Crawler Ads — one ad per product, always labelled Sponsored",
+      "Server-side resonance matching, never user profiles",
+      "Aggregated campaign analytics",
+      "Team management",
+    ],
   },
+
 };
 
 function PricingPage() {
