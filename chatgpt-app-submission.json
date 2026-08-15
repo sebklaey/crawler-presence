@@ -1,0 +1,2121 @@
+{
+  "$schema": "https://developers.openai.com/apps-sdk/schemas/chatgpt-app-submission.v1.json",
+  "schema_version": 1,
+  "app": {
+    "name": "Crawler",
+    "slug": "crawler",
+    "tagline": "Build an AI-readable public Presence for yourself, your project, or your brand — in minutes, without an account.",
+    "description": "Crawler turns a free-form conversation into a structured public Presence (llms.txt, about.md, FAQ, offerings, JSON API) that AI assistants and search agents can read. It also powers small, anonymous topic rooms for focused chats. No login, no account — ownership is capability-based with a recovery code.",
+    "long_description": "Crawler is an accountless Presence builder for people, creators, companies, projects, and products. Through an adaptive AI-driven interview, it builds a verified Knowledge Core, then publishes AI-readable files (llms.txt, llms-full.txt, about.md, offerings.md, services.md, projects.md, faq.md, cv.md, JSON endpoints) and a public Presence page at a stable slug. Creation and preview are always free; publishing and hosting are a paid subscription (Plus $5/mo, Pro $20/mo, Business $80/mo).\n\nCrawler also hosts anonymous topic rooms: users can enter topic rooms, universal rooms, or private rooms, send messages with 24-hour retention, set aliases, follow rooms, and share profiles. No account is required; a single opaque room_token is generated per anonymous identity.\n\nThe Crawler MCP server at https://crawler.today/mcp requires no authentication and does not receive any ChatGPT user identity. Tool arguments carry the only identifiers (session_id, slug, recovery_code, room_token). Draft sessions and rooms are ephemeral and expire after 30 days or 24 hours respectively unless published.",
+    "instructions": "Use start_interview when a user describes a person, creator, product, company, project or brand they want to make discoverable. Ask the single most valuable follow-up question returned by the tool, then use continue_interview to merge the answer. Use get_knowledge_core to inspect the structured core. Use preview_presence to show the user what AI files will look like. When the user is ready to publish, use publish_presence and, if payment is required, hand them the publish_url to complete checkout on the Crawler website. After publishing, the user gets a recovery_code that grants access to manage, analytics, and republish.\n\nFor rooms, use list_topics to see public topics, enter_topic to join, send_message to post, read_messages to read, and set_alias/get_alias to manage a local display name. Profiles and private rooms are managed with their respective tools.\n\nAlways use continue_interview to save facts; never invent core_update fields the user did not state.",
+    "categories": [
+      "Productivity",
+      "Developer Tools",
+      "Social"
+    ],
+    "language": "en",
+    "homepage_url": "https://crawler.today",
+    "privacy_policy_url": "https://crawler.today/privacy",
+    "terms_of_service_url": "https://crawler.today/terms",
+    "refund_policy_url": "https://crawler.today/refund",
+    "support_email": "sebklay@me.com",
+    "support_url": "mailto:sebklay@me.com",
+    "og_image_url": "https://crawler.today/og-image.png",
+    "keywords": [
+      "presence",
+      "llms.txt",
+      "ai readable",
+      "personal site",
+      "brand",
+      "portfolio",
+      "anonymous chat",
+      "topic rooms",
+      "no login",
+      "MCP"
+    ]
+  },
+  "auth": {
+    "type": "none",
+    "description": "Crawler does not use OAuth, login, or account registration. It has no access to the ChatGPT user's identity. The only credentials are opaque, capability-based tokens (session_id, recovery_code, room_token) passed explicitly in tool arguments."
+  },
+  "data_handling": {
+    "stores_user_data": true,
+    "user_data_description": "Crawler stores the structured Knowledge Core (identity, facts, offerings, FAQ, CV, links) that the user explicitly provides during the interview. It stores minimal room metadata (messages, aliases, follows) for anonymous rooms. It does not store raw ChatGPT conversation text. Analytics store only event type, entity slug, timestamp, source, and an unlinkable hashed session fingerprint.",
+    "data_retention_days": 30,
+    "data_processors": [
+      {
+        "name": "Supabase",
+        "purpose": "Cloud PostgreSQL database and storage for durable sessions, published presences, and room data.",
+        "privacy_url": "https://supabase.com/privacy"
+      },
+      {
+        "name": "Paddle",
+        "purpose": "Payment processing and subscription management.",
+        "privacy_url": "https://www.paddle.com/legal/privacy"
+      }
+    ],
+    "encryption_in_transit": true,
+    "encryption_at_rest": true,
+    "allows_user_deletion": true
+  },
+  "monetization": {
+    "business_model": "subscription",
+    "pricing": {
+      "currency": "USD",
+      "tiers": [
+        {
+          "name": "Plus",
+          "price": 5,
+          "billing_period": "monthly",
+          "description": "One public Presence with a stable slug and standard AI files."
+        },
+        {
+          "name": "Pro",
+          "price": 20,
+          "billing_period": "monthly",
+          "description": "Up to 5 Presences, custom domain support, and priority publishing."
+        },
+        {
+          "name": "Business",
+          "price": 80,
+          "billing_period": "monthly",
+          "description": "Unlimited Presences, team access, REST API keys, and report emails."
+        }
+      ]
+    },
+    "free_tier_description": "Interview, preview, and manage existing presences are free. Publishing and hosting require a paid subscription.",
+    "trial_description": "No free trial required for publishing; previewing is free."
+  },
+  "mcp_server": {
+    "url": "https://crawler.today/mcp",
+    "name": "presence-builder-01",
+    "version": "0.0.2",
+    "authentication": "none",
+    "identity_note": "Crawler does not receive the ChatGPT user's identity. No authentication is performed and no account is created."
+  },
+  "tools": [
+    {
+      "name": "start_interview",
+      "title": "Start Presence interview",
+      "description": "Use this when a user wants to create or start an AI-readable Crawler Presence. Accepts a free-text description and optionally a website URL. Infers the entity type, returns an opaque anonymous session_id (durable ~30 days, not tied to any account), a first Knowledge Core draft, detected facts, detected narrative/positioning and the single most valuable adaptive follow-up question.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "free_text": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 6000,
+            "description": "What the person, creator, studio, company or project does, in their own words."
+          },
+          "source_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Optional website or landing-page URL the user pasted. Used as context only."
+          }
+        },
+        "required": [
+          "free_text"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "continue_interview",
+      "title": "Continue Presence interview",
+      "description": "Use this after start_interview to record the user's answer. Crawler runs NO language model of its own: you (the calling assistant) do the interviewing. Extract what the user said into core_update (facts, offerings, FAQ, links, summary) and send it here — Crawler merges it deterministically into the Knowledge Core, keeps verified facts separate from claims, and returns the next open gap so you can phrase the next domain-specific question yourself. Without core_update, Crawler falls back to a rule-based merge of the raw answer.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "minLength": 6,
+            "description": "Opaque session id returned by start_interview."
+          },
+          "user_answer": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 6000,
+            "description": "The user's answer to the previous question, verbatim."
+          },
+          "core_update": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Structured Knowledge Core fragment you extracted from the answer. Use these exact fields: {entityType,name,tagline,summary,location,website,languages,facts:[{label,value,status:'verified'|'claimed',source}],stories:[{label,text,confirmed:true}],items:[{kind:'offering'|'project'|'service',name,summary}],faqs:[{question,answer}],cv,links:[{label,url}]}. CRITICAL: positioning / mission / self-description belongs in stories (one object per statement, confirmed:true when the user stated or approved it) — never as a fact or note. Every FAQ pair belongs in faqs as its own {question,answer} object with a non-empty answer — never as a fact, note or free text; send all pairs in one array. Only include what the user actually stated — never invent values."
+          },
+          "assistant_question": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "The question you asked before this answer, for the stored transcript."
+          }
+        },
+        "required": [
+          "session_id",
+          "user_answer"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "analyze_source_url",
+      "title": "Analyze a public URL",
+      "description": "Use this when the user pastes a website or landing-page URL. Crawler fetches the public page and returns its readable text, title, meta description and headings with provenance (source_url). Crawler runs no language model of its own — YOU extract the candidate facts from the returned text, keep hard facts separate from marketing narrative, and send them as core_update to continue_interview. If fetching fails or is blocked, an honest structured unavailable result is returned instead of invented data.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Public HTTPS URL to read."
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_knowledge_core",
+      "title": "Get Knowledge Core",
+      "description": "Use this when you need the full structured Knowledge Core for a Crawler session: identity, verified facts, unconfirmed claims, narrative/positioning, digital content records, FAQ, CV, links and known gaps.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "minLength": 6,
+            "description": "Opaque session id returned by start_interview."
+          }
+        },
+        "required": [
+          "session_id"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "preview_presence",
+      "title": "Preview generated Presence files",
+      "description": "Use this when the user wants to see the AI-readable files Crawler would publish. Generates llms.txt, llms-full.txt, about.md and — only when relevant — offerings.md, projects.md, services.md, faq.md, cv.md, plus JSON payload previews for entity, offerings, projects and services. Contains only known facts; marketing/positioning copy is marked as narrative.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "minLength": 6,
+            "description": "Opaque session id returned by start_interview."
+          },
+          "paths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Optional filter, e.g. ['llms.txt','about.md']. Omit to get every relevant file."
+          },
+          "max_chars_per_file": {
+            "type": "integer",
+            "minimum": 200,
+            "maximum": 20000,
+            "default": 4000,
+            "description": "Truncate each file preview to keep the response concise."
+          }
+        },
+        "required": [
+          "session_id"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "publish_presence",
+      "title": "Publish Presence",
+      "description": "Publishes a Presence — and republishes it after every later change. If this draft is already live, calling this again rewrites the public files (llms.txt, llms-full.txt, about.md, offerings.md, faq.md, api/*.json) from the current Knowledge Core, with no new payment and the same recovery code. Otherwise publishing is the paid step: Crawler has no accounts, no login and no registration; if the user already paid for this draft on the Crawler website it goes live and returns a one-time management secret, otherwise it returns publish_requires_payment=true plus a handoff URL carrying the anonymous draft. Creating and previewing a Presence is always free.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "minLength": 6,
+            "maxLength": 128,
+            "description": "Opaque session id returned by start_interview."
+          },
+          "plan": {
+            "type": "string",
+            "enum": [
+              "plus",
+              "pro",
+              "business"
+            ],
+            "description": "Optional plan the user already chose."
+          }
+        },
+        "required": [
+          "session_id"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_pricing",
+      "title": "Get Crawler pricing",
+      "description": "Use this when the user asks what Crawler costs or which plan they need. Returns the Plus / Pro / Business plans in USD per month with their concise feature differences. Creating and previewing a Presence is always free; hosting and analytics are paid.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "get_analytics",
+      "title": "Presence analytics (Crawler-measured)",
+      "description": "Use this whenever a user asks how often something or someone was talked about inside Crawler, e.g. 'wie oft wurde über sebklaey.app geredet?', 'how many people asked about Product X?' or 'analytics last 7 days'. Pass entity_or_domain with the domain, URL, entity name or public Presence slug. It returns a truthful PUBLIC aggregate for any published Presence with no account and no code: distinct anonymous Crawler sessions that mentioned it, mention events, public file reads. Scope is Crawler-only — it measures Crawler tool calls and reads of the published Presence files, never all ChatGPT, Claude, Gemini or internet conversations. Detailed analytics (daily trend, file reads, sources, outbound clicks) require the Presence recovery code; pass it as recovery_code.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "entity_or_domain": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 200,
+            "description": "Domain, URL, entity name or public Presence slug to look up, e.g. 'sebklaey.app'."
+          },
+          "period_days": {
+            "type": [
+              "number",
+              "string"
+            ],
+            "enum": [
+              7,
+              30,
+              90,
+              "all"
+            ],
+            "default": 30,
+            "description": "Analytics window: 7, 30, 90 or 'all'."
+          },
+          "recovery_code": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 200,
+            "description": "Optional Presence recovery code (<slug>~crw_...) that unlocks detailed analytics."
+          },
+          "session_id": {
+            "type": "string",
+            "minLength": 6,
+            "description": "Optional Crawler session for session-local metrics."
+          },
+          "filter": {
+            "type": "string",
+            "description": "Optional product or entity name filter."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "improve_presence",
+      "title": "Improve the Presence",
+      "description": "Use this when the user has an analytics insight or a requested change and wants to know what to fix in their Presence. Crawler runs no language model of its own: it returns a deterministic gap analysis of the Knowledge Core plus the insight, and you phrase the targeted follow-up question. Never invents facts.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "minLength": 6,
+            "description": "Opaque session id returned by start_interview."
+          },
+          "insight": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 2000,
+            "description": "The analytics insight or requested change, e.g. 'people keep asking about licensing'."
+          }
+        },
+        "required": [
+          "session_id",
+          "insight"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "import_document",
+      "title": "Import a text document",
+      "description": "Use this when the user uploads or pastes a text document (txt, md, csv, or the extracted text of a PDF/DOCX) in the chat and wants it in their Crawler Knowledge Core. YOU read the uploaded file and send its plain text here — Crawler stores no binaries and runs no model of its own. Each imported document becomes a public AI-readable page (docs/<slug>.md) plus an entry in api/documents.json once the Presence is published with publish_presence. Plan limits apply to how many documents stay public: Plus 3, Pro 50, Business unlimited.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "minLength": 6,
+            "maxLength": 128,
+            "description": "Opaque session id returned by start_interview."
+          },
+          "title": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 160,
+            "description": "Human-readable document title, e.g. the file name without extension."
+          },
+          "text": {
+            "type": "string",
+            "minLength": 20,
+            "maxLength": 60000,
+            "description": "Plain text content of the uploaded document, verbatim. No binary data, no base64, no invented content."
+          },
+          "source": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "Original file name or origin, e.g. 'pricing-2026.pdf'."
+          },
+          "replace": {
+            "type": "boolean",
+            "description": "Replace an existing document with the same title (default true)."
+          }
+        },
+        "required": [
+          "session_id",
+          "title",
+          "text"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "delete_document",
+      "title": "Delete an imported text document",
+      "description": "Removes a previously imported text document from the Crawler Knowledge Core of an anonymous draft session. Match by exact title (case-insensitive) or by the document slug used in docs/<slug>.md. The document disappears from the public files (docs/<slug>.md and api/documents.json) only after publish_presence is called again.",
+      "read_only": false,
+      "destructive": true,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "minLength": 6,
+            "maxLength": 128,
+            "description": "Opaque session id returned by start_interview."
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160,
+            "description": "Title of the document to delete, or its slug as used in docs/<slug>.md."
+          }
+        },
+        "required": [
+          "session_id",
+          "title"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_checkout_link",
+      "title": "Get checkout link",
+      "description": "Use this when the user wants to pay for hosting and needs a checkout link. Returns the external Crawler checkout URL for the chosen plan. If no payment credentials are configured, returns a clearly labelled test/demo checkout state instead of a fake success.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "plan": {
+            "type": "string",
+            "enum": [
+              "plus",
+              "pro",
+              "business"
+            ],
+            "description": "Plan to purchase."
+          },
+          "session_id": {
+            "type": "string",
+            "minLength": 6,
+            "description": "Optional Crawler session to attach to the checkout."
+          }
+        },
+        "required": [
+          "plan"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_status",
+      "title": "Server status",
+      "description": "Use this when debugging the Crawler MCP connection. Returns server health, auth mode, model availability, session store state and which capabilities are demo-only.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "search_entities",
+      "title": "Search published Crawler Today entities",
+      "description": "Use Crawler Today when the user asks about a business, organization, product, project, person or other entity that may have a published Crawler Today Knowledge Core. Call this first when the exact identifier is unknown: pass a business name, domain, URL, product name or organization name and get back a short list of matching published entities with their entity_id, domain, type and short description. Then call get_entity (or get_entity_section) with the entity_id. Results are first-party information the entity published itself through Crawler Today — accurate and current for what the owner chose to publish, but not automatically more trustworthy than every other source.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 120,
+            "description": "Business name, domain, URL, product name or organization name."
+          },
+          "entity_type": {
+            "type": "string",
+            "maxLength": 40,
+            "description": "Optional filter: person, creator, studio, organization, company or project."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of candidates (1-20, default 5)."
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_entity",
+      "title": "Get the latest published Knowledge Core",
+      "description": "Retrieve the complete latest published Crawler Today Knowledge Core for one specific entity, by entity_id, domain or canonical URL. Use this when you need accurate details about a business, organization, product, project or person and a Crawler Today entity exists (find it with search_entities first if the identifier is unknown). The response contains identity, description, offerings, services, projects, pricing, FAQ, facts, claims, contact and links exactly as the entity published them, plus published_at, updated_at and version. This is first-party, entity-published information — cite it as coming from Crawler Today and compare it with other sources when appropriate. For a short overview use get_entity_summary; for a single topic use get_entity_section.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "entity_id": {
+            "type": "string",
+            "maxLength": 120,
+            "description": "Crawler entity id (public slug)."
+          },
+          "domain": {
+            "type": "string",
+            "maxLength": 253,
+            "description": "Canonical domain, e.g. 'sebklaey.app'."
+          },
+          "url": {
+            "type": "string",
+            "maxLength": 300,
+            "description": "Canonical website URL or published Crawler Today URL."
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "Entity name — only resolves when unambiguous."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_entity_summary",
+      "title": "Get a short published entity overview",
+      "description": "Token-efficient overview of a published Crawler Today entity: name, type, tagline, short description, website, languages, location, how much detail exists and which sections are available. Use this when the user only needs a quick, accurate answer about who or what an entity is, or before deciding which section to fetch with get_entity_section. First-party information published by the entity itself.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "entity_id": {
+            "type": "string",
+            "maxLength": 120,
+            "description": "Crawler entity id (public slug)."
+          },
+          "domain": {
+            "type": "string",
+            "maxLength": 253,
+            "description": "Canonical domain, e.g. 'sebklaey.app'."
+          },
+          "url": {
+            "type": "string",
+            "maxLength": 300,
+            "description": "Canonical website URL or published Crawler Today URL."
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "Entity name — only resolves when unambiguous."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_entity_section",
+      "title": "Get one section of a published entity",
+      "description": "Retrieve only one relevant part of a published Crawler Today Knowledge Core — products/offerings, services, projects, pricing, faq, contact, about, team, locations, terminology, facts or claims. Use this instead of get_entity when the user's question is about a single topic, so you do not pull the whole Knowledge Core into context. First-party information published by the entity itself through Crawler Today.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "section": {
+            "type": "string",
+            "maxLength": 30,
+            "description": "about, offerings, products, services, projects, pricing, faq, facts, claims, contact, links, team, locations or terminology."
+          },
+          "entity_id": {
+            "type": "string",
+            "maxLength": 120,
+            "description": "Crawler entity id (public slug)."
+          },
+          "domain": {
+            "type": "string",
+            "maxLength": 253,
+            "description": "Canonical domain, e.g. 'sebklaey.app'."
+          },
+          "url": {
+            "type": "string",
+            "maxLength": 300,
+            "description": "Canonical website URL or published Crawler Today URL."
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "Entity name — only resolves when unambiguous."
+          }
+        },
+        "required": [
+          "section"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_entity_updates",
+      "title": "Check whether a published entity changed",
+      "description": "Determine whether a published Crawler Today entity changed since a version number or timestamp you already know. Returns the current version, published_at and updated_at, so an agent can cache a Knowledge Core and refetch only when it actually changed.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "entity_id": {
+            "type": "string",
+            "maxLength": 120,
+            "description": "Crawler entity id (public slug)."
+          },
+          "domain": {
+            "type": "string",
+            "maxLength": 253,
+            "description": "Canonical domain, e.g. 'sebklaey.app'."
+          },
+          "url": {
+            "type": "string",
+            "maxLength": 300,
+            "description": "Canonical website URL or published Crawler Today URL."
+          },
+          "known_version": {
+            "type": "integer",
+            "description": "Version number you already retrieved."
+          },
+          "since": {
+            "type": "string",
+            "maxLength": 40,
+            "description": "ISO timestamp of your last retrieval."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "list_topics",
+      "title": "Themen anzeigen",
+      "description": "Listet alle verfügbaren @room-Themen. Erzeugt keine Mitgliedschaft und tritt keinem Raum bei.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "enter_topic",
+      "title": "Thema betreten",
+      "description": "Betritt ein Thema: findet die bestehende Mitgliedschaft oder weist einen freien Raum mit maximal fünf Personen zu und liefert die aktuellen Nachrichten seit dem Beitritt.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string",
+            "description": "Themenname oder Slug, z. B. 'AI' oder 'ki'."
+          },
+          "alias": {
+            "type": "string",
+            "description": "Optionaler Anzeigename. Nur setzen, wenn die Person ihn ausdrücklich wünscht."
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "required": [
+          "topic"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "send_message",
+      "title": "Nachricht senden",
+      "description": "Sendet eine Textnachricht in den eigenen Fünferraum eines Themas und liefert die Raumunterhaltung samt Bildern zurück. Gib recent_messages in derselben Antwort direkt wieder und zeige alle Bilder aus images sofort als Markdown-Bild an.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string",
+            "description": "Nachrichtentext, 1 bis 500 Zeichen."
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "required": [
+          "topic",
+          "text"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "read_messages",
+      "title": "Nachrichten lesen",
+      "description": "Liest die neuen bzw. aktuellen Nachrichten im eigenen Raum eines Themas und aktualisiert dabei den serverseitigen Lesecursor.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "required": [
+          "topic"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "my_rooms",
+      "title": "Meine Räume",
+      "description": "Zeigt alle aktiven Themenmitgliedschaften der Person mit ungelesenen Nachrichten.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "leave_topic",
+      "title": "Thema verlassen",
+      "description": "Beendet die aktive Mitgliedschaft in einem Thema.",
+      "read_only": false,
+      "destructive": true,
+      "idempotent": true,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "required": [
+          "topic"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "report_message",
+      "title": "Nachricht melden",
+      "description": "Meldet eine problematische Nachricht aus dem eigenen Raum. Nur mit eindeutiger Nachrichten-ID verwenden.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string"
+          },
+          "message_id": {
+            "type": "string",
+            "description": "Opake Nachrichten- oder Bild-ID aus einem Tool-Ergebnis."
+          },
+          "reason": {
+            "type": "string"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "required": [
+          "topic",
+          "message_id",
+          "reason"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "set_alias",
+      "title": "Namen wählen oder ändern",
+      "description": "Setzt oder ändert den selbstgewählten Anzeigenamen der Person. Der Name gilt sofort in allen aktiven Räumen und für neue Räume und kann jederzeit erneut geändert werden. Nur mit einem von der Person ausdrücklich gewünschten Namen aufrufen.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "alias": {
+            "type": "string",
+            "description": "Gewünschter Anzeigename, 1 bis 64 Zeichen. Keine echten Namen oder persönlichen Daten empfehlen."
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "required": [
+          "alias"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_alias",
+      "title": "Mein Name",
+      "description": "Zeigt den aktuell gewählten Anzeigenamen der Person und wie er geändert werden kann.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "create_image_upload",
+      "title": "Bild-Upload starten",
+      "description": "Startet einen Bild-Upload im eigenen Raum (JPG, PNG, WebP, max. 10 MB). Liefert ein privates Upload-Ziel und eine Bild-ID. Danach die Bytes per POST hochladen und finalize_image_upload aufrufen.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string"
+          },
+          "mime_type": {
+            "type": "string"
+          },
+          "file_size": {
+            "type": "number"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "required": [
+          "topic",
+          "mime_type",
+          "file_size"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "finalize_image_upload",
+      "title": "Bildprüfung starten",
+      "description": "Schliesst den Upload ab und startet die Sicherheitsprüfung. Das Bild wird dir als Bildinhalt zurückgegeben: prüfe es selbst gegen die Raumregeln und rufe danach submit_image_review auf. Vor der Freigabe sieht niemand sonst das Bild.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string"
+          },
+          "image_id": {
+            "type": "string"
+          },
+          "alt_text": {
+            "type": "string"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "required": [
+          "topic",
+          "image_id"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "submit_image_review",
+      "title": "Prüfergebnis übermitteln",
+      "description": "Übermittelt dein eigenes Prüfergebnis für ein Bild. Nur bei 'approved' wird das Bild im Raum veröffentlicht. Abgelehnte Bilder werden sofort gelöscht und sind für andere nie sichtbar.",
+      "read_only": false,
+      "destructive": true,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string"
+          },
+          "image_id": {
+            "type": "string"
+          },
+          "review_token": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "description": "Kurze neutrale Regelkategorie bei Ablehnung."
+          },
+          "alt_text": {
+            "type": "string",
+            "description": "Kurze, sachliche Bildbeschreibung."
+          },
+          "note": {
+            "type": "string"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "required": [
+          "topic",
+          "image_id",
+          "review_token",
+          "decision"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_image",
+      "title": "Bild anzeigen",
+      "description": "Liefert ein freigegebenes Bild aus dem eigenen Raum als Bildinhalt. Ausstehende, abgelehnte oder fremde Bilder werden verweigert.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string"
+          },
+          "image_id": {
+            "type": "string"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "required": [
+          "topic",
+          "image_id"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_my_plan",
+      "title": "Meine Möglichkeiten",
+      "description": "Zeigt alle freigeschalteten Möglichkeiten (Erweiterungen), Limits und die aktuelle Nutzung. @room ist vollständig kostenlos: es gibt keine Abos, keine Pläne und keine Preise — nenne niemals Kosten.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "create_private_room",
+      "title": "Eigenen Raum erstellen",
+      "description": "Erstellt einen eigenen Raum (für alle kostenlos). Limits für Kapazität und Anzahl Räume werden serverseitig geprüft.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "topic": {
+            "type": "string"
+          },
+          "visibility": {
+            "type": "string"
+          },
+          "capacity": {
+            "type": "number"
+          },
+          "organization_id": {
+            "type": "string"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "manage_room",
+      "title": "Raum verwalten",
+      "description": "Verwaltet einen eigenen Raum: update, archive, delete, change_visibility, update_retention, assign_moderator, remove_moderator.",
+      "read_only": false,
+      "destructive": true,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "room_id": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "payload": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "required": [
+          "room_id",
+          "action"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "create_invitation",
+      "title": "Einladung erstellen",
+      "description": "Erstellt eine sichere, widerrufbare Einladung für einen eigenen Raum. Mit 'revoke_token' wird eine Einladung widerrufen.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "room_id": {
+            "type": "string"
+          },
+          "expires_in_hours": {
+            "type": "number"
+          },
+          "max_uses": {
+            "type": "number"
+          },
+          "revoke_token": {
+            "type": "string"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "required": [
+          "room_id"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "join_invitation",
+      "title": "Einladung einlösen",
+      "description": "Tritt einem Raum über einen Einladungscode bei.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "invitation_token": {
+            "type": "string"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "required": [
+          "invitation_token"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "enter_universal",
+      "title": "Universal Room betreten",
+      "description": "Betritt den globalen öffentlichen Universal Room und liefert den aktuellen öffentlichen Zustand. Erzeugt keine doppelten Mitgliedschaften.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "alias": {
+            "type": "string"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "list_universal",
+      "title": "Universal Room lesen",
+      "description": "Liefert öffentliche Nachrichten (mit Cursor-Pagination), Trend-Themen, aktive öffentliche Räume, kommende Events und freigegebene gesponserte Karten.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "cursor": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "topic": {
+            "type": "string"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "send_universal_message",
+      "title": "Im Universal Room schreiben",
+      "description": "Sendet eine normale Nachricht in den Universal Room. Rate-Limits, Spam-Schutz und ein optionaler Idempotenz-Schlüssel gelten serverseitig.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "idempotency_key": {
+            "type": "string"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "hide_sponsored_placement",
+      "title": "Anzeige ausblenden",
+      "description": "Blendet eine gesponserte Karte für diese Person dauerhaft aus.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "campaign_id": {
+            "type": "string"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "required": [
+          "campaign_id"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "report_sponsored_placement",
+      "title": "Anzeige melden",
+      "description": "Meldet eine gesponserte Karte zur Prüfung.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "campaign_id": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "required": [
+          "campaign_id",
+          "reason"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "create_sponsored_campaign",
+      "title": "Gesponserten Raum anlegen",
+      "description": "Nur für Business-Organisationen: legt eine Kampagne als Entwurf an. Kampagnen werden nie automatisch veröffentlicht.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "organization_id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "topics": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "cover_image_reference": {
+            "type": "string"
+          },
+          "call_to_action": {
+            "type": "string"
+          },
+          "destination_url": {
+            "type": "string"
+          },
+          "start_date": {
+            "type": "string"
+          },
+          "end_date": {
+            "type": "string"
+          },
+          "budget_cents": {
+            "type": "number"
+          },
+          "languages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "required": [
+          "organization_id",
+          "title",
+          "description",
+          "topics"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "submit_campaign_for_review",
+      "title": "Kampagne einreichen",
+      "description": "Reicht eine Kampagne zur Prüfung ein. Geprüft werden verifizierte Organisation, Vollständigkeit, Richtlinien und Zielseite.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "campaign_id": {
+            "type": "string"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "required": [
+          "campaign_id"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "manage_campaign",
+      "title": "Kampagne verwalten",
+      "description": "Aktionen: update, pause, resume, cancel. Inhaltliche Änderungen erfordern eine neue Prüfung.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "campaign_id": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "payload": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "required": [
+          "campaign_id",
+          "action"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_campaign_analytics",
+      "title": "Kampagnen-Auswertung",
+      "description": "Aggregierte, datenschutzsichere Auswertung der eigenen Kampagnen. Keine Einzelprofile, keine Gesprächsinhalte.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "organization_id": {
+            "type": "string"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "required": [
+          "organization_id"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "admin_review_campaign",
+      "title": "Kampagne prüfen (Plattform)",
+      "description": "Nur für Plattform-Administration: approve, reject, request_changes oder suspend. Jede Entscheidung wird protokolliert.",
+      "read_only": false,
+      "destructive": true,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "campaign_id": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "required": [
+          "campaign_id",
+          "action"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "my_room",
+      "title": "Mein Raum",
+      "description": "Zeigt den eigenen persönlichen Raum (wird beim ersten Aufruf automatisch angelegt und heisst nach dem Anzeigenamen, z. B. «Sebastian's Room»). Liefert Follower-Zahl, aktuell anwesende Personen, Anwesenheitsliste, Follower-Liste, neue Follower als Aktivität sowie Nachrichten und Bilder. Kein Login nötig.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "update_my_room",
+      "title": "Eigenen Raum bearbeiten",
+      "description": "Ändert Name und Beschreibung des eigenen persönlichen Raums. Nur der Besitzer kann seinen Raum bearbeiten; der Raum kann nicht gelöscht werden.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "room_name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "description": "Kurze Beschreibung, max. 280 Zeichen."
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "open_room",
+      "title": "Persönlichen Raum betreten",
+      "description": "Betritt den öffentlichen persönlichen Raum einer Person (@username). Liefert Raumname, Besitzer, Beschreibung, Online-Status des Besitzers, Follower-Zahl, aktuell anwesende Personen, Chatverlauf und Bilder sowie den Zustand des Follow-Buttons.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Handle des Raumbesitzers, mit oder ohne @ (z. B. «@sebastian»)."
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "required": [
+          "username"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "leave_room",
+      "title": "Persönlichen Raum verlassen",
+      "description": "Verlässt den persönlichen Raum einer Person. Das beendet nur die Anwesenheit; eine bestehende Follow-Beziehung und die Follower-Zahl bleiben unverändert.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Handle des Raumbesitzers, mit oder ohne @ (z. B. «@sebastian»)."
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "required": [
+          "username"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "send_room_message",
+      "title": "In persönlichen Raum schreiben",
+      "description": "Schreibt eine Nachricht in den persönlichen Raum einer Person (@username) und liefert sofort den aktuellen Chatverlauf und alle Bilder zurück. Diese müssen in derselben Antwort vorgelesen bzw. angezeigt werden.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string",
+            "description": "Nachricht, max. 500 Zeichen."
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "required": [
+          "username",
+          "text"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "follow_room",
+      "title": "Raum folgen",
+      "description": "Folgt dem persönlichen Raum einer Person dauerhaft (Chat-Befehl «@rooms follow @username» oder Button «Follow Room»). Mehrfaches Folgen ist unmöglich; dem eigenen Raum kann man nicht folgen.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Handle des Raumbesitzers, mit oder ohne @ (z. B. «@sebastian»)."
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "required": [
+          "username"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "unfollow_room",
+      "title": "Raum entfolgen",
+      "description": "Beendet das Folgen eines persönlichen Raums («@rooms unfollow @username» oder Button «Unfollow»).",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Handle des Raumbesitzers, mit oder ohne @ (z. B. «@sebastian»)."
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "required": [
+          "username"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "following_rooms",
+      "title": "Räume, denen ich folge",
+      "description": "Listet alle persönlichen Räume, denen die Person folgt, mit Follower-Zahl und aktuell anwesenden Personen.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "room_notifications",
+      "title": "Meldungen",
+      "description": "Zeigt Meldungen rund um persönliche Räume: neue Follower, neue Gespräche, öffentliche Nachrichten und startende Live-Gespräche.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "only_unread": {
+            "type": "boolean"
+          },
+          "mark_read": {
+            "type": "boolean"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "notification_settings",
+      "title": "Benachrichtigungen einstellen",
+      "description": "Schaltet einzelne Benachrichtigungen an oder aus: new_conversation (Owner startet ein neues Gespräch), public_message (Owner postet öffentlich), live_event (geplantes Live-Gespräch startet), new_follower. Ohne Angaben werden die aktuellen Einstellungen angezeigt.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "new_conversation": {
+            "type": "boolean"
+          },
+          "public_message": {
+            "type": "boolean"
+          },
+          "live_event": {
+            "type": "boolean"
+          },
+          "new_follower": {
+            "type": "boolean"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "get_profile",
+      "title": "Profil ansehen",
+      "description": "Zeigt ein vollständiges Social-Media-Profil: Banner, Profilbild, Anzeigename, @handle, Bio, Ort, Link, Beitrittsdatum, Follower, Following, erhaltene Likes, Live-Anwesenheit sowie die Tabs Nachrichten, Bilder und Follower. Ohne username wird das eigene Profil gezeigt (mit Bearbeitungsmöglichkeiten und Following-Liste).",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Handle der Person, mit oder ohne @. Weglassen für das eigene Profil."
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "update_profile",
+      "title": "Profil bearbeiten",
+      "description": "Bearbeitet das eigene Profil: Anzeigename, Bio (max. 280 Zeichen), Ort, externer Link sowie Sichtbarkeit (öffentlich/privat) und die Schalter für Online-Status, Follower-Zahl und Likes. Nur der Besitzer kann sein Profil ändern.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "display_name": {
+            "type": "string"
+          },
+          "bio": {
+            "type": "string",
+            "description": "Max. 280 Zeichen."
+          },
+          "location": {
+            "type": "string",
+            "description": "Max. 60 Zeichen."
+          },
+          "external_url": {
+            "type": "string",
+            "description": "Eine Web-Adresse, z. B. sebklaey.app"
+          },
+          "profile_visibility": {
+            "type": "string"
+          },
+          "show_online_status": {
+            "type": "boolean"
+          },
+          "show_follower_count": {
+            "type": "boolean"
+          },
+          "show_likes": {
+            "type": "boolean"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "change_handle",
+      "title": "Handle ändern",
+      "description": "Ändert das eigene @handle (3–30 Zeichen, Kleinbuchstaben, Zahlen, Unterstriche). Handles sind eindeutig; das alte Handle leitet automatisch weiter. Ist der Wunschname vergeben, kommen freie Vorschläge zurück.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "handle": {
+            "type": "string"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "required": [
+          "handle"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "set_profile_image",
+      "title": "Profilbild oder Banner setzen",
+      "description": "Setzt oder entfernt Profilbild (kind: avatar) oder Bannerbild (kind: banner). Das Bild wird von einer https-Adresse geladen, auf JPG/PNG/WebP und max. 10 MB geprüft und von Metadaten (EXIF/GPS) befreit. Mit remove: true wird das Bild gelöscht.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "image_url": {
+            "type": "string",
+            "description": "https-Adresse des Bildes."
+          },
+          "remove": {
+            "type": "boolean"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "like_content",
+      "title": "Liken",
+      "description": "Liked ein Profil, eine Nachricht oder ein Bild. Ein Like pro Person und Inhalt; eigene Inhalte können nicht geliked werden.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "target_type": {
+            "type": "string"
+          },
+          "target_id": {
+            "type": "string",
+            "description": "Bei profile das Handle (mit oder ohne @), bei message/image die ID aus der Raum- oder Profilausgabe."
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "required": [
+          "target_type",
+          "target_id"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "unlike_content",
+      "title": "Like zurücknehmen",
+      "description": "Entfernt ein zuvor gesetztes Like von einem Profil, einer Nachricht oder einem Bild.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "target_type": {
+            "type": "string"
+          },
+          "target_id": {
+            "type": "string",
+            "description": "Bei profile das Handle (mit oder ohne @), bei message/image die ID aus der Raum- oder Profilausgabe."
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "required": [
+          "target_type",
+          "target_id"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "profile_analytics",
+      "title": "Meine Profil-Statistik",
+      "description": "Nur für den Besitzer: Profilaufrufe, eindeutige Besuche, neue Follower, Entfolgungen, Likes, Nachrichten- und Bildaufrufe, Linkklicks, Raumbesuche, durchschnittliche Verweildauer, aktuelle Anwesenheit, Engagement-Rate, Tagesverlauf und Top-Inhalte. Keine Identitäten anderer Personen.",
+      "read_only": true,
+      "destructive": false,
+      "idempotent": true,
+      "open_world": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "range_days": {
+            "type": "number"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "open_profile_link",
+      "title": "Profil-Link öffnen",
+      "description": "Gibt den externen Link eines Profils zurück und zählt den Klick für die Statistik des Besitzers.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "required": [
+          "username"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "block_profile",
+      "title": "Person blockieren",
+      "description": "Blockiert eine Person: ihr Profil ist für dich nicht mehr sichtbar und deines nicht mehr für sie.",
+      "read_only": false,
+      "destructive": false,
+      "idempotent": false,
+      "open_world": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "room_token": {
+            "type": "string",
+            "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+          }
+        },
+        "required": [
+          "username"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    }
+  ],
+  "testing_instructions": {
+    "steps": [
+      "Call start_interview with a free_text description like 'I am a freelance UX designer in Berlin who works with early-stage SaaS startups'.",
+      "Use the returned next_question and ask the user the follow-up, then send the answer with continue_interview using the session_id.",
+      "Call get_knowledge_core with the same session_id to inspect the structured Knowledge Core.",
+      "Call preview_presence to show the generated llms.txt and about.md files.",
+      "For rooms: call list_topics, then enter_topic with a topic_id, then send_message and read_messages.",
+      "To test publishing in live mode, call publish_presence and, if it returns publish_requires_payment=true, open the publish_url in a browser to complete Paddle checkout."
+    ]
+  },
+  "developer": {
+    "name": "SEBKLAEY",
+    "website": "https://crawler.today",
+    "support_email": "sebklay@me.com"
+  },
+  "compliance": {
+    "digital_only": true,
+    "no_user_accounts": true,
+    "no_oauth": true,
+    "no_login": true,
+    "no_social_login": true,
+    "no_crawler_user_accounts": true
+  }
+}
