@@ -383,7 +383,10 @@ describe("persisted error codes carry no secrets", () => {
   });
 
   test("the module never derives stored text from error.message", async () => {
-    const src = await Bun.file("src/lib/payment-events.server.ts").text();
+    const src = (await Bun.file("src/lib/payment-events.server.ts").text())
+      // strip comments: prose may mention error.message, code may not read it
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/\/\/[^\n]*/g, "");
     expect(src).not.toMatch(/error\.message/);
     expect(src).not.toMatch(/String\(error\)/);
   });
