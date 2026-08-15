@@ -9,11 +9,13 @@
 import { siteUrl } from "../mcp/site";
 import {
   PLAN_INFO,
+  PLAN_ORDER,
   requiredPlanForTool,
-  upgradeTargetForTool,
   type CustomerPlan,
   type EntitlementPlan,
 } from "./catalog";
+import { hasEntitlement, highestPlan, planRankOf } from "./features";
+
 
 export type UpgradePayload = {
   ok: false;
@@ -99,6 +101,13 @@ export type UpgradeInput = {
   contextHash?: string | null;
   usage?: { used: number; max: number; unit: string };
   limitKey?: string;
+  /**
+   * Plan that the blocked *feature* really needs. Overrides the tool-level
+   * mapping — one tool (create_public_room) can serve several tiers
+   * (standard room = Plus, community room = Pro).
+   */
+  requiredPlan?: string | null;
+
 };
 
 /** Structured `upgrade_required` / `limit_reached` answer for a blocked tool. */
@@ -113,11 +122,27 @@ const INFO_ONLY_TOOLS = new Set([
 ]);
 
 export async function buildUpgradePayload(input: UpgradeInput): Promise<UpgradePayload> {
-  const required = requiredPlanForTool(input.tool);
-  const target = upgradeTargetForTool(input.tool);
+  const toolRequired = requiredPlanForTool(input.tool);
+  // A feature-level requirement always wins over the tool-level default, so a
+  // Pro user is never asked to buy Plus.
+  let required: EntitlementPlan =
+    toolRequired === "admin"
+      ? "admin"
+      : input.requiredPlan
+        ? highestPlan(input.requiredPlan)
+        : toolRequired;
+  // Limit errors: the plan is high enough, only the quota is exhausted — offer
+  // the next tier above the current plan instead of a plan already owned.
+  if (required !== "admin" && hasEntitlement(input.currentPlan, required)) {
+    const next = PLAN_ORDER[Math.min(planRankOf(input.currentPlan) + 1, PLAN_ORDER.length - 1)]!;
+    required = next;
+  }
+  const target: CustomerPlan | null =
+    toolRequired === "admin" ? null : (required as CustomerPlan);
   const feature = input.feature ?? input.tool;
   const lang = input.language ?? "en";
   const info = PLAN_INFO[required];
+
 
   if (!target) {
     return {

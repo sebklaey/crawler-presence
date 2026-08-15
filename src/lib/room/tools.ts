@@ -311,6 +311,11 @@ export async function handleMyRooms(_input: unknown, meta: McpMeta) {
 
   const rooms = [];
   for (const row of rows) {
+    // Owned rooms and communities have no topic — fall back to the room title.
+    const topic = row.topics ?? {
+      slug: (row.rooms as any)?.kind ?? "room",
+      display_name: (row.rooms as any)?.title ?? "Room",
+    };
     const membership: MembershipContext = {
       membershipId: row.id,
       alias: row.alias,
@@ -320,7 +325,7 @@ export async function handleMyRooms(_input: unknown, meta: McpMeta) {
       roomNumber: row.rooms.room_number,
       capacity: row.rooms.capacity,
       memberCount: 0,
-      topic: { slug: row.topics.slug, display_name: row.topics.display_name },
+      topic: { slug: topic.slug, display_name: topic.display_name },
     };
     const memberCount = await countActiveMembers(db, membership.roomId);
 
@@ -335,6 +340,7 @@ export async function handleMyRooms(_input: unknown, meta: McpMeta) {
       unread_count: await countUnread(db, { ...membership, memberCount }),
     });
   }
+
   return { rooms };
 }
 

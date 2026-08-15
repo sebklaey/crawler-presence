@@ -1,0 +1,2 @@
+ALTER TABLE public.rooms DROP CONSTRAINT rooms_kind_check;
+ALTER TABLE public.rooms ADD CONSTRAINT rooms_kind_check CHECK (kind = ANY (ARRAY['topic'::text, 'room'::text, 'private'::text, 'community'::text, 'universal'::text, 'sponsored'::text, 'personal'::text]));
