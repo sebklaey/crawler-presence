@@ -1,8 +1,9 @@
 /**
  * Team access, report settings and team sign-in — all capability-based.
  *
- * Owner actions require the recovery code. Team members use their own team
- * code, which grants only what their role allows and never exposes billing,
+ * Owner actions are authorised by the verified HttpOnly management session
+ * cookie (writes also require the CSRF header). Team members use their own
+ * team code, which grants only what their role allows and never exposes billing,
  * the owner secret or the team list.
  */
 import { createServerFn } from "@tanstack/react-start";
@@ -19,21 +20,9 @@ export type TeamFailure = { ok: false; reason: string };
 /** Business is the plan that includes shared team access. */
 const TEAM_PLANS = ["business"];
 
-async function resolveOwner(code: string) {
-  const { parseRecoveryCode, verifyManageSecret, allowRequest, PresenceStoreError } = await import(
-    "./mcp/presences"
-  );
-  const parsed = parseRecoveryCode(code);
-  if (!parsed) return { error: "invalid-code" as const };
-  try {
-    if (!(await allowRequest(`team:${parsed.rateKey}`, 20))) return { error: "rate-limited" as const };
-    const presence = await verifyManageSecret(parsed.slug, parsed.secret);
-    if (!presence) return { error: "not-found" as const };
-    return { presence, slug: presence.slug };
-  } catch (error) {
-    if (error instanceof PresenceStoreError) return { error: "unavailable" as const };
-    throw error;
-  }
+async function resolveOwner(write: boolean) {
+  const { requireManagedPresence } = await import("./manage-presence.server");
+  return requireManagedPresence({ write, rate: { name: "team", limit: 20 } });
 }
 
 export type TeamState = {
@@ -44,9 +33,8 @@ export type TeamState = {
 };
 
 export const teamOverviewFn = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => codeSchema.parse(input))
-  .handler(async ({ data }): Promise<TeamState | TeamFailure> => {
-    const resolved = await resolveOwner(data.code);
+  .handler(async (): Promise<TeamState | TeamFailure> => {
+    const resolved = await resolveOwner(false);
     if ("error" in resolved) return { ok: false, reason: resolved.error };
     const allowed = TEAM_PLANS.includes(resolved.presence.plan);
 
@@ -67,7 +55,7 @@ export const teamOverviewFn = createServerFn({ method: "POST" })
     }
   });
 
-const inviteSchema = codeSchema.extend({
+const inviteSchema = z.object({
   label: z.string().trim().min(1).max(80),
   role: z.enum(["viewer", "editor"]),
 });
@@ -75,7 +63,7 @@ const inviteSchema = codeSchema.extend({
 export const teamInviteFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => inviteSchema.parse(input))
   .handler(async ({ data }): Promise<{ ok: true; member: TeamMember; code: string } | TeamFailure> => {
-    const resolved = await resolveOwner(data.code);
+    const resolved = await resolveOwner(true);
     if ("error" in resolved) return { ok: false, reason: resolved.error };
     if (!TEAM_PLANS.includes(resolved.presence.plan)) return { ok: false, reason: "plan" };
 
@@ -92,12 +80,12 @@ export const teamInviteFn = createServerFn({ method: "POST" })
     }
   });
 
-const revokeSchema = codeSchema.extend({ memberId: z.string().uuid() });
+const revokeSchema = z.object({ memberId: z.string().uuid() });
 
 export const teamRevokeFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => revokeSchema.parse(input))
   .handler(async ({ data }): Promise<{ ok: true } | TeamFailure> => {
-    const resolved = await resolveOwner(data.code);
+    const resolved = await resolveOwner(true);
     if ("error" in resolved) return { ok: false, reason: resolved.error };
     const { PresenceStoreError } = await import("./mcp/presences");
     try {
@@ -110,7 +98,7 @@ export const teamRevokeFn = createServerFn({ method: "POST" })
     }
   });
 
-const reportSchema = codeSchema.extend({
+const reportSchema = z.object({
   email: z.string().trim().max(200),
   frequency: z.enum(["off", "weekly", "monthly"]),
 });
@@ -118,7 +106,7 @@ const reportSchema = codeSchema.extend({
 export const teamSetReportsFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => reportSchema.parse(input))
   .handler(async ({ data }): Promise<{ ok: true } | TeamFailure> => {
-    const resolved = await resolveOwner(data.code);
+    const resolved = await resolveOwner(true);
     if ("error" in resolved) return { ok: false, reason: resolved.error };
 
     const { EMAIL_REGEX } = await import("./email.server");
@@ -138,9 +126,8 @@ export const teamSetReportsFn = createServerFn({ method: "POST" })
 
 /** Sends the report immediately, so the user can see exactly what arrives. */
 export const teamSendReportNowFn = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => codeSchema.parse(input))
-  .handler(async ({ data }): Promise<{ ok: boolean; reason?: string; preview?: string }> => {
-    const resolved = await resolveOwner(data.code);
+  .handler(async (): Promise<{ ok: boolean; reason?: string; preview?: string }> => {
+    const resolved = await resolveOwner(true);
     if ("error" in resolved) return { ok: false, reason: resolved.error };
 
     const { getReportSettings, buildReport, sendReport } = await import("./reports.server");

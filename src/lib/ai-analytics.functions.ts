@@ -1,30 +1,24 @@
 /**
- * Server functions for the AI analytics dashboard. Capability-based: the
- * recovery code is the only key, it is never logged and never put in a URL.
+ * Server functions for the AI analytics dashboard. Authority is the verified
+ * HttpOnly management session cookie; writes also require the CSRF header.
  */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { AiAnalyticsDashboard, AnalyticsPeriod } from "./analytics/model";
 
 const periodSchema = z.union([z.literal(7), z.literal(30), z.literal(90), z.literal("all")]).default(30);
-const codeSchema = z.string().trim().min(10).max(200);
 
 export type AiAnalyticsResult =
-  | { ok: false; reason: "invalid-code" | "not-found" | "rate-limited" | "unavailable" }
+  | { ok: false; reason: "unauthenticated" | "csrf" | "not-found" | "rate-limited" | "unavailable" }
   | { ok: true; dashboard: AiAnalyticsDashboard };
 
 type Presence = { slug: string; plan: string; core: Record<string, unknown> };
 
-async function authorize(code: string, rateBudget = 60) {
-  const { parseRecoveryCode, verifyManageSecret, allowRequest } = await import("./mcp/presences");
-  const parsed = parseRecoveryCode(code);
-  if (!parsed) return { ok: false as const, reason: "invalid-code" as const };
-  if (!(await allowRequest(`ai-analytics:${parsed.rateKey}`, rateBudget))) {
-    return { ok: false as const, reason: "rate-limited" as const };
-  }
-  const presence = await verifyManageSecret(parsed.slug, parsed.secret);
-  if (!presence) return { ok: false as const, reason: "not-found" as const };
-  return { ok: true as const, presence: presence as unknown as Presence };
+async function authorize(write: boolean, rateBudget = 60) {
+  const { requireManagedPresence } = await import("./manage-presence.server");
+  const auth = await requireManagedPresence({ write, rate: { name: "ai-analytics", limit: rateBudget } });
+  if ("error" in auth) return { ok: false as const, reason: auth.error };
+  return { ok: true as const, presence: auth.presence as unknown as Presence };
 }
 
 function presenceName(presence: Presence): string {
@@ -38,9 +32,9 @@ function presenceCategory(presence: Presence): string {
 }
 
 export const aiAnalyticsDashboardFn = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => z.object({ code: codeSchema, period: periodSchema }).parse(input))
+  .inputValidator((input: unknown) => z.object({ period: periodSchema }).parse(input))
   .handler(async ({ data }): Promise<AiAnalyticsResult> => {
-    const auth = await authorize(data.code);
+    const auth = await authorize(false);
     if (!auth.ok) return auth;
     try {
       const { buildAiAnalytics } = await import("./analytics/aggregate.server");
@@ -96,14 +90,13 @@ export const connectAnalyticsSourceFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
     z
       .object({
-        code: codeSchema,
         source: z.enum(["search_console", "ai_probes"]),
         choice: z.string().trim().max(300).optional(),
       })
       .parse(input),
   )
   .handler(async ({ data }): Promise<ConnectResult> => {
-    const auth = await authorize(data.code, 20);
+    const auth = await authorize(true, 20);
     if (!auth.ok) return { ok: false, message: "Access could not be verified." };
     const { upsertSource } = await import("./analytics/connectors.server");
 
@@ -161,14 +154,13 @@ export const saveAnalyticsSourceFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
     z
       .object({
-        code: codeSchema,
         source: z.enum(["search_console"]),
         value: z.string().trim().max(300),
       })
       .parse(input),
   )
   .handler(async ({ data }): Promise<ActionResult> => {
-    const auth = await authorize(data.code, 20);
+    const auth = await authorize(true, 20);
     if (!auth.ok) return { ok: false, message: "Access could not be verified." };
     const { upsertSource } = await import("./analytics/connectors.server");
     await upsertSource(auth.presence.slug, data.source, {
@@ -182,10 +174,10 @@ export const saveAnalyticsSourceFn = createServerFn({ method: "POST" })
 /** Manually triggers a connector sync or a probe run. */
 export const syncAnalyticsSourceFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
-    z.object({ code: codeSchema, source: z.enum(["search_console", "ai_probes"]) }).parse(input),
+    z.object({ source: z.enum(["search_console", "ai_probes"]) }).parse(input),
   )
   .handler(async ({ data }): Promise<ActionResult> => {
-    const auth = await authorize(data.code, 10);
+    const auth = await authorize(true, 10);
     if (!auth.ok) return { ok: false, message: "Access could not be verified." };
     try {
       if (data.source === "search_console") {
@@ -226,14 +218,13 @@ export const saveProviderKeyFn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
     z
       .object({
-        code: codeSchema,
         provider: z.enum(["anthropic", "perplexity"]),
         key: z.string().trim().max(400),
       })
       .parse(input),
   )
   .handler(async ({ data }): Promise<ActionResult> => {
-    const auth = await authorize(data.code, 10);
+    const auth = await authorize(true, 10);
     if (!auth.ok) return { ok: false, message: "Access could not be verified." };
     try {
       const { saveProviderKey } = await import("./analytics/connectors.server");
@@ -247,9 +238,9 @@ export const saveProviderKeyFn = createServerFn({ method: "POST" })
 
 /** CSV export of the current dashboard rows. */
 export const exportAnalyticsCsvFn = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => z.object({ code: codeSchema, period: periodSchema }).parse(input))
+  .inputValidator((input: unknown) => z.object({ period: periodSchema }).parse(input))
   .handler(async ({ data }): Promise<{ ok: boolean; csv: string }> => {
-    const auth = await authorize(data.code, 10);
+    const auth = await authorize(true, 10);
     if (!auth.ok) return { ok: false, csv: "" };
     const { buildAiAnalytics } = await import("./analytics/aggregate.server");
     const dashboard = await buildAiAnalytics({
