@@ -30,6 +30,8 @@ import {
   type ProfileRow,
 } from "./profile";
 import { enforceRateLimit, WINDOWS } from "./ratelimit";
+import { NO_VALUE_NOTICE } from "./sugar/config";
+import { loadSugarAccount } from "./sugar/service";
 import { getDb, touchPresence, type Db } from "./store";
 
 export const PROFILE_DISPLAY_INSTRUCTION =
@@ -83,7 +85,19 @@ async function profileImages(db: Db, profile: ProfileRow, viewerHash: string) {
 async function serializeProfile(db: Db, profile: ProfileRow, viewerHash: string) {
   const media = await profileImageUrls(db, profile);
   const metrics = await publicMetrics(db, profile, viewerHash);
+  const isOwner = profile.ownerSubjectHash === viewerHash;
+  const sugar = await loadSugarAccount(db, profile.ownerSubjectHash);
   return {
+    sugar_balance: sugar.balance,
+    sugar_minted_all_time: sugar.lifetimeMinted,
+    sugar_notice: NO_VALUE_NOTICE,
+    ...(isOwner
+      ? {
+          sugar_mining_status: sugar.miningStatus,
+          sugar_mining_lease_expires_at: sugar.leaseExpiresAt,
+          sugar_minted_today: sugar.dailyMinted,
+        }
+      : {}),
     handle: profile.handle,
     display_name: profile.roomName,
     bio: profile.bio ?? "",
@@ -91,7 +105,7 @@ async function serializeProfile(db: Db, profile: ProfileRow, viewerHash: string)
     external_url: profile.externalUrl ?? "",
     joined_at: profile.createdAt,
     visibility: profile.visibility,
-    is_owner: profile.ownerSubjectHash === viewerHash,
+    is_owner: isOwner,
     ...media,
     ...metrics,
   };

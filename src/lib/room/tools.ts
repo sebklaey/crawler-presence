@@ -12,6 +12,7 @@ import { z } from "zod";
 import { generateAlias, sanitizeAlias } from "./alias";
 import { config, imageConfig } from "./config";
 import { bytesToBase64, randomId } from "./crypto";
+import { trySugarActivity } from "./sugar/service";
 import { roomError } from "./errors";
 import { resolveIdentity, type McpMeta } from "./identity";
 import { decodeImageId, decodeMessageId, encodeImageId, encodeMessageId, idKind } from "./ids";
@@ -229,6 +230,7 @@ export async function handleSendMessage(input: unknown, meta: McpMeta) {
   );
 
   const sent = await insertMessage(db, membership, body, settings.messageRetentionHours);
+  await trySugarActivity(db, identity.subjectHash, "send_message");
 
   const { messages } = await fetchVisibleMessages(db, membership, {
     afterId: membership.lastReadMessageId,

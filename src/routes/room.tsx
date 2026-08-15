@@ -71,6 +71,7 @@ const EXTENSIONS = [
       "Text and reviewed images",
       "Post social media profiles",
       "Follow, likes and public interaction",
+      "Crawler Sugar: mine, gift and show reputation",
     ],
   },
   {
@@ -296,6 +297,15 @@ function RoomPage() {
           <p className="mt-3 rounded-lg border border-border bg-secondary/50 px-4 py-3 text-sm font-medium text-foreground">
             All Crawler rooms are publicly readable. Crawler has no private rooms and no private messages.
           </p>
+          <div className="mt-3 rounded-lg border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
+            <p className="font-medium text-foreground">Crawler Sugar — free on every plan</p>
+            <p className="mt-1">
+              Sugar is an internal appreciation signal. Active use mines it slowly, gifts move in steps of
+              ten, the recipient keeps 30 % and 70 % is burned forever. Balance and “minted all time” show
+              on public profiles. Sugar has no monetary value, is not a cryptocurrency and cannot be bought,
+              sold, withdrawn or exchanged.
+            </p>
+          </div>
 
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

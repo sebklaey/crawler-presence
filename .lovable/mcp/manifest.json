@@ -2576,6 +2576,210 @@
         "outputSchema": null
       },
       {
+        "name": "get_my_sugar",
+        "title": "Mein Sugar",
+        "description": "Zeigt den eigenen Crawler-Sugar-Kontostand, 'Minted all time', den Mining-Status und die weltweite Umlaufmenge. Sugar ist kostenlos in jedem Abo, hat keinen Geldwert, ist keine Kryptowährung und funktioniert ausschliesslich innerhalb von Crawler.",
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false,
+          "idempotentHint": true
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+            },
+            "session_id": {
+              "type": "string",
+              "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "start_sugar_mining",
+        "title": "Sugar-Mining starten",
+        "description": "Startet ein serverseitiges Mining-Zeitfenster von 5 Minuten. 'Mining' ist eine Metapher für aktive, echte Nutzung: pro 5 Minuten qualifizierter Aktivität entsteht 1 Sugar, begrenzt durch ein Tageslimit und die weltweite Höchstmenge. Neue Kennungen können erst nach 24 Stunden Sugar erzeugen.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false,
+          "idempotentHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+            },
+            "session_id": {
+              "type": "string",
+              "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "preview_sugar_gift",
+        "title": "Sugar-Geschenk vorschauen",
+        "description": "Zeigt vor dem Senden genau, was passiert: Betrag, Anteil für die empfangende Person (30 %), verbrannter Anteil (70 %) und der Kontostand danach. Verändert nichts und verlangt danach eine ausdrückliche Bestätigung.",
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false,
+          "idempotentHint": true
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "username": {
+              "type": "string",
+              "description": "Handle der empfangenden Person, mit oder ohne @."
+            },
+            "amount": {
+              "type": "number",
+              "description": "Vielfaches von 10 (10, 20, 30 …)."
+            },
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+            },
+            "session_id": {
+              "type": "string",
+              "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+            }
+          },
+          "required": [
+            "username",
+            "amount"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "send_sugar",
+        "title": "Sugar verschenken",
+        "description": "Verschenkt Sugar in Schritten von 10 an ein Handle. 30 % kommen an, 70 % werden dauerhaft verbrannt. Ohne confirm: true wird nur die Bestätigungsfrage zurückgegeben — es wird nichts gesendet. Sugar hat keinen Geldwert und ist nicht auszahlbar.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false,
+          "idempotentHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "username": {
+              "type": "string",
+              "description": "Handle der empfangenden Person, mit oder ohne @."
+            },
+            "amount": {
+              "type": "number",
+              "description": "Vielfaches von 10 (10, 20, 30 …)."
+            },
+            "confirm": {
+              "type": "boolean",
+              "description": "Muss true sein, nachdem die Person ausdrücklich zugestimmt hat."
+            },
+            "confirmation_token": {
+              "type": "string",
+              "description": "Token aus preview_sugar_gift — verhindert doppeltes Senden."
+            },
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+            },
+            "session_id": {
+              "type": "string",
+              "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+            }
+          },
+          "required": [
+            "username",
+            "amount"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_public_sugar",
+        "title": "Sugar eines Profils",
+        "description": "Zeigt die öffentlichen Sugar-Werte eines Profils: Kontostand und 'Minted all time'. Mehr ist über andere Personen nicht sichtbar.",
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false,
+          "idempotentHint": true
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "username": {
+              "type": "string"
+            },
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+            },
+            "session_id": {
+              "type": "string",
+              "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+            }
+          },
+          "required": [
+            "username"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_my_sugar_activity",
+        "title": "Meine Sugar-Bewegungen",
+        "description": "Listet die letzten eigenen Sugar-Ereignisse aus dem manipulationssicheren Journal: erzeugt (MINT), gesendet (TRANSFER_OUT), erhalten (TRANSFER_IN) und verbrannt (BURN).",
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false,
+          "idempotentHint": true
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "number",
+              "description": "1–50, Standard 20."
+            },
+            "room_token": {
+              "type": "string",
+              "description": "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back."
+            },
+            "session_id": {
+              "type": "string",
+              "description": "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
         "name": "create_resonance_pattern",
         "title": "Schwingungsmuster erstellen",
         "description": "Legt ein anonymes Schwingungsmuster für Crawler Match an (Pro-Abo). Führe zuerst ein natürliches Gespräch über Interessen, Arbeitsweise und gewünschte Verbindung und leite daraus die abstrakten Dimensionen ab. Crawler speichert keine Profiltexte und keine Chatverläufe, nur die abstrakten Match-Dimensionen.",

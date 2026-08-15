@@ -18,6 +18,7 @@ import {
 } from "./ads";
 import { sanitizeAlias } from "./alias";
 import { roomError } from "./errors";
+import { trySugarActivity } from "./sugar/service";
 import {
   currentUsage,
   requireEntitlement,
@@ -345,6 +346,7 @@ export async function handleSendUniversalMessage(input: unknown, meta: McpMeta) 
     data.text,
     data.idempotency_key ?? null,
   );
+  await trySugarActivity(db, ctx.subjectHash, "send_universal_message");
   const feed = await universalFeed(db, ctx.subjectHash, membership, { limit: 20 });
   return { sent: true, duplicate: sent.duplicate, sent_message: sent.message, ...feed };
 }

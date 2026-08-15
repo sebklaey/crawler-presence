@@ -47,6 +47,7 @@ export const PLAN_INFO: Record<EntitlementPlan, PlanInfo> = {
       "Build a Knowledge Core",
       "Full preview of all AI files",
       "Search and read public Presences",
+      "Crawler Sugar: mine, gift and show reputation",
     ],
   },
   plus: {
@@ -167,6 +168,13 @@ export const TOOL_PLANS: Record<string, EntitlementPlan> = {
   set_resonance_ads_preference: "free",
   notification_settings: "free",
   room_notifications: "free",
+  // Crawler Sugar (free for everyone)
+  get_my_sugar: "free",
+  start_sugar_mining: "free",
+  preview_sugar_gift: "free",
+  send_sugar: "free",
+  get_public_sugar: "free",
+  list_my_sugar_activity: "free",
   // System and pricing
   get_pricing: "free",
   get_my_plan: "free",

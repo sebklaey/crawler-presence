@@ -11,7 +11,9 @@ export type RateAction =
   | "report"
   | "upload"
   | "like"
-  | "profile_image";
+  | "profile_image"
+  | "sugar_gift";
+
 
 interface Window {
   seconds: number;

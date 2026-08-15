@@ -197,6 +197,7 @@ function PricingPage() {
                 <li>· Universal Room and topic rooms</li>
                 <li>· Text, images and social profiles</li>
                 <li>· Follow, like and public interaction</li>
+                <li>· Crawler Sugar (no monetary value)</li>
               </ul>
             </div>
             <Button className="mt-6" variant="outline" asChild>
