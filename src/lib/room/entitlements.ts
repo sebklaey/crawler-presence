@@ -210,21 +210,71 @@ export async function currentUsage(db: Db, ctx: AccountContext) {
   };
 }
 
+/**
+ * Public-facing feature naming. Internal keys (some historic, e.g.
+ * "private_rooms") are never shown — all rooms in Crawler are public.
+ */
+export const FEATURE_KEY_ALIASES: Record<string, string> = {
+  private_rooms: "own_public_rooms",
+};
+
+export const FEATURE_LABELS: Record<string, string> = {
+  own_public_rooms: "Eigene öffentliche Räume",
+  invitations: "Einladungen",
+  custom_alias: "Eigener Alias",
+  personal_room: "Persönlicher öffentlicher Raum",
+  communities: "Communities",
+  match: "Crawler Match",
+  pair_rooms: "Öffentliche Pair Rooms",
+  moderators: "Moderation",
+  room_analytics: "Raum-Statistik",
+  organizations: "Verifizierte Organisationen",
+  sponsored_campaigns: "Gesponserte Kampagnen",
+  api_access: "API-Zugriff",
+  exports: "Exporte",
+  audit_logs: "Audit-Logs",
+};
+
+/** Renames internal entitlement keys for anything the caller can see. */
+export function publicFeatureKey(key: string): string {
+  return FEATURE_KEY_ALIASES[key] ?? key;
+}
+
+export function publicFeatures(map: Record<string, boolean>): Record<string, boolean> {
+  const out: Record<string, boolean> = {};
+  for (const [key, value] of Object.entries(map)) out[publicFeatureKey(key)] = value;
+  return out;
+}
+
+/** Direct Paddle checkout link for one plan code (falls back to the site). */
+export async function planCheckoutUrl(planCode: string): Promise<string> {
+  if (!planCode || planCode === "free") return UPGRADE_URL;
+  try {
+    const { checkoutUrlFor } = await import("../entitlements/upgrade.server");
+    return await checkoutUrlFor(planCode as "plus" | "pro" | "business");
+  } catch {
+    return UPGRADE_URL;
+  }
+}
+
 /** Locked features plus the cheapest plan that unlocks them. */
 export async function upgradeOptions(db: Db, ctx: AccountContext) {
   const plans = [...(await listPlans(db))].sort((a, b) => a.price_cents - b.price_cents);
-  return Object.keys(ctx.entitlements)
-    .filter((key) => !ctx.entitlements[key])
-    .map((key) => {
+  const locked = Object.keys(ctx.entitlements).filter((key) => !ctx.entitlements[key]);
+  return Promise.all(
+    locked.map(async (key) => {
       const plan = plans.find((p) => p.entitlements?.[key]);
+      const publicKey = publicFeatureKey(key);
       return {
-        feature: key,
+        feature: publicKey,
+        feature_label: FEATURE_LABELS[publicKey] ?? publicKey.replace(/_/g, " "),
         included: false,
         required_plan: plan?.code ?? null,
         price_usd: plan ? plan.price_cents / 100 : null,
-        upgrade_url: UPGRADE_URL,
+        upgrade_url: await planCheckoutUrl(plan?.code ?? ""),
       };
-    });
+    }),
+  );
 }
 
 
