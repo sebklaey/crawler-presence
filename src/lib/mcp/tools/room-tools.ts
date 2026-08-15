@@ -16,6 +16,7 @@ import { LOVE_TOOLS } from "@/lib/room/mcp.love";
 import { MATCH_TOOLS } from "@/lib/room/match/mcp";
 import { SOCIAL_TOOLS } from "@/lib/room/social/mcp";
 import { toRoomError } from "@/lib/room/errors";
+import { requiredPlanForCall } from "@/lib/entitlements/features";
 
 type Json = Record<string, unknown>;
 
@@ -168,6 +169,7 @@ function adapt(tool: RoomTool) {
           subjectHash: knownSubjectHash,
           language: detectLanguage(rest),
           feature: tool.title,
+          requiredPlan: requiredPlanForCall(tool.name, rest),
         });
         if (denied) {
           return {

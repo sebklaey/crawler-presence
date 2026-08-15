@@ -199,8 +199,14 @@ export async function checkToolAccess(input: {
   subjectHash?: string | null;
   language?: "de" | "en";
   feature?: string;
+  /** Argument-aware requirement (e.g. community room = Pro). */
+  requiredPlan?: string | null;
 }): Promise<UpgradePayload | null> {
-  const required = requiredPlanForTool(input.tool);
+  const toolRequired = requiredPlanForTool(input.tool);
+  const required =
+    toolRequired === "admin"
+      ? "admin"
+      : highestPlan(toolRequired, input.requiredPlan ?? "free");
   if (required === "free") return null;
 
   if (input.sessionToken) {
@@ -232,5 +238,6 @@ export async function checkToolAccess(input: {
     currentPlan: ctx.plan,
     language: input.language ?? "en",
     contextHash: ctx.subjectHash,
+    requiredPlan: required,
   });
 }
