@@ -25,6 +25,17 @@ export default defineTool({
       .describe("Title of the document to delete, or its slug as used in docs/<slug>.md."),
   },
   annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+  outputSchema: {
+    deleted: z.boolean().optional(),
+    title: z.string().optional(),
+    removed_public_path: z.string().optional(),
+    document_count: z.number().optional(),
+    remaining_documents: z.array(z.string()).optional(),
+    published: z.boolean().optional().describe("False — the public files change only after publish_presence."),
+    publish_prompt: z.string().optional(),
+    publish_handoff_url: z.string().optional(),
+    presence_score: z.number().optional(),
+  },
   handler: async ({ session_id, title }) => {
     if (!(await allowRequest(`tool:delete_document:${session_id}`, 20)))
       throw new ToolError("Too many document deletions for this session in the last minute. Try again shortly.");

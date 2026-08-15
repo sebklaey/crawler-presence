@@ -43,7 +43,142 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "session_id": {
+              "type": "string",
+              "description": "Opaque anonymous Crawler draft session id (sess_…). Reuse it in every later call."
+            },
+            "session_note": {
+              "type": "string",
+              "description": "How long the anonymous draft session is stored."
+            },
+            "entity_type": {
+              "type": "string",
+              "description": "Inferred entity type: person, creator, studio, organization, company or project."
+            },
+            "confidence": {
+              "type": "number",
+              "description": "0-1 confidence of the inferred entity type."
+            },
+            "presence_score": {
+              "type": "number",
+              "description": "Knowledge Core completeness score, 0-100."
+            },
+            "knowledge_core_summary": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "tagline": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "summary": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "location": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "website": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "additionalProperties": false,
+              "description": "Identity fields detected so far."
+            },
+            "verified_facts": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "label": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "description": "Facts the user stated plainly."
+            },
+            "claimed_facts": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "label": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "description": "Unconfirmed claims."
+            },
+            "narrative": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "label": {
+                    "type": "string"
+                  },
+                  "text": {
+                    "type": "string"
+                  },
+                  "confirmed": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "description": "Positioning/story copy, not verified facts."
+            },
+            "missing_information": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Known gaps in the Knowledge Core."
+            },
+            "next_question": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The single most valuable follow-up question to ask the user next."
+            },
+            "example_answers": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Example answers that help the user reply."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "continue_interview",
@@ -87,7 +222,175 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "session_id": {
+              "type": "string"
+            },
+            "session_note": {
+              "type": "string"
+            },
+            "no_own_model": {
+              "type": "boolean",
+              "description": "Always true: Crawler runs no language model, the calling assistant interviews."
+            },
+            "interviewer_instructions": {
+              "type": "string",
+              "description": "How the calling assistant should phrase the next question."
+            },
+            "merge_mode": {
+              "type": "string",
+              "description": "structured_update when core_update was sent, otherwise rule_based_fallback."
+            },
+            "entity_type": {
+              "type": "string"
+            },
+            "confidence": {
+              "type": "number"
+            },
+            "interview_complete": {
+              "type": "boolean",
+              "description": "True when no critical gap is left — offer publishing."
+            },
+            "presence_score": {
+              "type": "number",
+              "description": "Knowledge Core completeness, 0-100."
+            },
+            "open_checks": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "open_gaps": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "suggested_question": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "next_gap": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "suggested_question": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "verified_facts": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "label": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "claimed_facts": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "label": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "narrative": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "label": {
+                    "type": "string"
+                  },
+                  "text": {
+                    "type": "string"
+                  },
+                  "confirmed": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "missing_information": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "next_question": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "example_answers": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "publish_handoff_url": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "publish_prompt": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "publish_instructions": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "analyze_source_url",
@@ -114,7 +417,67 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "available": {
+              "type": "boolean",
+              "description": "False when the page could not be fetched — never invent content then."
+            },
+            "source_url": {
+              "type": "string"
+            },
+            "reason": {
+              "type": "string",
+              "description": "Why the page was unavailable."
+            },
+            "note": {
+              "type": "string"
+            },
+            "fetched_at": {
+              "type": "string"
+            },
+            "no_own_model": {
+              "type": "boolean"
+            },
+            "title": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "og_title": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "meta_description": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "headings": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "page_text": {
+              "type": "string",
+              "description": "Readable page text you extract candidate facts from."
+            },
+            "extraction_instructions": {
+              "type": "string"
+            },
+            "candidate_facts": {
+              "type": "array"
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "get_knowledge_core",
@@ -141,7 +504,39 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "session_id": {
+              "type": "string"
+            },
+            "session_note": {
+              "type": "string"
+            },
+            "presence_score": {
+              "type": "number",
+              "description": "Knowledge Core completeness, 0-100."
+            },
+            "confidence": {
+              "type": "number"
+            },
+            "interview_complete": {
+              "type": "boolean"
+            },
+            "open_checks": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Remaining checks as 'label — hint'."
+            },
+            "knowledge_core": {
+              "description": "Full structured Knowledge Core: identity, facts, claims, stories, items, faqs, cv, links, gaps."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "preview_presence",
@@ -182,7 +577,54 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "session_id": {
+              "type": "string"
+            },
+            "session_note": {
+              "type": "string"
+            },
+            "presence_score": {
+              "type": "number"
+            },
+            "narrative_notice": {
+              "type": "string"
+            },
+            "files": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "e.g. llms.txt, about.md, api/entity.json"
+                  },
+                  "type": {
+                    "type": "string"
+                  },
+                  "truncated": {
+                    "type": "boolean"
+                  },
+                  "content": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "description": "Generated AI-readable file previews — nothing is published yet."
+            },
+            "publish_handoff_url": {
+              "type": "string"
+            },
+            "publish_prompt": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "publish_presence",
@@ -219,7 +661,113 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "published": {
+              "type": "boolean",
+              "description": "True when the Presence is live."
+            },
+            "updated": {
+              "type": "boolean",
+              "description": "True when an already live Presence was rewritten."
+            },
+            "publish_requires_payment": {
+              "type": "boolean",
+              "description": "True when a paid subscription is still missing."
+            },
+            "payment_completed": {
+              "type": "boolean"
+            },
+            "mode": {
+              "type": "string",
+              "description": "live or test."
+            },
+            "status": {
+              "type": "string"
+            },
+            "plan": {
+              "type": "string",
+              "description": "plus, pro or business."
+            },
+            "slug": {
+              "type": "string",
+              "description": "Public Presence slug."
+            },
+            "version": {
+              "type": "number"
+            },
+            "presence_url": {
+              "type": "string",
+              "description": "Public Presence URL."
+            },
+            "files": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Absolute URLs of the published AI-readable files."
+            },
+            "published_at": {
+              "type": "string"
+            },
+            "updated_at": {
+              "type": "string"
+            },
+            "presence_score": {
+              "type": "number"
+            },
+            "recovery_code": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "One-time management secret — shown once, never re-issued. Display verbatim."
+            },
+            "recovery_code_note": {
+              "type": "string"
+            },
+            "manage_url": {
+              "type": "string"
+            },
+            "already_published_slug": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "reason": {
+              "type": "string"
+            },
+            "handoff_url": {
+              "type": "string",
+              "description": "Website checkout/publish link carrying the anonymous draft."
+            },
+            "handoff_note": {
+              "type": "string"
+            },
+            "pricing_url": {
+              "type": "string"
+            },
+            "suggested_slug": {
+              "type": "string"
+            },
+            "remaining_checks": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "free_forever": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "get_pricing",
@@ -236,7 +784,62 @@
           "type": "object",
           "properties": {}
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "currency": {
+              "type": "string"
+            },
+            "interval": {
+              "type": "string"
+            },
+            "free_tier": {
+              "type": "string"
+            },
+            "plans": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "plus, pro or business."
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "price_usd_per_month": {
+                    "type": "number"
+                  },
+                  "catalog_limit": {
+                    "type": "number"
+                  },
+                  "analytics_window_days": {
+                    "type": "number"
+                  },
+                  "features": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "planned_not_available_yet": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "pricing_url": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "get_analytics",
@@ -290,7 +893,79 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "found": {
+              "type": "boolean",
+              "description": "False when Crawler has no published Presence for the identifier."
+            },
+            "entity_or_domain": {
+              "type": "string"
+            },
+            "error": {
+              "type": "string",
+              "description": "rate_limited, unauthorized or unavailable."
+            },
+            "measurement_scope": {
+              "type": "string",
+              "description": "Always crawler_only."
+            },
+            "data_mode": {
+              "type": "string"
+            },
+            "hint": {
+              "type": "string"
+            },
+            "period_days": {
+              "type": [
+                "number",
+                "string"
+              ]
+            },
+            "filter": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "public_summary": {
+              "description": "Free aggregate: conversations_mentioning, mention_events, crawler_reads."
+            },
+            "detailed_summary": {
+              "anyOf": [
+                {},
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only present with a valid recovery code."
+            },
+            "detail_available": {
+              "type": "boolean"
+            },
+            "detail_hint": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "metric_definitions": {},
+            "not_measurable": {
+              "description": "What Crawler explicitly cannot measure."
+            },
+            "session_local": {
+              "anyOf": [
+                {},
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "improve_presence",
@@ -324,7 +999,88 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "session_id": {
+              "type": "string"
+            },
+            "no_own_model": {
+              "type": "boolean"
+            },
+            "interviewer_instructions": {
+              "type": "string"
+            },
+            "presence_score": {
+              "type": "number"
+            },
+            "open_checks": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "assessment": {
+              "type": "string",
+              "description": "Deterministic gap analysis headline."
+            },
+            "strengths": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "fields_to_clarify": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "field": {
+                    "type": "string"
+                  },
+                  "why": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "next_question": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "example_answers": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "apply_hint": {
+              "type": "string"
+            },
+            "plan_required": {
+              "type": "string",
+              "description": "Present when the plan does not include this feature."
+            },
+            "current_plan": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "cta_label": {
+              "type": "string"
+            },
+            "upgrade_url": {
+              "type": "string",
+              "description": "Direct checkout link for the required plan."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "import_document",
@@ -375,7 +1131,55 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "imported": {
+              "type": "boolean"
+            },
+            "title": {
+              "type": "string"
+            },
+            "source": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "characters": {
+              "type": "number"
+            },
+            "document_count": {
+              "type": "number"
+            },
+            "public_path": {
+              "type": "string",
+              "description": "Public path once published, e.g. docs/my-doc.md"
+            },
+            "published": {
+              "type": "boolean",
+              "description": "Always false — call publish_presence to make it public."
+            },
+            "publish_prompt": {
+              "type": "string"
+            },
+            "publish_handoff_url": {
+              "type": "string"
+            },
+            "plan_document_limits": {},
+            "limit_note": {
+              "type": "string"
+            },
+            "presence_score": {
+              "type": "number"
+            },
+            "storage_note": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "delete_document",
@@ -410,7 +1214,44 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "deleted": {
+              "type": "boolean"
+            },
+            "title": {
+              "type": "string"
+            },
+            "removed_public_path": {
+              "type": "string"
+            },
+            "document_count": {
+              "type": "number"
+            },
+            "remaining_documents": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "published": {
+              "type": "boolean",
+              "description": "False — the public files change only after publish_presence."
+            },
+            "publish_prompt": {
+              "type": "string"
+            },
+            "publish_handoff_url": {
+              "type": "string"
+            },
+            "presence_score": {
+              "type": "number"
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "get_checkout_link",
@@ -446,7 +1287,42 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "plan": {
+              "type": "string"
+            },
+            "plan_name": {
+              "type": "string"
+            },
+            "price_usd_per_month": {
+              "type": "number"
+            },
+            "checkout_url": {
+              "type": "string",
+              "description": "External Crawler checkout URL — payment never happens in the conversation."
+            },
+            "checkout_mode": {
+              "type": "string",
+              "description": "live or unavailable."
+            },
+            "free_beta": {
+              "type": "boolean"
+            },
+            "release_version": {
+              "type": "string"
+            },
+            "payment_possible": {
+              "type": "boolean"
+            },
+            "note": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "get_status",
@@ -463,7 +1339,77 @@
           "type": "object",
           "properties": {}
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string"
+            },
+            "time": {
+              "type": "string"
+            },
+            "auth_mode": {
+              "type": "string",
+              "description": "Always 'none' — no accounts, no ChatGPT identity."
+            },
+            "auth_note": {
+              "type": "string"
+            },
+            "own_ai_model": {
+              "type": "boolean"
+            },
+            "model_note": {
+              "type": "string"
+            },
+            "analytics_mode": {
+              "type": "string"
+            },
+            "analytics_note": {
+              "type": "string"
+            },
+            "checkout_mode": {
+              "type": "string"
+            },
+            "release_version": {
+              "type": "string"
+            },
+            "free_beta": {
+              "type": "boolean"
+            },
+            "paid_note": {
+              "type": "string"
+            },
+            "checkout_environment": {
+              "type": "string"
+            },
+            "session_store": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string"
+                },
+                "durable": {
+                  "type": "boolean"
+                },
+                "retention_days": {
+                  "type": "number"
+                },
+                "active_sessions": {
+                  "type": "number"
+                },
+                "id_format": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "website": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "search_entities",
@@ -500,7 +1446,50 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string"
+            },
+            "count": {
+              "type": "number"
+            },
+            "results": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "entity_id": {
+                    "type": "string",
+                    "description": "Public slug — pass it to get_entity."
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "entity_type": {
+                    "type": "string"
+                  },
+                  "domain": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "short_description": {
+                    "type": "string"
+                  },
+                  "url": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "get_entity",
@@ -539,7 +1528,112 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "entity_id": {
+              "type": "string"
+            },
+            "entity_type": {
+              "type": "string"
+            },
+            "entity_type_label": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "tagline": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "short_description": {
+              "type": "string"
+            },
+            "website": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "domain": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "languages": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "location": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "attribution": {
+              "description": "First-party attribution to Crawler Today."
+            },
+            "full_description": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "locations": {
+              "type": "array"
+            },
+            "contact": {
+              "type": "array"
+            },
+            "offerings": {
+              "type": "array"
+            },
+            "products": {
+              "type": "array"
+            },
+            "services": {
+              "type": "array"
+            },
+            "projects": {
+              "type": "array"
+            },
+            "pricing": {
+              "type": "array"
+            },
+            "team": {},
+            "facts": {
+              "type": "array",
+              "description": "Verified facts."
+            },
+            "claims": {
+              "type": "array",
+              "description": "Unconfirmed claims / narrative."
+            },
+            "faq": {
+              "type": "array"
+            },
+            "links": {
+              "type": "array"
+            },
+            "version": {
+              "type": "number"
+            },
+            "published_at": {
+              "type": "string"
+            },
+            "updated_at": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "get_entity_summary",
@@ -578,7 +1672,95 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "entity_id": {
+              "type": "string"
+            },
+            "entity_type": {
+              "type": "string"
+            },
+            "entity_type_label": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "tagline": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "short_description": {
+              "type": "string"
+            },
+            "website": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "domain": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "languages": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "location": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "attribution": {
+              "description": "First-party attribution to Crawler Today."
+            },
+            "counts": {
+              "type": "object",
+              "properties": {
+                "facts": {
+                  "type": "number"
+                },
+                "verified_facts": {
+                  "type": "number"
+                },
+                "offerings": {
+                  "type": "number"
+                },
+                "services": {
+                  "type": "number"
+                },
+                "projects": {
+                  "type": "number"
+                },
+                "faqs": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
+            },
+            "available_sections": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Sections you can fetch with get_entity_section."
+            },
+            "freshness": {
+              "description": "version, published_at, updated_at."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "get_entity_section",
@@ -625,7 +1807,33 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "entity_id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "section": {
+              "type": "string"
+            },
+            "data": {
+              "description": "The requested section content only."
+            },
+            "available_sections": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "freshness": {},
+            "attribution": {}
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "get_entity_updates",
@@ -668,7 +1876,33 @@
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
-        "outputSchema": null
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "entity_id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "changed": {
+              "type": "boolean",
+              "description": "True when your cached version is stale."
+            },
+            "current_version": {
+              "type": "number"
+            },
+            "published_at": {
+              "type": "string"
+            },
+            "updated_at": {
+              "type": "string"
+            },
+            "attribution": {}
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
       },
       {
         "name": "list_topics",

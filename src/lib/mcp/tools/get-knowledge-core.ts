@@ -13,6 +13,15 @@ export default defineTool({
     session_id: z.string().trim().min(6).describe("Opaque session id returned by start_interview."),
   },
   annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  outputSchema: {
+    session_id: z.string().optional(),
+    session_note: z.string().optional(),
+    presence_score: z.number().optional().describe("Knowledge Core completeness, 0-100."),
+    confidence: z.number().optional(),
+    interview_complete: z.boolean().optional(),
+    open_checks: z.array(z.string()).optional().describe("Remaining checks as 'label — hint'."),
+    knowledge_core: z.any().optional().describe("Full structured Knowledge Core: identity, facts, claims, stories, items, faqs, cv, links, gaps."),
+  },
   handler: async ({ session_id }) => {
     const session = await getSession(session_id);
     if (!session) throw new ToolError("Unknown or expired session_id. Call start_interview to begin a new session.");

@@ -1,4 +1,5 @@
 import { defineTool } from "@lovable.dev/mcp-js";
+import { z } from "zod";
 import { PLANS } from "../../billing";
 import { siteUrl } from "../site";
 
@@ -9,6 +10,25 @@ export default defineTool({
     "Use this when the user asks what Crawler costs or which plan they need. Returns the Plus / Pro / Business plans in USD per month with their concise feature differences. Creating and previewing a Presence is always free; hosting and analytics are paid.",
   inputSchema: {},
   annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  outputSchema: {
+    currency: z.string().optional(),
+    interval: z.string().optional(),
+    free_tier: z.string().optional(),
+    plans: z
+      .array(
+        z.object({
+          id: z.string().optional().describe("plus, pro or business."),
+          name: z.string().optional(),
+          price_usd_per_month: z.number().optional(),
+          catalog_limit: z.number().optional(),
+          analytics_window_days: z.number().optional(),
+          features: z.array(z.string()).optional(),
+          planned_not_available_yet: z.array(z.string()).optional(),
+        }),
+      )
+      .optional(),
+    pricing_url: z.string().optional(),
+  },
   handler: () => ({
     content: [
       {

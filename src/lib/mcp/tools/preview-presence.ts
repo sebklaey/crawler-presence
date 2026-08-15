@@ -25,6 +25,25 @@ export default defineTool({
       .describe("Truncate each file preview to keep the response concise."),
   },
   annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  outputSchema: {
+    session_id: z.string().optional(),
+    session_note: z.string().optional(),
+    presence_score: z.number().optional(),
+    narrative_notice: z.string().optional(),
+    files: z
+      .array(
+        z.object({
+          path: z.string().optional().describe("e.g. llms.txt, about.md, api/entity.json"),
+          type: z.string().optional(),
+          truncated: z.boolean().optional(),
+          content: z.string().optional(),
+        }),
+      )
+      .optional()
+      .describe("Generated AI-readable file previews — nothing is published yet."),
+    publish_handoff_url: z.string().optional(),
+    publish_prompt: z.string().optional(),
+  },
   handler: async ({ session_id, paths, max_chars_per_file }) => {
     const session = await getSession(session_id);
     if (!session) throw new ToolError("Unknown or expired session_id. Call start_interview to begin a new session.");

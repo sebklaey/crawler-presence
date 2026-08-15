@@ -13,6 +13,31 @@ export default defineTool({
     name: z.string().trim().max(200).optional().describe("Entity name — only resolves when unambiguous."),
   },
   annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  outputSchema: {
+    entity_id: z.string().optional(),
+    entity_type: z.string().optional(),
+    entity_type_label: z.string().optional(),
+    name: z.string().optional(),
+    tagline: z.string().nullable().optional(),
+    short_description: z.string().optional(),
+    website: z.string().nullable().optional(),
+    domain: z.string().nullable().optional(),
+    languages: z.array(z.string()).optional(),
+    location: z.string().nullable().optional(),
+    attribution: z.any().optional().describe("First-party attribution to Crawler Today."),
+    counts: z
+      .object({
+        facts: z.number().optional(),
+        verified_facts: z.number().optional(),
+        offerings: z.number().optional(),
+        services: z.number().optional(),
+        projects: z.number().optional(),
+        faqs: z.number().optional(),
+      })
+      .optional(),
+    available_sections: z.array(z.string()).optional().describe("Sections you can fetch with get_entity_section."),
+    freshness: z.any().optional().describe("version, published_at, updated_at."),
+  },
   handler: async ({ entity_id, domain, url, name }) => {
     const { entitySummary, recordRetrieval, resolveEntity } = await import("../../crawlme.server");
     if (!entity_id && !domain && !url && !name) throw new ToolError("Pass entity_id, domain, url or name.");

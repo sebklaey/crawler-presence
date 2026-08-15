@@ -14,6 +14,15 @@ export default defineTool({
     since: z.string().trim().max(40).optional().describe("ISO timestamp of your last retrieval."),
   },
   annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  outputSchema: {
+    entity_id: z.string().optional(),
+    name: z.string().optional(),
+    changed: z.boolean().optional().describe("True when your cached version is stale."),
+    current_version: z.number().optional(),
+    published_at: z.string().optional(),
+    updated_at: z.string().optional(),
+    attribution: z.any().optional(),
+  },
   handler: async ({ entity_id, domain, url, known_version, since }) => {
     const { entityUpdates, resolveEntity } = await import("../../crawlme.server");
     if (!entity_id && !domain && !url) throw new ToolError("Pass entity_id, domain or url.");

@@ -18,6 +18,15 @@ export default defineTool({
     name: z.string().trim().max(200).optional().describe("Entity name — only resolves when unambiguous."),
   },
   annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  outputSchema: {
+    entity_id: z.string().optional(),
+    name: z.string().optional(),
+    section: z.string().optional(),
+    data: z.any().optional().describe("The requested section content only."),
+    available_sections: z.array(z.string()).optional(),
+    freshness: z.any().optional(),
+    attribution: z.any().optional(),
+  },
   handler: async ({ section, entity_id, domain, url, name }) => {
     const { ENTITY_SECTIONS } = await import("../../crawlme");
     const { entitySection, recordRetrieval, resolveEntity } = await import("../../crawlme.server");

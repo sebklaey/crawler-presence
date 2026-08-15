@@ -13,6 +13,17 @@ export default defineTool({
     session_id: z.string().trim().min(6).optional().describe("Optional Crawler session to attach to the checkout."),
   },
   annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  outputSchema: {
+    plan: z.string().optional(),
+    plan_name: z.string().optional(),
+    price_usd_per_month: z.number().optional(),
+    checkout_url: z.string().optional().describe("External Crawler checkout URL — payment never happens in the conversation."),
+    checkout_mode: z.string().optional().describe("live or unavailable."),
+    free_beta: z.boolean().optional(),
+    release_version: z.string().optional(),
+    payment_possible: z.boolean().optional(),
+    note: z.string().optional(),
+  },
   handler: ({ plan, session_id }) => {
     const p = planById(plan);
     const base = siteUrl();

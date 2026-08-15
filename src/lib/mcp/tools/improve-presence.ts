@@ -20,6 +20,24 @@ export default defineTool({
       .describe("The analytics insight or requested change, e.g. 'people keep asking about licensing'."),
   },
   annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+  outputSchema: {
+    session_id: z.string().optional(),
+    no_own_model: z.boolean().optional(),
+    interviewer_instructions: z.string().optional(),
+    presence_score: z.number().optional(),
+    open_checks: z.array(z.string()).optional(),
+    assessment: z.string().optional().describe("Deterministic gap analysis headline."),
+    strengths: z.array(z.string()).optional(),
+    fields_to_clarify: z.array(z.object({ field: z.string().optional(), why: z.string().optional() })).optional(),
+    next_question: z.string().nullable().optional(),
+    example_answers: z.array(z.string()).optional(),
+    apply_hint: z.string().optional(),
+    plan_required: z.string().optional().describe("Present when the plan does not include this feature."),
+    current_plan: z.string().optional(),
+    message: z.string().optional(),
+    cta_label: z.string().optional(),
+    upgrade_url: z.string().optional().describe("Direct checkout link for the required plan."),
+  },
   handler: async ({ session_id, insight }) => {
     if (!(await allowRequest(`tool:improve_presence:${session_id}`, 20)))
       throw new ToolError("Too many improvement requests for this session in the last minute. Try again shortly.");

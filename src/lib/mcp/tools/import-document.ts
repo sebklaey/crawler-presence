@@ -36,6 +36,21 @@ export default defineTool({
     replace: z.boolean().optional().describe("Replace an existing document with the same title (default true)."),
   },
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  outputSchema: {
+    imported: z.boolean().optional(),
+    title: z.string().optional(),
+    source: z.string().nullable().optional(),
+    characters: z.number().optional(),
+    document_count: z.number().optional(),
+    public_path: z.string().optional().describe("Public path once published, e.g. docs/my-doc.md"),
+    published: z.boolean().optional().describe("Always false — call publish_presence to make it public."),
+    publish_prompt: z.string().optional(),
+    publish_handoff_url: z.string().optional(),
+    plan_document_limits: z.any().optional(),
+    limit_note: z.string().optional(),
+    presence_score: z.number().optional(),
+    storage_note: z.string().optional(),
+  },
   handler: async ({ session_id, title, text, source, replace }) => {
     if (!(await allowRequest(`tool:import_document:${session_id}`, 20)))
       throw new ToolError("Too many document imports for this session in the last minute. Try again shortly.");
