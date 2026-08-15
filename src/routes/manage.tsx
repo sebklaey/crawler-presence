@@ -191,7 +191,7 @@ function ManagePage() {
   async function setStatus(status: "live" | "offline") {
     setBusy(true);
     try {
-      const result = await manageSetStatusFn({ data: { code, status } });
+      const result = await manageSetStatusFn({ data: { status } });
       if (!result.ok) {
         toast.error(REASONS[result.reason ?? ""] ?? "That did not work.");
         return;
@@ -225,7 +225,7 @@ function ManagePage() {
   async function updateContent() {
     setBusy(true);
     try {
-      const result = await manageUpdateCoreFn({ data: { code, core } });
+      const result = await manageUpdateCoreFn({ data: { core } });
       if (!result.ok) {
         toast.error(
           result.reason === "empty-core"
@@ -245,7 +245,7 @@ function ManagePage() {
     setBusy(true);
     try {
       const result = await manageBillingPortalFn({
-        data: { code, returnUrl: `${window.location.origin}/manage` },
+        data: { returnUrl: `${window.location.origin}/manage` },
       });
       if (!result.ok || !result.url) {
         toast.error(REASONS[result.reason ?? ""] ?? result.reason ?? "Billing portal unavailable.");
@@ -468,8 +468,8 @@ function ManagePage() {
             
             <CustomDomainSection data={data} refresh={() => open()} />
             <ApiAccessSection data={data} />
-            <RetentionSection code={code} />
-            <TeamAndReportsSection code={code} plan={data.plan} />
+            <RetentionSection />
+            <TeamAndReportsSection plan={data.plan} />
 
 
 
