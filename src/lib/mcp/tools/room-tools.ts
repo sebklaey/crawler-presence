@@ -81,13 +81,15 @@ const SESSION_FIELD = z
   );
 
 function adapt(tool: RoomTool) {
+  roomToolContracts.set(tool.name, responseValidator(tool.outputSchema));
   return defineTool({
     name: tool.name,
     title: tool.title,
     description: tool.description,
     inputSchema: { ...toShape(tool.inputSchema), room_token: TOKEN_FIELD, session_id: SESSION_FIELD },
     annotations: tool.annotations as never,
-    outputSchema: toOutputShape(tool.outputSchema),
+    outputSchema: advertisedOutputShape(tool.outputSchema),
+
 
     handler: async (input: Record<string, unknown> | undefined) => {
       const raw = (input ?? {}) as Record<string, unknown>;
