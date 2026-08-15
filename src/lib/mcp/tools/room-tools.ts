@@ -88,16 +88,23 @@ const TOKEN_FIELD = z
     "Opaque anonymous room identity issued by Crawler. Reuse the same room_token for every room_* call of the same person. If omitted, a new anonymous identity is created and returned — store it, there is no account and no other way back.",
   );
 
+const SESSION_FIELD = z
+  .string()
+  .optional()
+  .describe(
+    "Optional Crawler draft session id (sess_…) of a paid Presence. Pass it once to unlock the paid room features that this subscription includes.",
+  );
+
 function adapt(tool: RoomTool) {
   return defineTool({
     name: tool.name,
     title: tool.title,
     description: tool.description,
-    inputSchema: { ...toShape(tool.inputSchema), room_token: TOKEN_FIELD },
+    inputSchema: { ...toShape(tool.inputSchema), room_token: TOKEN_FIELD, session_id: SESSION_FIELD },
     annotations: tool.annotations as never,
     handler: async (input: Record<string, unknown> | undefined) => {
       const raw = (input ?? {}) as Record<string, unknown>;
-      const { room_token: provided, ...rest } = raw;
+      const { room_token: provided, session_id: sessionId, ...rest } = raw;
       const token = typeof provided === "string" && provided.trim() ? provided.trim() : newRoomToken();
       const issued = token !== provided;
 
