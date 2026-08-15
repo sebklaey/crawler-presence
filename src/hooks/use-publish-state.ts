@@ -5,7 +5,8 @@ import { asPlanId } from "@/lib/entitlements";
 import { planById } from "@/lib/billing";
 import type { PlanId } from "@/lib/billing";
 import { isCoreEmpty, type KnowledgeCore } from "@/lib/knowledge";
-import { useCore, usePublished, useRecoveryCode } from "@/lib/store";
+import { useCore, usePublished } from "@/lib/store";
+import { useManageSession } from "./use-manage-session";
 
 /** Order-independent comparison of two Knowledge Cores. */
 function stable(value: unknown): string {
@@ -20,7 +21,7 @@ function stable(value: unknown): string {
 }
 
 export type PublishState = {
-  /** A published Presence is known in this browser and manageable with the stored code. */
+  /** A published Presence is known in this browser and an open management session can manage it. */
   isLive: boolean;
   slug: string | null;
   plan: PlanId;
@@ -33,8 +34,8 @@ export type PublishState = {
   overDocumentLimit: boolean;
   documentLimit: number;
   documentCount: number;
-  /** Recovery code stored in this browser; required to push updates. */
-  code: string;
+  /** A verified HttpOnly management session is open — writes are allowed. */
+  manageable: boolean;
   loading: boolean;
   refresh: () => void;
 };
@@ -46,11 +47,12 @@ export type PublishState = {
 export function usePublishState(): PublishState {
   const [core] = useCore();
   const [published] = usePublished();
-  const [code] = useRecoveryCode();
+  const session = useManageSession();
 
-  const enabled = Boolean(code && published?.slug);
+  // Authority is the HttpOnly cookie, never a capability held in the browser.
+  const enabled = session.ready && session.active;
   const query = useQuery({
-    queryKey: ["publish-state", published?.slug ?? "", code ? "code" : ""],
+    queryKey: ["publish-state", session.slug ?? published?.slug ?? ""],
     enabled,
     staleTime: 30 * 1000,
     queryFn: () => manageRestoreCoreFn(),
@@ -70,7 +72,7 @@ export function usePublishState(): PublishState {
 
   return {
     isLive,
-    slug: ok ? ((result as { slug: string }).slug ?? null) : (published?.slug ?? null),
+    slug: ok ? ((result as { slug: string }).slug ?? null) : (session.slug ?? published?.slug ?? null),
     plan,
     hasChanges,
     overLimit: (core.items?.length ?? 0) > limit || overDocumentLimit,
@@ -78,8 +80,8 @@ export function usePublishState(): PublishState {
     overDocumentLimit,
     documentLimit,
     documentCount,
-    code,
-    loading: enabled && query.isLoading,
+    manageable: enabled && ok,
+    loading: (!session.ready || (enabled && query.isLoading)),
     refresh: () => void query.refetch(),
   };
 }
