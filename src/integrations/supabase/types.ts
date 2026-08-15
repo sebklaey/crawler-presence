@@ -2091,13 +2091,17 @@ export type Database = {
       }
       payment_events: {
         Row: {
+          attempts: number
+          correlation_id: string | null
           created_at: string
           environment: string
           error: string | null
+          error_code: string | null
           event_id: string
           event_type: string
           id: string
           intent_ref: string | null
+          lease_expires_at: string | null
           occurred_at: string | null
           processed_at: string | null
           status: string
@@ -2105,13 +2109,17 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          attempts?: number
+          correlation_id?: string | null
           created_at?: string
           environment?: string
           error?: string | null
+          error_code?: string | null
           event_id: string
           event_type: string
           id?: string
           intent_ref?: string | null
+          lease_expires_at?: string | null
           occurred_at?: string | null
           processed_at?: string | null
           status?: string
@@ -2119,13 +2127,17 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          attempts?: number
+          correlation_id?: string | null
           created_at?: string
           environment?: string
           error?: string | null
+          error_code?: string | null
           event_id?: string
           event_type?: string
           id?: string
           intent_ref?: string | null
+          lease_expires_at?: string | null
           occurred_at?: string | null
           processed_at?: string | null
           status?: string
@@ -4384,6 +4396,20 @@ export type Database = {
       }
     }
     Functions: {
+      claim_payment_event: {
+        Args: {
+          p_correlation_id?: string
+          p_environment: string
+          p_event_id: string
+          p_event_type: string
+          p_intent_ref?: string
+          p_lease_seconds?: number
+          p_max_attempts?: number
+          p_occurred_at?: string
+          p_subscription_id?: string
+        }
+        Returns: Json
+      }
       cleanup_expired: { Args: never; Returns: Json }
       enforce_all_retention: {
         Args: never
@@ -4398,6 +4424,14 @@ export type Database = {
         }[]
       }
       enforce_text_retention: { Args: { p_room_id: string }; Returns: number }
+      finish_payment_event: {
+        Args: {
+          p_correlation_id?: string
+          p_error_code?: string
+          p_event_id: string
+        }
+        Returns: Json
+      }
       get_or_create_personal_room: {
         Args: { p_handle: string; p_room_name: string; p_subject_hash: string }
         Returns: Json
@@ -4411,6 +4445,24 @@ export type Database = {
         Returns: Json
       }
       love_cleanup_expired: { Args: never; Returns: Json }
+      mirror_subscription_monotonic: {
+        Args: {
+          p_canceled_at: string
+          p_current_period_end: string
+          p_current_period_start: string
+          p_customer_id: string
+          p_environment: string
+          p_occurred_at: string
+          p_plan: string
+          p_price_id: string
+          p_product_id: string
+          p_scheduled_change_action: string
+          p_scheduled_change_at: string
+          p_status: string
+          p_subscription_id: string
+        }
+        Returns: Json
+      }
       purge_dead_images: {
         Args: never
         Returns: {
