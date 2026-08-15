@@ -43,7 +43,7 @@ export async function resolveLinkedPlan(db: Db, subjectHash: string): Promise<{
 
   const { data: presence } = await db
     .from("published_presences")
-    .select("slug, plan, status, subscription_status, current_period_end, billing_subscription_id")
+    .select("slug, plan, status, subscription_status, current_period_end, billing_subscription_id, billing_customer_id")
     .eq("slug", slug)
     .maybeSingle();
 
@@ -51,9 +51,10 @@ export async function resolveLinkedPlan(db: Db, subjectHash: string): Promise<{
   // moment ago is known to ChatGPT on the very next tool call.
   let current: any = presence;
   const subscriptionId = (presence as any)?.billing_subscription_id as string | undefined;
-  if (subscriptionId) {
-    const { refreshSubscriptionPlan } = await import("../billing-refresh.server");
-    const fresh = await refreshSubscriptionPlan(subscriptionId);
+  const customerId = (presence as any)?.billing_customer_id as string | undefined;
+  if (subscriptionId || customerId) {
+    const { reconcilePresenceBilling } = await import("../billing-refresh.server");
+    const fresh = await reconcilePresenceBilling({ slug, customerId, subscriptionId });
     if (fresh) {
       current = {
         ...(presence as any),

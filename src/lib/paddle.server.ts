@@ -197,6 +197,7 @@ export async function createHostedCheckout(input: {
 export type PaddleSubscription = {
   id: string;
   status?: string | null;
+  created_at?: string | null;
   current_billing_period?: { ends_at?: string | null } | null;
   items?: Array<{ price?: { id?: string; import_meta?: { external_id?: string | null } | null } | null }>;
 };
@@ -205,6 +206,18 @@ export type PaddleSubscription = {
 export async function fetchSubscription(subscriptionId: string): Promise<PaddleSubscription> {
   return paddleFetch<PaddleSubscription>(`/subscriptions/${encodeURIComponent(subscriptionId)}`);
 }
+
+/**
+ * Every subscription of one customer. An upgrade bought through a fresh
+ * checkout is a *new* subscription, so the presence has to look at the whole
+ * list — not only at the subscription it was published with.
+ */
+export async function listCustomerSubscriptions(customerId: string): Promise<PaddleSubscription[]> {
+  return paddleFetch<PaddleSubscription[]>(
+    `/subscriptions?customer_id=${encodeURIComponent(customerId)}&per_page=50`,
+  );
+}
+
 
 /** Plan a live subscription currently bills for, or null when unknown. */
 export async function planOfSubscription(subscription: PaddleSubscription): Promise<PlanId | null> {

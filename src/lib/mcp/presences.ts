@@ -538,6 +538,25 @@ export async function saveBaseline(slug: string, baseline: unknown): Promise<voi
     .is("baseline", null);
 }
 
+/**
+ * Points a Presence at the subscription that currently pays for it. An upgrade
+ * bought in a new checkout creates a new subscription, so the Presence has to
+ * follow it instead of staying on the old, cheaper one.
+ */
+export async function attachPresenceSubscription(
+  slug: string,
+  billingSubscriptionId: string,
+): Promise<void> {
+  const supabase = await client();
+  if (!supabase) return;
+  const { error } = await supabase
+    .from("published_presences")
+    .update({ billing_subscription_id: billingSubscriptionId })
+    .eq("slug", slug);
+  if (error) storeFailure("billing-attach", error.message);
+}
+
+
 
 /**
  * Keeps a presence in sync with subscription lifecycle events.
