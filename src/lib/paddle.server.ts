@@ -206,6 +206,18 @@ export async function fetchSubscription(subscriptionId: string): Promise<PaddleS
   return paddleFetch<PaddleSubscription>(`/subscriptions/${encodeURIComponent(subscriptionId)}`);
 }
 
+/**
+ * Every subscription of one customer. An upgrade bought through a fresh
+ * checkout is a *new* subscription, so the presence has to look at the whole
+ * list — not only at the subscription it was published with.
+ */
+export async function listCustomerSubscriptions(customerId: string): Promise<PaddleSubscription[]> {
+  return paddleFetch<PaddleSubscription[]>(
+    `/subscriptions?customer_id=${encodeURIComponent(customerId)}&per_page=50`,
+  );
+}
+
+
 /** Plan a live subscription currently bills for, or null when unknown. */
 export async function planOfSubscription(subscription: PaddleSubscription): Promise<PlanId | null> {
   const item = subscription.items?.[0]?.price;
