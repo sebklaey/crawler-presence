@@ -97,10 +97,21 @@ const DISPLAY_INSTRUCTION =
 
 /* ------------------------------- own room -------------------------------- */
 
+/** Personal rooms are a paid extension (Plus and above). */
+async function requirePersonalRoomPlan(db: Db, subjectHash: string): Promise<void> {
+  const { resolveEntitlements, requireEntitlement } = await import("./entitlements");
+  const ctx = await resolveEntitlements(db, subjectHash);
+  requireEntitlement(ctx, "private_rooms");
+}
+
+
+
 export async function handleMyRoom(_input: unknown, meta: McpMeta) {
   const identity = await resolveIdentity(meta);
   const db = await getDb();
   await touchPresence(db, identity.subjectHash);
+  await requirePersonalRoomPlan(db, identity.subjectHash);
+
 
   const room = await ensurePersonalRoom(db, identity.subjectHash);
   const membership = await joinPersonalRoom(db, room, identity.subjectHash);
@@ -135,7 +146,9 @@ export async function handleUpdateMyRoom(input: unknown, meta: McpMeta) {
   const identity = await resolveIdentity(meta);
   const db = await getDb();
   await touchPresence(db, identity.subjectHash);
+  await requirePersonalRoomPlan(db, identity.subjectHash);
   await ensurePersonalRoom(db, identity.subjectHash);
+
 
   const updated = await updatePersonalRoom(db, identity.subjectHash, parsed);
   return {

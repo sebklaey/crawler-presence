@@ -53,7 +53,7 @@ const REPORT_REASONS = [
 ] as const;
 
 export const plusInputSchemas = {
-  get_my_plan: z.object({}).strict(),
+  get_my_plan: z.object({ recovery_code: z.string().min(6).max(200).optional() }).strict(),
   create_private_room: z
     .object({
       title: z.string().min(2).max(120),
@@ -154,16 +154,37 @@ async function context(meta: McpMeta): Promise<{ db: Db; ctx: AccountContext }> 
 /* ------------------------------- plan tool ------------------------------- */
 
 export async function handleGetMyPlan(input: unknown, meta: McpMeta) {
-  parse(plusInputSchemas.get_my_plan, input);
-  const { db, ctx } = await context(meta);
+  const data = parse(plusInputSchemas.get_my_plan, input);
+  const identity = await resolveIdentity(meta);
+  const db = await getDb();
+
+
+  let linked: { plan: string; presenceSlug: string } | null = null;
+  let linkError: string | null = null;
+  if (data.recovery_code) {
+    const { linkPlanByRecoveryCode } = await import("./planlink");
+    linked = await linkPlanByRecoveryCode(db, identity.subjectHash, data.recovery_code);
+    if (!linked) linkError = "Dieser Wiederherstellungscode ist ungültig oder das Abo ist nicht aktiv.";
+  }
+
+  const ctx = await resolveEntitlements(db, identity.subjectHash);
   const usage = await currentUsage(db, ctx);
+  const locked = await upgradeOptions(db, ctx);
   return {
+    plan: ctx.plan.code,
+    plan_name: ctx.plan.name,
+    price_usd: ctx.plan.price_cents / 100,
+    linked_presence: linked?.presenceSlug ?? null,
+    link_error: linkError,
     features: ctx.entitlements,
     limits: ctx.limits,
     usage,
-    extensions: await upgradeOptions(db, ctx),
+    locked,
+    upgrade_url: "https://crawler.today/room",
     notice:
-      "Alle Möglichkeiten von @room sind kostenlos freigeschaltet. Es gibt keine Abos, keine Pläne und keine Preise.",
+      ctx.plan.code === "free"
+        ? "Du nutzt @crawler Rooms gratis: öffentliche Themenräume und der Universal Room sind frei. Eigene Räume (Plus $5/Monat), Communities (Pro $20/Monat) und Organisationen (Business $80/Monat) gehören zum Crawler-Abo. Nach dem Kauf auf crawler.today/room den Wiederherstellungscode hier mit recovery_code angeben, um die Erweiterungen freizuschalten."
+        : `Aktives Abo: ${ctx.plan.name}. Upgrades und Verwaltung auf https://crawler.today/room.`,
   };
 }
 
@@ -171,16 +192,20 @@ export async function handlePublicPlans() {
   const db = await getDb();
   const plans = await listPlans(db);
   return {
-    free: true,
+    free_tier: "Öffentliche Themenräume und der Universal Room sind kostenlos.",
+    upgrade_url: "https://crawler.today/room",
     extensions: plans.map((plan) => ({
       code: plan.code,
       name: plan.name,
       tagline: plan.tagline ?? "",
+      price_usd: plan.price_cents / 100,
+      interval: plan.interval,
       limits: plan.limits,
       entitlements: plan.entitlements,
     })),
   };
 }
+
 
 /* ------------------------------ owned rooms ------------------------------ */
 
