@@ -41,30 +41,61 @@ interface RoomTool {
  */
 export const roomToolContracts = new Map<string, ReturnType<typeof responseValidator>>();
 
-/** Set by the test suite: an invalid tool payload throws instead of warning. */
-const strictOutput = () =>
-  typeof process !== "undefined" && process.env?.["CRAWLER_STRICT_OUTPUT"] === "1";
+function correlationId(): string {
+  const bytes = new Uint8Array(8);
+  crypto.getRandomValues(bytes);
+  return `cid_${Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("")}`;
+}
 
-function validateOutput(name: string, payload: Json): Json {
+/**
+ * Output validation is ALWAYS enforced — there is no opt-in environment flag.
+ * A payload that violates the declared contract never leaves the server; the
+ * caller receives one safe typed OUTPUT_CONTRACT_VIOLATION error instead, which
+ * itself satisfies the advertised error envelope of every tool.
+ */
+export function validateOutput(name: string, payload: Json): Json {
   const validator = roomToolContracts.get(name);
   if (!validator) return payload;
   const parsed = validator.safeParse(payload);
-  if (!parsed.success) {
-    const detail = parsed.error.issues.map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`).join("; ");
-    if (strictOutput()) throw new Error(`Output contract violated for ${name}: ${detail}`);
-    console.error("[room-tool:output]", name, detail);
-  }
-  return payload;
+  if (parsed.success) return payload;
+  const detail = parsed.error.issues.map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`).join("; ");
+  const cid = typeof payload["correlation_id"] === "string" ? (payload["correlation_id"] as string) : correlationId();
+  console.error("[room-tool:output]", name, detail);
+  return {
+    status: "error",
+    code: "OUTPUT_CONTRACT_VIOLATION",
+    message:
+      "Crawler produced a response that does not match its declared output contract. Nothing was returned to avoid an invalid payload. Please report the correlation id.",
+    retryable: false,
+    correlation_id: cid,
+  };
 }
 
+/**
+ * Read-only classification.
+ *
+ * `public`   — no identity at all; the handler must stay pure.
+ * `identity` — needs a mapped subject; without one the call returns a typed
+ *              IDENTITY_REQUIRED and performs zero writes.
+ *
+ * A read-only call NEVER creates or passes an ephemeral identity.
+ */
+const PUBLIC_READ_TOOLS = new Set([
+  "list_topics",
+  "get_image",
+  "get_public_sugar",
+  "resolve_social_profile",
+  "preview_social_profile",
+  "list_social_providers",
+]);
 
-
-
-function newRoomToken(): string {
-  const bytes = new Uint8Array(24);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+function readOnlyScope(name: string, input: Record<string, unknown>): "public" | "identity" {
+  if (PUBLIC_READ_TOOLS.has(name)) return "public";
+  // get_profile with an explicit username is a public profile read.
+  if (name === "get_profile" && typeof input["username"] === "string" && input["username"].trim()) return "public";
+  return "identity";
 }
+
 
 const TOKEN_FIELD = z
   .string()
@@ -122,11 +153,28 @@ function adapt(tool: RoomTool) {
       }
 
       let knownSubjectHash: string | null = identity.subjectId;
-      // A read-only call by a brand-new caller gets an ephemeral identity for
-      // this request only — it is never returned as a durable capability.
-      const token = identity.roomToken ?? newRoomToken();
+      // A read-only call NEVER invents an identity. Public reads run without
+      // one; identity-required reads fail closed with a typed error.
+      const scope = readOnly ? readOnlyScope(tool.name, rest) : "identity";
+      if (readOnly && scope === "identity" && !identity.roomToken) {
+        const message =
+          "This read needs your anonymous Crawler identity. Pass the room_token you were given (or a session_id of your paid Presence). Nothing was created.";
+        return {
+          isError: true,
+          content: [{ type: "text" as const, text: message }],
+          structuredContent: validateOutput(tool.name, {
+            status: "error",
+            code: "IDENTITY_REQUIRED",
+            message,
+            retryable: false,
+            correlation_id: correlationId(),
+          }),
+        };
+      }
+      const token = identity.roomToken;
       const echoToken = identity.roomToken;
       const issued = identity.issued;
+
 
 
       try {
@@ -171,10 +219,11 @@ function adapt(tool: RoomTool) {
 
 
         const result = await tool.handler(rest, {
-          "room/token": token,
+          ...(token ? { "room/token": token } : {}),
           "crawler/session_id": session,
           ...(knownSubjectHash ? { "room/subject_hash": knownSubjectHash } : {}),
         });
+
 
         let text = tool.summary(result);
         if (issued && echoToken) {
@@ -186,7 +235,10 @@ function adapt(tool: RoomTool) {
         const uiUri = typeof result["_ui_uri"] === "string" ? (result["_ui_uri"] as string) : null;
         const uiMime = typeof result["_ui_mime"] === "string" ? (result["_ui_mime"] as string) : "text/html";
         const publicResult = Object.fromEntries(
-          Object.entries(result).filter(([key]) => !key.startsWith("_")),
+          Object.entries(result)
+            .filter(([key]) => !key.startsWith("_"))
+            // The envelope owns "status" — a domain status travels as result_status.
+            .map(([key, value]) => [key === "status" ? "result_status" : key, value]),
         );
         const content: Array<Record<string, unknown>> = [{ type: "text" as const, text }];
         if (uiHtml && uiUri) {
@@ -219,7 +271,7 @@ function adapt(tool: RoomTool) {
             max?: number;
             current?: number;
             limit?: string;
-            plan_required?: string;
+            required_plan?: string;
             feature?: string;
           };
           const payload = await buildUpgradePayload({
@@ -229,7 +281,7 @@ function adapt(tool: RoomTool) {
             language: detectLanguage(rest),
             contextHash: ctx.subjectHash,
             correlationId: ctx.correlationId,
-            ...(details.plan_required ? { requiredPlan: details.plan_required } : {}),
+            ...(details.required_plan ? { requiredPlan: details.required_plan } : {}),
             ...(roomError.code === "LIMIT_REACHED" && typeof details.max === "number"
 
               ? {

@@ -108,7 +108,8 @@ const submission = {
     "destructive": tool.annotations?.destructiveHint ?? false,
     "idempotent": tool.annotations?.idempotentHint ?? false,
     "open_world": tool.annotations?.openWorldHint ?? false,
-    "input_schema": tool.inputSchema
+    "input_schema": tool.inputSchema,
+    "output_schema": tool.outputSchema
   })),
   "testing_instructions": {
     "steps": [

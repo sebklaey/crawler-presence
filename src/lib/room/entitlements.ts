@@ -171,7 +171,6 @@ export function requireEntitlement(ctx: AccountContext, key: string): void {
   if (ctx.entitlements[key] === true) return;
   throw roomError("PLAN_REQUIRED", undefined, {
     feature: publicFeatureKey(key),
-    plan_required: required,
     required_plan: required,
     current_plan: normalizePlan(ctx.plan.code),
     upgrade_url: UPGRADE_URL,

@@ -1079,7 +1079,7 @@
             "apply_hint": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
               "description": "Present when the plan does not include this feature."
             },
@@ -2016,9 +2016,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -2304,9 +2304,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -2645,9 +2645,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -2921,9 +2921,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -3043,9 +3043,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -3133,9 +3133,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -3238,9 +3238,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -3335,9 +3335,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -3422,9 +3422,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -3494,7 +3494,14 @@
           "properties": {
             "status": {
               "type": "string",
-              "const": "awaiting_upload"
+              "enum": [
+                "ok",
+                "error",
+                "upgrade_required",
+                "limit_reached",
+                "temporarily_unavailable"
+              ],
+              "description": "Discriminator: \"ok\" carries the success payload, every other value carries the shared envelope."
             },
             "image_id": {
               "type": "string",
@@ -3536,6 +3543,10 @@
               ],
               "additionalProperties": false
             },
+            "result_status": {
+              "type": "string",
+              "const": "awaiting_upload"
+            },
             "max_bytes": {
               "type": "integer"
             },
@@ -3562,9 +3573,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -3577,6 +3588,9 @@
               "description": "Direct checkout link for the required plan."
             }
           },
+          "required": [
+            "status"
+          ],
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         }
@@ -3626,12 +3640,23 @@
             "status": {
               "type": "string",
               "enum": [
-                "approved",
-                "pending"
-              ]
+                "ok",
+                "error",
+                "upgrade_required",
+                "limit_reached",
+                "temporarily_unavailable"
+              ],
+              "description": "Discriminator: \"ok\" carries the success payload, every other value carries the shared envelope."
             },
             "image_id": {
               "type": "string"
+            },
+            "result_status": {
+              "type": "string",
+              "enum": [
+                "approved",
+                "pending"
+              ]
             },
             "message": {
               "type": "string"
@@ -3763,9 +3788,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -3778,6 +3803,9 @@
               "description": "Direct checkout link for the required plan."
             }
           },
+          "required": [
+            "status"
+          ],
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         }
@@ -3847,12 +3875,23 @@
             "status": {
               "type": "string",
               "enum": [
-                "approved",
-                "rejected"
-              ]
+                "ok",
+                "error",
+                "upgrade_required",
+                "limit_reached",
+                "temporarily_unavailable"
+              ],
+              "description": "Discriminator: \"ok\" carries the success payload, every other value carries the shared envelope."
             },
             "image_id": {
               "type": "string"
+            },
+            "result_status": {
+              "type": "string",
+              "enum": [
+                "approved",
+                "rejected"
+              ]
             },
             "message": {
               "type": "string"
@@ -3971,9 +4010,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -3986,6 +4025,9 @@
               "description": "Direct checkout link for the required plan."
             }
           },
+          "required": [
+            "status"
+          ],
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         }
@@ -4082,9 +4124,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -4303,9 +4345,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -4467,9 +4509,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -4581,9 +4623,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -4695,9 +4737,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -4791,9 +4833,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -5126,9 +5168,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -5457,9 +5499,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -5823,9 +5865,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -5913,9 +5955,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -6015,9 +6057,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -6112,10 +6154,21 @@
           "properties": {
             "status": {
               "type": "string",
-              "const": "draft"
+              "enum": [
+                "ok",
+                "error",
+                "upgrade_required",
+                "limit_reached",
+                "temporarily_unavailable"
+              ],
+              "description": "Discriminator: \"ok\" carries the success payload, every other value carries the shared envelope."
             },
             "campaign_id": {
               "type": "string"
+            },
+            "result_status": {
+              "type": "string",
+              "const": "draft"
             },
             "policy_ok": {
               "type": "boolean"
@@ -6143,9 +6196,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -6158,6 +6211,9 @@
               "description": "Direct checkout link for the required plan."
             }
           },
+          "required": [
+            "status"
+          ],
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         }
@@ -6198,6 +6254,17 @@
           "properties": {
             "status": {
               "type": "string",
+              "enum": [
+                "ok",
+                "error",
+                "upgrade_required",
+                "limit_reached",
+                "temporarily_unavailable"
+              ],
+              "description": "Discriminator: \"ok\" carries the success payload, every other value carries the shared envelope."
+            },
+            "result_status": {
+              "type": "string",
               "const": "pending_review"
             },
             "message": {
@@ -6217,9 +6284,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -6232,6 +6299,9 @@
               "description": "Direct checkout link for the required plan."
             }
           },
+          "required": [
+            "status"
+          ],
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         }
@@ -6324,9 +6394,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -6658,9 +6728,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -6730,14 +6800,25 @@
             "status": {
               "type": "string",
               "enum": [
+                "ok",
+                "error",
+                "upgrade_required",
+                "limit_reached",
+                "temporarily_unavailable"
+              ],
+              "description": "Discriminator: \"ok\" carries the success payload, every other value carries the shared envelope."
+            },
+            "campaign_id": {
+              "type": "string"
+            },
+            "result_status": {
+              "type": "string",
+              "enum": [
                 "approved",
                 "rejected",
                 "draft",
                 "suspended"
               ]
-            },
-            "campaign_id": {
-              "type": "string"
             },
             "message": {
               "type": "string"
@@ -6756,9 +6837,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -6771,6 +6852,9 @@
               "description": "Direct checkout link for the required plan."
             }
           },
+          "required": [
+            "status"
+          ],
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         }
@@ -6859,13 +6943,24 @@
           "properties": {
             "status": {
               "type": "string",
-              "const": "draft"
+              "enum": [
+                "ok",
+                "error",
+                "upgrade_required",
+                "limit_reached",
+                "temporarily_unavailable"
+              ],
+              "description": "Discriminator: \"ok\" carries the success payload, every other value carries the shared envelope."
             },
             "creative_id": {
               "type": "string"
             },
             "campaign_id": {
               "type": "string"
+            },
+            "result_status": {
+              "type": "string",
+              "const": "draft"
             },
             "knowledge_slug": {
               "type": "string"
@@ -6887,9 +6982,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -6902,6 +6997,9 @@
               "description": "Direct checkout link for the required plan."
             }
           },
+          "required": [
+            "status"
+          ],
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         }
@@ -7279,9 +7377,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -7369,9 +7467,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -7459,9 +7557,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -7760,9 +7858,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -7854,9 +7952,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -8106,9 +8204,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -8209,9 +8307,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -8415,9 +8513,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -8525,9 +8623,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -8635,9 +8733,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -8751,9 +8849,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -8889,9 +8987,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -9003,9 +9101,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -9377,9 +9475,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -9639,9 +9737,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -9732,9 +9830,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -9849,9 +9947,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -9957,9 +10055,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -10068,9 +10166,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -10269,9 +10367,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -10357,9 +10455,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -10447,9 +10545,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -10607,9 +10705,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -10746,9 +10844,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -10888,9 +10986,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -10960,7 +11058,14 @@
           "properties": {
             "status": {
               "type": "string",
-              "description": "Nur nach erfolgreichem Senden."
+              "enum": [
+                "ok",
+                "error",
+                "upgrade_required",
+                "limit_reached",
+                "temporarily_unavailable"
+              ],
+              "description": "Discriminator: \"ok\" carries the success payload, every other value carries the shared envelope."
             },
             "confirmation_required": {
               "type": "boolean",
@@ -10973,6 +11078,10 @@
             "recipient_receives": {
               "type": "number",
               "description": "Nur in der Vorschau vor der Bestätigung."
+            },
+            "result_status": {
+              "type": "string",
+              "description": "Nur nach erfolgreichem Senden."
             },
             "duplicate": {
               "type": "boolean",
@@ -11032,9 +11141,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -11047,6 +11156,9 @@
               "description": "Direct checkout link for the required plan."
             }
           },
+          "required": [
+            "status"
+          ],
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         }
@@ -11147,9 +11259,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -11272,9 +11384,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -11427,9 +11539,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -11647,9 +11759,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -11828,9 +11940,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -11980,9 +12092,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -12142,9 +12254,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -12268,9 +12380,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -12333,7 +12445,15 @@
           "type": "object",
           "properties": {
             "status": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "ok",
+                "error",
+                "upgrade_required",
+                "limit_reached",
+                "temporarily_unavailable"
+              ],
+              "description": "Discriminator: \"ok\" carries the success payload, every other value carries the shared envelope."
             },
             "ok": {
               "type": "boolean"
@@ -12346,6 +12466,9 @@
               "type": "string"
             },
             "match_request_id": {
+              "type": "string"
+            },
+            "result_status": {
               "type": "string"
             },
             "duplicate": {
@@ -12364,9 +12487,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -12379,6 +12502,9 @@
               "description": "Direct checkout link for the required plan."
             }
           },
+          "required": [
+            "status"
+          ],
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         }
@@ -12434,7 +12560,15 @@
           "type": "object",
           "properties": {
             "status": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "ok",
+                "error",
+                "upgrade_required",
+                "limit_reached",
+                "temporarily_unavailable"
+              ],
+              "description": "Discriminator: \"ok\" carries the success payload, every other value carries the shared envelope."
             },
             "ok": {
               "type": "boolean"
@@ -12442,6 +12576,9 @@
             "code": {
               "type": "string",
               "description": "Error code when status is not ok."
+            },
+            "result_status": {
+              "type": "string"
             },
             "room_url": {
               "type": [
@@ -12471,9 +12608,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -12486,6 +12623,9 @@
               "description": "Direct checkout link for the required plan."
             }
           },
+          "required": [
+            "status"
+          ],
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         }
@@ -12559,9 +12699,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -12699,9 +12839,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -12787,9 +12927,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -12998,9 +13138,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -13206,9 +13346,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -13287,9 +13427,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -13338,6 +13478,17 @@
           "type": "object",
           "properties": {
             "status": {
+              "type": "string",
+              "enum": [
+                "ok",
+                "error",
+                "upgrade_required",
+                "limit_reached",
+                "temporarily_unavailable"
+              ],
+              "description": "Discriminator: \"ok\" carries the success payload, every other value carries the shared envelope."
+            },
+            "result_status": {
               "type": "string",
               "enum": [
                 "no_pattern",
@@ -13413,9 +13564,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -13428,6 +13579,9 @@
               "description": "Direct checkout link for the required plan."
             }
           },
+          "required": [
+            "status"
+          ],
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         }
@@ -13461,6 +13615,17 @@
           "type": "object",
           "properties": {
             "status": {
+              "type": "string",
+              "enum": [
+                "ok",
+                "error",
+                "upgrade_required",
+                "limit_reached",
+                "temporarily_unavailable"
+              ],
+              "description": "Discriminator: \"ok\" carries the success payload, every other value carries the shared envelope."
+            },
+            "result_status": {
               "type": "string",
               "enum": [
                 "no_pattern",
@@ -13619,9 +13784,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -13634,6 +13799,9 @@
               "description": "Direct checkout link for the required plan."
             }
           },
+          "required": [
+            "status"
+          ],
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"
         }
@@ -13728,9 +13896,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -13855,9 +14023,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -13970,9 +14138,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -14058,9 +14226,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -14243,9 +14411,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -14427,9 +14595,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -14669,9 +14837,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"
@@ -14799,9 +14967,9 @@
             "correlation_id": {
               "type": "string"
             },
-            "plan_required": {
+            "required_plan": {
               "type": "string",
-              "description": "Plan that unlocks this feature: plus, pro or business."
+              "description": "Plan that unlocks this feature: plus, pro, business or admin."
             },
             "current_plan": {
               "type": "string"

@@ -32,7 +32,7 @@ export default defineTool({
     next_question: z.string().nullable().optional(),
     example_answers: z.array(z.string()).optional(),
     apply_hint: z.string().optional(),
-    plan_required: z.string().optional().describe("Present when the plan does not include this feature."),
+    required_plan: z.string().optional().describe("Present when the plan does not include this feature."),
     current_plan: z.string().optional(),
     message: z.string().optional(),
     cta_label: z.string().optional(),

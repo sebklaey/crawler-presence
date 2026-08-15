@@ -8,6 +8,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 import mcp from "../src/lib/mcp/index";
+import { roomTools } from "../src/lib/mcp/tools/room-tools";
 import { CRAWLER_MCP_NAME, CRAWLER_MCP_TITLE, CRAWLER_VERSION } from "../src/lib/version";
 import { PLAN_DEFINITIONS, PLAN_ORDER, ADMIN_TOOLS, isKnownTool } from "../src/lib/entitlements/plans";
 import { requiredPlanForTool } from "../src/lib/entitlements/catalog";
@@ -31,14 +32,27 @@ type AnyTool = {
 
 const runtimeTools = (mcp as unknown as { tools: AnyTool[] }).tools;
 const runtimeNames = runtimeTools.map((t) => t.name).sort();
+const roomToolNames = (roomTools as unknown as AnyTool[]).map((t) => t.name);
+
+type SchemaTool = AnyTool & { inputSchema?: unknown; outputSchema?: unknown };
 
 const manifest = JSON.parse(readFileSync(".lovable/mcp/manifest.json", "utf8")) as {
-  mcp: { server: { name: string; title?: string; version?: string }; tools: AnyTool[] };
+  mcp: { server: { name: string; title?: string; version?: string }; tools: SchemaTool[] };
 };
 const submission = JSON.parse(readFileSync("chatgpt-app-submission.json", "utf8")) as {
   $schema: string;
   mcp_server: { name: string; version: string };
-  tools: { name: string }[];
+  tools: {
+    name: string;
+    title?: string;
+    description?: string;
+    read_only?: boolean;
+    destructive?: boolean;
+    idempotent?: boolean;
+    open_world?: boolean;
+    input_schema?: unknown;
+    output_schema?: unknown;
+  }[];
 };
 
 check("runtime tool names are unique", () => {
@@ -51,6 +65,78 @@ check("manifest parity", () => {
 
 check("submission parity", () => {
   assert.deepEqual(submission.tools.map((t) => t.name).sort(), runtimeNames);
+});
+
+check("manifest annotations match the runtime registry", () => {
+  const byName = new Map(manifest.mcp.tools.map((t) => [t.name, t]));
+  for (const tool of runtimeTools) {
+    const m = byName.get(tool.name);
+    assert.ok(m, `missing in manifest: ${tool.name}`);
+    assert.deepEqual(m!.annotations, tool.annotations, `annotation drift: ${tool.name}`);
+    assert.equal(m!.title, tool.title, `title drift: ${tool.name}`);
+    assert.equal(m!.description, tool.description, `description drift: ${tool.name}`);
+  }
+});
+
+check("submission mirrors manifest name, annotations, input and output schema", () => {
+  const byName = new Map(manifest.mcp.tools.map((t) => [t.name, t]));
+  for (const tool of submission.tools) {
+    const m = byName.get(tool.name);
+    assert.ok(m, `submission tool missing in manifest: ${tool.name}`);
+    const a = (m!.annotations ?? {}) as Record<string, unknown>;
+    assert.equal(tool.title, m!.title, `title drift: ${tool.name}`);
+    assert.equal(tool.description, m!.description, `description drift: ${tool.name}`);
+    assert.equal(tool.read_only, a["readOnlyHint"], `read_only drift: ${tool.name}`);
+    assert.equal(tool.destructive, a["destructiveHint"], `destructive drift: ${tool.name}`);
+    assert.equal(tool.idempotent, a["idempotentHint"], `idempotent drift: ${tool.name}`);
+    assert.equal(tool.open_world, a["openWorldHint"], `open_world drift: ${tool.name}`);
+    assert.deepEqual(tool.input_schema, m!.inputSchema, `input schema drift: ${tool.name}`);
+    assert.deepEqual(tool.output_schema, m!.outputSchema, `output schema drift: ${tool.name}`);
+  }
+});
+
+check("every room-domain output schema carries the shared envelope", () => {
+  const bad: string[] = [];
+  for (const tool of manifest.mcp.tools.filter((t) => roomToolNames.includes(t.name))) {
+    const schema = tool.outputSchema as
+      | { properties?: Record<string, { enum?: unknown[] }> }
+      | undefined;
+    const props = schema?.properties ?? {};
+    const status = props["status"];
+    if (!status || !Array.isArray(status.enum) || !status.enum.includes("ok")) bad.push(tool.name);
+    else if (!props["code"] || !props["correlation_id"] || !props["required_plan"]) bad.push(tool.name);
+  }
+  assert.deepEqual(bad, [], `tools without the shared response envelope: ${bad.join(", ")}`);
+});
+
+check("room-domain tools advertise their own success fields", () => {
+  const byName = new Map(manifest.mcp.tools.map((t) => [t.name, t]));
+  const generic = new Set([
+    "status",
+    "room_token",
+    "code",
+    "message",
+    "retryable",
+    "correlation_id",
+    "required_plan",
+    "current_plan",
+    "cta_label",
+    "upgrade_url",
+  ]);
+  const missing: string[] = [];
+  for (const tool of roomToolNames) {
+    const schema = byName.get(tool)?.outputSchema as { properties?: Record<string, unknown> } | undefined;
+    const own = Object.keys(schema?.properties ?? {}).filter((key) => !generic.has(key));
+    if (own.length === 0) missing.push(tool);
+  }
+  assert.deepEqual(missing, [], `room tools still on the generic output contract: ${missing.join(", ")}`);
+});
+
+check("no OPEN_OUTPUT and no obsolete generic contract remains", () => {
+  const sources = ["src/lib/room/mcp.ts", "src/lib/room/mcp.personal.ts", "src/lib/room/mcp.plus.ts", "src/lib/room/mcp.profile.ts", "src/lib/room/mcp.sugar.ts", "src/lib/room/mcp.love.ts", "src/lib/room/match/mcp.ts", "src/lib/room/social/mcp.ts"];
+  for (const file of sources) {
+    assert.ok(!readFileSync(file, "utf8").includes("OPEN_OUTPUT"), `OPEN_OUTPUT still present in ${file}`);
+  }
 });
 
 check("submission uses the ChatGPT app submission v1 schema", () => {
@@ -167,5 +253,9 @@ check("public instructions use the @crawler connector name", () => {
 });
 
 console.log(`Runtime tools: ${runtimeNames.length}`);
+console.log(`Room-domain tools: ${roomToolNames.length}`);
+console.log(
+  `Read-only tools: ${runtimeTools.filter((t) => t.annotations?.["readOnlyHint"] === true).length}`,
+);
 console.log(failures ? `${failures} check(s) failed` : "All MCP contract parity checks passed");
 if (failures) process.exit(1);

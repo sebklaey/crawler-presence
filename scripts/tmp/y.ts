@@ -1,0 +1,13 @@
+import { TOOLS } from "../../src/lib/room/mcp";
+import { PERSONAL_TOOLS } from "../../src/lib/room/mcp.personal";
+import { PLUS_TOOLS } from "../../src/lib/room/mcp.plus";
+import { PROFILE_TOOLS } from "../../src/lib/room/mcp.profile";
+import { SUGAR_TOOLS } from "../../src/lib/room/mcp.sugar";
+import { LOVE_TOOLS } from "../../src/lib/room/mcp.love";
+import { MATCH_TOOLS } from "../../src/lib/room/match/mcp";
+import { SOCIAL_TOOLS } from "../../src/lib/room/social/mcp";
+const all=[...TOOLS,...PERSONAL_TOOLS,...PLUS_TOOLS,...PROFILE_TOOLS,...SUGAR_TOOLS,...LOVE_TOOLS,...MATCH_TOOLS,...SOCIAL_TOOLS] as any[];
+const coll = all.filter(t=>t.outputSchema?.properties?.status);
+console.log(coll.map(t=>t.name));
+const none = all.filter(t=>!t.outputSchema || Object.keys(t.outputSchema.properties??{}).length===0);
+console.log("no output schema:", none.map(t=>t.name));
