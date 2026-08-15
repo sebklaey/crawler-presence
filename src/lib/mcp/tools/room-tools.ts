@@ -100,6 +100,7 @@ function toOutputShape(schema: Json | undefined): Record<string, z.ZodTypeAny> {
     current_plan: z.string().optional(),
     cta_label: z.string().optional(),
     upgrade_url: z.string().optional().describe("Direct Paddle checkout link for the required plan."),
+    correlation_id: z.string().optional().describe("Stable id of this decision — quote it in support requests."),
   };
 }
 
@@ -217,6 +218,7 @@ function adapt(tool: RoomTool) {
           structuredContent: { ...publicResult, room_token: token },
         };
       } catch (error) {
+        const { newCorrelationId } = await import("@/lib/core/access.server");
         console.error("[room-tool]", tool.name, error);
         const roomError = toRoomError(error);
 
@@ -225,7 +227,7 @@ function adapt(tool: RoomTool) {
         if (roomError.code === "PLAN_REQUIRED" || roomError.code === "LIMIT_REACHED") {
           const { buildUpgradePayload, detectLanguage } = await import("@/lib/entitlements/upgrade.server");
           const { resolvePlanContext } = await import("@/lib/entitlements/guard.server");
-          const ctx = await resolvePlanContext(token);
+          const ctx = await resolvePlanContext(token, knownSubjectHash, session);
           const details = roomError.details as {
             max?: number;
             current?: number;
@@ -239,6 +241,7 @@ function adapt(tool: RoomTool) {
             currentPlan: ctx.plan,
             language: detectLanguage(rest),
             contextHash: ctx.subjectHash,
+            correlationId: ctx.correlationId,
             ...(details.plan_required ? { requiredPlan: details.plan_required } : {}),
             ...(roomError.code === "LIMIT_REACHED" && typeof details.max === "number"
 
@@ -262,7 +265,12 @@ function adapt(tool: RoomTool) {
         return {
           isError: true,
           content: [{ type: "text" as const, text: roomError.message }],
-          structuredContent: { error: roomError.code, message: roomError.message, room_token: token },
+          structuredContent: {
+            error: roomError.code,
+            message: roomError.message,
+            room_token: token,
+            correlation_id: newCorrelationId(),
+          },
         };
       }
     },

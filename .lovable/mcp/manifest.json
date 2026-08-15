@@ -1980,6 +1980,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -2243,6 +2247,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -2555,6 +2563,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -2803,6 +2815,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -2905,6 +2921,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -2976,6 +2996,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -3053,6 +3077,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -3126,6 +3154,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -3189,6 +3221,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -3263,6 +3299,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -3336,6 +3376,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -3425,6 +3469,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -3495,6 +3543,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -3558,6 +3610,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -3648,6 +3704,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -3721,6 +3781,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -3795,6 +3859,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -3860,6 +3928,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -3922,6 +3994,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -3990,6 +4066,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -4058,6 +4138,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -4122,6 +4206,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -4190,6 +4278,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -4293,6 +4385,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -4357,6 +4453,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -4429,6 +4529,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -4494,6 +4598,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -4566,6 +4674,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -4678,6 +4790,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -4742,6 +4858,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -4806,6 +4926,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -4870,6 +4994,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -4929,6 +5057,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -4995,6 +5127,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -5061,6 +5197,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -5127,6 +5267,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -5197,6 +5341,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -5263,6 +5411,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -5329,6 +5481,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -5388,6 +5544,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -5453,6 +5613,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -5524,6 +5688,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -5587,6 +5755,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -5673,6 +5845,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -5738,6 +5914,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -5810,6 +5990,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -5880,6 +6064,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -5950,6 +6138,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -6012,6 +6204,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -6077,6 +6273,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -6145,6 +6345,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -6204,6 +6408,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -6263,6 +6471,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -6334,6 +6546,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -6413,6 +6629,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -6478,6 +6698,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -6541,6 +6765,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -6607,6 +6835,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -6686,6 +6918,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -6745,6 +6981,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -6804,6 +7044,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -6876,6 +7120,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -6934,6 +7182,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -7007,6 +7259,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -7082,6 +7338,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -7141,6 +7401,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -7200,6 +7464,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -7262,6 +7530,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -7358,6 +7630,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -7454,6 +7730,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -7513,6 +7793,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -7572,6 +7856,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -7631,6 +7919,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -7700,6 +7992,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -7766,6 +8062,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -7836,6 +8136,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -7902,6 +8206,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -7977,6 +8285,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -8052,6 +8364,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -8164,6 +8480,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
@@ -8223,6 +8543,10 @@
             "upgrade_url": {
               "type": "string",
               "description": "Direct Paddle checkout link for the required plan."
+            },
+            "correlation_id": {
+              "type": "string",
+              "description": "Stable id of this decision — quote it in support requests."
             }
           },
           "additionalProperties": false,
