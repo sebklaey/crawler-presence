@@ -75,7 +75,7 @@ export async function resolvePlanForSession(sessionToken: string): Promise<{
       .select(
         "slug, plan, status, subscription_status, current_period_end, billing_subscription_id, billing_customer_id",
       )
-      .eq("session_token", sessionToken)
+      .eq("session_token_hash", await (await import("../mcp/presences")).hashSessionToken(sessionToken))
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();

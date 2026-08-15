@@ -36,6 +36,12 @@ export type PublishIntent = {
   presenceSlug: string | null;
 };
 
+/** Draft session capabilities only ever reach the database as a hash. */
+async function hashSession(token: string): Promise<string> {
+  const { hashSessionToken } = await import("./mcp/presences");
+  return hashSessionToken(token);
+}
+
 type Row = {
   intent_ref: string;
   session_token: string | null;
@@ -79,9 +85,14 @@ export async function createIntent(input: {
   const supabase = db();
   if (!supabase) return null;
   const intentRef = opaqueToken("pi");
+  const { hashSessionToken } = await import("./mcp/presences");
+  const sessionHash = input.sessionToken ? await hashSessionToken(input.sessionToken) : null;
   const { error } = await supabase.from("publish_intents").insert({
     intent_ref: intentRef,
-    session_token: input.sessionToken ?? null,
+    // Only the hash is stored; the redacted placeholder keeps the legacy
+    // column non-null-ish for older readers without holding a capability.
+    session_token: sessionHash ? `redacted:${sessionHash.slice(0, 32)}` : null,
+    session_token_hash: sessionHash,
     plan: input.plan,
     status: input.status,
     environment: billingEnvironment(),
@@ -163,7 +174,7 @@ export async function redeemableIntentForSession(sessionToken: string): Promise<
   const { data } = await supabase
     .from("publish_intents")
     .select(COLUMNS)
-    .eq("session_token", sessionToken)
+    .eq("session_token_hash", await hashSession(sessionToken))
     .eq("status", "paid")
     .is("presence_slug", null)
     .gt("expires_at", new Date().toISOString())
@@ -180,7 +191,7 @@ export async function latestIntentForSession(sessionToken: string): Promise<Publ
   const { data } = await supabase
     .from("publish_intents")
     .select(COLUMNS)
-    .eq("session_token", sessionToken)
+    .eq("session_token_hash", await hashSession(sessionToken))
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
