@@ -135,6 +135,30 @@ function ManagePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [codeHydrated, storedCode]);
 
+  /**
+   * Coming back from a checkout must show the new plan at once: whenever this
+   * tab regains focus, the Presence is silently reloaded (server-side it also
+   * reconciles the subscription with the payment provider).
+   */
+  const lastRefresh = useRef(0);
+  useEffect(() => {
+    if (!data?.ok) return;
+    const refresh = () => {
+      if (document.visibilityState === "hidden") return;
+      if (Date.now() - lastRefresh.current < 5000) return;
+      lastRefresh.current = Date.now();
+      void open(code, { silent: true });
+    };
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.ok, code]);
+
+
   function signOut() {
     setStoredCode("");
     setData(null);
