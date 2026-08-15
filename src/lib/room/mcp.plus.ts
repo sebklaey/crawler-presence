@@ -67,7 +67,7 @@ export const PLUS_TOOLS: PlusToolDefinition[] = [
     name: "get_my_plan",
     title: "Mein Abo und meine Möglichkeiten",
     description:
-      "Zeigt das aktive Crawler-Abo, die freigeschalteten Erweiterungen, Limits, die Nutzung und die gesperrten Funktionen mit dem nötigen Plan. Öffentliche Themenräume und der Universal Room sind gratis; eigene Räume gehören zu Plus ($5/Monat), Communities zu Pro ($20/Monat), Organisationen zu Business ($80/Monat) — buchbar auf https://crawler.today/room. Mit recovery_code wird ein bezahltes Presence-Abo mit dieser anonymen Kennung verknüpft.",
+      "Zeigt das aktive Crawler-Abo, die freigeschalteten Erweiterungen, Limits, die Nutzung und die gesperrten Funktionen mit dem nötigen Plan. Öffentliche Themenräume und der Universal Room sind gratis; eigene Räume gehören zu Plus ($5/Monat), Communities zu Pro ($20/Monat), Organisationen zu Business ($80/Monat) — direkt über die checkout_urls/upgrade_url aus der Antwort buchbar (Paddle-Checkout). Mit recovery_code wird ein bezahltes Presence-Abo mit dieser anonymen Kennung verknüpft.",
     inputSchema: {
       type: "object",
       properties: {
