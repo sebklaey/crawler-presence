@@ -268,9 +268,79 @@ export async function handlePublicPlans() {
 
 /* ------------------------------ owned rooms ------------------------------ */
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48);
+}
+
+/**
+ * Resolves an organization by uuid, slug or name for the current owner and
+ * creates one on demand, so a community can be created in a single call.
+ */
+async function resolveOrganization(
+  db: Db,
+  ctx: AccountContext,
+  reference: string | undefined,
+  fallbackName: string,
+): Promise<string> {
+  requireEntitlement(ctx, "communities");
+
+  if (reference) {
+    const column = UUID_RE.test(reference) ? "id" : "slug";
+    const { data: found } = await db
+      .from("organizations")
+      .select("id")
+      .eq(column, UUID_RE.test(reference) ? reference : slugify(reference))
+      .maybeSingle();
+    if (found) {
+      const org = await requireOrganizationAccess(db, ctx, (found as { id: string }).id);
+      return org.id;
+    }
+  }
+
+  const name = (reference && !UUID_RE.test(reference) ? reference : fallbackName).slice(0, 120);
+  const { data: existing } = await db
+    .from("organizations")
+    .select("id")
+    .eq("owner_account_id", ctx.accountId)
+    .eq("name", name)
+    .maybeSingle();
+  if (existing) return (existing as { id: string }).id;
+
+  const { data: created, error } = await db
+    .from("organizations")
+    .insert({
+      name,
+      slug: `${slugify(name) || "community"}-${Math.random().toString(36).slice(2, 8)}`,
+      owner_account_id: ctx.accountId,
+    })
+    .select("id")
+    .single();
+  if (error || !created) throw roomError("INTERNAL_ERROR");
+
+  await db.from("organization_members").insert({
+    organization_id: (created as { id: string }).id,
+    account_id: ctx.accountId,
+    role: "organization_admin",
+  });
+
+  return (created as { id: string }).id;
+}
+
 export async function handleCreatePublicRoom(input: unknown, meta: McpMeta) {
   const data = parse(plusInputSchemas.create_public_room, input);
   const { db, ctx } = await context(meta);
+
+  const wantsCommunity = data.kind === "community" || Boolean(data.organization_id || data.organization_name);
+  const organizationId = wantsCommunity
+    ? await resolveOrganization(db, ctx, data.organization_id ?? data.organization_name, data.title)
+    : null;
 
   const room = await createOwnedRoom(db, ctx, {
     title: data.title,
@@ -278,7 +348,7 @@ export async function handleCreatePublicRoom(input: unknown, meta: McpMeta) {
     ...(data.topic !== undefined ? { topic: data.topic } : {}),
     visibility: "public",
     ...(data.capacity !== undefined ? { capacity: data.capacity } : {}),
-    ...(data.organization_id !== undefined ? { organizationId: data.organization_id } : {}),
+    ...(organizationId ? { organizationId } : {}),
   });
 
   const invitation = ctx.entitlements["invitations"]
@@ -288,13 +358,19 @@ export async function handleCreatePublicRoom(input: unknown, meta: McpMeta) {
   return {
     room_id: await encodeRoomId(room.id),
     title: room.title,
+    kind: room.kind,
+    organization_id: organizationId,
     visibility: room.visibility,
     capacity: room.capacity,
     retention: { texts: room.retention_texts, images: room.retention_images },
     invitation_token: invitation?.invitation_token ?? null,
-    message: `Raum «${room.title}» wurde erstellt.`,
+    message:
+      room.kind === "community"
+        ? `Community «${room.title}» wurde erstellt.`
+        : `Raum «${room.title}» wurde erstellt.`,
   };
 }
+
 
 export async function handleManageRoom(input: unknown, meta: McpMeta) {
   const data = parse(plusInputSchemas.manage_room, input);
