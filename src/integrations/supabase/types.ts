@@ -609,6 +609,7 @@ export type Database = {
           current_period_start: string | null
           customer_id: string
           environment: string
+          last_event_id: string | null
           last_event_occurred_at: string | null
           plan: string | null
           price_id: string | null
@@ -626,6 +627,7 @@ export type Database = {
           current_period_start?: string | null
           customer_id: string
           environment?: string
+          last_event_id?: string | null
           last_event_occurred_at?: string | null
           plan?: string | null
           price_id?: string | null
@@ -643,6 +645,7 @@ export type Database = {
           current_period_start?: string | null
           customer_id?: string
           environment?: string
+          last_event_id?: string | null
           last_event_occurred_at?: string | null
           plan?: string | null
           price_id?: string | null
@@ -2092,6 +2095,7 @@ export type Database = {
       payment_events: {
         Row: {
           attempts: number
+          claim_token: string | null
           correlation_id: string | null
           created_at: string
           environment: string
@@ -2110,6 +2114,7 @@ export type Database = {
         }
         Insert: {
           attempts?: number
+          claim_token?: string | null
           correlation_id?: string | null
           created_at?: string
           environment?: string
@@ -2128,6 +2133,7 @@ export type Database = {
         }
         Update: {
           attempts?: number
+          claim_token?: string | null
           correlation_id?: string | null
           created_at?: string
           environment?: string
@@ -4426,6 +4432,7 @@ export type Database = {
       enforce_text_retention: { Args: { p_room_id: string }; Returns: number }
       finish_payment_event: {
         Args: {
+          p_claim_token: string
           p_correlation_id?: string
           p_error_code?: string
           p_event_id: string
@@ -4452,6 +4459,7 @@ export type Database = {
           p_current_period_start: string
           p_customer_id: string
           p_environment: string
+          p_event_id?: string
           p_occurred_at: string
           p_plan: string
           p_price_id: string
