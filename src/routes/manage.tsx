@@ -83,7 +83,7 @@ function ManagePage() {
    * Pull the owner's real data into the browser workspace so /knowledge,
    * /preview, /analytics and /publish show this Presence, not an empty draft.
    */
-  async function restoreWorkspace(next: string) {
+  async function restoreWorkspace() {
     try {
       const restored = await manageRestoreCoreFn();
       if (!restored.ok) return;
@@ -93,21 +93,39 @@ function ManagePage() {
       if (!isCoreEmpty(remote) || isCoreEmpty(core)) setCore(remote);
       setPlan(restored.plan as "free" | "plus" | "pro" | "business");
       setPublished({ at: restored.publishedAt, slug: restored.slug });
-      setStoredCode(next);
 
     } catch {
       /* the overview already loaded — restoring the workspace is best effort */
     }
   }
 
+  /**
+   * Opens (or refreshes) the management view.
+   *
+   * When a raw recovery code is supplied it is exchanged once for the HttpOnly
+   * management cookie and then wiped from React memory — every later call is
+   * authorised by that cookie alone.
+   */
   async function open(next = code, opts?: { silent?: boolean }) {
     setBusy(true);
     try {
+      if (next && next.trim().length >= 10) {
+        const { openManageSession } = await import("@/lib/manage-session");
+        const session = await openManageSession(next.trim());
+        // The capability has done its one job: forget it immediately.
+        setCode("");
+        setStoredCode("");
+        if (!session.ok) {
+          setData(null);
+          if (!opts?.silent) toast.error(REASONS[session.reason] ?? "Could not open that Presence.");
+          return;
+        }
+      }
       const result = await manageOverviewFn();
       if (!result.ok) {
         setData(null);
-        // A stored code that no longer works must not keep the session locked open.
-        if (opts?.silent && (result.reason === "invalid-code" || result.reason === "not-found")) {
+        // An expired or missing management cookie must not keep the page open.
+        if (opts?.silent && (result.reason === "unauthenticated" || result.reason === "not-found")) {
           setStoredCode("");
           return;
         }
@@ -115,7 +133,7 @@ function ManagePage() {
         return;
       }
       setData(result);
-      await restoreWorkspace(next);
+      await restoreWorkspace();
       if (!opts?.silent)
         toast.success("Presence data loaded into Knowledge, Preview, Analytics and Publish.");
     } catch {
@@ -125,13 +143,14 @@ function ManagePage() {
     }
   }
 
-  /** Stay unlocked: reopen the Presence from the remembered recovery code. */
+  /** Stay unlocked while the HttpOnly management cookie is still valid. */
   useEffect(() => {
     if (!codeHydrated || autoOpened.current) return;
-    if (!storedCode || storedCode.trim().length < 10) return;
     autoOpened.current = true;
-    setCode(storedCode);
-    void open(storedCode, { silent: true });
+    void (async () => {
+      const { manageSessionActive } = await import("@/lib/manage-session");
+      if ((await manageSessionActive()).active) void open("", { silent: true });
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [codeHydrated, storedCode]);
 
