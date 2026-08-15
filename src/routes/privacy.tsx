@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 
 import { AppShell, PageHead } from "@/components/app-shell";
+import { RETENTION_CATALOG } from "@/lib/retention-catalog";
 
 export const Route = createFileRoute("/privacy")({
   head: () => ({
