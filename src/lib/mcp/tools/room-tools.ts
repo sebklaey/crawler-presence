@@ -12,6 +12,7 @@ import { PERSONAL_TOOLS } from "@/lib/room/mcp.personal";
 import { PLUS_TOOLS } from "@/lib/room/mcp.plus";
 import { PROFILE_TOOLS } from "@/lib/room/mcp.profile";
 import { MATCH_TOOLS } from "@/lib/room/match/mcp";
+import { SOCIAL_TOOLS } from "@/lib/room/social/mcp";
 import { toRoomError } from "@/lib/room/errors";
 
 type Json = Record<string, unknown>;
